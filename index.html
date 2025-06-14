@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TOKO BUAH INDONESIA - Kasir</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="icon.png">
+</head>
+<body>
+
+  <h1>TOKO BUAH INDONESIA</h1>
+
+  <div class="form-group">
+    <label>Nama Buah</label>
+    <input type="text" id="namaBuah" placeholder="Contoh: Apel">
+  </div>
+
+  <div class="form-group">
+    <label>Harga Satuan (Rp)</label>
+    <input type="number" id="hargaBuah" placeholder="Contoh: 10000">
+  </div>
+
+  <div class="form-group">
+    <label>Jumlah</label>
+    <input type="number" id="jumlahBuah" placeholder="Contoh: 2">
+  </div>
+
+  <button onclick="tambahKeKeranjang()">Tambah ke Keranjang</button>
+
+  <table id="keranjang">
+    <thead>
+      <tr>
+        <th>Nama Buah</th>
+        <th>Harga Satuan</th>
+        <th>Jumlah</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">Total</td>
+        <td id="totalBayar">Rp 0</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <button onclick="cetakStruk()">Cetak Struk</button>
+
+  <script>
+    const keranjang = [];
+    let total = 0;
+
+    function tambahKeKeranjang() {
+      const nama = document.getElementById("namaBuah").value;
+      const harga = parseInt(document.getElementById("hargaBuah").value);
+      const jumlah = parseInt(document.getElementById("jumlahBuah").value);
+
+      if (!nama || !harga || !jumlah) {
+        alert("Mohon isi semua data!");
+        return;
+      }
+
+      const subtotal = harga * jumlah;
+      keranjang.push({ nama, harga, jumlah, subtotal });
+      total += subtotal;
+
+      renderKeranjang();
+      resetForm();
+    }
+
+    function renderKeranjang() {
+      const tbody = document.querySelector("#keranjang tbody");
+      tbody.innerHTML = "";
+
+      keranjang.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.nama}</td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${item.subtotal.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("totalBayar").innerText = "Rp " + total.toLocaleString();
+    }
+
+    function resetForm() {
+      document.getElementById("namaBuah").value = "";
+      document.getElementById("hargaBuah").value = "";
+      document.getElementById("jumlahBuah").value = "";
+    }
+
+    function cetakStruk() {
+      let struk = "=== TOKO BUAH INDONESIA ===\n";
+      keranjang.forEach(item => {
+        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${item.subtotal.toLocaleString()}\n`;
+      });
+      struk += "-----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
+      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+      alert(struk);
+    }
+  </script>
+</body>
+</html>
