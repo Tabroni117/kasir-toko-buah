@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>TOKO BUAH INDONESIA - Kasir</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="icon.png" type="image/png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <style>
@@ -64,19 +66,16 @@
       font-weight: bold;
       background-color: #f0f0f0;
     }
-    .qris-section {
-      margin-top: 30px;
+    #qrisContainer {
+      margin-top: 20px;
       text-align: center;
+      display: none;
     }
-    .qris-section img {
-      max-width: 300px;
-      width: 100%;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-    }
-    .qris-section p {
-      font-weight: bold;
-      margin-top: 10px;
+    #qrisContainer img {
+      width: 250px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background: white;
     }
   </style>
 </head>
@@ -121,12 +120,11 @@
     </tfoot>
   </table>
 
-  <button onclick="cetakStruk()">🧾 Cetak Struk</button>
+  <button onclick="pilihCetak()">🧾 Cetak Struk</button>
 
-  <div class="qris-section">
-    <h2>💳 Pembayaran via QRIS</h2>
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAboAAAHeCAIAAABi8FmeAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYG..." alt="QRIS Tokobuah" />
-    <p>Silakan scan QRIS untuk membayar</p>
+  <div id="qrisContainer">
+    <h3>Silakan Bayar via QRIS:</h3>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgA..." alt="QRIS" />
   </div>
 
   <script>
@@ -170,14 +168,27 @@
       document.getElementById("jumlahBuah").value = "";
     }
 
-    function cetakStruk() {
+    function pilihCetak() {
+      const pilihan = confirm("Klik OK untuk cetak struk + QRIS\nKlik BATAL untuk struk biasa.");
+      if (pilihan) {
+        cetakStruk(true);
+      } else {
+        cetakStruk(false);
+      }
+    }
+
+    function cetakStruk(tampilkanQR) {
       let struk = "=== TOKO BUAH INDONESIA ===\n";
       keranjang.forEach(item => {
         struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${item.subtotal.toLocaleString()}\n`;
       });
       struk += "-----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
       struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
       alert(struk);
+
+      const qris = document.getElementById("qrisContainer");
+      qris.style.display = tampilkanQR ? "block" : "none";
     }
   </script>
 </body>
