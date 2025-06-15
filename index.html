@@ -1,117 +1,64 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>TOKO BUAH INDONESIA - Kasir</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="icon.png" type="image/png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f5f7fa;
+    /* Modal QRIS */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
       padding: 20px;
-      color: #333;
-    }
-    header {
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
       text-align: center;
-      margin-bottom: 30px;
     }
-    header h1 {
-      font-size: 28px;
-      color: #2d89ef;
-    }
-    .form-group {
+    .modal img {
+      max-width: 100%;
+      height: auto;
       margin-bottom: 15px;
     }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: #2d89ef;
-      color: white;
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
       border: none;
-      padding: 10px 16px;
-      margin: 10px 0;
       border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #1e6fce;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #2d89ef;
+    .btn-primary {
+      background-color: #4CAF50;
       color: white;
     }
-    tfoot td {
-      font-weight: bold;
-      background-color: #f0f0f0;
-    }
-    #qrisModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-    }
-    #qrisContent {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-      max-width: 90%;
-    }
-    #qrisContent img {
-      width: 250px;
-      margin: 10px 0;
+    .btn-secondary {
+      background-color: #ccc;
     }
   </style>
 </head>
 <body>
+  <h1>🍉 TOKO BUAH INDONESIA – Aplikasi Kasir</h1>
 
-  <header>
-    <h1>📦 TOKO BUAH INDONESIA - Aplikasi Kasir</h1>
-    <button onclick="window.location.href='login.html'">🔐 Login Admin</button>
-  </header>
+  <form id="form">
+    <label>Nama Buah<br><input type="text" id="nama" placeholder="Contoh: Apel"></label><br>
+    <label>Harga Satuan (Rp)<br><input type="number" id="harga" placeholder="Contoh: 10000"></label><br>
+    <label>Jumlah<br><input type="number" id="jumlah" placeholder="Contoh: 2"></label><br>
+    <button type="button" onclick="tambahItem()">Tambah ke Keranjang</button>
+  </form>
 
-  <div class="form-group">
-    <label>Nama Buah</label>
-    <input type="text" id="namaBuah" placeholder="Contoh: Apel" />
-  </div>
-  <div class="form-group">
-    <label>Harga Satuan (Rp)</label>
-    <input type="number" id="hargaBuah" placeholder="Contoh: 10000" />
-  </div>
-  <div class="form-group">
-    <label>Jumlah</label>
-    <input type="number" id="jumlahBuah" placeholder="Contoh: 2" />
-  </div>
-
-  <button onclick="tambahKeKeranjang()">Tambah ke Keranjang</button>
-
-  <h2>🛒 Daftar Belanja</h2>
-  <table id="keranjang">
+  <h3>🛒 Daftar Belanja</h3>
+  <table border="1" width="100%">
     <thead>
       <tr>
         <th>Nama Buah</th>
@@ -120,83 +67,93 @@
         <th>Subtotal</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="tabelBelanja"></tbody>
     <tfoot>
       <tr>
-        <td colspan="3">Total</td>
-        <td id="totalBayar">Rp 0</td>
+        <td colspan="3"><b>Total</b></td>
+        <td id="totalBelanja">Rp 0</td>
       </tr>
     </tfoot>
   </table>
 
-  <button onclick="cetakStruk()">🧾 Cetak Struk</button>
+  <br>
+  <button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button>
 
   <!-- Modal QRIS -->
-  <div id="qrisModal">
-    <div id="qrisContent">
+  <div id="qrisModal" class="modal">
+    <div class="modal-content">
       <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABgAAAAPACAIAAAB8XCUvAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYG..." alt="QRIS GrabFood">
-      <br/>
-      <button onclick="tutupQris()">Tutup</button>
+      <img src="qris.png.png" alt="QRIS Pembayaran">
+      <br>
+      <button class="btn btn-primary" onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+      <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
     </div>
   </div>
 
   <script>
-    const keranjang = [];
-    let total = 0;
+    let keranjang = [];
 
-    function tambahKeKeranjang() {
-      const nama = document.getElementById("namaBuah").value;
-      const harga = parseInt(document.getElementById("hargaBuah").value);
-      const jumlah = parseInt(document.getElementById("jumlahBuah").value);
-      if (!nama || !harga || !jumlah) {
-        alert("Mohon isi semua data!");
+    function tambahItem() {
+      const nama = document.getElementById("nama").value;
+      const harga = parseInt(document.getElementById("harga").value);
+      const jumlah = parseInt(document.getElementById("jumlah").value);
+
+      if (!nama || isNaN(harga) || isNaN(jumlah)) {
+        alert("Mohon isi semua data dengan benar.");
         return;
       }
-      const subtotal = harga * jumlah;
-      keranjang.push({ nama, harga, jumlah, subtotal });
-      total += subtotal;
-      renderKeranjang();
-      resetForm();
+
+      keranjang.push({ nama, harga, jumlah });
+      updateTabel();
     }
 
-    function renderKeranjang() {
-      const tbody = document.querySelector("#keranjang tbody");
-      tbody.innerHTML = "";
+    function updateTabel() {
+      const tabel = document.getElementById("tabelBelanja");
+      tabel.innerHTML = "";
+      let total = 0;
+
       keranjang.forEach(item => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+
+        const row = `<tr>
           <td>${item.nama}</td>
           <td>Rp ${item.harga.toLocaleString()}</td>
           <td>${item.jumlah}</td>
-          <td>Rp ${item.subtotal.toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
+          <td>Rp ${subtotal.toLocaleString()}</td>
+        </tr>`;
+        tabel.innerHTML += row;
       });
-      document.getElementById("totalBayar").innerText = "Rp " + total.toLocaleString();
+
+      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
     }
 
-    function resetForm() {
-      document.getElementById("namaBuah").value = "";
-      document.getElementById("hargaBuah").value = "";
-      document.getElementById("jumlahBuah").value = "";
+    function showQrisModal() {
+      document.getElementById("qrisModal").style.display = "block";
+    }
+
+    function closeQrisModal() {
+      document.getElementById("qrisModal").style.display = "none";
     }
 
     function cetakStruk() {
-      let struk = "=== TOKO BUAH INDONESIA ===\n";
-      keranjang.forEach(item => {
-        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${item.subtotal.toLocaleString()}\n`;
-      });
-      struk += "-----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-      alert(struk);
-      document.getElementById("qrisModal").style.display = "flex";
-    }
+      closeQrisModal();
 
-    function tutupQris() {
-      document.getElementById("qrisModal").style.display = "none";
+      let struk = "=== TOKO BUAH INDONESIA ===\n";
+      let total = 0;
+
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+      });
+
+      struk += "----------------------------\n";
+      struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+      alert(struk);
     }
   </script>
-
 </body>
 </html>
