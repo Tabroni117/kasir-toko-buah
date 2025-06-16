@@ -3,149 +3,284 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Admin</title>
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body, html {
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f8ff;
       margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      padding: 20px;
+      color: #333;
     }
 
-    .container {
+    header {
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding-top: 60px; /* 👈 ini bikin naik ke atas */
-    }
-
-    .login-box {
-      width: 100%;
-      max-width: 360px;
-      background-color: #fff;
-      padding: 25px;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px 20px;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      flex-wrap: wrap;
     }
 
-    h1 {
-      text-align: center;
-      color: #2e8b57;
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-container img {
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .login-btn {
+      background-color: white;
+      color: #4CAF50;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
       margin-bottom: 20px;
-      font-size: 24px;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
     }
 
     label {
       display: block;
-      margin-bottom: 5px;
-      font-size: 16px;
+      margin-bottom: 10px;
     }
 
     input[type="text"],
-    input[type="password"] {
+    input[type="number"] {
       width: 100%;
       padding: 10px;
-      font-size: 16px;
+      margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 6px;
+      box-sizing: border-box;
     }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #2e8b57;
+    button, .btn {
+      margin-top: 10px;
+      background-color: #4CAF50;
       color: white;
+      padding: 10px;
       border: none;
       border-radius: 6px;
-      font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     button:hover {
-      background-color: #246b45;
+      background-color: #43a047;
     }
 
-    .loading {
+    .btn-secondary {
+      background-color: #ccc;
+      color: #333;
+    }
+
+    .tabel-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-width: 500px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #e8f5e9;
+    }
+
+    tfoot td {
+      font-weight: bold;
+    }
+
+    .modal {
       display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
       text-align: center;
-      margin-top: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #ccc;
-      border-top: 4px solid #2e8b57;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
+    .modal img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 15px;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 20px;
-      }
-
-      label, input, button {
-        font-size: 15px;
-      }
-
-      .container {
-        padding-top: 40px; /* Naik juga di HP */
+    @media screen and (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="login-box">
-      <h1>Login Admin</h1>
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" id="username" placeholder="admin">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="1234">
-      </div>
-      <button onclick="login()">Login</button>
-      <div class="loading" id="loadingBox">
-        <div class="spinner"></div>
-        <div>Memproses login...</div>
-      </div>
+
+  <header>
+    <div class="logo-container">
+      <img src="rujak-logo.png" alt="Logo Rujak Buah">
+      <h1>TOKO BUAH INDONESIA</h1>
+    </div>
+    <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+  </header>
+
+  <form id="form">
+    <label>Nama Buah
+      <input type="text" id="nama" placeholder="Contoh: Apel">
+    </label>
+    <label>Harga Satuan (Rp)
+      <input type="number" id="harga" placeholder="Contoh: 10000">
+    </label>
+    <label>Jumlah
+      <input type="number" id="jumlah" placeholder="Contoh: 2">
+    </label>
+    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+  </form>
+
+  <h3>🛒 Daftar Belanja</h3>
+  <div class="tabel-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Buah</th>
+          <th>Harga Satuan</th>
+          <th>Jumlah</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="tabelBelanja"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td id="totalBelanja">Rp 0</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <br>
+  <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+
+  <!-- Modal QRIS -->
+  <div id="qrisModal" class="modal">
+    <div class="modal-content">
+      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+      <img src="qris.png.png" alt="QRIS Pembayaran">
+      <br>
+      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+      <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
     </div>
   </div>
 
   <script>
-    function login() {
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+    let keranjang = [];
 
-      if (username === 'admin' && password === '1234') {
-        document.getElementById('loadingBox').style.display = 'block';
-        setTimeout(() => {
-          localStorage.setItem('loggedIn', 'yes');
-          window.location.href = 'dashboard.html';
-        }, 1500);
-      } else {
-        alert('Login gagal! Username atau password salah.');
+    function tambahItem() {
+      const nama = document.getElementById("nama").value;
+      const harga = parseInt(document.getElementById("harga").value);
+      const jumlah = parseInt(document.getElementById("jumlah").value);
+
+      if (!nama || isNaN(harga) || isNaN(jumlah)) {
+        alert("Mohon isi semua data dengan benar.");
+        return;
       }
+
+      keranjang.push({ nama, harga, jumlah });
+      updateTabel();
+    }
+
+    function updateTabel() {
+      const tabel = document.getElementById("tabelBelanja");
+      tabel.innerHTML = "";
+      let total = 0;
+
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+
+        const row = `<tr>
+          <td>${item.nama}</td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${subtotal.toLocaleString()}</td>
+        </tr>`;
+        tabel.innerHTML += row;
+      });
+
+      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+    }
+
+    function showQrisModal() {
+      document.getElementById("qrisModal").style.display = "block";
+    }
+
+    function closeQrisModal() {
+      document.getElementById("qrisModal").style.display = "none";
+    }
+
+    function cetakStruk() {
+      closeQrisModal();
+
+      let struk = "=== TOKO BUAH INDONESIA ===\n";
+      let total = 0;
+
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+      });
+
+      struk += "----------------------------\n";
+      struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+      alert(struk);
     }
   </script>
 </body>
