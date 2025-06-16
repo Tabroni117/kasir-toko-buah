@@ -1,128 +1,167 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard Stok Buah</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f1f8e9;
+      background-color: #f0fff0;
       margin: 0;
       padding: 20px;
       text-align: center;
     }
 
-    h2 {
-      color: #388e3c;
-      margin-bottom: 10px;
-    }
-
-    .back-btn {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 25px;
-      font-size: 15px;
-      cursor: pointer;
+    h1 {
+      color: green;
     }
 
     table {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
+      width: 95%;
+      margin: 20px auto;
       border-collapse: collapse;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      background: white;
-      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
       overflow: hidden;
     }
 
     th, td {
-      padding: 12px 14px;
+      padding: 10px;
       border-bottom: 1px solid #ddd;
     }
 
     th {
-      background-color: #c8e6c9;
-      font-weight: bold;
+      background-color: #dfffdc;
+      color: green;
     }
 
-    tr:last-child td {
-      border-bottom: none;
+    input[type="text"], input[type="number"] {
+      padding: 5px;
+      margin: 5px;
+      width: 120px;
     }
 
-    @media screen and (max-width: 600px) {
-      table, th, td {
-        font-size: 14px;
-      }
+    button {
+      padding: 6px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
 
-      .back-btn {
-        font-size: 14px;
-        padding: 8px 14px;
-      }
+    .edit-btn { background-color: #ffc107; color: black; }
+    .delete-btn { background-color: #dc3545; color: white; }
+    .save-btn { background-color: #28a745; color: white; }
+    .add-btn { background-color: #007bff; color: white; }
+
+    #backBtn {
+      margin-top: 10px;
+      padding: 8px 14px;
+      background-color: green;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-btn">← Kembali ke Halaman Utama</a>
-  <h2>📦 Daftar Stok Buah</h2>
+  <h1>📦 Daftar Stok Buah</h1>
+  <a id="backBtn" href="index.html">← Back to Home Page</a>
 
-  <table id="stokTable">
+  <h3>➕ Tambah Buah Baru</h3>
+  <input type="text" id="newName" placeholder="Nama Buah" />
+  <input type="number" id="newPrice" placeholder="Harga (Rp)" />
+  <input type="number" id="newStock" placeholder="Stok" />
+  <button class="add-btn" onclick="addBuah()">Tambah</button>
+
+  <table>
     <thead>
       <tr>
         <th>Nama</th>
         <th>Harga</th>
         <th>Stok</th>
+        <th>Aksi</th>
       </tr>
     </thead>
-    <tbody id="tableBody">
-      <!-- Data akan diisi otomatis dari Firebase -->
-    </tbody>
+    <tbody id="buahTable"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <script>
-    // 🔄 Konfigurasi Firebase DISAMAKAN DENGAN index.html
+    // GANTI DENGAN PUNYAMU
     const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+      apiKey: "API_KEY_KAMU",
+      authDomain: "PROJECT_ID.firebaseapp.com",
+      projectId: "PROJECT_ID",
+      storageBucket: "PROJECT_ID.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "APP_ID_KAMU"
     };
 
-    // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const buahRef = collection(db, "buah");
 
-    // Ambil data dari Firestore dan tampilkan ke tabel
-    db.collection("stok_buah").get()
-      .then((querySnapshot) => {
-        const tbody = document.getElementById("tableBody");
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.nama}</td>
-            <td>Rp ${Number(data.harga).toLocaleString("id-ID")}</td>
-            <td>${data.stok}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      })
-      .catch((error) => {
-        console.error("Gagal ambil data:", error);
-        alert("Terjadi kesalahan saat mengambil data stok.");
+    async function loadData() {
+      const snapshot = await getDocs(buahRef);
+      const tbody = document.getElementById("buahTable");
+      tbody.innerHTML = "";
+
+      snapshot.forEach((docu) => {
+        const data = docu.data();
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td contenteditable="true" onblur="editField('${docu.id}', 'nama', this.innerText)">${data.nama}</td>
+          <td contenteditable="true" onblur="editField('${docu.id}', 'harga', this.innerText)">${data.harga}</td>
+          <td contenteditable="true" onblur="editField('${docu.id}', 'stok', this.innerText)">${data.stok}</td>
+          <td><button class="delete-btn" onclick="deleteBuah('${docu.id}')">Hapus</button></td>
+        `;
+
+        tbody.appendChild(row);
       });
+    }
+
+    async function addBuah() {
+      const nama = document.getElementById("newName").value.trim();
+      const harga = parseInt(document.getElementById("newPrice").value);
+      const stok = parseInt(document.getElementById("newStock").value);
+
+      if (nama && !isNaN(harga) && !isNaN(stok)) {
+        await addDoc(buahRef, { nama, harga, stok });
+        loadData();
+        document.getElementById("newName").value = "";
+        document.getElementById("newPrice").value = "";
+        document.getElementById("newStock").value = "";
+      } else {
+        alert("Mohon isi semua kolom dengan benar.");
+      }
+    }
+
+    async function editField(id, field, value) {
+      const ref = doc(db, "buah", id);
+      let val = field === "nama" ? value : parseInt(value);
+      if (field !== "nama" && isNaN(val)) return;
+
+      await updateDoc(ref, { [field]: val });
+    }
+
+    async function deleteBuah(id) {
+      if (confirm("Yakin ingin menghapus buah ini?")) {
+        await deleteDoc(doc(db, "buah", id));
+        loadData();
+      }
+    }
+
+    loadData();
   </script>
 </body>
 </html>
