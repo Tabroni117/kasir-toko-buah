@@ -1,184 +1,169 @@
-
-<form id="form">
-  <label>Nama Buah
-    <input type="text" id="nama" placeholder="Contoh: Apel" autocomplete="off" required>
-  </label>
-  <label>Harga Satuan (Rp)
-    <input type="number" id="harga" placeholder="Contoh: 10000" autocomplete="off" required>
-  </label>
-  <label>Jumlah
-    <input type="number" id="jumlah" placeholder="Contoh: 2" autocomplete="off" required>
-  </label>
-  <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
-</form>
-
-<!-- Form Tambah Stok -->
-<form id="formStok">
-  <label>Nama Buah
-    <input type="text" id="stokNama" placeholder="Contoh: Semangka" autocomplete="off" required>
-  </label>
-  <label>Harga Satuan (Rp)
-    <input type="number" id="stokHarga" placeholder="Contoh: 12000" autocomplete="off" required>
-  </label>
-  <label>Stok Awal
-    <input type="number" id="stokJumlah" placeholder="Contoh: 30" autocomplete="off" required>
-  </label>
-  <button type="button" onclick="tambahBuahKeStok()">✅ Simpan ke Stok</button>
-</form>
-
-<!-- Firebase SDK (versi async defer agar lebih ringan) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" async defer></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" async defer></script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Pastikan Firebase siap setelah dokumen termuat
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let keranjang = [];
-    let indexEdit = null;
-
-    window.tambahItem = function () {
-      const nama = document.getElementById("nama").value.trim();
-      const harga = parseInt(document.getElementById("harga").value);
-      const jumlah = parseInt(document.getElementById("jumlah").value);
-      if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
-        alert("Mohon isi semua data dengan benar."); return;
-      }
-      const item = { nama, harga, jumlah };
-      keranjang.push(item);
-      updateTabel();
-      document.getElementById("form").reset();
-      db.collection("transaksi").add({
-        ...item,
-        total: harga * jumlah,
-        waktu: new Date()
-      });
-    }
-
-    window.updateTabel = function () {
-      const tabel = document.getElementById("tabelBelanja");
-      tabel.innerHTML = "";
-      let total = 0;
-      keranjang.forEach((item, i) => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        tabel.innerHTML += `
-          <tr>
-            <td>${item.nama}</td>
-            <td>Rp ${item.harga.toLocaleString()}</td>
-            <td>${item.jumlah}</td>
-            <td>Rp ${subtotal.toLocaleString()}</td>
-            <td>
-              <button class="btn btn-edit" onclick="editItem(${i})">✏️</button>
-              <button class="btn btn-delete" onclick="hapusItem(${i})">🗑️</button>
-            </td>
-          </tr>`;
-      });
-      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
-    }
-
-    window.hapusItem = function (i) {
-      if (confirm("Hapus item ini?")) {
-        keranjang.splice(i, 1);
-        updateTabel();
-      }
-    }
-
-    window.editItem = function (i) {
-      indexEdit = i;
-      const item = keranjang[i];
-      document.getElementById("editNama").value = item.nama;
-      document.getElementById("editHarga").value = item.harga;
-      document.getElementById("editJumlah").value = item.jumlah;
-      document.getElementById("editModal").style.display = "block";
-    }
-
-    window.closeEditModal = function () {
-      document.getElementById("editModal").style.display = "none";
-    }
-
-    window.simpanEdit = function () {
-      const nama = document.getElementById("editNama").value;
-      const harga = parseInt(document.getElementById("editHarga").value);
-      const jumlah = parseInt(document.getElementById("editJumlah").value);
-      if (!nama || isNaN(harga) || isNaN(jumlah)) return;
-      keranjang[indexEdit] = { nama, harga, jumlah };
-      closeEditModal();
-      updateTabel();
-    }
-
-    window.showQrisModal = function () {
-      document.getElementById("qrisModal").style.display = "block";
-    }
-
-    window.closeQrisModal = function () {
-      document.getElementById("qrisModal").style.display = "none";
-    }
-
-    window.cetakStruk = function () {
-      closeQrisModal();
-      let total = 0;
-      let struk = "=== TOKO BUAH INDONESIA ===\n";
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
-      });
-      struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nTerima kasih belanja!\n";
-      alert(struk);
-    }
-
-    window.tampilkanStokBuah = function () {
-      db.collection("stok").get().then(snapshot => {
-        const tabel = document.getElementById("tabelStokBuah");
-        tabel.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          tabel.innerHTML += `
-            <tr>
-              <td>${data.nama}</td>
-              <td>Rp ${data.harga.toLocaleString()}</td>
-              <td>${data.stok}</td>
-            </tr>`;
-        });
-      });
-    }
-
-    window.tambahBuahKeStok = function () {
-      const nama = document.getElementById("stokNama").value.trim();
-      const harga = parseInt(document.getElementById("stokHarga").value);
-      const stok = parseInt(document.getElementById("stokJumlah").value);
-      if (!nama || isNaN(harga) || isNaN(stok) || stok <= 0) {
-        alert("Mohon isi semua data buah dengan benar."); return;
-      }
-
-      // Cek apakah buah dengan nama yang sama sudah ada
-      db.collection("stok").where("nama", "==", nama).get().then(querySnapshot => {
-        if (!querySnapshot.empty) {
-          alert("Buah sudah ada, silakan edit stoknya saja.");
-          return;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kasir Toko Buah</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-        db.collection("stok").add({ nama, harga, stok }).then(() => {
-          alert("Buah berhasil ditambahkan ke stok!");
-          document.getElementById("formStok").reset();
-          tampilkanStokBuah();
-        });
-      }).catch(error => {
-        alert("Terjadi kesalahan: " + error);
-      });
-    }
+        h2 {
+            margin-top: 30px;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+        form {
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kasir Toko Buah Indonesia</h1>
 
-    tampilkanStokBuah(); // Muat stok saat halaman terbuka
-  });
-</script>
+    <h2>Tambah ke Keranjang</h2>
+    <form id="formBeli">
+        <label>Nama Buah
+            <input type="text" id="nama" placeholder="Contoh: Apel">
+        </label>
+        <label>Harga Satuan (Rp)
+            <input type="number" id="harga" placeholder="Contoh: 10000">
+        </label>
+        <label>Jumlah
+            <input type="number" id="jumlah" placeholder="Contoh: 3">
+        </label>
+        <button type="button" onclick="tambahKeKeranjang()">+ Tambah ke Keranjang</button>
+    </form>
+
+    <h2>Tambah ke Stok</h2>
+    <form id="formStok">
+        <label>Nama Buah
+            <input type="text" id="stokNama" placeholder="Contoh: Jeruk" required>
+        </label>
+        <label>Harga Satuan (Rp)
+            <input type="number" id="stokHarga" placeholder="Contoh: 15000" required>
+        </label>
+        <label>Stok Awal
+            <input type="number" id="stokJumlah" placeholder="Contoh: 50" required>
+        </label>
+        <button type="button" onclick="tambahBuahKeStok()">✅ Simpan ke Stok</button>
+    </form>
+
+    <h2>Daftar Stok Buah</h2>
+    <table id="tabelStok">
+        <tr>
+            <th>Nama</th>
+            <th>Harga</th>
+            <th>Stok</th>
+        </tr>
+    </table>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function tambahBuahKeStok() {
+            const nama = document.getElementById("stokNama").value.trim();
+            const harga = parseInt(document.getElementById("stokHarga").value);
+            const stok = parseInt(document.getElementById("stokJumlah").value);
+
+            if (!nama || isNaN(harga) || isNaN(stok)) {
+                alert("Semua kolom wajib diisi!");
+                return;
+            }
+
+            db.collection("stok").add({ nama, harga, stok })
+                .then(() => {
+                    alert("Buah berhasil ditambahkan ke stok!");
+                    document.getElementById("formStok").reset();
+                    tampilkanStokBuah();
+                })
+                .catch(error => {
+                    alert("Terjadi kesalahan: " + error);
+                });
+        }
+
+        function tampilkanStokBuah() {
+            const tabel = document.getElementById("tabelStok");
+            tabel.innerHTML = `
+                <tr>
+                    <th>Nama</th>
+                    <th>Harga</th>
+                    <th>Stok</th>
+                </tr>
+            `;
+            db.collection("stok").get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = tabel.insertRow();
+                    row.innerHTML = `
+                        <td>${data.nama}</td>
+                        <td>Rp ${data.harga.toLocaleString()}</td>
+                        <td>${data.stok}</td>
+                    `;
+                });
+            });
+        }
+
+        function tambahKeKeranjang() {
+            alert("Fitur tambah ke keranjang belum diaktifkan di versi ini.");
+        }
+
+        window.onload = tampilkanStokBuah;
+    </script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</body>
+</html>
