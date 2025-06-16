@@ -1,169 +1,379 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>Kasir Toko Buah</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h2 {
-            margin-top: 30px;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 5px;
-        }
-        form {
-            margin-bottom: 20px;
-            max-width: 400px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            margin-top: 15px;
-            padding: 10px;
-            width: 100%;
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .logo-container img {
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .login-btn {
+      background-color: white;
+      color: #4CAF50;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover { background-color: #43a047; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    table th, table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      text-align: center;
+    }
+    table th { background-color: #e8f5e9; }
+    tfoot td { font-weight: bold; }
+    .modal, .edit-modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content, .edit-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .modal img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .btn {
+      padding: 6px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-edit { background-color: #ffc107; color: #333; }
+    .btn-delete { background-color: #f44336; color: white; }
+    .btn-primary { background-color: #4CAF50; color: white; }
+    .btn-secondary { background-color: #ccc; color: #333; }
+    @media (max-width: 600px) {
+      header h1 { font-size: 16px; }
+      table th, table td { font-size: 12px; padding: 6px; }
+      .btn { font-size: 10px; padding: 4px 6px; }
+    }
+  </style>
 </head>
 <body>
-    <h1>Kasir Toko Buah Indonesia</h1>
 
-    <h2>Tambah ke Keranjang</h2>
-    <form id="formBeli">
-        <label>Nama Buah
-            <input type="text" id="nama" placeholder="Contoh: Apel">
-        </label>
-        <label>Harga Satuan (Rp)
-            <input type="number" id="harga" placeholder="Contoh: 10000">
-        </label>
-        <label>Jumlah
-            <input type="number" id="jumlah" placeholder="Contoh: 3">
-        </label>
-        <button type="button" onclick="tambahKeKeranjang()">+ Tambah ke Keranjang</button>
-    </form>
+<header>
+  <div class="logo-container">
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <h1>TOKO BUAH INDONESIA</h1>
+  </div>
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+</header>
 
-    <h2>Tambah ke Stok</h2>
-    <form id="formStok">
-        <label>Nama Buah
-            <input type="text" id="stokNama" placeholder="Contoh: Jeruk" required>
-        </label>
-        <label>Harga Satuan (Rp)
-            <input type="number" id="stokHarga" placeholder="Contoh: 15000" required>
-        </label>
-        <label>Stok Awal
-            <input type="number" id="stokJumlah" placeholder="Contoh: 50" required>
-        </label>
-        <button type="button" onclick="tambahBuahKeStok()">✅ Simpan ke Stok</button>
-    </form>
+<form id="form">
+  <label>Nama Buah
+    <input type="text" id="nama" placeholder="Contoh: Apel">
+  </label>
+  <label>Harga Satuan (Rp)
+    <input type="number" id="harga" placeholder="Contoh: 10000">
+  </label>
+  <label>Jumlah
+    <input type="number" id="jumlah" placeholder="Contoh: 2">
+  </label>
+  <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+</form>
 
-    <h2>Daftar Stok Buah</h2>
-    <table id="tabelStok">
+<h3>🛒 Daftar Belanja</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Jumlah</th>
+      <th>Subtotal</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="tabelBelanja"></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="4">Total</td>
+      <td id="totalBelanja">Rp 0</td>
+    </tr>
+  </tfoot>
+</table>
+
+<h3>📦 Daftar Stok Buah</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Stok</th>
+    </tr>
+  </thead>
+  <tbody id="tabelStokBuah"></tbody>
+</table>
+
+<h3>➕ Tambah Buah ke Stok</h3>
+<form id="formStok">
+  <label>Nama Buah
+    <input type="text" id="stokNama" placeholder="Contoh: Semangka">
+  </label>
+  <label>Harga Satuan (Rp)
+    <input type="number" id="stokHarga" placeholder="Contoh: 12000">
+  </label>
+  <label>Stok Awal
+    <input type="number" id="stokJumlah" placeholder="Contoh: 30">
+  </label>
+  <button type="button" onclick="tambahBuahKeStok()">✅ Simpan ke Stok</button>
+</form>
+
+<br>
+<button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button>
+
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png.png" alt="QRIS Pembayaran">
+    <br>
+    <button class="btn btn-primary" onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
+  </div>
+</div>
+
+<div id="editModal" class="edit-modal">
+  <div class="edit-content">
+    <h3>Edit Item</h3>
+    <input type="text" id="editNama" placeholder="Nama Buah">
+    <input type="number" id="editHarga" placeholder="Harga">
+    <input type="number" id="editJumlah" placeholder="Jumlah">
+    <br><br>
+    <button class="btn btn-primary" onclick="simpanEdit()">Simpan</button>
+    <button class="btn btn-secondary" onclick="closeEditModal()">Batal</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let keranjang = [];
+  let indexEdit = null;
+
+  function tambahItem() {
+    const nama = document.getElementById("nama").value.trim();
+    const harga = parseInt(document.getElementById("harga").value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
+    if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
+      alert("Mohon isi semua data dengan benar."); return;
+    }
+    const item = { nama, harga, jumlah };
+    keranjang.push(item);
+    updateTabel();
+    document.getElementById("form").reset();
+    db.collection("transaksi").add({
+      ...item,
+      total: harga * jumlah,
+      waktu: new Date()
+    });
+  }
+
+  function updateTabel() {
+    const tabel = document.getElementById("tabelBelanja");
+    tabel.innerHTML = "";
+    let total = 0;
+    keranjang.forEach((item, i) => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      tabel.innerHTML += `
         <tr>
-            <th>Nama</th>
-            <th>Harga</th>
-            <th>Stok</th>
-        </tr>
-    </table>
+          <td>${item.nama}</td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${subtotal.toLocaleString()}</td>
+          <td>
+            <button class="btn btn-edit" onclick="editItem(${i})">✏️</button>
+            <button class="btn btn-delete" onclick="hapusItem(${i})">🗑️</button>
+          </td>
+        </tr>`;
+    });
+    document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+  }
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "SENDER_ID",
-            appId: "APP_ID"
-        };
+  function hapusItem(i) {
+    if (confirm("Hapus item ini?")) {
+      keranjang.splice(i, 1);
+      updateTabel();
+    }
+  }
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  function editItem(i) {
+    indexEdit = i;
+    const item = keranjang[i];
+    document.getElementById("editNama").value = item.nama;
+    document.getElementById("editHarga").value = item.harga;
+    document.getElementById("editJumlah").value = item.jumlah;
+    document.getElementById("editModal").style.display = "block";
+  }
 
-        function tambahBuahKeStok() {
-            const nama = document.getElementById("stokNama").value.trim();
-            const harga = parseInt(document.getElementById("stokHarga").value);
-            const stok = parseInt(document.getElementById("stokJumlah").value);
+  function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
 
-            if (!nama || isNaN(harga) || isNaN(stok)) {
-                alert("Semua kolom wajib diisi!");
-                return;
-            }
+  function simpanEdit() {
+    const nama = document.getElementById("editNama").value;
+    const harga = parseInt(document.getElementById("editHarga").value);
+    const jumlah = parseInt(document.getElementById("editJumlah").value);
+    if (!nama || isNaN(harga) || isNaN(jumlah)) return;
+    keranjang[indexEdit] = { nama, harga, jumlah };
+    closeEditModal();
+    updateTabel();
+  }
 
-            db.collection("stok").add({ nama, harga, stok })
-                .then(() => {
-                    alert("Buah berhasil ditambahkan ke stok!");
-                    document.getElementById("formStok").reset();
-                    tampilkanStokBuah();
-                })
-                .catch(error => {
-                    alert("Terjadi kesalahan: " + error);
-                });
-        }
+  function showQrisModal() {
+    document.getElementById("qrisModal").style.display = "block";
+  }
 
-        function tampilkanStokBuah() {
-            const tabel = document.getElementById("tabelStok");
-            tabel.innerHTML = `
-                <tr>
-                    <th>Nama</th>
-                    <th>Harga</th>
-                    <th>Stok</th>
-                </tr>
-            `;
-            db.collection("stok").get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const row = tabel.insertRow();
-                    row.innerHTML = `
-                        <td>${data.nama}</td>
-                        <td>Rp ${data.harga.toLocaleString()}</td>
-                        <td>${data.stok}</td>
-                    `;
-                });
-            });
-        }
+  function closeQrisModal() {
+    document.getElementById("qrisModal").style.display = "none";
+  }
 
-        function tambahKeKeranjang() {
-            alert("Fitur tambah ke keranjang belum diaktifkan di versi ini.");
-        }
+  function cetakStruk() {
+    closeQrisModal();
+    let total = 0;
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+    });
+    struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nTerima kasih belanja!\n";
+    alert(struk);
+  }
 
-        window.onload = tampilkanStokBuah;
-    </script>
+  function tampilkanStokBuah() {
+    db.collection("stok").get().then(snapshot => {
+      const tabel = document.getElementById("tabelStokBuah");
+      tabel.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        tabel.innerHTML += `
+          <tr>
+            <td>${data.nama}</td>
+            <td>Rp ${data.harga.toLocaleString()}</td>
+            <td>${data.stok}</td>
+          </tr>`;
+      });
+    });
+  }
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  function tambahBuahKeStok() {
+    const nama = document.getElementById("stokNama").value.trim();
+    const harga = parseInt(document.getElementById("stokHarga").value);
+    const stok = parseInt(document.getElementById("stokJumlah").value);
+    if (!nama || isNaN(harga) || isNaN(stok) || stok <= 0) {
+      alert("Mohon isi semua data buah dengan benar."); return;
+    }
+    db.collection("stok").add({ nama, harga, stok }).then(() => {
+      alert("Buah berhasil ditambahkan ke stok!");
+      document.getElementById("formStok").reset();
+      tampilkanStokBuah();
+    }).catch(error => {
+      alert("Terjadi kesalahan: " + error);
+    });
+  }
+
+  window.onload = tampilkanStokBuah;
+</script>
+
 </body>
 </html>
