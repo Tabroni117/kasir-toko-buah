@@ -254,7 +254,24 @@
   </div>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
 <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.firebasestorage.app",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
   let keranjang = [];
   let indexEdit = null;
 
@@ -268,9 +285,25 @@
       return;
     }
 
-    keranjang.push({ nama, harga, jumlah });
+    const item = { nama, harga, jumlah };
+    keranjang.push(item);
     updateTabel();
     document.getElementById("form").reset();
+    simpanKeFirebase(item);
+  }
+
+  function simpanKeFirebase(item) {
+    db.collection("transaksi").add({
+      nama: item.nama,
+      harga: item.harga,
+      jumlah: item.jumlah,
+      total: item.harga * item.jumlah,
+      waktu: new Date()
+    }).then(() => {
+      console.log("Data transaksi tersimpan.");
+    }).catch(error => {
+      console.error("Gagal simpan ke Firebase:", error);
+    });
   }
 
   function updateTabel() {
@@ -360,5 +393,6 @@
     alert(struk);
   }
 </script>
+
 </body>
 </html>
