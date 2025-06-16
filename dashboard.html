@@ -1,128 +1,128 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard Stok Buah</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f1f8e9;
-      margin: 0;
+      font-family: sans-serif;
+      background: #eaffdc;
       padding: 20px;
+    }
+    h1 {
+      color: green;
       text-align: center;
     }
-
-    h2 {
-      color: #388e3c;
-      margin-bottom: 10px;
+    .form-input {
+      text-align: center;
+      margin-bottom: 20px;
     }
-
-    .back-btn {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 25px;
-      font-size: 15px;
-      cursor: pointer;
+    input {
+      padding: 5px;
+      margin: 5px;
     }
-
     table {
       width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
+      background: #d4f8c4;
       border-collapse: collapse;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
     }
-
     th, td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #ddd;
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
     }
-
-    th {
-      background-color: #c8e6c9;
-      font-weight: bold;
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    @media screen and (max-width: 600px) {
-      table, th, td {
-        font-size: 14px;
-      }
-
-      .back-btn {
-        font-size: 14px;
-        padding: 8px 14px;
-      }
+    button {
+      padding: 5px 10px;
+      margin: 2px;
     }
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-btn">← Kembali ke Halaman Utama</a>
-  <h2>📦 Daftar Stok Buah</h2>
+  <h1>📦 Daftar Stok Buah</h1>
 
-  <table id="stokTable">
+  <div class="form-input">
+    <input type="text" id="newName" placeholder="Nama Buah">
+    <input type="number" id="newPrice" placeholder="Harga">
+    <input type="number" id="newStock" placeholder="Stok">
+    <button onclick="tambahBuah()">Tambah</button>
+  </div>
+
+  <table>
     <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Stok</th>
-      </tr>
+      <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
     </thead>
-    <tbody id="tableBody">
-      <!-- Data akan diisi otomatis dari Firebase -->
-    </tbody>
+    <tbody id="buahTable"></tbody>
   </table>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
   <script>
-    // 🔄 Konfigurasi Firebase DISAMAKAN DENGAN index.html
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
       projectId: "tokobuahkasir",
       storageBucket: "tokobuahkasir.appspot.com",
       messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
     };
 
     // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
+    const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const buahRef = db.collection("buah");
 
-    // Ambil data dari Firestore dan tampilkan ke tabel
-    db.collection("stok_buah").get()
-      .then((querySnapshot) => {
-        const tbody = document.getElementById("tableBody");
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.nama}</td>
-            <td>Rp ${Number(data.harga).toLocaleString("id-ID")}</td>
-            <td>${data.stok}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      })
-      .catch((error) => {
-        console.error("Gagal ambil data:", error);
-        alert("Terjadi kesalahan saat mengambil data stok.");
+    async function loadData() {
+      const snapshot = await buahRef.get();
+      const table = document.getElementById("buahTable");
+      table.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td><input value="${data.nama}" onchange="editField('${doc.id}', 'nama', this.value)"/></td>
+          <td><input type="number" value="${data.harga}" onchange="editField('${doc.id}', 'harga', this.value)"/></td>
+          <td><input type="number" value="${data.stok}" onchange="editField('${doc.id}', 'stok', this.value)"/></td>
+          <td>
+            <button onclick="hapusBuah('${doc.id}')">Hapus</button>
+          </td>
+        `;
+        table.appendChild(row);
       });
+    }
+
+    async function tambahBuah() {
+      const nama = document.getElementById("newName").value.trim();
+      const harga = parseInt(document.getElementById("newPrice").value);
+      const stok = parseInt(document.getElementById("newStock").value);
+
+      if (nama && !isNaN(harga) && !isNaN(stok)) {
+        await buahRef.add({ nama, harga, stok });
+        document.getElementById("newName").value = "";
+        document.getElementById("newPrice").value = "";
+        document.getElementById("newStock").value = "";
+        loadData();
+      } else {
+        alert("Isi semua kolom dengan benar!");
+      }
+    }
+
+    async function editField(id, field, value) {
+      if (field !== "nama") value = parseInt(value);
+      await buahRef.doc(id).update({ [field]: value });
+    }
+
+    async function hapusBuah(id) {
+      if (confirm("Hapus buah ini?")) {
+        await buahRef.doc(id).delete();
+        loadData();
+      }
+    }
+
+    loadData();
   </script>
 </body>
 </html>
