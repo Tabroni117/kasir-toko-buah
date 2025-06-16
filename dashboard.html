@@ -1,40 +1,47 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Stok Buah</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
       padding: 20px;
-      background: #f9f9f9;
       text-align: center;
     }
+
     h2 {
-      color: green;
+      color: #2e7d32;
     }
+
     .back-btn {
-      display: inline-block;
       background-color: #4CAF50;
       color: white;
       padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
       text-decoration: none;
-      border-radius: 5px;
+      display: inline-block;
       margin-bottom: 20px;
+      font-size: 16px;
     }
+
     table {
+      width: 95%;
       margin: auto;
-      width: 90%;
       border-collapse: collapse;
     }
+
     th, td {
-      border: 1px solid #999;
+      border: 1px solid #bbb;
       padding: 10px;
-      text-align: center;
     }
+
     th {
-      background-color: #f0f0f0;
+      background: #e0e0e0;
     }
   </style>
 </head>
@@ -42,16 +49,19 @@
   <a href="index.html" class="back-btn">← Kembali ke Halaman Utama</a>
   <h2>Daftar Stok Buah</h2>
   <table id="stokTable">
-    <tr>
-      <th>Nama</th>
-      <th>Harga</th>
-      <th>Stok</th>
-    </tr>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga</th>
+        <th>Stok</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -63,23 +73,30 @@
       appId: "1:661381192318:web:89a3b5c2e5bc68369c3790"
     };
 
+    // Inisialisasi Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    db.collection("stok_buah").get().then((querySnapshot) => {
-      const table = document.getElementById("stokTable");
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const row = table.insertRow();
-        row.innerHTML = `
-          <td>${data.nama}</td>
-          <td>Rp ${data.harga.toLocaleString("id-ID")}</td>
-          <td>${data.stok}</td>
-        `;
+    // Ambil data dari koleksi "stok_buah"
+    db.collection("stok_buah").get()
+      .then((querySnapshot) => {
+        const tbody = document.getElementById("tableBody");
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>${data.nama}</td>
+            <td>Rp ${Number(data.harga).toLocaleString("id-ID")}</td>
+            <td>${data.stok}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      })
+      .catch((error) => {
+        console.error("Error ambil data:", error);
+        alert("Gagal mengambil data dari Firestore.");
       });
-    }).catch((error) => {
-      console.error("Gagal mengambil data:", error);
-    });
   </script>
 </body>
 </html>
