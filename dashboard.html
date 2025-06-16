@@ -1,128 +1,67 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Stok Buah</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #eaffdc;
-      padding: 20px;
-    }
-    h1 {
-      color: green;
-      text-align: center;
-    }
-    .form-input {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    input {
-      padding: 5px;
-      margin: 5px;
-    }
-    table {
-      width: 100%;
-      background: #d4f8c4;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    button {
-      padding: 5px 10px;
-      margin: 2px;
-    }
-  </style>
-</head>
-<body>
-  <h1>📦 Daftar Stok Buah</h1>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  <div class="form-input">
-    <input type="text" id="newName" placeholder="Nama Buah">
-    <input type="number" id="newPrice" placeholder="Harga">
-    <input type="number" id="newStock" placeholder="Stok">
-    <button onclick="tambahBuah()">Tambah</button>
-  </div>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
 
-  <table>
-    <thead>
-      <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
-    </thead>
-    <tbody id="buahTable"></tbody>
-  </table>
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const buahRef = collection(db, "buah");
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-      measurementId: "G-7CPE2DB2BV"
-    };
+  async function loadData() {
+    const snapshot = await getDocs(buahRef);
+    const table = document.getElementById("buahTable");
+    table.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const row = document.createElement("tr");
 
-    // Inisialisasi Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const buahRef = db.collection("buah");
+      row.innerHTML = `
+        <td><input value="${data.nama}" onchange="editField('${docSnap.id}', 'nama', this.value)"/></td>
+        <td><input type="number" value="${data.harga}" onchange="editField('${docSnap.id}', 'harga', this.value)"/></td>
+        <td><input type="number" value="${data.stok}" onchange="editField('${docSnap.id}', 'stok', this.value)"/></td>
+        <td><button onclick="hapusBuah('${docSnap.id}')">Hapus</button></td>
+      `;
+      table.appendChild(row);
+    });
+  }
 
-    async function loadData() {
-      const snapshot = await buahRef.get();
-      const table = document.getElementById("buahTable");
-      table.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-          <td><input value="${data.nama}" onchange="editField('${doc.id}', 'nama', this.value)"/></td>
-          <td><input type="number" value="${data.harga}" onchange="editField('${doc.id}', 'harga', this.value)"/></td>
-          <td><input type="number" value="${data.stok}" onchange="editField('${doc.id}', 'stok', this.value)"/></td>
-          <td>
-            <button onclick="hapusBuah('${doc.id}')">Hapus</button>
-          </td>
-        `;
-        table.appendChild(row);
-      });
+  window.tambahBuah = async function () {
+    const nama = document.getElementById("newName").value.trim();
+    const harga = parseInt(document.getElementById("newPrice").value);
+    const stok = parseInt(document.getElementById("newStock").value);
+    if (nama && !isNaN(harga) && !isNaN(stok)) {
+      await addDoc(buahRef, { nama, harga, stok });
+      document.getElementById("newName").value = "";
+      document.getElementById("newPrice").value = "";
+      document.getElementById("newStock").value = "";
+      loadData();
+    } else {
+      alert("Isi semua kolom!");
     }
+  };
 
-    async function tambahBuah() {
-      const nama = document.getElementById("newName").value.trim();
-      const harga = parseInt(document.getElementById("newPrice").value);
-      const stok = parseInt(document.getElementById("newStock").value);
+  window.editField = async function (id, field, value) {
+    if (field !== "nama") value = parseInt(value);
+    const buahDoc = doc(db, "buah", id);
+    await updateDoc(buahDoc, { [field]: value });
+  };
 
-      if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await buahRef.add({ nama, harga, stok });
-        document.getElementById("newName").value = "";
-        document.getElementById("newPrice").value = "";
-        document.getElementById("newStock").value = "";
-        loadData();
-      } else {
-        alert("Isi semua kolom dengan benar!");
-      }
+  window.hapusBuah = async function (id) {
+    if (confirm("Hapus buah ini?")) {
+      const buahDoc = doc(db, "buah", id);
+      await deleteDoc(buahDoc);
+      loadData();
     }
+  };
 
-    async function editField(id, field, value) {
-      if (field !== "nama") value = parseInt(value);
-      await buahRef.doc(id).update({ [field]: value });
-    }
-
-    async function hapusBuah(id) {
-      if (confirm("Hapus buah ini?")) {
-        await buahRef.doc(id).delete();
-        loadData();
-      }
-    }
-
-    loadData();
-  </script>
-</body>
-</html>
+  loadData();
+</script>
