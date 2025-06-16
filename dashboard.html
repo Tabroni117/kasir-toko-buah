@@ -6,157 +6,118 @@
   <title>Dashboard Stok Buah</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0fff0;
-      margin: 0;
+      font-family: sans-serif;
+      background: #eaffdc;
       padding: 20px;
-      text-align: center;
     }
-
     h1 {
       color: green;
+      text-align: center;
     }
-
-    table {
-      width: 95%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 10px;
-      overflow: hidden;
+    .form-input {
+      text-align: center;
+      margin-bottom: 20px;
     }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #dfffdc;
-      color: green;
-    }
-
-    input[type="text"], input[type="number"] {
+    input {
       padding: 5px;
       margin: 5px;
-      width: 120px;
     }
-
+    table {
+      width: 100%;
+      background: #d4f8c4;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
     button {
-      padding: 6px 10px;
+      padding: 5px 10px;
       margin: 2px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .edit-btn { background-color: #ffc107; color: black; }
-    .delete-btn { background-color: #dc3545; color: white; }
-    .save-btn { background-color: #28a745; color: white; }
-    .add-btn { background-color: #007bff; color: white; }
-
-    #backBtn {
-      margin-top: 10px;
-      padding: 8px 14px;
-      background-color: green;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      display: inline-block;
     }
   </style>
 </head>
 <body>
   <h1>📦 Daftar Stok Buah</h1>
-  <a id="backBtn" href="index.html">← Back to Home Page</a>
 
-  <h3>➕ Tambah Buah Baru</h3>
-  <input type="text" id="newName" placeholder="Nama Buah" />
-  <input type="number" id="newPrice" placeholder="Harga (Rp)" />
-  <input type="number" id="newStock" placeholder="Stok" />
-  <button class="add-btn" onclick="addBuah()">Tambah</button>
+  <div class="form-input">
+    <input type="text" id="newName" placeholder="Nama Buah">
+    <input type="number" id="newPrice" placeholder="Harga">
+    <input type="number" id="newStock" placeholder="Stok">
+    <button onclick="tambahBuah()">Tambah</button>
+  </div>
 
   <table>
     <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Stok</th>
-        <th>Aksi</th>
-      </tr>
+      <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
     </thead>
     <tbody id="buahTable"></tbody>
   </table>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // GANTI DENGAN PUNYAMU
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <script>
     const firebaseConfig = {
-      apiKey: "API_KEY_KAMU",
-      authDomain: "PROJECT_ID.firebaseapp.com",
-      projectId: "PROJECT_ID",
-      storageBucket: "PROJECT_ID.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "APP_ID_KAMU"
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const buahRef = collection(db, "buah");
+    // Inisialisasi Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const buahRef = db.collection("buah");
 
     async function loadData() {
-      const snapshot = await getDocs(buahRef);
-      const tbody = document.getElementById("buahTable");
-      tbody.innerHTML = "";
-
-      snapshot.forEach((docu) => {
-        const data = docu.data();
+      const snapshot = await buahRef.get();
+      const table = document.getElementById("buahTable");
+      table.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
         const row = document.createElement("tr");
 
         row.innerHTML = `
-          <td contenteditable="true" onblur="editField('${docu.id}', 'nama', this.innerText)">${data.nama}</td>
-          <td contenteditable="true" onblur="editField('${docu.id}', 'harga', this.innerText)">${data.harga}</td>
-          <td contenteditable="true" onblur="editField('${docu.id}', 'stok', this.innerText)">${data.stok}</td>
-          <td><button class="delete-btn" onclick="deleteBuah('${docu.id}')">Hapus</button></td>
+          <td><input value="${data.nama}" onchange="editField('${doc.id}', 'nama', this.value)"/></td>
+          <td><input type="number" value="${data.harga}" onchange="editField('${doc.id}', 'harga', this.value)"/></td>
+          <td><input type="number" value="${data.stok}" onchange="editField('${doc.id}', 'stok', this.value)"/></td>
+          <td>
+            <button onclick="hapusBuah('${doc.id}')">Hapus</button>
+          </td>
         `;
-
-        tbody.appendChild(row);
+        table.appendChild(row);
       });
     }
 
-    async function addBuah() {
+    async function tambahBuah() {
       const nama = document.getElementById("newName").value.trim();
       const harga = parseInt(document.getElementById("newPrice").value);
       const stok = parseInt(document.getElementById("newStock").value);
 
       if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await addDoc(buahRef, { nama, harga, stok });
-        loadData();
+        await buahRef.add({ nama, harga, stok });
         document.getElementById("newName").value = "";
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
+        loadData();
       } else {
-        alert("Mohon isi semua kolom dengan benar.");
+        alert("Isi semua kolom dengan benar!");
       }
     }
 
     async function editField(id, field, value) {
-      const ref = doc(db, "buah", id);
-      let val = field === "nama" ? value : parseInt(value);
-      if (field !== "nama" && isNaN(val)) return;
-
-      await updateDoc(ref, { [field]: val });
+      if (field !== "nama") value = parseInt(value);
+      await buahRef.doc(id).update({ [field]: value });
     }
 
-    async function deleteBuah(id) {
-      if (confirm("Yakin ingin menghapus buah ini?")) {
-        await deleteDoc(doc(db, "buah", id));
+    async function hapusBuah(id) {
+      if (confirm("Hapus buah ini?")) {
+        await buahRef.doc(id).delete();
         loadData();
       }
     }
