@@ -6,6 +6,10 @@
   <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #f0f8ff;
@@ -102,6 +106,7 @@
       padding: 10px;
       border-bottom: 1px solid #eee;
       font-size: 14px;
+      text-align: center;
     }
 
     table th {
@@ -276,10 +281,9 @@
     apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
     authDomain: "tokobuahkasir.firebaseapp.com",
     projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.firebasestorage.app",
+    storageBucket: "tokobuahkasir.appspot.com",
     messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-    measurementId: "G-7CPE2DB2BV"
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
   };
 
   const app = firebase.initializeApp(firebaseConfig);
@@ -289,11 +293,11 @@
   let indexEdit = null;
 
   function tambahItem() {
-    const nama = document.getElementById("nama").value;
+    const nama = document.getElementById("nama").value.trim();
     const harga = parseInt(document.getElementById("harga").value);
     const jumlah = parseInt(document.getElementById("jumlah").value);
 
-    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+    if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
       alert("Mohon isi semua data dengan benar.");
       return;
     }
@@ -302,20 +306,11 @@
     keranjang.push(item);
     updateTabel();
     document.getElementById("form").reset();
-    simpanKeFirebase(item);
-  }
 
-  function simpanKeFirebase(item) {
     db.collection("transaksi").add({
-      nama: item.nama,
-      harga: item.harga,
-      jumlah: item.jumlah,
-      total: item.harga * item.jumlah,
+      ...item,
+      total: harga * jumlah,
       waktu: new Date()
-    }).then(() => {
-      console.log("Data transaksi tersimpan.");
-    }).catch(error => {
-      console.error("Gagal simpan ke Firebase:", error);
     });
   }
 
@@ -324,36 +319,36 @@
     tabel.innerHTML = "";
     let total = 0;
 
-    keranjang.forEach((item, index) => {
+    keranjang.forEach((item, i) => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
 
-      const row = `<tr>
-        <td>${item.nama}</td>
-        <td>Rp ${item.harga.toLocaleString()}</td>
-        <td>${item.jumlah}</td>
-        <td>Rp ${subtotal.toLocaleString()}</td>
-        <td>
-          <button class="btn btn-edit" onclick="editItem(${index})">✏️</button>
-          <button class="btn btn-delete" onclick="hapusItem(${index})">🗑️</button>
-        </td>
-      </tr>`;
-      tabel.innerHTML += row;
+      tabel.innerHTML += `
+        <tr>
+          <td>${item.nama}</td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${subtotal.toLocaleString()}</td>
+          <td>
+            <button class="btn btn-edit" onclick="editItem(${i})">✏️</button>
+            <button class="btn btn-delete" onclick="hapusItem(${i})">🗑️</button>
+          </td>
+        </tr>`;
     });
 
     document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
   }
 
-  function hapusItem(index) {
-    if (confirm("Yakin ingin menghapus item ini?")) {
-      keranjang.splice(index, 1);
+  function hapusItem(i) {
+    if (confirm("Hapus item ini?")) {
+      keranjang.splice(i, 1);
       updateTabel();
     }
   }
 
-  function editItem(index) {
-    indexEdit = index;
-    const item = keranjang[index];
+  function editItem(i) {
+    indexEdit = i;
+    const item = keranjang[i];
     document.getElementById("editNama").value = item.nama;
     document.getElementById("editHarga").value = item.harga;
     document.getElementById("editJumlah").value = item.jumlah;
@@ -368,11 +363,7 @@
     const nama = document.getElementById("editNama").value;
     const harga = parseInt(document.getElementById("editHarga").value);
     const jumlah = parseInt(document.getElementById("editJumlah").value);
-
-    if (!nama || isNaN(harga) || isNaN(jumlah)) {
-      alert("Mohon isi data edit dengan benar.");
-      return;
-    }
+    if (!nama || isNaN(harga) || isNaN(jumlah)) return;
 
     keranjang[indexEdit] = { nama, harga, jumlah };
     closeEditModal();
@@ -389,9 +380,8 @@
 
   function cetakStruk() {
     closeQrisModal();
-
-    let struk = "=== TOKO BUAH INDONESIA ===\n";
     let total = 0;
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
 
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
@@ -399,10 +389,7 @@
       struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
     });
 
-    struk += "----------------------------\n";
-    struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
-    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-
+    struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nTerima kasih belanja!\n";
     alert(struk);
   }
 
@@ -410,24 +397,19 @@
     db.collection("stok").get().then(snapshot => {
       const tabel = document.getElementById("tabelStokBuah");
       tabel.innerHTML = "";
-
       snapshot.forEach(doc => {
         const data = doc.data();
-        const row = `<tr>
-          <td>${data.nama}</td>
-          <td>Rp ${data.harga.toLocaleString()}</td>
-          <td>${data.stok}</td>
-        </tr>`;
-        tabel.innerHTML += row;
+        tabel.innerHTML += `
+          <tr>
+            <td>${data.nama}</td>
+            <td>Rp ${data.harga.toLocaleString()}</td>
+            <td>${data.stok}</td>
+          </tr>`;
       });
-    }).catch(error => {
-      console.error("Gagal memuat stok:", error);
     });
   }
 
-  window.onload = function() {
-    tampilkanStokBuah();
-  };
+  window.onload = tampilkanStokBuah;
 </script>
 
 </body>
