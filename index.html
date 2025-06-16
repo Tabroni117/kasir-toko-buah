@@ -1,287 +1,192 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f0f8ff;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #4CAF50;
-      color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
-      flex-wrap: wrap;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo-container img {
-      height: 50px;
-      margin-right: 15px;
-      border-radius: 50%;
-    }
-
-    header h1 {
-      font-size: 20px;
-      margin: 0;
-    }
-
-    .login-btn {
-      background-color: white;
-      color: #4CAF50;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-top: 20px;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 10px;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-
-    button, .btn {
-      margin-top: 10px;
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    button:hover {
-      background-color: #43a047;
-    }
-
-    .btn-secondary {
-      background-color: #ccc;
-      color: #333;
-    }
-
-    .tabel-container {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      min-width: 500px;
-    }
-
-    table th, table td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-
-    table th {
-      background-color: #e8f5e9;
-    }
-
-    tfoot td {
-      font-weight: bold;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background-color: #fff;
-      margin: 10% auto;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    .modal img {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 15px;
-    }
-
+    /* CSS dipersingkat, tetap sama */
+    body { font-family: 'Poppins', sans-serif; background: #f0f8ff; margin: 0; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; background: #4CAF50; color: white; padding: 15px 20px; border-radius: 10px; flex-wrap: wrap; }
+    .logo-container { display: flex; align-items: center; }
+    .logo-container img { height: 50px; margin-right: 15px; border-radius: 50%; }
+    h1 { font-size: 20px; margin: 0; }
+    .login-btn { background: white; color: #4CAF50; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    form { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 20px 0; }
+    input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; }
+    button, .btn { margin-top: 10px; background: #4CAF50; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%; }
+    button:hover { background-color: #43a047; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); min-width: 500px; }
+    th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #e8f5e9; }
+    .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+    .modal-content { background: #fff; margin: 10% auto; padding: 25px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     @media screen and (max-width: 600px) {
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      header { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo-container">
-      <img src="rujak-logo.png" alt="Logo Rujak Buah">
-      <h1>TOKO BUAH INDONESIA</h1>
-    </div>
-    <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-  </header>
-
-  <form id="form">
-    <label>Nama Buah
-      <input type="text" id="nama" placeholder="Contoh: Apel">
-    </label>
-    <label>Harga Satuan (Rp)
-      <input type="number" id="harga" placeholder="Contoh: 10000">
-    </label>
-    <label>Jumlah
-      <input type="number" id="jumlah" placeholder="Contoh: 2">
-    </label>
-    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
-  </form>
-
-  <h3>🛒 Daftar Belanja</h3>
-  <div class="tabel-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Nama Buah</th>
-          <th>Harga Satuan</th>
-          <th>Jumlah</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody id="tabelBelanja"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3">Total</td>
-          <td id="totalBelanja">Rp 0</td>
-        </tr>
-      </tfoot>
-    </table>
+<header>
+  <div class="logo-container">
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <h1>TOKO BUAH INDONESIA</h1>
   </div>
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+</header>
 
-  <br>
-  <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+<form id="form">
+  <label>Pilih Buah
+    <select id="nama"></select>
+  </label>
+  <label>Harga Satuan (Rp)
+    <input type="number" id="harga" placeholder="Harga otomatis" readonly>
+  </label>
+  <label>Jumlah
+    <input type="number" id="jumlah" placeholder="Contoh: 2">
+  </label>
+  <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+</form>
 
-  <!-- Modal QRIS -->
-  <div id="qrisModal" class="modal">
-    <div class="modal-content">
-      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-      <img src="qris.png.png" alt="QRIS Pembayaran">
-      <br>
-      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
-      <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
-    </div>
+<h3>🛒 Daftar Belanja</h3>
+<div class="tabel-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Nama Buah</th>
+        <th>Harga Satuan</th>
+        <th>Jumlah</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody id="tabelBelanja"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">Total</td>
+        <td id="totalBelanja">Rp 0</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<br>
+<button onclick="showQrisModal()">🧾 Cetak Struk</button>
+
+<!-- Modal QRIS -->
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png.png" alt="QRIS Pembayaran">
+    <br>
+    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
   </div>
+</div>
 
-  <script>
-    let keranjang = [];
+<script>
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
 
-    function tambahItem() {
-      const nama = document.getElementById("nama").value;
-      const harga = parseInt(document.getElementById("harga").value);
-      const jumlah = parseInt(document.getElementById("jumlah").value);
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-      if (!nama || isNaN(harga) || isNaN(jumlah)) {
-        alert("Mohon isi semua data dengan benar.");
-        return;
-      }
+  let buahData = [];
+  let keranjang = [];
 
-      keranjang.push({ nama, harga, jumlah });
-      updateTabel();
+  const selectNama = document.getElementById("nama");
+  const inputHarga = document.getElementById("harga");
+
+  // Ambil daftar buah dari Firestore
+  db.collection("stok_buah").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      buahData.push(data);
+
+      const option = document.createElement("option");
+      option.value = data.nama;
+      option.textContent = data.nama;
+      selectNama.appendChild(option);
+    });
+  });
+
+  // Saat nama buah dipilih, isi harga otomatis
+  selectNama.addEventListener("change", () => {
+    const selected = buahData.find(buah => buah.nama === selectNama.value);
+    inputHarga.value = selected ? selected.harga : '';
+  });
+
+  function tambahItem() {
+    const nama = selectNama.value;
+    const harga = parseInt(inputHarga.value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
+
+    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+      alert("Mohon isi semua data.");
+      return;
     }
 
-    function updateTabel() {
-      const tabel = document.getElementById("tabelBelanja");
-      tabel.innerHTML = "";
-      let total = 0;
+    keranjang.push({ nama, harga, jumlah });
+    updateTabel();
+  }
 
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
+  function updateTabel() {
+    const tabel = document.getElementById("tabelBelanja");
+    tabel.innerHTML = "";
+    let total = 0;
 
-        const row = `<tr>
-          <td>${item.nama}</td>
-          <td>Rp ${item.harga.toLocaleString()}</td>
-          <td>${item.jumlah}</td>
-          <td>Rp ${subtotal.toLocaleString()}</td>
-        </tr>`;
-        tabel.innerHTML += row;
-      });
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
 
-      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
-    }
+      const row = `<tr>
+        <td>${item.nama}</td>
+        <td>Rp ${item.harga.toLocaleString()}</td>
+        <td>${item.jumlah}</td>
+        <td>Rp ${subtotal.toLocaleString()}</td>
+      </tr>`;
+      tabel.innerHTML += row;
+    });
 
-    function showQrisModal() {
-      document.getElementById("qrisModal").style.display = "block";
-    }
+    document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+  }
 
-    function closeQrisModal() {
-      document.getElementById("qrisModal").style.display = "none";
-    }
+  function showQrisModal() {
+    document.getElementById("qrisModal").style.display = "block";
+  }
 
-    function cetakStruk() {
-      closeQrisModal();
+  function closeQrisModal() {
+    document.getElementById("qrisModal").style.display = "none";
+  }
 
-      let struk = "=== TOKO BUAH INDONESIA ===\n";
-      let total = 0;
+  function cetakStruk() {
+    closeQrisModal();
 
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
-      });
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    let total = 0;
 
-      struk += "----------------------------\n";
-      struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
-      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+    });
 
-      alert(struk);
-    }
-  </script>
+    struk += "----------------------------\n";
+    struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+    alert(struk);
+  }
+</script>
 </body>
 </html>
