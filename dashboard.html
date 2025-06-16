@@ -85,17 +85,48 @@
         <th>Stok</th>
       </tr>
     </thead>
-    <tbody>
-      <tr><td>Apel</td><td>Rp 10.000</td><td>50</td></tr>
-      <tr><td>Jeruk</td><td>Rp 8.000</td><td>40</td></tr>
-      <tr><td>Pisang</td><td>Rp 5.000</td><td>60</td></tr>
-      <tr><td>Semangka</td><td>Rp 15.000</td><td>20</td></tr>
+    <tbody id="stok-tabel">
+      <!-- Data akan dimuat dari Firestore -->
     </tbody>
   </table>
 
   <button onclick="logout()">Logout</button>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
   <script>
+    // Ganti bagian ini dengan konfigurasi asli dari Firebase project kamu
+    const firebaseConfig = {
+      apiKey: "GANTI_DENGAN_API_KEY",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "GANTI_DENGAN_SENDER_ID",
+      appId: "GANTI_DENGAN_APP_ID"
+    };
+
+    // Inisialisasi Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Ambil data dari koleksi 'stok' dan tampilkan di tabel
+    db.collection("stok").get().then((querySnapshot) => {
+      const table = document.getElementById("stok-tabel");
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${data.nama}</td>
+          <td>Rp ${data.harga.toLocaleString()}</td>
+          <td>${data.stok}</td>
+        `;
+        table.appendChild(row);
+      });
+    });
+
+    // Proteksi login
     if (localStorage.getItem('loggedIn') !== 'yes') {
       alert('Silakan login dulu');
       window.location.href = 'login.html';
