@@ -1,20 +1,200 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
-    /* ... seluruh CSS seperti yang di atas ... */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-container img {
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .login-btn {
+      background-color: white;
+      color: #4CAF50;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background-color: #43a047;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    table th, table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+
+    table th {
+      background-color: #e8f5e9;
+    }
+
+    tfoot td {
+      font-weight: bold;
+    }
+
+    .modal, .edit-modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content, .edit-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .modal img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .btn {
+      padding: 6px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #333;
+    }
+
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #ccc;
+      color: #333;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 16px;
+      }
+
+      table th, table td {
+        font-size: 12px;
+        padding: 6px;
+      }
+
+      .btn {
+        font-size: 10px;
+        padding: 4px 6px;
+      }
+    }
   </style>
 </head>
-<body><header>
+<body>
+
+<header>
   <div class="logo-container">
     <img src="rujak-logo.png" alt="Logo Rujak Buah">
     <h1>TOKO BUAH INDONESIA</h1>
   </div>
   <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-</header><form id="form">
+</header>
+
+<form id="form">
   <label>Nama Buah
     <input type="text" id="nama" placeholder="Contoh: Apel">
   </label>
@@ -25,7 +205,9 @@
     <input type="number" id="jumlah" placeholder="Contoh: 2">
   </label>
   <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
-</form><h3>🛒 Daftar Belanja</h3>
+</form>
+
+<h3>🛒 Daftar Belanja</h3>
 <table>
   <thead>
     <tr>
@@ -43,8 +225,13 @@
       <td id="totalBelanja">Rp 0</td>
     </tr>
   </tfoot>
-</table><br>
-<button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button><!-- Modal QRIS --><div id="qrisModal" class="modal">
+</table>
+
+<br>
+<button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button>
+
+<!-- Modal QRIS -->
+<div id="qrisModal" class="modal">
   <div class="modal-content">
     <h3>Silakan Scan QRIS untuk Pembayaran</h3>
     <img src="qris.png.png" alt="QRIS Pembayaran">
@@ -52,7 +239,10 @@
     <button class="btn btn-primary" onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
     <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
   </div>
-</div><!-- Modal Edit --><div id="editModal" class="edit-modal">
+</div>
+
+<!-- Modal Edit -->
+<div id="editModal" class="edit-modal">
   <div class="edit-content">
     <h3>Edit Item</h3>
     <input type="text" id="editNama" placeholder="Nama Buah">
@@ -62,7 +252,13 @@
     <button class="btn btn-primary" onclick="simpanEdit()">Simpan</button>
     <button class="btn btn-secondary" onclick="closeEditModal()">Batal</button>
   </div>
-</div><!-- Firebase SDK --><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script><script>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
     authDomain: "tokobuahkasir.firebaseapp.com",
@@ -103,6 +299,10 @@
       jumlah: item.jumlah,
       total: item.harga * item.jumlah,
       waktu: new Date()
+    }).then(() => {
+      console.log("Data transaksi tersimpan.");
+    }).catch(error => {
+      console.error("Gagal simpan ke Firebase:", error);
     });
   }
 
@@ -192,5 +392,7 @@
 
     alert(struk);
   }
-</script></body>
+</script>
+
+</body>
 </html>
