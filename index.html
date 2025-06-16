@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
@@ -98,9 +98,9 @@
     }
 
     table th, table td {
-      padding: 12px;
+      padding: 10px;
       border-bottom: 1px solid #eee;
-      text-align: left;
+      font-size: 14px;
     }
 
     table th {
@@ -111,7 +111,7 @@
       font-weight: bold;
     }
 
-    .modal {
+    .modal, .edit-modal {
       display: none;
       position: fixed;
       z-index: 999;
@@ -122,7 +122,7 @@
       background-color: rgba(0,0,0,0.5);
     }
 
-    .modal-content {
+    .modal-content, .edit-content {
       background-color: #fff;
       margin: 10% auto;
       padding: 25px;
@@ -139,12 +139,22 @@
     }
 
     .btn {
-      padding: 10px 16px;
-      margin: 5px;
+      padding: 6px 10px;
+      margin: 2px;
       border: none;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 12px;
       cursor: pointer;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #333;
+    }
+
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
     }
 
     .btn-primary {
@@ -156,128 +166,199 @@
       background-color: #ccc;
       color: #333;
     }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 16px;
+      }
+
+      table th, table td {
+        font-size: 12px;
+        padding: 6px;
+      }
+
+      .btn {
+        font-size: 10px;
+        padding: 4px 6px;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo-container">
-      <img src="rujak-logo.png" alt="Logo Rujak Buah">
-      <h1>TOKO BUAH INDONESIA</h1>
-    </div>
-    <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-  </header>
-
-  <form id="form">
-    <label>Nama Buah
-      <input type="text" id="nama" placeholder="Contoh: Apel">
-    </label>
-    <label>Harga Satuan (Rp)
-      <input type="number" id="harga" placeholder="Contoh: 10000">
-    </label>
-    <label>Jumlah
-      <input type="number" id="jumlah" placeholder="Contoh: 2">
-    </label>
-    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
-  </form>
-
-  <h3>🛒 Daftar Belanja</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Nama Buah</th>
-        <th>Harga Satuan</th>
-        <th>Jumlah</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="tabelBelanja"></tbody>
-    <tfoot>
-      <tr>
-        <td colspan="3">Total</td>
-        <td id="totalBelanja">Rp 0</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <br>
-  <button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button>
-
-  <!-- Modal QRIS -->
-  <div id="qrisModal" class="modal">
-    <div class="modal-content">
-      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-      <img src="qris.png.png" alt="QRIS Pembayaran">
-      <br>
-      <button class="btn btn-primary" onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
-      <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
-    </div>
+<header>
+  <div class="logo-container">
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <h1>TOKO BUAH INDONESIA</h1>
   </div>
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+</header>
 
-  <script>
-    let keranjang = [];
+<form id="form">
+  <label>Nama Buah
+    <input type="text" id="nama" placeholder="Contoh: Apel">
+  </label>
+  <label>Harga Satuan (Rp)
+    <input type="number" id="harga" placeholder="Contoh: 10000">
+  </label>
+  <label>Jumlah
+    <input type="number" id="jumlah" placeholder="Contoh: 2">
+  </label>
+  <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+</form>
 
-    function tambahItem() {
-      const nama = document.getElementById("nama").value;
-      const harga = parseInt(document.getElementById("harga").value);
-      const jumlah = parseInt(document.getElementById("jumlah").value);
+<h3>🛒 Daftar Belanja</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Jumlah</th>
+      <th>Subtotal</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="tabelBelanja"></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="4">Total</td>
+      <td id="totalBelanja">Rp 0</td>
+    </tr>
+  </tfoot>
+</table>
 
-      if (!nama || isNaN(harga) || isNaN(jumlah)) {
-        alert("Mohon isi semua data dengan benar.");
-        return;
-      }
+<br>
+<button class="btn btn-primary" onclick="showQrisModal()">🧾 Cetak Struk</button>
 
-      keranjang.push({ nama, harga, jumlah });
+<!-- Modal QRIS -->
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png.png" alt="QRIS Pembayaran">
+    <br>
+    <button class="btn btn-primary" onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
+  </div>
+</div>
+
+<!-- Modal Edit -->
+<div id="editModal" class="edit-modal">
+  <div class="edit-content">
+    <h3>Edit Item</h3>
+    <input type="text" id="editNama" placeholder="Nama Buah">
+    <input type="number" id="editHarga" placeholder="Harga">
+    <input type="number" id="editJumlah" placeholder="Jumlah">
+    <br><br>
+    <button class="btn btn-primary" onclick="simpanEdit()">Simpan</button>
+    <button class="btn btn-secondary" onclick="closeEditModal()">Batal</button>
+  </div>
+</div>
+
+<script>
+  let keranjang = [];
+  let indexEdit = null;
+
+  function tambahItem() {
+    const nama = document.getElementById("nama").value;
+    const harga = parseInt(document.getElementById("harga").value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
+
+    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+      alert("Mohon isi semua data dengan benar.");
+      return;
+    }
+
+    keranjang.push({ nama, harga, jumlah });
+    updateTabel();
+    document.getElementById("form").reset();
+  }
+
+  function updateTabel() {
+    const tabel = document.getElementById("tabelBelanja");
+    tabel.innerHTML = "";
+    let total = 0;
+
+    keranjang.forEach((item, index) => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+
+      const row = `<tr>
+        <td>${item.nama}</td>
+        <td>Rp ${item.harga.toLocaleString()}</td>
+        <td>${item.jumlah}</td>
+        <td>Rp ${subtotal.toLocaleString()}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editItem(${index})">✏️</button>
+          <button class="btn btn-delete" onclick="hapusItem(${index})">🗑️</button>
+        </td>
+      </tr>`;
+      tabel.innerHTML += row;
+    });
+
+    document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+  }
+
+  function hapusItem(index) {
+    if (confirm("Yakin ingin menghapus item ini?")) {
+      keranjang.splice(index, 1);
       updateTabel();
     }
+  }
 
-    function updateTabel() {
-      const tabel = document.getElementById("tabelBelanja");
-      tabel.innerHTML = "";
-      let total = 0;
+  function editItem(index) {
+    indexEdit = index;
+    const item = keranjang[index];
+    document.getElementById("editNama").value = item.nama;
+    document.getElementById("editHarga").value = item.harga;
+    document.getElementById("editJumlah").value = item.jumlah;
+    document.getElementById("editModal").style.display = "block";
+  }
 
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
+  function closeEditModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
 
-        const row = `<tr>
-          <td>${item.nama}</td>
-          <td>Rp ${item.harga.toLocaleString()}</td>
-          <td>${item.jumlah}</td>
-          <td>Rp ${subtotal.toLocaleString()}</td>
-        </tr>`;
-        tabel.innerHTML += row;
-      });
+  function simpanEdit() {
+    const nama = document.getElementById("editNama").value;
+    const harga = parseInt(document.getElementById("editHarga").value);
+    const jumlah = parseInt(document.getElementById("editJumlah").value);
 
-      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+      alert("Mohon isi data edit dengan benar.");
+      return;
     }
 
-    function showQrisModal() {
-      document.getElementById("qrisModal").style.display = "block";
-    }
+    keranjang[indexEdit] = { nama, harga, jumlah };
+    closeEditModal();
+    updateTabel();
+  }
 
-    function closeQrisModal() {
-      document.getElementById("qrisModal").style.display = "none";
-    }
+  function showQrisModal() {
+    document.getElementById("qrisModal").style.display = "block";
+  }
 
-    function cetakStruk() {
-      closeQrisModal();
+  function closeQrisModal() {
+    document.getElementById("qrisModal").style.display = "none";
+  }
 
-      let struk = "=== TOKO BUAH INDONESIA ===\n";
-      let total = 0;
+  function cetakStruk() {
+    closeQrisModal();
 
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
-      });
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    let total = 0;
 
-      struk += "----------------------------\n";
-      struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
-      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+    });
 
-      alert(struk);
-    }
-  </script>
+    struk += "----------------------------\n";
+    struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+    alert(struk);
+  }
+</script>
 </body>
 </html>
