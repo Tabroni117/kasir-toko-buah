@@ -95,6 +95,7 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
     }
 
     table th, table td {
@@ -225,6 +226,18 @@
       <td id="totalBelanja">Rp 0</td>
     </tr>
   </tfoot>
+</table>
+
+<h3>📦 Daftar Stok Buah</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Stok</th>
+    </tr>
+  </thead>
+  <tbody id="tabelStokBuah"></tbody>
 </table>
 
 <br>
@@ -392,6 +405,29 @@
 
     alert(struk);
   }
+
+  function tampilkanStokBuah() {
+    db.collection("stok").get().then(snapshot => {
+      const tabel = document.getElementById("tabelStokBuah");
+      tabel.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = `<tr>
+          <td>${data.nama}</td>
+          <td>Rp ${data.harga.toLocaleString()}</td>
+          <td>${data.stok}</td>
+        </tr>`;
+        tabel.innerHTML += row;
+      });
+    }).catch(error => {
+      console.error("Gagal memuat stok:", error);
+    });
+  }
+
+  window.onload = function() {
+    tampilkanStokBuah();
+  };
 </script>
 
 </body>
