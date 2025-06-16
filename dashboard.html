@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -36,6 +36,12 @@
       padding: 5px 10px;
       margin: 2px;
     }
+    #loading {
+      text-align: center;
+      margin: 10px;
+      display: none;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -48,6 +54,8 @@
     <button onclick="tambahBuah()">Tambah</button>
   </div>
 
+  <div id="loading">⏳ Memuat data...</div>
+
   <table>
     <thead>
       <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
@@ -55,10 +63,14 @@
     <tbody id="buahTable"></tbody>
   </table>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
-  <script>
+  <!-- Firebase SDK Modular -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, addDoc,
+      doc, updateDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
@@ -70,37 +82,42 @@
     };
 
     // Inisialisasi Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const buahRef = db.collection("buah");
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const buahRef = collection(db, "buah");
 
+    // Tampilkan data buah
     async function loadData() {
-      const snapshot = await buahRef.get();
+      document.getElementById("loading").style.display = "block";
+      const snapshot = await getDocs(buahRef);
+      document.getElementById("loading").style.display = "none";
+
       const table = document.getElementById("buahTable");
       table.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const row = document.createElement("tr");
 
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+
+        const row = document.createElement("tr");
         row.innerHTML = `
-          <td><input value="${data.nama}" onchange="editField('${doc.id}', 'nama', this.value)"/></td>
-          <td><input type="number" value="${data.harga}" onchange="editField('${doc.id}', 'harga', this.value)"/></td>
-          <td><input type="number" value="${data.stok}" onchange="editField('${doc.id}', 'stok', this.value)"/></td>
-          <td>
-            <button onclick="hapusBuah('${doc.id}')">Hapus</button>
-          </td>
+          <td><input value="${data.nama}" onchange="editField('${id}', 'nama', this.value)"/></td>
+          <td><input type="number" value="${data.harga}" onchange="editField('${id}', 'harga', this.value)"/></td>
+          <td><input type="number" value="${data.stok}" onchange="editField('${id}', 'stok', this.value)"/></td>
+          <td><button onclick="hapusBuah('${id}')">Hapus</button></td>
         `;
         table.appendChild(row);
       });
     }
 
-    async function tambahBuah() {
+    // Tambah buah baru
+    window.tambahBuah = async function () {
       const nama = document.getElementById("newName").value.trim();
       const harga = parseInt(document.getElementById("newPrice").value);
       const stok = parseInt(document.getElementById("newStock").value);
 
       if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await buahRef.add({ nama, harga, stok });
+        await addDoc(buahRef, { nama, harga, stok });
         document.getElementById("newName").value = "";
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
@@ -110,18 +127,23 @@
       }
     }
 
-    async function editField(id, field, value) {
+    // Edit data buah
+    window.editField = async function (id, field, value) {
       if (field !== "nama") value = parseInt(value);
-      await buahRef.doc(id).update({ [field]: value });
+      const buahDoc = doc(db, "buah", id);
+      await updateDoc(buahDoc, { [field]: value });
     }
 
-    async function hapusBuah(id) {
+    // Hapus buah
+    window.hapusBuah = async function (id) {
       if (confirm("Hapus buah ini?")) {
-        await buahRef.doc(id).delete();
+        const buahDoc = doc(db, "buah", id);
+        await deleteDoc(buahDoc);
         loadData();
       }
     }
 
+    // Jalankan saat halaman dibuka
     loadData();
   </script>
 </body>
