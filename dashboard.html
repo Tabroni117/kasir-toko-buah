@@ -16,6 +16,13 @@
       text-align: center;
       color: #2e8b57;
       font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    #statusKoneksi {
+      text-align: center;
+      color: gray;
+      font-size: 14px;
       margin-bottom: 20px;
     }
 
@@ -72,10 +79,54 @@
       }
     }
   </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDHrJ-vDWQerGC-EgkCS3Vu7bd-DHxAVp8",
+      authDomain: "tokobuah-6f881.firebaseapp.com",
+      projectId: "tokobuah-6f881",
+      storageBucket: "tokobuah-6f881.appspot.com",
+      messagingSenderId: "248499367083",
+      appId: "1:248499367083:web:da77df848fc19659cfa823"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const statusEl = document.getElementById("statusKoneksi");
+    const tbody = document.getElementById("isiStok");
+
+    async function tampilkanStok() {
+      try {
+        const querySnapshot = await getDocs(collection(db, "stok_buah"));
+        if (querySnapshot.empty) {
+          statusEl.textContent = "⚠️ Koneksi berhasil, tapi tidak ada data stok.";
+        } else {
+          statusEl.textContent = "✅ Koneksi Firestore berhasil.";
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${data.nama}</td>
+              <td>Rp ${data.harga.toLocaleString("id-ID")}</td>
+              <td>${data.stok}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        statusEl.textContent = "❌ Gagal koneksi ke Firestore.";
+      }
+    }
+
+    tampilkanStok();
+  </script>
 </head>
 <body>
 
   <h1>Dashboard Stok Buah</h1>
+  <p id="statusKoneksi">Memeriksa koneksi ke database...</p>
 
   <table>
     <thead>
@@ -85,11 +136,8 @@
         <th>Stok</th>
       </tr>
     </thead>
-    <tbody>
-      <tr><td>Apel</td><td>Rp 10.000</td><td>50</td></tr>
-      <tr><td>Jeruk</td><td>Rp 8.000</td><td>40</td></tr>
-      <tr><td>Pisang</td><td>Rp 5.000</td><td>60</td></tr>
-      <tr><td>Semangka</td><td>Rp 15.000</td><td>20</td></tr>
+    <tbody id="isiStok">
+      <!-- Data stok dari Firestore akan ditampilkan di sini -->
     </tbody>
   </table>
 
