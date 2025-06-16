@@ -2,174 +2,150 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Daftar Belanja</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Admin</title>
   <style>
-    /* Tambahan CSS supaya langsung tampil bagus */
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background-color: white;
-      border-radius: 6px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      font-size: 15px;
-    }
-
-    .aksi-btn {
-      padding: 6px 8px;
-      margin: 0 2px;
-      font-size: 14px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .aksi-btn.edit {
-      background-color: #ffcc00;
-      color: black;
-    }
-
-    .aksi-btn.hapus {
-      background-color: #e74c3c;
-      color: white;
-    }
-
-    /* Modal edit */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 90%;
-      width: 300px;
-    }
-
-    .modal-content input {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
+    * {
       box-sizing: border-box;
     }
 
-    .modal-content button {
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding-top: 60px; /* 👈 ini bikin naik ke atas */
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 360px;
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2e8b57;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
       padding: 10px;
-      margin-top: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #2e8b57;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #246b45;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ccc;
+      border-top: 4px solid #2e8b57;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     @media (max-width: 600px) {
-      th, td {
-        font-size: 14px;
-        padding: 8px;
+      h1 {
+        font-size: 20px;
       }
 
-      .aksi-btn {
-        font-size: 12px;
-        padding: 5px 6px;
+      label, input, button {
+        font-size: 15px;
+      }
+
+      .container {
+        padding-top: 40px; /* Naik juga di HP */
       }
     }
   </style>
 </head>
 <body>
-  <h1>Daftar Belanja</h1>
-  <table id="belanjaTable">
-    <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Jumlah</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Apel</td>
-        <td>Rp 10.000</td>
-        <td>2</td>
-        <td style="text-align:center;">
-          <button class="aksi-btn edit" onclick="editItem(this)">✏️</button>
-          <button class="aksi-btn hapus" onclick="hapusItem(this)">🗑️</button>
-        </td>
-      </tr>
-      <tr>
-        <td>Pisang</td>
-        <td>Rp 5.000</td>
-        <td>4</td>
-        <td style="text-align:center;">
-          <button class="aksi-btn edit" onclick="editItem(this)">✏️</button>
-          <button class="aksi-btn hapus" onclick="hapusItem(this)">🗑️</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Modal untuk Edit -->
-  <div class="modal" id="editModal">
-    <div class="modal-content">
-      <h3>Edit Item</h3>
-      <input type="text" id="editNama" placeholder="Nama">
-      <input type="text" id="editHarga" placeholder="Harga">
-      <input type="number" id="editJumlah" placeholder="Jumlah">
-      <button onclick="simpanEdit()">Simpan</button>
-      <button onclick="tutupModal()">Batal</button>
+  <div class="container">
+    <div class="login-box">
+      <h1>Login Admin</h1>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="admin">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="1234">
+      </div>
+      <button onclick="login()">Login</button>
+      <div class="loading" id="loadingBox">
+        <div class="spinner"></div>
+        <div>Memproses login...</div>
+      </div>
     </div>
   </div>
 
   <script>
-    let currentRow = null;
+    function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
 
-    function hapusItem(btn) {
-      const row = btn.closest("tr");
-      row.remove();
-    }
-
-    function editItem(btn) {
-      currentRow = btn.closest("tr");
-      const cells = currentRow.getElementsByTagName("td");
-      document.getElementById("editNama").value = cells[0].innerText;
-      document.getElementById("editHarga").value = cells[1].innerText;
-      document.getElementById("editJumlah").value = cells[2].innerText;
-      document.getElementById("editModal").style.display = "flex";
-    }
-
-    function simpanEdit() {
-      const nama = document.getElementById("editNama").value;
-      const harga = document.getElementById("editHarga").value;
-      const jumlah = document.getElementById("editJumlah").value;
-
-      if (currentRow) {
-        const cells = currentRow.getElementsByTagName("td");
-        cells[0].innerText = nama;
-        cells[1].innerText = harga;
-        cells[2].innerText = jumlah;
+      if (username === 'admin' && password === '1234') {
+        document.getElementById('loadingBox').style.display = 'block';
+        setTimeout(() => {
+          localStorage.setItem('loggedIn', 'yes');
+          window.location.href = 'dashboard.html';
+        }, 1500);
+      } else {
+        alert('Login gagal! Username atau password salah.');
       }
-
-      tutupModal();
-    }
-
-    function tutupModal() {
-      document.getElementById("editModal").style.display = "none";
     }
   </script>
 </body>
