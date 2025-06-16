@@ -3,84 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Stok</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Dashboard Stok Buah</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #f4f4f4; }
-    h1 { text-align: center; color: green; }
-
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+      text-align: center;
+    }
+    h2 {
+      color: green;
+    }
     .back-btn {
       display: inline-block;
-      margin-top: 10px;
-      padding: 10px 20px;
       background-color: #4CAF50;
       color: white;
+      padding: 10px 20px;
       text-decoration: none;
       border-radius: 5px;
-      font-size: 16px;
+      margin-bottom: 20px;
     }
-    .back-btn:hover {
-      background-color: #45a049;
+    table {
+      margin: auto;
+      width: 90%;
+      border-collapse: collapse;
     }
-
-    .center {
+    th, td {
+      border: 1px solid #999;
+      padding: 10px;
       text-align: center;
-      margin-bottom: 10px;
+    }
+    th {
+      background-color: #f0f0f0;
     }
   </style>
 </head>
 <body>
-  <div class="center">
-    <a href="index.html" class="back-btn">← Kembali ke Halaman Utama</a>
-  </div>
-
-  <h1>Daftar Stok Buah</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Stok</th>
-      </tr>
-    </thead>
-    <tbody id="stok-buah"></tbody>
+  <a href="index.html" class="back-btn">← Kembali ke Halaman Utama</a>
+  <h2>Daftar Stok Buah</h2>
+  <table id="stokTable">
+    <tr>
+      <th>Nama</th>
+      <th>Harga</th>
+      <th>Stok</th>
+    </tr>
   </table>
 
-  <!-- Firebase compat SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyDUMMYKEY123456789",
+      apiKey: "AIzaSyCt-3cwNpvNGeByXzH70qQugkA5M9vwHts",
       authDomain: "tokobuhakasir.firebaseapp.com",
       projectId: "tokobuhakasir",
       storageBucket: "tokobuhakasir.appspot.com",
-      messagingSenderId: "123456789000",
-      appId: "1:123456789000:web:abc123def456gh789"
+      messagingSenderId: "661381192318",
+      appId: "1:661381192318:web:89a3b5c2e5bc68369c3790"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const stokBody = document.getElementById("stok-buah");
-
     db.collection("stok_buah").get().then((querySnapshot) => {
+      const table = document.getElementById("stokTable");
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        const row = `
-          <tr>
-            <td>${data.nama}</td>
-            <td>Rp ${data.harga.toLocaleString()}</td>
-            <td>${data.stok}</td>
-          </tr>
+        const row = table.insertRow();
+        row.innerHTML = `
+          <td>${data.nama}</td>
+          <td>Rp ${data.harga.toLocaleString("id-ID")}</td>
+          <td>${data.stok}</td>
         `;
-        stokBody.innerHTML += row;
       });
     }).catch((error) => {
-      stokBody.innerHTML = `<tr><td colspan="3">Gagal ambil data: ${error.message}</td></tr>`;
+      console.error("Gagal mengambil data:", error);
     });
   </script>
 </body>
