@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { color: green; text-align: center; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
     th { background-color: #f4f4f4; }
@@ -25,12 +26,11 @@
     <tbody id="stok-buah"></tbody>
   </table>
 
-  <!-- Firebase Modular SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <!-- Firebase SDK (Compat) - Non-modular -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 
-    // 🔐 Ganti konfigurasi di bawah ini dengan yang asli dari Firebase Console kamu
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDUMMYKEY123456789",
       authDomain: "tokobuhakasir.firebaseapp.com",
@@ -40,13 +40,14 @@
       appId: "1:123456789000:web:abc123def456gh789"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
+    // Ambil data dari Firestore dan tampilkan ke tabel
     const stokBody = document.getElementById("stok-buah");
 
-    async function ambilStokBuah() {
-      const querySnapshot = await getDocs(collection(db, "stok_buah"));
+    db.collection("stok_buah").get().then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         const row = `
@@ -58,9 +59,9 @@
         `;
         stokBody.innerHTML += row;
       });
-    }
-
-    ambilStokBuah();
+    }).catch((error) => {
+      stokBody.innerHTML = `<tr><td colspan="3">Gagal ambil data: ${error.message}</td></tr>`;
+    });
   </script>
 </body>
 </html>
