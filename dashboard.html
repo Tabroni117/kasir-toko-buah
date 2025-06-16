@@ -1,159 +1,51 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard Stok</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Stok</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="firebase-config.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 15px;
-      margin: 0;
-      background-color: #f7f7f7;
-    }
-
-    h1 {
-      text-align: center;
-      color: #2e8b57;
-      font-size: 22px;
-      margin-bottom: 10px;
-    }
-
-    #statusKoneksi {
-      text-align: center;
-      color: gray;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      font-size: 15px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #e0f0e9;
-      color: #2e8b57;
-    }
-
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background-color: #d9534f;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #c9302c;
-    }
-
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 20px;
-      }
-
-      th, td {
-        font-size: 14px;
-        padding: 8px;
-      }
-
-      button {
-        font-size: 15px;
-        padding: 10px;
-      }
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f4f4f4; }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDHrJ-vDWQerGC-EgkCS3Vu7bd-DHxAVp8",
-      authDomain: "tokobuah-6f881.firebaseapp.com",
-      projectId: "tokobuah-6f881",
-      storageBucket: "tokobuah-6f881.appspot.com",
-      messagingSenderId: "248499367083",
-      appId: "1:248499367083:web:da77df848fc19659cfa823"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const statusEl = document.getElementById("statusKoneksi");
-    const tbody = document.getElementById("isiStok");
-
-    async function tampilkanStok() {
-      try {
-        const querySnapshot = await getDocs(collection(db, "stok_buah"));
-        if (querySnapshot.empty) {
-          statusEl.textContent = "⚠️ Koneksi berhasil, tapi tidak ada data stok.";
-        } else {
-          statusEl.textContent = "✅ Koneksi Firestore berhasil.";
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${data.nama}</td>
-              <td>Rp ${data.harga.toLocaleString("id-ID")}</td>
-              <td>${data.stok}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-        }
-      } catch (e) {
-        statusEl.textContent = "❌ Gagal koneksi ke Firestore.";
-      }
-    }
-
-    tampilkanStok();
-  </script>
 </head>
 <body>
-
-  <h1>Dashboard Stok Buah</h1>
-  <p id="statusKoneksi">Memeriksa koneksi ke database...</p>
-
+  <h1>Daftar Stok Buah</h1>
   <table>
     <thead>
       <tr>
-        <th>Nama Buah</th>
+        <th>Nama</th>
         <th>Harga</th>
         <th>Stok</th>
       </tr>
     </thead>
-    <tbody id="isiStok">
-      <!-- Data stok dari Firestore akan ditampilkan di sini -->
-    </tbody>
-  </table>
+    <tbody id="stok-buah"></tbody>
+  </table>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { firebaseConfig } from './firebase-config.js';
 
-  <button onclick="logout()">Logout</button>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  <script>
-    if (localStorage.getItem('loggedIn') !== 'yes') {
-      alert('Silakan login dulu');
-      window.location.href = 'login.html';
+    const stokBody = document.getElementById("stok-buah");
+
+    async function ambilStokBuah() {
+      const querySnapshot = await getDocs(collection(db, "stok_buah"));
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const row = `<tr>
+          <td>${data.nama}</td>
+          <td>Rp ${data.harga.toLocaleString()}</td>
+          <td>${data.stok}</td>
+        </tr>`;
+        stokBody.innerHTML += row;
+      });
     }
 
-    function logout() {
-      localStorage.removeItem('loggedIn');
-      window.location.href = 'index.html';
-    }
-  </script>
-
-</body>
+    ambilStokBuah();
+  </script></body>
 </html>
