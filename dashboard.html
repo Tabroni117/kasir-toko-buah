@@ -122,7 +122,10 @@
 
     <div class="btn-group">
       <button class="btn btn-red" onclick="hapusSemua()">🗑️</button>
-      <button class="btn btn-green" onclick="tambahBuah()">➕</button>
+      <div style="display: flex; gap: 4px;">
+        <button class="btn btn-green" onclick="simpanSemua()">💾</button>
+        <button class="btn btn-green" onclick="tambahBuah()">➕</button>
+      </div>
     </div>
 
     <button class="btn btn-green refresh" onclick="loadData()">🔄 Refresh</button>
@@ -249,6 +252,36 @@
         await batch.commit();
         loadData();
       }
+    }
+
+    async function simpanSemua() {
+      const rows = document.querySelectorAll("#buahTable tr");
+
+      for (const row of rows) {
+        const editBtn = row.querySelector("button.btn-green");
+        if (!editBtn) continue;
+
+        const idMatch = editBtn.getAttribute("onclick").match(/'(.+)'/);
+        if (!idMatch) continue;
+        const id = idMatch[1];
+
+        const inputNama = document.getElementById("input-nama-" + id);
+        const inputHarga = document.getElementById("input-harga-" + id);
+        const inputStok = document.getElementById("input-stok-" + id);
+
+        if (inputNama && inputHarga && inputStok) {
+          const newNama = inputNama.value.trim();
+          const newHarga = parseInt(inputHarga.value);
+          const newStok = parseInt(inputStok.value);
+
+          if (newNama && !isNaN(newHarga) && !isNaN(newStok)) {
+            await buahRef.doc(id).update({ nama: newNama, harga: newHarga, stok: newStok });
+          }
+        }
+      }
+
+      alert("✅ Semua data berhasil disimpan!");
+      loadData();
     }
 
     loadData();
