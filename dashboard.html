@@ -1,142 +1,184 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Stok Buah</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>📦 Daftar Stok Buah</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #eaffea;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1fff0;
       margin: 0;
       padding: 20px;
     }
-    h2 {
-      text-align: left;
-      margin-bottom: 10px;
+
+    h1 {
+      text-align: center;
+      color: #2e7d32;
     }
-    .form-input {
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .form {
       display: flex;
-      gap: 5px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-    input {
-      padding: 6px;
-      font-size: 14px;
-    }
-    button {
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-    }
-    th, td {
-      padding: 8px;
+
+    .form input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      text-align: left;
     }
-    th {
-      background: #c8e6c9;
-    }
-    .btn-edit {
-      background-color: #ffd54f;
-      border: none;
-    }
-    .btn-delete {
-      background-color: #ef5350;
+
+    .form button {
+      margin-top: 10px;
+      background-color: #66bb6a;
       color: white;
       border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
     }
+
+    .buah-card {
+      background: #e0f2f1;
+      border: 1px solid #b2dfdb;
+      border-radius: 10px;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+    }
+
+    .buah-card h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .buah-info {
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .action-buttons button {
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .edit-btn {
+      background: #ffee58;
+    }
+
+    .hapus-btn {
+      background: #ef5350;
+      color: white;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: #c8e6c9;
+      padding: 10px 15px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: black;
+    }
+
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>📦 Daftar Stok Buah</h1>
+    <a href="index.html" class="back-btn">⬅️ Kembali</a>
 
-  <h2>📦 Daftar Stok Buah</h2>
+    <div class="form">
+      <input type="text" id="newName" placeholder="Nama Buah">
+      <input type="number" id="newPrice" placeholder="Harga">
+      <input type="number" id="newStock" placeholder="Stok">
+      <button onclick="tambahBuah()">+ Tambah</button>
+    </div>
 
-  <div class="form-input">
-    <input type="text" id="nama" placeholder="Nama Buah" />
-    <input type="number" id="harga" placeholder="Harga" />
-    <input type="number" id="stok" placeholder="Stok" />
-    <button onclick="tambahBuah()" style="background:#4CAF50;color:white;">+ Tambah</button>
+    <div id="buahList"></div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Nama</th>
-        <th>Harga</th>
-        <th>Stok</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody id="tabel-buah">
-    </tbody>
-  </table>
-
   <script>
-    let buahList = [];
+    let buahData = [];
 
-    function renderTabel() {
-      const tbody = document.getElementById("tabel-buah");
-      tbody.innerHTML = "";
-      buahList.forEach((buah, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = \`
-          <td>\${buah.nama}</td>
-          <td>Rp\${buah.harga}</td>
-          <td>\${buah.stok}</td>
-          <td>
-            <button class="btn-edit" onclick="editBuah(\${index})">✏️ Edit</button>
-            <button class="btn-delete" onclick="hapusBuah(\${index})">🗑 Hapus</button>
-          </td>
-        \`;
-        tbody.appendChild(row);
+    function renderData() {
+      const list = document.getElementById("buahList");
+      list.innerHTML = "";
+
+      buahData.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "buah-card";
+
+        card.innerHTML = `
+          <h3>${item.nama}</h3>
+          <div class="buah-info">Harga: Rp${item.harga}</div>
+          <div class="buah-info">Stok: ${item.stok}</div>
+          <div class="action-buttons">
+            <button class="edit-btn" onclick="editBuah(${index})">✏️ Edit</button>
+            <button class="hapus-btn" onclick="hapusBuah(${index})">🗑️ Hapus</button>
+          </div>
+        `;
+
+        list.appendChild(card);
       });
     }
 
     function tambahBuah() {
-      const nama = document.getElementById("nama").value;
-      const harga = document.getElementById("harga").value;
-      const stok = document.getElementById("stok").value;
+      const nama = document.getElementById("newName").value.trim();
+      const harga = parseInt(document.getElementById("newPrice").value);
+      const stok = parseInt(document.getElementById("newStock").value);
 
-      if (nama && harga && stok) {
-        buahList.push({ nama, harga, stok });
-        renderTabel();
-        document.getElementById("nama").value = "";
-        document.getElementById("harga").value = "";
-        document.getElementById("stok").value = "";
+      if (nama && !isNaN(harga) && !isNaN(stok)) {
+        buahData.push({ nama, harga, stok });
+        document.getElementById("newName").value = "";
+        document.getElementById("newPrice").value = "";
+        document.getElementById("newStock").value = "";
+        renderData();
+      } else {
+        alert("Isi semua data dengan benar!");
       }
     }
 
     function editBuah(index) {
-      const buah = buahList[index];
-      const namaBaru = prompt("Edit Nama:", buah.nama);
-      const hargaBaru = prompt("Edit Harga:", buah.harga);
-      const stokBaru = prompt("Edit Stok:", buah.stok);
+      const item = buahData[index];
+      const namaBaru = prompt("Edit nama:", item.nama);
+      const hargaBaru = prompt("Edit harga:", item.harga);
+      const stokBaru = prompt("Edit stok:", item.stok);
 
-      if (namaBaru !== null && hargaBaru !== null && stokBaru !== null) {
-        buahList[index] = {
+      if (namaBaru && !isNaN(hargaBaru) && !isNaN(stokBaru)) {
+        buahData[index] = {
           nama: namaBaru,
-          harga: hargaBaru,
-          stok: stokBaru
+          harga: parseInt(hargaBaru),
+          stok: parseInt(stokBaru),
         };
-        renderTabel();
+        renderData();
       }
     }
 
     function hapusBuah(index) {
       if (confirm("Yakin ingin menghapus buah ini?")) {
-        buahList.splice(index, 1);
-        renderTabel();
+        buahData.splice(index, 1);
+        renderData();
       }
     }
-  </script>
 
+    renderData();
+  </script>
 </body>
 </html>
