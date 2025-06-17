@@ -1,184 +1,140 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>📦 Daftar Stok Buah</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stok Buah</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f1fff0;
+      font-family: sans-serif;
+      background: #eaffdc;
       margin: 0;
       padding: 20px;
     }
-
     h1 {
-      text-align: center;
-      color: #2e7d32;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-    }
-
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .form input {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    .form button {
-      margin-top: 10px;
-      background-color: #66bb6a;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .buah-card {
-      background: #e0f2f1;
-      border: 1px solid #b2dfdb;
-      border-radius: 10px;
-      padding: 10px 15px;
+      color: green;
       margin-bottom: 10px;
     }
-
-    .buah-card h3 {
-      margin: 0;
-      font-size: 18px;
+    .container {
+      max-width: 360px;
+      margin-left: 0;
     }
-
-    .buah-info {
+    input {
+      width: 100%;
+      padding: 6px;
+      margin: 4px 0;
       font-size: 14px;
-      margin: 5px 0;
+      box-sizing: border-box;
     }
-
-    .action-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .action-buttons button {
+    button {
+      padding: 8px;
+      width: 100%;
+      background-color: #4CAF50;
+      color: white;
       border: none;
-      padding: 5px 10px;
-      border-radius: 6px;
+      font-size: 14px;
+      margin-top: 5px;
       cursor: pointer;
     }
-
-    .edit-btn {
-      background: #ffee58;
+    table {
+      width: 100%;
+      margin-top: 15px;
+      background: #d4f8c4;
+      border-collapse: collapse;
+      font-size: 13px;
     }
-
-    .hapus-btn {
-      background: #ef5350;
-      color: white;
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
     }
-
-    .back-btn {
-      display: inline-block;
-      margin-bottom: 20px;
-      background: #c8e6c9;
-      padding: 10px 15px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: black;
+    #loading {
+      font-style: italic;
+      font-size: 13px;
+      color: #555;
     }
-
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📦 Daftar Stok Buah</h1>
-    <a href="index.html" class="back-btn">⬅️ Kembali</a>
+    <h1>📦 Stok Buah</h1>
 
-    <div class="form">
-      <input type="text" id="newName" placeholder="Nama Buah">
-      <input type="number" id="newPrice" placeholder="Harga">
-      <input type="number" id="newStock" placeholder="Stok">
-      <button onclick="tambahBuah()">+ Tambah</button>
-    </div>
+    <input type="text" id="newName" placeholder="Nama Buah" />
+    <input type="number" id="newPrice" placeholder="Harga" />
+    <input type="number" id="newStock" placeholder="Stok" />
+    <button onclick="tambahBuah()">Tambah</button>
 
-    <div id="buahList"></div>
+    <div id="loading" style="display:none;">⏳ Memuat data...</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Harga</th>
+          <th>Stok</th>
+          <th>🗑️</th>
+        </tr>
+      </thead>
+      <tbody id="buahTable"></tbody>
+    </table>
   </div>
 
-  <script>
-    let buahData = [];
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, addDoc,
+      doc, updateDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    function renderData() {
-      const list = document.getElementById("buahList");
-      list.innerHTML = "";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
+    };
 
-      buahData.forEach((item, index) => {
-        const card = document.createElement("div");
-        card.className = "buah-card";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const buahRef = collection(db, "buah");
 
-        card.innerHTML = `
-          <h3>${item.nama}</h3>
-          <div class="buah-info">Harga: Rp${item.harga}</div>
-          <div class="buah-info">Stok: ${item.stok}</div>
-          <div class="action-buttons">
-            <button class="edit-btn" onclick="editBuah(${index})">✏️ Edit</button>
-            <button class="hapus-btn" onclick="hapusBuah(${index})">🗑️ Hapus</button>
-          </div>
+    async function loadData() {
+      document.getElementById("loading").style.display = "block";
+      const snapshot = await getDocs(buahRef);
+      document.getElementById("loading").style.display = "none";
+
+      const table = document.getElementById("buahTable");
+      table.innerHTML = "";
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input value="${data.nama}" onchange="editField('${id}', 'nama', this.value)" style="width: 80px;" /></td>
+          <td><input type="number" value="${data.harga}" onchange="editField('${id}', 'harga', this.value)" style="width: 60px;" /></td>
+          <td><input type="number" value="${data.stok}" onchange="editField('${id}', 'stok', this.value)" style="width: 60px;" /></td>
+          <td><button onclick="hapusBuah('${id}')">🗑️</button></td>
         `;
-
-        list.appendChild(card);
+        table.appendChild(row);
       });
     }
 
-    function tambahBuah() {
+    window.tambahBuah = async function () {
       const nama = document.getElementById("newName").value.trim();
       const harga = parseInt(document.getElementById("newPrice").value);
       const stok = parseInt(document.getElementById("newStock").value);
 
       if (nama && !isNaN(harga) && !isNaN(stok)) {
-        buahData.push({ nama, harga, stok });
+        await addDoc(buahRef, { nama, harga, stok });
         document.getElementById("newName").value = "";
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
-        renderData();
+        loadData();
       } else {
-        alert("Isi semua data dengan benar!");
+        alert("Isi semua kolom dengan benar!");
       }
     }
-
-    function editBuah(index) {
-      const item = buahData[index];
-      const namaBaru = prompt("Edit nama:", item.nama);
-      const hargaBaru = prompt("Edit harga:", item.harga);
-      const stokBaru = prompt("Edit stok:", item.stok);
-
-      if (namaBaru && !isNaN(hargaBaru) && !isNaN(stokBaru)) {
-        buahData[index] = {
-          nama: namaBaru,
-          harga: parseInt(hargaBaru),
-          stok: parseInt(stokBaru),
-        };
-        renderData();
-      }
-    }
-
-    function hapusBuah(index) {
-      if (confirm("Yakin ingin menghapus buah ini?")) {
-        buahData.splice(index, 1);
-        renderData();
-      }
-    }
-
-    renderData();
-  </script>
-</body>
-</html>
