@@ -1,103 +1,89 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stok Buah</title>
   <style>
     body {
       margin: 0;
       font-family: 'Arial', sans-serif;
-      background-color: #f5f5f5;
-    }
-
-    header {
-      background-color: #f44336;
-      color: white;
-      text-align: center;
-      padding: 15px 10px;
-      font-size: 18px;
-      font-weight: bold;
+      background: #fefefe;
     }
 
     .container {
+      max-width: 360px;
+      margin: 20px auto;
       padding: 10px;
-      max-width: 600px;
-      margin: auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 16px;
+      color: #4caf50;
+      margin-bottom: 10px;
+    }
+
+    input, button {
+      font-size: 12px;
+      padding: 6px;
+      margin: 2px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #388e3c;
     }
 
     table {
       width: 100%;
-      background-color: white;
+      font-size: 12px;
       border-collapse: collapse;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-top: 10px;
     }
 
     th, td {
-      padding: 8px;
-      font-size: 14px;
+      padding: 6px;
       text-align: center;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #ddd;
     }
 
-    th {
-      background-color: #f1f1f1;
-      font-weight: bold;
-    }
-
-    td input {
-      width: 60px;
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .form-input {
-      margin-bottom: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    }
-
-    .form-input input, .form-input button {
-      margin: 4px 0;
-      font-size: 14px;
-      padding: 8px;
-      flex: 1 1 30%;
-      margin-right: 5px;
-    }
-
-    .form-input button {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      cursor: pointer;
-      flex: 1 1 100%;
-    }
-
-    .form-input button:hover {
-      background-color: #388e3c;
+    td button {
+      background: #f44336;
+      padding: 3px 6px;
+      font-size: 10px;
+      border-radius: 3px;
     }
 
     footer {
       text-align: center;
-      font-size: 12px;
-      color: #888;
-      padding: 10px;
+      font-size: 11px;
+      margin-top: 10px;
+      color: #999;
     }
   </style>
 </head>
 <body>
-  <header>📦 Stok Buah Indonesia</header>
 
   <div class="container">
-    <div class="form-input">
-      <input type="text" id="nama" placeholder="Nama Buah">
-      <input type="number" id="harga" placeholder="Harga">
-      <input type="number" id="stok" placeholder="Stok">
-      <button onclick="tambahBuah()">+ Tambah</button>
-    </div>
+    <h2>📦 Stok Buah</h2>
+
+    <input type="text" id="nama" placeholder="Nama Buah">
+    <input type="number" id="harga" placeholder="Harga (Rp)">
+    <input type="number" id="stok" placeholder="Stok">
+    <button onclick="tambahBuah()">+ Tambah</button>
 
     <table>
       <thead>
@@ -105,47 +91,46 @@
           <th>Nama</th>
           <th>Harga</th>
           <th>Stok</th>
-          <th>Aksi</th>
+          <th>❌</th>
         </tr>
       </thead>
       <tbody id="tabelBuah">
-        <!-- Data buah ditampilkan di sini -->
+        <!-- Data buah akan tampil di sini -->
       </tbody>
     </table>
   </div>
 
-  <footer>© 2025 Rujak Buah Indonesia</footer>
+  <footer>© Rujak Buah Indonesia</footer>
 
   <script>
-    const tabel = document.getElementById("tabelBuah");
-
     function tambahBuah() {
-      const nama = document.getElementById("nama").value;
-      const harga = document.getElementById("harga").value;
-      const stok = document.getElementById("stok").value;
+      const nama = document.getElementById('nama').value;
+      const harga = document.getElementById('harga').value;
+      const stok = document.getElementById('stok').value;
 
-      if (!nama || !harga || !stok) return alert("Isi semua kolom!");
+      if (!nama || !harga || !stok) {
+        alert("Isi semua kolom!");
+        return;
+      }
 
-      const tr = document.createElement("tr");
+      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${nama}</td>
         <td>Rp ${parseInt(harga).toLocaleString()}</td>
         <td>${stok}</td>
-        <td><button onclick="hapusRow(this)">🗑</button></td>
+        <td><button onclick="hapus(this)">🗑</button></td>
       `;
-      tabel.appendChild(tr);
+      document.getElementById('tabelBuah').appendChild(tr);
 
-      // Reset input
-      document.getElementById("nama").value = "";
-      document.getElementById("harga").value = "";
-      document.getElementById("stok").value = "";
+      document.getElementById('nama').value = '';
+      document.getElementById('harga').value = '';
+      document.getElementById('stok').value = '';
     }
 
-    function hapusRow(button) {
-      if (confirm("Yakin hapus buah ini?")) {
-        button.parentElement.parentElement.remove();
-      }
+    function hapus(el) {
+      el.parentElement.parentElement.remove();
     }
   </script>
+
 </body>
 </html>
