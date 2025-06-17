@@ -141,19 +141,27 @@
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
         loadData();
-      } else {
-        alert("Isi semua kolom dengan benar!");
-      }
+    } else {
+      alert("Isi semua kolom dengan benar!");
     }
+  }
 
-    window.hapusBuah = async function (id) {
-      const docRef = doc(db, "buah", id);
-      await deleteDoc(docRef);
-      loadData();
-    }
-
-    // Panggil saat halaman dibuka
+  window.hapusBuah = async function(id) {
+    await deleteDoc(doc(buahRef, id));
     loadData();
+  }
+
+  window.editField = async function(id, field, value) {
+    const ref = doc(buahRef, id);
+    const update = {};
+    update[field] = field === 'harga' || field === 'stok' ? parseInt(value) : value;
+    await updateDoc(ref, update);
+  }
+
+  // ⬇️ Tambahan ini supaya data langsung tampil
+  loadData();
+
+</script>
   </script>
 </body>
 </html>
