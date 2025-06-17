@@ -127,108 +127,126 @@
   <!-- FIREBASE SDK + SCRIPT -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-      measurementId: "G-7CPE2DB2BV"
-    };
+  <!-- ... HTML dan CSS tetap sama ... -->
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const buahRef = db.collection("buah");
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
 
-    async function loadData() {
-      document.getElementById("loading").style.display = "block";
-      const snapshot = await buahRef.get();
-      document.getElementById("loading").style.display = "none";
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const buahRef = db.collection("buah");
 
-      const table = document.getElementById("buahTable");
-      table.innerHTML = "";
+  async function loadData() {
+    document.getElementById("loading").style.display = "block";
+    const snapshot = await buahRef.get();
+    document.getElementById("loading").style.display = "none";
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const id = doc.id;
+    const table = document.getElementById("buahTable");
+    table.innerHTML = "";
 
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><input id="nama-${id}" value="${data.nama}" /></td>
-          <td><input id="harga-${id}" type="number" value="${data.harga}" /></td>
-          <td><input id="stok-${id}" type="number" value="${data.stok}" /></td>
-          <td style="display:flex; gap:4px; justify-content:center;">
-            <button class="btn btn-red" style="padding:4px;" onclick="hapusBuah('${id}')">❌</button>
-            <button class="btn btn-green" style="padding:4px;" onclick="simpanEdit('${id}')">✏️</button>
-          </td>
-        `;
-        table.appendChild(row);
-      });
-    }
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const id = doc.id;
 
-    async function simpanEdit(id) {
-      try {
-        const namaEl = document.getElementById(`nama-${id}`);
-        const hargaEl = document.getElementById(`harga-${id}`);
-        const stokEl = document.getElementById(`stok-${id}`);
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td id="nama-${id}">${data.nama}</td>
+        <td id="harga-${id}">${data.harga}</td>
+        <td id="stok-${id}">${data.stok}</td>
+        <td style="display:flex; gap:4px; justify-content:center;">
+          <button class="btn btn-red" style="padding:4px;" onclick="hapusBuah('${id}')">❌</button>
+          <button class="btn btn-green" style="padding:4px;" onclick="toggleEdit('${id}')">✏️</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
+  }
 
-        if (!namaEl || !hargaEl || !stokEl) {
-          alert("⚠️ Data tidak ditemukan di halaman!");
-          return;
-        }
+  async function toggleEdit(id) {
+    const namaCell = document.getElementById("nama-" + id);
+    const hargaCell = document.getElementById("harga-" + id);
+    const stokCell = document.getElementById("stok-" + id);
+    const editBtn = namaCell.parentElement.querySelector(".btn-green");
 
-        const nama = namaEl.value.trim();
-        const harga = parseInt(hargaEl.value);
-        const stok = parseInt(stokEl.value);
+    // Jika saat ini mode teks ➜ ubah ke input
+    if (!namaCell.querySelector("input")) {
+      const currentNama = namaCell.innerText;
+      const currentHarga = hargaCell.innerText;
+      const currentStok = stokCell.innerText;
 
-        if (nama && !isNaN(harga) && !isNaN(stok)) {
-          await buahRef.doc(id).update({ nama, harga, stok });
-          alert("✅ Data berhasil diperbarui!");
-          loadData();
-        } else {
-          alert("⚠️ Mohon isi semua data dengan benar.");
-        }
-      } catch (error) {
-        alert("❌ Terjadi kesalahan saat menyimpan.");
-        console.error(error);
-      }
-    }
+      namaCell.innerHTML = `<input type="text" id="input-nama-${id}" value="${currentNama}" />`;
+      hargaCell.innerHTML = `<input type="number" id="input-harga-${id}" value="${currentHarga}" />`;
+      stokCell.innerHTML = `<input type="number" id="input-stok-${id}" value="${currentStok}" />`;
+      editBtn.textContent = "💾";
+    } 
+    // Jika sudah input ➜ simpan ke Firestore
+    else {
+      const newNama = document.getElementById("input-nama-" + id).value.trim();
+      const newHarga = parseInt(document.getElementById("input-harga-" + id).value);
+      const newStok = parseInt(document.getElementById("input-stok-" + id).value);
 
-    window.simpanEdit = simpanEdit;
+      if (newNama && !isNaN(newHarga) && !isNaN(newStok)) {
+        await buahRef.doc(id).update({
+          nama: newNama,
+          harga: newHarga,
+          stok: newStok
+        });
 
-    async function tambahBuah() {
-      const nama = document.getElementById("newName").value.trim();
-      const harga = parseInt(document.getElementById("newPrice").value);
-      const stok = parseInt(document.getElementById("newStock").value);
+        namaCell.innerHTML = newNama;
+        hargaCell.innerHTML = newHarga;
+        stokCell.innerHTML = newStok;
+        editBtn.textContent = "✏️";
 
-      if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await buahRef.add({ nama, harga, stok });
-        document.getElementById("newName").value = "";
-        document.getElementById("newPrice").value = "";
-        document.getElementById("newStock").value = "";
-        loadData();
+        alert("✅ Data berhasil diperbarui!");
       } else {
-        alert("Isi semua kolom dengan benar!");
+        alert("⚠️ Cek kembali data yang kamu isi!");
       }
     }
+  }
 
-    async function hapusBuah(id) {
-      await buahRef.doc(id).delete();
+  window.toggleEdit = toggleEdit;
+
+  async function tambahBuah() {
+    const nama = document.getElementById("newName").value.trim();
+    const harga = parseInt(document.getElementById("newPrice").value);
+    const stok = parseInt(document.getElementById("newStock").value);
+
+    if (nama && !isNaN(harga) && !isNaN(stok)) {
+      await buahRef.add({ nama, harga, stok });
+      document.getElementById("newName").value = "";
+      document.getElementById("newPrice").value = "";
+      document.getElementById("newStock").value = "";
+      loadData();
+    } else {
+      alert("Isi semua kolom dengan benar!");
+    }
+  }
+
+  async function hapusBuah(id) {
+    await buahRef.doc(id).delete();
+    loadData();
+  }
+
+  async function hapusSemua() {
+    if (confirm("Yakin ingin menghapus SEMUA data buah?")) {
+      const snapshot = await buahRef.get();
+      const batch = db.batch();
+      snapshot.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
       loadData();
     }
+  }
 
-    async function hapusSemua() {
-      if (confirm("Yakin ingin menghapus SEMUA data buah?")) {
-        const snapshot = await buahRef.get();
-        const batch = db.batch();
-        snapshot.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        loadData();
-      }
-    }
-
+  loadData();
+</script>
     loadData();
   </script>
 </body>
