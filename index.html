@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
-    /* CSS dipersingkat, tetap sama */
     body { font-family: 'Poppins', sans-serif; background: #f0f8ff; margin: 0; padding: 20px; }
     header { display: flex; justify-content: space-between; align-items: center; background: #4CAF50; color: white; padding: 15px 20px; border-radius: 10px; flex-wrap: wrap; }
     .logo-container { display: flex; align-items: center; }
@@ -45,6 +44,9 @@
   </label>
   <label>Harga Satuan (Rp)
     <input type="number" id="harga" placeholder="Harga otomatis" readonly>
+  </label>
+  <label>Satuan
+    <input type="text" id="satuan" placeholder="Satuan otomatis" readonly>
   </label>
   <label>Jumlah
     <input type="number" id="jumlah" placeholder="Contoh: 2">
@@ -88,7 +90,6 @@
 </div>
 
 <script>
-  // Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
     authDomain: "tokobuahkasir.firebaseapp.com",
@@ -106,8 +107,8 @@
 
   const selectNama = document.getElementById("nama");
   const inputHarga = document.getElementById("harga");
+  const inputSatuan = document.getElementById("satuan");
 
-  // Ambil daftar buah dari Firestore
   db.collection("stok_buah").get().then(snapshot => {
     snapshot.forEach(doc => {
       const data = doc.data();
@@ -120,10 +121,10 @@
     });
   });
 
-  // Saat nama buah dipilih, isi harga otomatis
   selectNama.addEventListener("change", () => {
     const selected = buahData.find(buah => buah.nama === selectNama.value);
     inputHarga.value = selected ? selected.harga : '';
+    inputSatuan.value = selected ? selected.satuan : '';
   });
 
   function tambahItem() {
