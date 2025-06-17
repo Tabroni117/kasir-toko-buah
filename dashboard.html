@@ -19,13 +19,18 @@
       max-width: 360px;
       margin-left: 0;
     }
-    input {
-      width: 100%;
-      padding: 6px;
-      margin: 4px 0;
-      font-size: 14px;
-      box-sizing: border-box;
+
+    .input-row {
+      display: flex;
+      gap: 6px;
     }
+
+    .input-row input {
+      flex: 1;
+      font-size: 13px;
+      padding: 4px;
+    }
+
     button {
       padding: 8px;
       width: 100%;
@@ -59,9 +64,11 @@
   <div class="container">
     <h1>📦 Stok Buah</h1>
 
-    <input type="text" id="newName" placeholder="Nama Buah" />
-    <input type="number" id="newPrice" placeholder="Harga" />
-    <input type="number" id="newStock" placeholder="Stok" />
+    <div class="input-row">
+      <input type="text" id="newName" placeholder="Nama Buah" />
+      <input type="number" id="newPrice" placeholder="Harga" />
+      <input type="number" id="newStock" placeholder="Stok" />
+    </div>
     <button onclick="tambahBuah()">Tambah</button>
 
     <div id="loading" style="display:none;">⏳ Memuat data...</div>
@@ -141,27 +148,24 @@
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
         loadData();
-    } else {
-      alert("Isi semua kolom dengan benar!");
+      } else {
+        alert("Isi semua kolom dengan benar!");
+      }
     }
-  }
 
-  window.hapusBuah = async function(id) {
-    await deleteDoc(doc(buahRef, id));
+    window.hapusBuah = async function(id) {
+      await deleteDoc(doc(buahRef, id));
+      loadData();
+    }
+
+    window.editField = async function(id, field, value) {
+      const ref = doc(buahRef, id);
+      const update = {};
+      update[field] = field === 'harga' || field === 'stok' ? parseInt(value) : value;
+      await updateDoc(ref, update);
+    }
+
     loadData();
-  }
-
-  window.editField = async function(id, field, value) {
-    const ref = doc(buahRef, id);
-    const update = {};
-    update[field] = field === 'harga' || field === 'stok' ? parseInt(value) : value;
-    await updateDoc(ref, update);
-  }
-
-  // ⬇️ Tambahan ini supaya data langsung tampil
-  loadData();
-
-</script>
   </script>
 </body>
 </html>
