@@ -123,6 +123,13 @@
       });
     }
 
+    async function editField(id, field, value) {
+      const docRef = doc(db, "buah", id);
+      const update = {};
+      update[field] = field === "harga" || field === "stok" ? parseInt(value) : value;
+      await updateDoc(docRef, update);
+    }
+
     window.tambahBuah = async function () {
       const nama = document.getElementById("newName").value.trim();
       const harga = parseInt(document.getElementById("newPrice").value);
@@ -138,3 +145,15 @@
         alert("Isi semua kolom dengan benar!");
       }
     }
+
+    window.hapusBuah = async function (id) {
+      const docRef = doc(db, "buah", id);
+      await deleteDoc(docRef);
+      loadData();
+    }
+
+    // Panggil saat halaman dibuka
+    loadData();
+  </script>
+</body>
+</html>
