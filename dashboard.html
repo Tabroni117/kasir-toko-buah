@@ -1,129 +1,142 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Stok Buah</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #ecfce9;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            padding: 10px 20px;
-        }
-        h2 {
-            text-align: left;
-            margin-top: 10px;
-        }
-        .form-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin: 10px 0;
-        }
-        .form-bar input {
-            padding: 5px;
-            font-size: 14px;
-            width: 100px;
-        }
-        .form-bar button {
-            padding: 6px 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-        }
-        .buah-item {
-            background-color: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-        }
-        .buah-item h3 {
-            margin: 0 0 5px 0;
-        }
-        .buah-item .btn {
-            margin-right: 5px;
-            padding: 5px 8px;
-            font-size: 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .edit-btn {
-            background-color: #ffc107;
-        }
-        .hapus-btn {
-            background-color: #f44336;
-            color: white;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stok Buah</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eaffea;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: left;
+      margin-bottom: 10px;
+    }
+    .form-input {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    input {
+      padding: 6px;
+      font-size: 14px;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background: #c8e6c9;
+    }
+    .btn-edit {
+      background-color: #ffd54f;
+      border: none;
+    }
+    .btn-delete {
+      background-color: #ef5350;
+      color: white;
+      border: none;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>📦 Daftar Stok Buah</h2>
-        <div class="form-bar">
-            <input type="text" id="nama" placeholder="Nama Buah" />
-            <input type="number" id="harga" placeholder="Harga" />
-            <input type="number" id="stok" placeholder="Stok" />
-            <button onclick="tambahData()">+ Tambah</button>
-        </div>
-        <div id="dataList"></div>
-    </div>
 
-    <script>
-        let data = [];
+  <h2>📦 Daftar Stok Buah</h2>
 
-        function renderData() {
-            const list = document.getElementById("dataList");
-            list.innerHTML = "";
-            data.forEach((item, index) => {
-                const div = document.createElement("div");
-                div.className = "buah-item";
-                div.innerHTML = `
-                    <h3>${item.nama}</h3>
-                    <p>Harga: Rp${item.harga}</p>
-                    <p>Stok: ${item.stok}</p>
-                    <button class="btn edit-btn" onclick="editData(${index})">✏️ Edit</button>
-                    <button class="btn hapus-btn" onclick="hapusData(${index})">🗑️ Hapus</button>
-                `;
-                list.appendChild(div);
-            });
-        }
+  <div class="form-input">
+    <input type="text" id="nama" placeholder="Nama Buah" />
+    <input type="number" id="harga" placeholder="Harga" />
+    <input type="number" id="stok" placeholder="Stok" />
+    <button onclick="tambahBuah()" style="background:#4CAF50;color:white;">+ Tambah</button>
+  </div>
 
-        function tambahData() {
-            const nama = document.getElementById("nama").value.trim();
-            const harga = document.getElementById("harga").value.trim();
-            const stok = document.getElementById("stok").value.trim();
-            if (nama && harga && stok) {
-                data.push({ nama, harga, stok });
-                document.getElementById("nama").value = "";
-                document.getElementById("harga").value = "";
-                document.getElementById("stok").value = "";
-                renderData();
-            }
-        }
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga</th>
+        <th>Stok</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="tabel-buah">
+    </tbody>
+  </table>
 
-        function hapusData(index) {
-            data.splice(index, 1);
-            renderData();
-        }
+  <script>
+    let buahList = [];
 
-        function editData(index) {
-            const item = data[index];
-            const nama = prompt("Edit Nama Buah:", item.nama);
-            const harga = prompt("Edit Harga:", item.harga);
-            const stok = prompt("Edit Stok:", item.stok);
-            if (nama && harga && stok) {
-                data[index] = { nama, harga, stok };
-                renderData();
-            }
-        }
-    </script>
+    function renderTabel() {
+      const tbody = document.getElementById("tabel-buah");
+      tbody.innerHTML = "";
+      buahList.forEach((buah, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = \`
+          <td>\${buah.nama}</td>
+          <td>Rp\${buah.harga}</td>
+          <td>\${buah.stok}</td>
+          <td>
+            <button class="btn-edit" onclick="editBuah(\${index})">✏️ Edit</button>
+            <button class="btn-delete" onclick="hapusBuah(\${index})">🗑 Hapus</button>
+          </td>
+        \`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function tambahBuah() {
+      const nama = document.getElementById("nama").value;
+      const harga = document.getElementById("harga").value;
+      const stok = document.getElementById("stok").value;
+
+      if (nama && harga && stok) {
+        buahList.push({ nama, harga, stok });
+        renderTabel();
+        document.getElementById("nama").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("stok").value = "";
+      }
+    }
+
+    function editBuah(index) {
+      const buah = buahList[index];
+      const namaBaru = prompt("Edit Nama:", buah.nama);
+      const hargaBaru = prompt("Edit Harga:", buah.harga);
+      const stokBaru = prompt("Edit Stok:", buah.stok);
+
+      if (namaBaru !== null && hargaBaru !== null && stokBaru !== null) {
+        buahList[index] = {
+          nama: namaBaru,
+          harga: hargaBaru,
+          stok: stokBaru
+        };
+        renderTabel();
+      }
+    }
+
+    function hapusBuah(index) {
+      if (confirm("Yakin ingin menghapus buah ini?")) {
+        buahList.splice(index, 1);
+        renderTabel();
+      }
+    }
+  </script>
+
 </body>
 </html>
