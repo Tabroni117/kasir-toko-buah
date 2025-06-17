@@ -1,194 +1,130 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Stok Buah</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f0fff0;
-      margin: 0;
-      padding: 10px;
-    }
-
-    h2 {
-      color: #2e7d32;
-      margin-left: 10px;
-    }
-
-    .container {
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
-      padding: 10px;
-    }
-
-    table {
-      font-size: 14px;
-      min-width: 280px;
-      border-collapse: collapse;
-      background: #ffffff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px 8px;
-      text-align: center;
-    }
-
-    th {
-      background: #c8e6c9;
-      color: #2e7d32;
-    }
-
-    input[type="text"], input[type="number"] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 4px;
-      font-size: 13px;
-    }
-
-    .form-input {
-      width: 280px;
-      margin-top: 8px;
-    }
-
-    .form-input input {
-      margin-bottom: 6px;
-    }
-
-    button {
-      background: #81c784;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      cursor: pointer;
-      border-radius: 3px;
-      font-size: 13px;
-    }
-
-    button:hover {
-      background: #66bb6a;
-    }
-
-    .edit-btn {
-      background: #ffb300;
-    }
-
-    .delete-btn {
-      background: #e57373;
-    }
-
-    #loading {
-      font-size: 12px;
-      font-style: italic;
-      color: #999;
-      margin: 10px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Stok Buah</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ecfce9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            padding: 10px 20px;
+        }
+        h2 {
+            text-align: left;
+            margin-top: 10px;
+        }
+        .form-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .form-bar input {
+            padding: 5px;
+            font-size: 14px;
+            width: 100px;
+        }
+        .form-bar button {
+            padding: 6px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        .buah-item {
+            background-color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+        }
+        .buah-item h3 {
+            margin: 0 0 5px 0;
+        }
+        .buah-item .btn {
+            margin-right: 5px;
+            padding: 5px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #ffc107;
+        }
+        .hapus-btn {
+            background-color: #f44336;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-  <h2>📦 Stok Buah</h2>
-
-  <div class="container">
-    <div>
-      <table>
-        <thead>
-          <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="buahTable"></tbody>
-      </table>
-
-      <div class="form-input">
-        <input type="text" id="newName" placeholder="Nama Buah">
-        <input type="number" id="newPrice" placeholder="Harga">
-        <input type="number" id="newStock" placeholder="Stok">
-        <button onclick="tambahBuah()">➕ Tambah</button>
-      </div>
-
-      <div id="loading">⏳ Memuat data...</div>
+    <div class="container">
+        <h2>📦 Daftar Stok Buah</h2>
+        <div class="form-bar">
+            <input type="text" id="nama" placeholder="Nama Buah" />
+            <input type="number" id="harga" placeholder="Harga" />
+            <input type="number" id="stok" placeholder="Stok" />
+            <button onclick="tambahData()">+ Tambah</button>
+        </div>
+        <div id="dataList"></div>
     </div>
-  </div>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import {
-      getFirestore, collection, getDocs, addDoc,
-      doc, updateDoc, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    <script>
+        let data = [];
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
+        function renderData() {
+            const list = document.getElementById("dataList");
+            list.innerHTML = "";
+            data.forEach((item, index) => {
+                const div = document.createElement("div");
+                div.className = "buah-item";
+                div.innerHTML = `
+                    <h3>${item.nama}</h3>
+                    <p>Harga: Rp${item.harga}</p>
+                    <p>Stok: ${item.stok}</p>
+                    <button class="btn edit-btn" onclick="editData(${index})">✏️ Edit</button>
+                    <button class="btn hapus-btn" onclick="hapusData(${index})">🗑️ Hapus</button>
+                `;
+                list.appendChild(div);
+            });
+        }
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const buahRef = collection(db, "buah");
+        function tambahData() {
+            const nama = document.getElementById("nama").value.trim();
+            const harga = document.getElementById("harga").value.trim();
+            const stok = document.getElementById("stok").value.trim();
+            if (nama && harga && stok) {
+                data.push({ nama, harga, stok });
+                document.getElementById("nama").value = "";
+                document.getElementById("harga").value = "";
+                document.getElementById("stok").value = "";
+                renderData();
+            }
+        }
 
-    async function loadData() {
-      document.getElementById("loading").style.display = "block";
-      const snapshot = await getDocs(buahRef);
-      document.getElementById("loading").style.display = "none";
+        function hapusData(index) {
+            data.splice(index, 1);
+            renderData();
+        }
 
-      const table = document.getElementById("buahTable");
-      table.innerHTML = "";
-
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const id = docSnap.id;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><input value="${data.nama}" onchange="editField('${id}', 'nama', this.value)"/></td>
-          <td><input type="number" value="${data.harga}" onchange="editField('${id}', 'harga', this.value)"/></td>
-          <td><input type="number" value="${data.stok}" onchange="editField('${id}', 'stok', this.value)"/></td>
-          <td>
-            <button class="delete-btn" onclick="hapusBuah('${id}')">🗑</button>
-          </td>
-        `;
-        table.appendChild(row);
-      });
-    }
-
-    window.tambahBuah = async function () {
-      const nama = document.getElementById("newName").value.trim();
-      const harga = parseInt(document.getElementById("newPrice").value);
-      const stok = parseInt(document.getElementById("newStock").value);
-
-      if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await addDoc(buahRef, { nama, harga, stok });
-        document.getElementById("newName").value = "";
-        document.getElementById("newPrice").value = "";
-        document.getElementById("newStock").value = "";
-        loadData();
-      } else {
-        alert("Isi semua kolom dengan benar!");
-      }
-    }
-
-    window.editField = async function (id, field, value) {
-      if (field !== "nama") value = parseInt(value);
-      const buahDoc = doc(db, "buah", id);
-      await updateDoc(buahDoc, { [field]: value });
-    }
-
-    window.hapusBuah = async function (id) {
-      if (confirm("Yakin mau hapus buah ini?")) {
-        const buahDoc = doc(db, "buah", id);
-        await deleteDoc(buahDoc);
-        loadData();
-      }
-    }
-
-    loadData();
-  </script>
+        function editData(index) {
+            const item = data[index];
+            const nama = prompt("Edit Nama Buah:", item.nama);
+            const harga = prompt("Edit Harga:", item.harga);
+            const stok = prompt("Edit Stok:", item.stok);
+            if (nama && harga && stok) {
+                data[index] = { nama, harga, stok };
+                renderData();
+            }
+        }
+    </script>
 </body>
 </html>
