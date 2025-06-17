@@ -23,10 +23,6 @@
       max-width: 380px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    .container {
-      max-width: 360px;
-      min-width: 300px;
-    }
 
     h1 {
       color: #009688;
@@ -64,12 +60,10 @@
 
     .btn-green {
       background-color: #4CAF50;
-      font-size: 12px;
     }
 
     .btn-red {
       background-color: #f44336;
-      font-size: 12px;
     }
 
     table {
@@ -175,26 +169,34 @@
     }
 
     async function simpanEdit(id) {
-      const nama = document.getElementById("nama-" + id).value;
-      const harga = parseInt(document.getElementById("harga-" + id).value);
-      const stok = parseInt(document.getElementById("stok-" + id).value);
+      try {
+        const namaEl = document.getElementById(`nama-${id}`);
+        const hargaEl = document.getElementById(`harga-${id}`);
+        const stokEl = document.getElementById(`stok-${id}`);
 
-      if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await buahRef.doc(id).update({ nama, harga, stok });
-        alert("✅ Data berhasil disimpan!");
-        loadData();
-      } else {
-        alert("⚠️ Cek kembali data yang kamu isi!");
+        if (!namaEl || !hargaEl || !stokEl) {
+          alert("⚠️ Data tidak ditemukan di halaman!");
+          return;
+        }
+
+        const nama = namaEl.value.trim();
+        const harga = parseInt(hargaEl.value);
+        const stok = parseInt(stokEl.value);
+
+        if (nama && !isNaN(harga) && !isNaN(stok)) {
+          await buahRef.doc(id).update({ nama, harga, stok });
+          alert("✅ Data berhasil diperbarui!");
+          loadData();
+        } else {
+          alert("⚠️ Mohon isi semua data dengan benar.");
+        }
+      } catch (error) {
+        alert("❌ Terjadi kesalahan saat menyimpan.");
+        console.error(error);
       }
     }
-    window.simpanEdit = simpanEdit; // <- Perbaikan utama agar tombol ✏️ berfungsi
 
-    async function editField(id, field, value) {
-      const ref = buahRef.doc(id);
-      const update = {};
-      update[field] = field === "harga" || field === "stok" ? parseInt(value) : value;
-      await ref.update(update);
-    }
+    window.simpanEdit = simpanEdit;
 
     async function tambahBuah() {
       const nama = document.getElementById("newName").value.trim();
