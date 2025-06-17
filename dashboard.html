@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -50,9 +51,6 @@
       padding: 6px;
       text-align: center;
     }
-    input.nama { width: 80px; }
-    input.harga { width: 60px; }
-    input.stok { width: 50px; }
     #loading {
       font-style: italic;
       font-size: 13px;
@@ -70,6 +68,7 @@
       <input type="number" id="newStock" placeholder="Stok" />
     </div>
     <button onclick="tambahBuah()">Tambah</button>
+    <button onclick="hapusSemua()">🗑️ Hapus Semua Data</button>
 
     <div id="loading" style="display:none;">⏳ Memuat data...</div>
 
@@ -121,13 +120,20 @@
 
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td><input class="nama" value="${data.nama}" onchange="editField('${id}', 'nama', this.value)" /></td>
-          <td><input class="harga" type="number" value="${data.harga}" onchange="editField('${id}', 'harga', this.value)" /></td>
-          <td><input class="stok" type="number" value="${data.stok}" onchange="editField('${id}', 'stok', this.value)" /></td>
+          <td><input value="${data.nama}" onchange="editField('${id}', 'nama', this.value)" style="width: 80px;" /></td>
+          <td><input type="number" value="${data.harga}" onchange="editField('${id}', 'harga', this.value)" style="width: 60px;" /></td>
+          <td><input type="number" value="${data.stok}" onchange="editField('${id}', 'stok', this.value)" style="width: 60px;" /></td>
           <td><button onclick="hapusBuah('${id}')">🗑️</button></td>
         `;
         table.appendChild(row);
       });
+    }
+
+    async function editField(id, field, value) {
+      const docRef = doc(db, "buah", id);
+      const update = {};
+      update[field] = field === "harga" || field === "stok" ? parseInt(value) : value;
+      await updateDoc(docRef, update);
     }
 
     window.tambahBuah = async function () {
@@ -151,8 +157,20 @@
       loadData();
     }
 
+    window.hapusSemua = async function () {
+      if (confirm("Yakin ingin menghapus SEMUA data buah?")) {
+        const snapshot = await getDocs(buahRef);
+        const promises = [];
+        snapshot.forEach(docSnap => {
+          promises.push(deleteDoc(doc(buahRef, docSnap.id)));
+        });
+        await Promise.all(promises);
+        loadData();
+      }
+    }
+
     window.editField = async function(id, field, value) {
-      const ref = doc(buahRef, id);
+      const ref = doc(db, "buah", id);
       const update = {};
       update[field] = field === 'harga' || field === 'stok' ? parseInt(value) : value;
       await updateDoc(ref, update);
