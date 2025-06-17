@@ -17,25 +17,49 @@
     }
     .container {
       max-width: 360px;
-      margin-left: 0;
+      margin: auto;
     }
     .input-row {
       display: flex;
       gap: 6px;
+      margin-bottom: 10px;
     }
-    .input-row input {
-      flex: 1;
+    #newName, #newPrice, #newStock {
       font-size: 13px;
-      padding: 4px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
     }
-    button {
-      padding: 8px;
-      width: 100%;
+    #newName {
+      width: 120px;
+    }
+    #newPrice {
+      width: 80px;
+    }
+    #newStock {
+      width: 60px;
+    }
+    .btn-green {
       background-color: #4CAF50;
       color: white;
-      border: none;
       font-size: 14px;
-      margin-top: 5px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 8px;
+      width: 100%;
+      cursor: pointer;
+    }
+    #clearAllButton {
+      background-color: #e53935;
+      color: white;
+      font-size: 14px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 8px;
+      width: 100%;
       cursor: pointer;
     }
     table {
@@ -66,8 +90,9 @@
       <input type="number" id="newPrice" placeholder="Harga" />
       <input type="number" id="newStock" placeholder="Stok" />
     </div>
-    <button onclick="tambahBuah()">Tambah</button>
-    <button onclick="hapusSemua()">🗑️ Hapus Semua Data</button>
+
+    <button class="btn-green" onclick="tambahBuah()">Tambah</button>
+    <button id="clearAllButton" onclick="hapusSemua()">🗑️ Hapus Semua Data</button>
 
     <div id="loading" style="display:none;">⏳ Memuat data...</div>
 
@@ -126,13 +151,6 @@
         `;
         table.appendChild(row);
       });
-    }
-
-    async function editField(id, field, value) {
-      const docRef = doc(db, "buah", id);
-      const update = {};
-      update[field] = field === "harga" || field === "stok" ? parseInt(value) : value;
-      await updateDoc(docRef, update);
     }
 
     window.tambahBuah = async function () {
