@@ -19,10 +19,12 @@
     .wrapper {
       display: flex;
       flex-wrap: wrap;
-      justify-content: flex-start; /* Geser ke kiri */
+      justify-content: flex-start;
       align-items: flex-start;
-      gap: 12px; /* Lebih rapat */
-      padding: 20px 10px;
+      gap: 20px;
+      padding: 30px 10px;
+      max-width: 800px;
+      margin: auto;
     }
 
     .container {
@@ -30,8 +32,9 @@
       border: 2px solid #bfe5dc;
       border-radius: 12px;
       padding: 20px;
-      flex: 1 1 300px; /* Lebar otomatis & responsif */
+      flex: 1 1 300px;
       min-width: 260px;
+      max-width: 100%;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
 
@@ -72,9 +75,8 @@
     }
 
     @keyframes blink {
-      0% { opacity: 1; }
+      0%, 100% { opacity: 1; }
       50% { opacity: 0; }
-      100% { opacity: 1; }
     }
 
     .input-row input {
@@ -257,13 +259,11 @@
 
     async function updateRingkasan() {
       const snapshot = await buahRef.get();
-      let totalJenis = 0;
-      let totalStok = 0;
-      let totalNilai = 0;
+      let totalJenis = 0, totalStok = 0, totalNilai = 0;
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        totalJenis += 1;
+        totalJenis++;
         totalStok += data.stok || 0;
         totalNilai += (data.harga || 0) * (data.stok || 0);
       });
@@ -280,13 +280,9 @@
       const editBtn = namaCell.parentElement.querySelector(".btn-green");
 
       if (!namaCell.querySelector("input")) {
-        const currentNama = namaCell.innerText;
-        const currentHarga = hargaCell.innerText;
-        const currentStok = stokCell.innerText;
-
-        namaCell.innerHTML = `<input type="text" id="input-nama-${id}" value="${currentNama}" />`;
-        hargaCell.innerHTML = `<input type="number" id="input-harga-${id}" value="${currentHarga}" />`;
-        stokCell.innerHTML = `<input type="number" id="input-stok-${id}" value="${currentStok}" />`;
+        namaCell.innerHTML = `<input type="text" id="input-nama-${id}" value="${namaCell.innerText}" />`;
+        hargaCell.innerHTML = `<input type="number" id="input-harga-${id}" value="${hargaCell.innerText}" />`;
+        stokCell.innerHTML = `<input type="number" id="input-stok-${id}" value="${stokCell.innerText}" />`;
         editBtn.textContent = "💾";
       } else {
         const newNama = document.getElementById("input-nama-" + id).value.trim();
@@ -299,7 +295,6 @@
           hargaCell.innerHTML = newHarga;
           stokCell.innerHTML = newStok;
           editBtn.textContent = "✏️";
-          alert("✅ Data berhasil diperbarui!");
           updateRingkasan();
         } else {
           alert("⚠️ Cek kembali data yang kamu isi!");
