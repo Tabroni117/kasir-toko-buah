@@ -1,145 +1,209 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Toko Buah Indonesia</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background-color: #f1f5f9;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Poppins', sans-serif;
+      background: #f0f8ff;
       margin: 0;
-      padding: 0;
-    }header {
-  background-color: #22c55e;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  font-weight: bold;
-  font-size: 20px;
-}
+      padding: 20px;
+    }
+    .running-text {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      box-sizing: border-box;
+      padding: 5px 0;
+      color: green;
+      font-weight: bold;
+      font-size: 18px;
+      animation: blink 2s infinite;
+      text-align: center;
+    }
+    .running-text span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marquee 12s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #4CAF50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .logo-container img {
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .login-btn {
+      background: white;
+      color: #4CAF50;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.login-bar {
-  background-color: #22c55e;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 15px;
-}
+    /* INI BAGIAN BARU YANG DIMINTA */
+    .form-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: nowrap;
+    }
 
-.login-bar button {
-  background-color: white;
-  color: #16a34a;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-}
+    form {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 65%;
+    }
 
-.container-kasir {
-  padding: 15px;
-  max-width: 1200px;
-  margin: auto;
-}
+    .tombol-aksi {
+      width: 30%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-.form-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button, .btn {
+      background: #4CAF50;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #43a047;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-width: 500px;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    th {
+      background: #e8f5e9;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
 
-form {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tombol-aksi {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tombol-aksi button {
-  background-color: #22c55e;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-table {
-  margin-top: 20px;
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-table th, table td {
-  padding: 10px;
-  text-align: center;
-}
-
-table thead {
-  background-color: #bbf7d0;
-}
-
-.total {
-  font-weight: bold;
-}
-
-@media screen and (max-width: 768px) {
-  .form-section {
-    grid-template-columns: 1fr;
-  }
-}
-
+    /* Responsif HP */
+    @media screen and (max-width: 600px) {
+      .form-section {
+        flex-direction: column;
+      }
+      form, .tombol-aksi {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>🍉 TOKO BUAH INDONESIA</header>
-  <div class="login-bar">
-    <span>🛍️ Rujak Buah</span>
-    <button>🔐 Login</button>
-  </div>  <div class="container-kasir">
-    <div class="form-section">
-      <!-- FORM INPUT -->
-      <form id="form-buah">
-        <div class="mb-2">
-          <label>Pilih Buah</label>
-          <select class="form-select" id="nama-buah">
-            <option value="Mangga">Mangga</option>
-            <option value="Apel">Apel</option>
-            <option value="Jeruk">Jeruk</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <label>Harga Satuan (Rp)</label>
-          <input type="text" class="form-control" id="harga" placeholder="Harga otomatis" readonly>
-        </div>
-        <div class="mb-2">
-          <label>Jumlah</label>
-          <input type="number" class="form-control" id="jumlah" placeholder="Contoh: 2">
-        </div>
-        <button type="submit" class="btn btn-success w-100">+ Tambah ke Keranjang</button>
-      </form><!-- TOMBOL TOMBOL -->
+
+<div class="running-text">
+  <span>RUJAK BUAH INDONESIA</span>
+</div>
+
+<header>
+  <div class="logo-container">
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <h1>TOKO BUAH INDONESIA</h1>
+  </div>
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+</header>
+
+<div class="form-section">
+  <form id="form">
+    <label>Pilih Buah
+      <select id="nama"></select>
+    </label>
+    <label>Harga Satuan (Rp)
+      <input type="number" id="harga" placeholder="Harga otomatis" readonly>
+    </label>
+    <label>Jumlah
+      <input type="number" id="jumlah" placeholder="Contoh: 2">
+    </label>
+    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+  </form>
+
   <div class="tombol-aksi">
-    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-    <button onclick="resetForm()">♻️ Reset Form</button>
-    <button onclick="cetakStruk()">🧾 Cetak Struk</button>
-    <button onclick="refreshHalaman()">🔄 Refresh Halaman</button>
-    <button onclick="keDashboard()">📊 Dashboard</button>
     <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+    <button onclick="resetForm()">🔄 Reset Form</button>
+    <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+    <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
+    <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
   </div>
 </div>
 
-<!-- TABEL BELANJA -->
-<h5 class="mt-4">🧺 Daftar Belanja</h5>
+<h3>🛒 Daftar Belanja</h3>
 <table>
   <thead>
     <tr>
@@ -149,48 +213,154 @@ table thead {
       <th>Subtotal</th>
     </tr>
   </thead>
-  <tbody id="tabel-belanja"></tbody>
+  <tbody id="tabelBelanja"></tbody>
   <tfoot>
-    <tr class="total">
+    <tr>
       <td colspan="3">Total</td>
-      <td id="total-belanja">Rp 0</td>
+      <td id="totalBelanja">Rp 0</td>
     </tr>
   </tfoot>
 </table>
 
-  </div>  <script>
-    function hapusSemua() {
-      document.getElementById('tabel-belanja').innerHTML = '';
-      document.getElementById('total-belanja').innerText = 'Rp 0';
-    }
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+    <br>
+    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
+  </div>
+</div>
 
-    function resetForm() {
-      document.getElementById('form-buah').reset();
-    }
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
 
-    function cetakStruk() {
-      alert('Struk dicetak!');
-    }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    function refreshHalaman() {
-      location.reload();
-    }
+  let buahData = [];
+  let keranjang = [];
 
-    function keDashboard() {
-      alert('Menuju dashboard...');
-    }
+  const selectNama = document.getElementById("nama");
+  const inputHarga = document.getElementById("harga");
 
-    function simpanTransaksi() {
-      alert('Transaksi disimpan!');
-    }
+  db.collection("buah").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      buahData.push(data);
 
-    document.getElementById('nama-buah').addEventListener('change', function () {
-      const hargaMap = {
-        'Mangga': 10000,
-        'Apel': 12000,
-        'Jeruk': 8000
-      };
-      document.getElementById('harga').value = hargaMap[this.value] || '';
+      const option = document.createElement("option");
+      option.value = data.nama;
+      option.textContent = data.nama;
+      selectNama.appendChild(option);
     });
-  </script></body>
+  });
+
+  selectNama.addEventListener("change", () => {
+    const selected = buahData.find(buah => buah.nama === selectNama.value);
+    inputHarga.value = selected ? selected.harga : '';
+  });
+
+  function tambahItem() {
+    const nama = selectNama.value;
+    const harga = parseInt(inputHarga.value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
+
+    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+      alert("Mohon isi semua data.");
+      return;
+    }
+
+    keranjang.push({ nama, harga, jumlah });
+    updateTabel();
+  }
+
+  function updateTabel() {
+    const tabel = document.getElementById("tabelBelanja");
+    tabel.innerHTML = "";
+    let total = 0;
+
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+
+      const row = `<tr>
+        <td>${item.nama}</td>
+        <td>Rp ${item.harga.toLocaleString()}</td>
+        <td>${item.jumlah}</td>
+        <td>Rp ${subtotal.toLocaleString()}</td>
+      </tr>`;
+      tabel.innerHTML += row;
+    });
+
+    document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+  }
+
+  function simpanTransaksi() {
+    if (keranjang.length === 0) {
+      alert("Keranjang masih kosong.");
+      return;
+    }
+
+    db.collection("transaksi").add({
+      tanggal: new Date(),
+      item: keranjang,
+      total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
+    }).then(() => {
+      alert("Transaksi berhasil disimpan!");
+    }).catch(err => {
+      alert("Gagal menyimpan transaksi.");
+      console.error(err);
+    });
+  }
+
+  function hapusSemua() {
+    if (confirm("Hapus semua item di keranjang?")) {
+      keranjang = [];
+      updateTabel();
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("form").reset();
+    document.getElementById("harga").value = "";
+  }
+
+  function showQrisModal() {
+    document.getElementById("qrisModal").style.display = "block";
+  }
+
+  function closeQrisModal() {
+    document.getElementById("qrisModal").style.display = "none";
+  }
+
+  function cetakStruk() {
+    closeQrisModal();
+
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    let total = 0;
+
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+    });
+
+    struk += "----------------------------\n";
+    struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+    alert(struk);
+    window.location.href = "dashboard.html";
+  }
+</script>
+
+</body>
 </html>
