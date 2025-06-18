@@ -2,165 +2,373 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Stok Buah</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📦 Stok Buah</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: #eafff0;
       font-family: 'Segoe UI', sans-serif;
+      background-color: #eaf7f4;
+      margin: 0;
+      padding: 0;
     }
-    .judul {
-      font-weight: bold;
-      color: #069368;
+
+    .wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 100px 10px 10px 10px;
     }
-    .judul span {
+
+    .container {
+      background-color: #fff;
+      border: 2px solid #bfe5dc;
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .summary {
+      background-color: #f2fff9;
+      max-width: 250px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      color: #009688;
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .marquee {
+      font-size: 13px;
+      color: green;
+      white-space: nowrap;
+      overflow: hidden;
+      width: 160px;
+    }
+
+    .marquee span {
       display: inline-block;
-      animation: slide 5s linear infinite;
+      animation: slide 4s linear infinite, blink 1.2s step-start infinite alternate;
     }
+
     @keyframes slide {
-      0% { transform: translateX(0); }
-      50% { transform: translateX(10px); }
-      100% { transform: translateX(0); }
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
     }
-    .btn-custom {
-      margin: 5px 3px;
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
     }
-    .table td, .table th {
-      vertical-align: middle;
+
+    .input-row input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      font-size: 13px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-green {
+      background-color: #4CAF50;
+    }
+
+    .btn-red {
+      background-color: #f44336;
+    }
+
+    .btn-small {
+      padding: 5px 7px;
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: center;
+    }
+
+    td input {
+      width: 100%;
+      font-size: 13px;
+      padding: 4px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    #loading {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .refresh {
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .summary {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container py-4">
-    <div class="d-flex justify-content-end mb-3">
-      <button class="btn btn-primary btn-custom">Cetak</button>
-      <button class="btn btn-purple btn-custom" style="background: #b64fc8; color: #fff;">Stok Masuk</button>
-      <button class="btn btn-warning btn-custom">Stok Keluar</button>
-      <button class="btn btn-danger btn-custom">Pengaturan</button>
+  <div class="wrapper">
+    <!-- KIRI: Form & Tabel -->
+    <div class="container">
+      <div class="header-row">
+        <h1>📦 Stok Buah</h1>
+        <div class="marquee"><span>RUJAK BUAH INDONESIA</span></div>
+      </div>
+
+      <div class="input-row">
+        <input type="text" id="newName" placeholder="Nama Buah" />
+        <input type="number" id="newPrice" placeholder="Harga" />
+        <input type="number" id="newStock" placeholder="Stok" />
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-red" onclick="hapusSemua()">🗑️</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-green" onclick="simpanSemua()">💾</button>
+          <button class="btn btn-green" onclick="tambahBuah()">➕</button>
+        </div>
+      </div>
+
+      <button class="btn btn-green refresh" onclick="loadData()">🔄 Refresh</button>
+
+      <div id="loading" style="display:none;">⏳ Memuat data...</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Harga</th>
+            <th>Stok</th>
+            <th>🛠️</th>
+          </tr>
+        </thead>
+        <tbody id="buahTable"></tbody>
+      </table>
     </div>
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card mb-3">
-          <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="judul">📦 Stok Buah <span>RUJAK BUAH I</span></h5>
-          </div>
-          <div class="card-body">
-            <div class="row g-2 mb-3">
-              <div class="col-md-4"><input type="text" id="nama" class="form-control" placeholder="Nama Buah"></div>
-              <div class="col-md-3"><input type="number" id="harga" class="form-control" placeholder="Harga"></div>
-              <div class="col-md-3"><input type="number" id="stok" class="form-control" placeholder="Stok"></div>
-              <div class="col-md-2 d-flex">
-                <button class="btn btn-danger w-100 me-1" onclick="hapusForm()">🗑</button>
-                <button class="btn btn-success w-100" onclick="simpanData()">💾</button>
-              </div>
-            </div>
-            <div class="mb-2">
-              <button class="btn btn-success w-100" onclick="loadData()">🔄 Refresh</button>
-            </div>
-            <table class="table table-bordered table-hover">
-              <thead class="table-success">
-                <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
-              </thead>
-              <tbody id="dataTabel"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header bg-light">
-            <h5>📊 Ringkasan Stok</h5>
-          </div>
-          <div class="card-body">
-            <p>Total Jenis Buah: <span id="totalJenis">0</span></p>
-            <p>Total Jumlah Stok: <span id="totalStok">0</span></p>
-            <p>Total Nilai (Rp): <span id="totalNilai">0</span></p>
-          </div>
-        </div>
-      </div>
+
+    <!-- KANAN: Ringkasan -->
+    <div class="container summary">
+      <h1>📊 Ringkasan Stok</h1>
+      <p id="totalJenis">Total Jenis Buah: 0</p>
+      <p id="totalStok">Total Jumlah Stok: 0</p>
+      <p id="totalNilai">Total Nilai (Rp): 0</p>
     </div>
   </div>
 
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
-      apiKey: "ISI_APIKEY",
-      authDomain: "ISI_AUTH",
-      projectId: "ISI_PROJECT_ID",
-      storageBucket: "ISI_BUCKET",
-      messagingSenderId: "ISI_MSG_ID",
-      appId: "ISI_APP_ID"
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const buahRef = db.collection("buah");
 
-    async function simpanData() {
-      const nama = document.getElementById("nama").value.trim();
-      const harga = parseInt(document.getElementById("harga").value);
-      const stok = parseInt(document.getElementById("stok").value);
-
-      if (nama && !isNaN(harga) && !isNaN(stok)) {
-        await buahRef.add({ nama, harga, stok });
-        alert("✅ Data berhasil ditambahkan!");
-        loadData();
-        hapusForm();
-      }
-    }
-
-    function hapusForm() {
-      document.getElementById("nama").value = '';
-      document.getElementById("harga").value = '';
-      document.getElementById("stok").value = '';
-    }
-
     async function loadData() {
-      const tabel = document.getElementById("dataTabel");
-      tabel.innerHTML = '';
+      document.getElementById("loading").style.display = "block";
       const snapshot = await buahRef.get();
+      document.getElementById("loading").style.display = "none";
 
-      let totalStok = 0;
-      let totalNilai = 0;
-      let totalJenis = 0;
+      const table = document.getElementById("buahTable");
+      table.innerHTML = "";
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        totalJenis++;
-        totalStok += data.stok;
-        totalNilai += data.harga * data.stok;
+        const id = doc.id;
 
-        const row = `
-          <tr>
-            <td><input class="form-control" value="${data.nama}" onchange="ubahData('${doc.id}', 'nama', this.value)"></td>
-            <td><input class="form-control" type="number" value="${data.harga}" onchange="ubahData('${doc.id}', 'harga', this.value)"></td>
-            <td><input class="form-control" type="number" value="${data.stok}" onchange="ubahData('${doc.id}', 'stok', this.value)"></td>
-            <td><button class="btn btn-sm btn-danger" onclick="hapusData('${doc.id}')">Hapus</button></td>
-          </tr>
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td id="nama-${id}">${data.nama}</td>
+          <td id="harga-${id}">${data.harga}</td>
+          <td id="stok-${id}">${data.stok}</td>
+          <td style="display:flex; gap:4px; justify-content:center;">
+            <button class="btn btn-red btn-small" onclick="hapusBuah('${id}')">❌</button>
+            <button class="btn btn-green btn-small" onclick="toggleEdit('${id}')">✏️</button>
+          </td>
         `;
-        tabel.innerHTML += row;
+        table.appendChild(row);
       });
 
-      document.getElementById("totalJenis").textContent = totalJenis;
-      document.getElementById("totalStok").textContent = totalStok;
-      document.getElementById("totalNilai").textContent = totalNilai;
+      updateRingkasan(); // ✅ Tambahan: update kotak ringkasan
     }
 
-    async function ubahData(id, field, value) {
-      if (field === 'harga' || field === 'stok') value = parseInt(value);
-      await buahRef.doc(id).update({ [field]: value });
+    async function updateRingkasan() {
+      const snapshot = await buahRef.get();
+      let totalJenis = 0;
+      let totalStok = 0;
+      let totalNilai = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        totalJenis += 1;
+        totalStok += data.stok || 0;
+        totalNilai += (data.harga || 0) * (data.stok || 0);
+      });
+
+      document.getElementById("totalJenis").textContent = "Total Jenis Buah: " + totalJenis;
+      document.getElementById("totalStok").textContent = "Total Jumlah Stok: " + totalStok;
+      document.getElementById("totalNilai").textContent = "Total Nilai (Rp): " + totalNilai.toLocaleString("id-ID");
+    }
+
+    async function toggleEdit(id) {
+      const namaCell = document.getElementById("nama-" + id);
+      const hargaCell = document.getElementById("harga-" + id);
+      const stokCell = document.getElementById("stok-" + id);
+      const editBtn = namaCell.parentElement.querySelector(".btn-green");
+
+      if (!namaCell.querySelector("input")) {
+        const currentNama = namaCell.innerText;
+        const currentHarga = hargaCell.innerText;
+        const currentStok = stokCell.innerText;
+
+        namaCell.innerHTML = `<input type="text" id="input-nama-${id}" value="${currentNama}" />`;
+        hargaCell.innerHTML = `<input type="number" id="input-harga-${id}" value="${currentHarga}" />`;
+        stokCell.innerHTML = `<input type="number" id="input-stok-${id}" value="${currentStok}" />`;
+        editBtn.textContent = "💾";
+      } else {
+        const newNama = document.getElementById("input-nama-" + id).value.trim();
+        const newHarga = parseInt(document.getElementById("input-harga-" + id).value);
+        const newStok = parseInt(document.getElementById("input-stok-" + id).value);
+
+        if (newNama && !isNaN(newHarga) && !isNaN(newStok)) {
+          await buahRef.doc(id).update({ nama: newNama, harga: newHarga, stok: newStok });
+          namaCell.innerHTML = newNama;
+          hargaCell.innerHTML = newHarga;
+          stokCell.innerHTML = newStok;
+          editBtn.textContent = "✏️";
+          alert("✅ Data berhasil diperbarui!");
+          updateRingkasan(); // Update ringkasan juga
+        } else {
+          alert("⚠️ Cek kembali data yang kamu isi!");
+        }
+      }
+    }
+
+    async function tambahBuah() {
+      const nama = document.getElementById("newName").value.trim();
+      const harga = parseInt(document.getElementById("newPrice").value);
+      const stok = parseInt(document.getElementById("newStock").value);
+
+      if (nama && !isNaN(harga) && !isNaN(stok)) {
+        await buahRef.add({ nama, harga, stok });
+        document.getElementById("newName").value = "";
+        document.getElementById("newPrice").value = "";
+        document.getElementById("newStock").value = "";
+        loadData();
+      } else {
+        alert("Isi semua kolom dengan benar!");
+      }
+    }
+
+    async function hapusBuah(id) {
+      await buahRef.doc(id).delete();
       loadData();
     }
 
-    async function hapusData(id) {
-      if (confirm("Yakin ingin menghapus?")) {
-        await buahRef.doc(id).delete();
+    async function hapusSemua() {
+      if (confirm("Yakin ingin menghapus SEMUA data buah?")) {
+        const snapshot = await buahRef.get();
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
         loadData();
       }
     }
 
-    window.onload = loadData;
+    async function simpanSemua() {
+      const rows = document.querySelectorAll("#buahTable tr");
+
+      for (const row of rows) {
+        const editBtn = row.querySelector("button.btn-green");
+        if (!editBtn) continue;
+
+        const idMatch = editBtn.getAttribute("onclick").match(/'(.+)'/);
+        if (!idMatch) continue;
+        const id = idMatch[1];
+
+        const inputNama = document.getElementById("input-nama-" + id);
+        const inputHarga = document.getElementById("input-harga-" + id);
+        const inputStok = document.getElementById("input-stok-" + id);
+
+        if (inputNama && inputHarga && inputStok) {
+          const newNama = inputNama.value.trim();
+          const newHarga = parseInt(inputHarga.value);
+          const newStok = parseInt(inputStok.value);
+
+          if (newNama && !isNaN(newHarga) && !isNaN(newStok)) {
+            await buahRef.doc(id).update({ nama: newNama, harga: newHarga, stok: newStok });
+          }
+        }
+      }
+
+      alert("✅ Semua data berhasil disimpan!");
+      loadData();
+    }
+
+    loadData();
   </script>
 </body>
 </html>
