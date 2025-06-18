@@ -2,89 +2,165 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Stok</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Stok Buah</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
     body {
-      background-color: #e8f5e9;
-      padding: 20px;
+      background: #eafff0;
+      font-family: 'Segoe UI', sans-serif;
     }
-    .container-custom {
-      max-width: 1000px;
-      margin: auto;
+    .judul {
+      font-weight: bold;
+      color: #069368;
     }
-    .card-custom {
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 12px;
+    .judul span {
+      display: inline-block;
+      animation: slide 5s linear infinite;
     }
-    .summary-box {
-      background-color: #fff3e0;
+    @keyframes slide {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
     }
-    .btn-lg-icon {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .btn-custom {
+      margin: 5px 3px;
+    }
+    .table td, .table th {
+      vertical-align: middle;
     }
   </style>
 </head>
 <body>
-  <div class="container container-custom">
-    <div class="d-flex justify-content-between flex-wrap mb-4">
-      <button class="btn btn-primary mb-2">📄 Cetak</button>
-      <button class="btn btn-purple mb-2" style="background:#9c27b0; color:white;">📥 Stok Masuk</button>
-      <button class="btn btn-warning mb-2">📤 Stok Keluar</button>
-      <button class="btn btn-danger mb-2">⚙️ Pengaturan</button>
+  <div class="container py-4">
+    <div class="d-flex justify-content-end mb-3">
+      <button class="btn btn-primary btn-custom">Cetak</button>
+      <button class="btn btn-purple btn-custom" style="background: #b64fc8; color: #fff;">Stok Masuk</button>
+      <button class="btn btn-warning btn-custom">Stok Keluar</button>
+      <button class="btn btn-danger btn-custom">Pengaturan</button>
     </div>
-
-    <div class="row g-4">
-      <!-- FORM INPUT -->
+    <div class="row">
       <div class="col-md-8">
-        <div class="card card-custom p-4">
-          <h4 class="mb-3">📦 Stok Buah <span class="float-end text-success">RUJAK BUAH I</span></h4>
-          <div class="mb-3">
-            <input type="text" id="inputNama" class="form-control" placeholder="Nama Buah">
+        <div class="card mb-3">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="judul">📦 Stok Buah <span>RUJAK BUAH I</span></h5>
           </div>
-          <div class="mb-3">
-            <input type="number" id="inputHarga" class="form-control" placeholder="Harga">
+          <div class="card-body">
+            <div class="row g-2 mb-3">
+              <div class="col-md-4"><input type="text" id="nama" class="form-control" placeholder="Nama Buah"></div>
+              <div class="col-md-3"><input type="number" id="harga" class="form-control" placeholder="Harga"></div>
+              <div class="col-md-3"><input type="number" id="stok" class="form-control" placeholder="Stok"></div>
+              <div class="col-md-2 d-flex">
+                <button class="btn btn-danger w-100 me-1" onclick="hapusForm()">🗑</button>
+                <button class="btn btn-success w-100" onclick="simpanData()">💾</button>
+              </div>
+            </div>
+            <div class="mb-2">
+              <button class="btn btn-success w-100" onclick="loadData()">🔄 Refresh</button>
+            </div>
+            <table class="table table-bordered table-hover">
+              <thead class="table-success">
+                <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
+              </thead>
+              <tbody id="dataTabel"></tbody>
+            </table>
           </div>
-          <div class="mb-3">
-            <input type="number" id="inputStok" class="form-control" placeholder="Stok">
-          </div>
-          <div class="d-flex gap-2 mb-3">
-            <button class="btn btn-danger w-100">🗑️</button>
-            <button class="btn btn-success w-100" onclick="loadData()">🔄 Refresh</button>
-            <button class="btn btn-secondary w-100">💾</button>
-            <button class="btn btn-success w-100">➕</button>
-          </div>
-          <table class="table table-bordered table-striped">
-            <thead class="table-success">
-              <tr><th>Nama</th><th>Harga</th><th>Stok</th><th></th></tr>
-            </thead>
-            <tbody id="tabelBuah">
-              <!-- Data diisi oleh JS -->
-            </tbody>
-          </table>
         </div>
       </div>
-
-      <!-- RINGKASAN STOK -->
       <div class="col-md-4">
-        <div class="card card-custom p-4 summary-box">
-          <h5 class="mb-3">📊 Ringkasan Stok</h5>
-          <p>Total Jenis Buah: <span id="totalJenis">0</span></p>
-          <p>Total Jumlah Stok: <span id="totalStok">0</span></p>
-          <p>Total Nilai (Rp): <span id="totalNilai">0</span></p>
+        <div class="card">
+          <div class="card-header bg-light">
+            <h5>📊 Ringkasan Stok</h5>
+          </div>
+          <div class="card-body">
+            <p>Total Jenis Buah: <span id="totalJenis">0</span></p>
+            <p>Total Jumlah Stok: <span id="totalStok">0</span></p>
+            <p>Total Nilai (Rp): <span id="totalNilai">0</span></p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Tambahkan Firebase config & JS mu di sini -->
   <script>
-    // Firebase dan function loadData() kamu masuk di sini
+    const firebaseConfig = {
+      apiKey: "ISI_APIKEY",
+      authDomain: "ISI_AUTH",
+      projectId: "ISI_PROJECT_ID",
+      storageBucket: "ISI_BUCKET",
+      messagingSenderId: "ISI_MSG_ID",
+      appId: "ISI_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const buahRef = db.collection("buah");
+
+    async function simpanData() {
+      const nama = document.getElementById("nama").value.trim();
+      const harga = parseInt(document.getElementById("harga").value);
+      const stok = parseInt(document.getElementById("stok").value);
+
+      if (nama && !isNaN(harga) && !isNaN(stok)) {
+        await buahRef.add({ nama, harga, stok });
+        alert("✅ Data berhasil ditambahkan!");
+        loadData();
+        hapusForm();
+      }
+    }
+
+    function hapusForm() {
+      document.getElementById("nama").value = '';
+      document.getElementById("harga").value = '';
+      document.getElementById("stok").value = '';
+    }
+
+    async function loadData() {
+      const tabel = document.getElementById("dataTabel");
+      tabel.innerHTML = '';
+      const snapshot = await buahRef.get();
+
+      let totalStok = 0;
+      let totalNilai = 0;
+      let totalJenis = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        totalJenis++;
+        totalStok += data.stok;
+        totalNilai += data.harga * data.stok;
+
+        const row = `
+          <tr>
+            <td><input class="form-control" value="${data.nama}" onchange="ubahData('${doc.id}', 'nama', this.value)"></td>
+            <td><input class="form-control" type="number" value="${data.harga}" onchange="ubahData('${doc.id}', 'harga', this.value)"></td>
+            <td><input class="form-control" type="number" value="${data.stok}" onchange="ubahData('${doc.id}', 'stok', this.value)"></td>
+            <td><button class="btn btn-sm btn-danger" onclick="hapusData('${doc.id}')">Hapus</button></td>
+          </tr>
+        `;
+        tabel.innerHTML += row;
+      });
+
+      document.getElementById("totalJenis").textContent = totalJenis;
+      document.getElementById("totalStok").textContent = totalStok;
+      document.getElementById("totalNilai").textContent = totalNilai;
+    }
+
+    async function ubahData(id, field, value) {
+      if (field === 'harga' || field === 'stok') value = parseInt(value);
+      await buahRef.doc(id).update({ [field]: value });
+      loadData();
+    }
+
+    async function hapusData(id) {
+      if (confirm("Yakin ingin menghapus?")) {
+        await buahRef.doc(id).delete();
+        loadData();
+      }
+    }
+
+    window.onload = loadData;
   </script>
 </body>
 </html>
