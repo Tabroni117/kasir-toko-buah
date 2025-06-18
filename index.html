@@ -18,7 +18,6 @@
       width: 100%;
       overflow: hidden;
       white-space: nowrap;
-      box-sizing: border-box;
       padding: 5px 0;
       color: green;
       font-weight: bold;
@@ -72,53 +71,29 @@
       cursor: pointer;
     }
 
-  .form-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-}
+    .form-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
 
-form {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  width: 100%;
-}
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
-.tombol-aksi {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.tombol-aksi button {
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  background: #4CAF50;
-  color: white;
-  cursor: pointer;
-  width: 100%;
-}
-
-.tombol-aksi button:hover {
-  background: #388e3c;
-}
-
-@media screen and (max-width: 600px) {
-  .form-section {
-    grid-template-columns: 1fr 1fr; /* tetap dua kolom di HP */
-  }
-}
-
-  form, .tombol-aksi {
-    flex: 1 1 48%;
-  }
-}
+    .tombol-aksi {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
     input, select {
       width: 100%;
@@ -126,6 +101,21 @@ form {
       margin-top: 5px;
       border: 1px solid #ccc;
       border-radius: 6px;
+    }
+
+    button, .btn {
+      background: #4CAF50;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #43a047;
     }
 
     table {
@@ -171,13 +161,7 @@ form {
 
     @media screen and (max-width: 768px) {
       .form-section {
-        flex-direction: column;
-      }
-      .tombol-aksi {
-        flex-direction: row;
-      }
-      .tombol-aksi button {
-        flex: 1 1 48%;
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -214,11 +198,11 @@ form {
   </form>
 
   <div class="tombol-aksi">
-    <button onclick="simpanTransaksi()">💾 Simpan</button>
-    <button onclick="hapusSemua()">🗑️ Hapus</button>
-    <button onclick="resetForm()">🔄 Reset</button>
-    <button onclick="showQrisModal()">🧾 Struk</button>
-    <button onclick="window.location.reload()">🔃 Refresh</button>
+    <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+    <button onclick="resetForm()">🔄 Reset Form</button>
+    <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+    <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
     <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
   </div>
 </div>
@@ -277,7 +261,6 @@ form {
     snapshot.forEach(doc => {
       const data = doc.data();
       buahData.push(data);
-
       const option = document.createElement("option");
       option.value = data.nama;
       option.textContent = data.nama;
@@ -294,12 +277,10 @@ form {
     const nama = selectNama.value;
     const harga = parseInt(inputHarga.value);
     const jumlah = parseInt(document.getElementById("jumlah").value);
-
     if (!nama || isNaN(harga) || isNaN(jumlah)) {
       alert("Mohon isi semua data.");
       return;
     }
-
     keranjang.push({ nama, harga, jumlah });
     updateTabel();
   }
@@ -308,11 +289,9 @@ form {
     const tabel = document.getElementById("tabelBelanja");
     tabel.innerHTML = "";
     let total = 0;
-
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
-
       const row = `<tr>
         <td>${item.nama}</td>
         <td>Rp ${item.harga.toLocaleString()}</td>
@@ -321,7 +300,6 @@ form {
       </tr>`;
       tabel.innerHTML += row;
     });
-
     document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
   }
 
@@ -330,7 +308,6 @@ form {
       alert("Keranjang masih kosong.");
       return;
     }
-
     db.collection("transaksi").add({
       tanggal: new Date(),
       item: keranjang,
@@ -365,20 +342,16 @@ form {
 
   function cetakStruk() {
     closeQrisModal();
-
     let struk = "=== TOKO BUAH INDONESIA ===\n";
     let total = 0;
-
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
       struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
     });
-
     struk += "----------------------------\n";
     struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
     struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-
     alert(struk);
     window.location.href = "dashboard.html";
   }
