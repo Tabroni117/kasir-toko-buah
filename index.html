@@ -4,213 +4,370 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TOKO BUAH INDONESIA</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
+      background: #f0f8ff;
       margin: 0;
-      background: #f1f5f9;
+      padding: 20px;
+    }
+    .running-text {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 5px 0;
+      color: green;
+      font-weight: bold;
+      font-size: 18px;
+      animation: blink 2s infinite;
+      text-align: center;
+    }
+    .running-text span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marquee 10s linear infinite;
+    }
+    @keyframes marquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
 
     header {
-      background: #22c55e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #4CAF50;
       color: white;
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.5rem;
-      font-weight: bold;
+      padding: 15px 20px;
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-container img {
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0;
     }
 
     .login-btn {
-      background: #facc15;
+      background: white;
+      color: #4CAF50;
       border: none;
-      padding: 6px 12px;
-      margin-top: 8px;
+      padding: 8px 14px;
       border-radius: 6px;
-      cursor: pointer;
       font-weight: bold;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 1rem;
+      cursor: pointer;
     }
 
     .form-section {
       display: flex;
-      gap: 1rem;
+      justify-content: space-between;
       align-items: flex-start;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
     }
 
-    form, .tombol-aksi {
+    form {
       background: white;
-      padding: 1rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-      flex: 1;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: 65%;
+      min-width: 280px;
     }
 
-    select, input {
+    .tombol-aksi {
+      width: 30%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 200px;
+    }
+
+    input, select {
       width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
-      margin-bottom: 1rem;
+      padding: 10px;
+      margin-top: 5px;
       border: 1px solid #ccc;
-      border-radius: 8px;
+      border-radius: 6px;
     }
 
-    button {
-      width: 100%;
-      margin-bottom: 0.8rem;
-      padding: 0.6rem;
-      font-weight: bold;
+    button, .btn {
+      background: #4CAF50;
       color: white;
-      background: #22c55e;
+      padding: 12px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 14px;
+      width: 100%;
     }
 
-    button:hover {
-      background: #16a34a;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      min-width: 500px;
     }
 
-    .tombol-aksi button:nth-child(2) { background: #ef4444; }
-    .tombol-aksi button:nth-child(3) { background: #0ea5e9; }
-    .tombol-aksi button:nth-child(4) { background: #8b5cf6; }
-    .tombol-aksi button:nth-child(5) { background: #f59e0b; }
-    .tombol-aksi button:nth-child(6) { background: #10b981; }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      background: #e8f5e9;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: #fff;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
 
     @media screen and (max-width: 768px) {
       .form-section {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
+        flex-direction: column;
       }
-
       form, .tombol-aksi {
-        width: 48%;
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    TOKO BUAH INDONESIA<br>
-    <button class="login-btn">🔐 Login</button>
-  </header>
+<div class="running-text">
+  <span>RUJAK BUAH INDONESIA</span>
+</div>
 
-  <div class="container">
-    <div class="form-section">
-      <form id="formBelanja">
-        <label>Pilih Buah</label>
-        <select id="buah" required>
-          <option value="">-- Pilih Buah --</option>
-          <option value="Mangga">Mangga</option>
-          <option value="Apel">Apel</option>
-          <option value="Jeruk">Jeruk</option>
-        </select>
-
-        <label>Harga Satuan (Rp)</label>
-        <input type="text" id="harga" placeholder="Harga otomatis" readonly />
-
-        <label>Jumlah</label>
-        <input type="number" id="jumlah" placeholder="Contoh: 2" required />
-
-        <button type="submit">+ Tambah ke Keranjang</button>
-      </form>
-
-      <div class="tombol-aksi">
-        <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
-        <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-        <button onclick="resetForm()">🔁 Reset Form</button>
-        <button onclick="cetakStruk()">🧾 Cetak Struk</button>
-        <button onclick="location.reload()">🔄 Refresh Halaman</button>
-        <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
-      </div>
-    </div>
+<header>
+  <div class="logo-container">
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <h1>TOKO BUAH INDONESIA</h1>
   </div>
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
+</header>
 
-  <script>
-    const buahSelect = document.getElementById("buah");
-    const hargaInput = document.getElementById("harga");
-    const jumlahInput = document.getElementById("jumlah");
+<div class="form-section">
+  <form id="form">
+    <label>Pilih Buah
+      <select id="nama"></select>
+    </label>
+    <label>Harga Satuan (Rp)
+      <input type="number" id="harga" placeholder="Harga otomatis" readonly>
+    </label>
+    <label>Jumlah
+      <input type="number" id="jumlah" placeholder="Contoh: 2">
+    </label>
+    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+  </form>
 
-    // Harga otomatis sesuai buah
-    buahSelect.addEventListener("change", () => {
-      const hargaBuah = {
-        "Mangga": 10000,
-        "Apel": 15000,
-        "Jeruk": 12000
-      };
-      hargaInput.value = hargaBuah[buahSelect.value] || "";
+  <div class="tombol-aksi">
+    <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+    <button onclick="resetForm()">🔄 Reset Form</button>
+    <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+    <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
+    <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+  </div>
+</div>
+
+<h3>🛒 Daftar Belanja</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Nama Buah</th>
+      <th>Harga Satuan</th>
+      <th>Jumlah</th>
+      <th>Subtotal</th>
+    </tr>
+  </thead>
+  <tbody id="tabelBelanja"></tbody>
+  <tfoot>
+    <tr>
+      <td colspan="3">Total</td>
+      <td id="totalBelanja">Rp 0</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+    <br>
+    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let buahData = [];
+  let keranjang = [];
+
+  const selectNama = document.getElementById("nama");
+  const inputHarga = document.getElementById("harga");
+
+  db.collection("buah").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      buahData.push(data);
+
+      const option = document.createElement("option");
+      option.value = data.nama;
+      option.textContent = data.nama;
+      selectNama.appendChild(option);
     });
+  });
 
-    const keranjang = [];
+  selectNama.addEventListener("change", () => {
+    const selected = buahData.find(buah => buah.nama === selectNama.value);
+    inputHarga.value = selected ? selected.harga : '';
+  });
 
-    document.getElementById("formBelanja").addEventListener("submit", e => {
-      e.preventDefault();
-      const nama = buahSelect.value;
-      const harga = parseInt(hargaInput.value);
-      const jumlah = parseInt(jumlahInput.value);
+  function tambahItem() {
+    const nama = selectNama.value;
+    const harga = parseInt(inputHarga.value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
 
-      if (!nama || !harga || !jumlah) {
-        alert("Isi semua data dengan benar!");
-        return;
-      }
-
-      keranjang.push({ nama, harga, jumlah });
-      alert(`Ditambahkan: ${nama} x ${jumlah}`);
-      resetForm();
-    });
-
-    function resetForm() {
-      buahSelect.value = "";
-      hargaInput.value = "";
-      jumlahInput.value = "";
+    if (!nama || isNaN(harga) || isNaN(jumlah)) {
+      alert("Mohon isi semua data.");
+      return;
     }
 
-    function hapusSemua() {
-      if (confirm("Yakin ingin menghapus semua data keranjang?")) {
-        keranjang.length = 0;
-        alert("Keranjang dikosongkan.");
-      }
+    keranjang.push({ nama, harga, jumlah });
+    updateTabel();
+  }
+
+  function updateTabel() {
+    const tabel = document.getElementById("tabelBelanja");
+    tabel.innerHTML = "";
+    let total = 0;
+
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+
+      const row = `<tr>
+        <td>${item.nama}</td>
+        <td>Rp ${item.harga.toLocaleString()}</td>
+        <td>${item.jumlah}</td>
+        <td>Rp ${subtotal.toLocaleString()}</td>
+      </tr>`;
+      tabel.innerHTML += row;
+    });
+
+    document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+  }
+
+  function simpanTransaksi() {
+    if (keranjang.length === 0) {
+      alert("Keranjang masih kosong.");
+      return;
     }
 
-    function simpanTransaksi() {
-      if (keranjang.length === 0) {
-        alert("Keranjang masih kosong!");
-        return;
-      }
-      // Simulasi simpan ke Firestore di sini
+    db.collection("transaksi").add({
+      tanggal: new Date(),
+      item: keranjang,
+      total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
+    }).then(() => {
       alert("Transaksi berhasil disimpan!");
+    }).catch(err => {
+      alert("Gagal menyimpan transaksi.");
+      console.error(err);
+    });
+  }
+
+  function hapusSemua() {
+    if (confirm("Hapus semua item di keranjang?")) {
+      keranjang = [];
+      updateTabel();
     }
+  }
 
-    function cetakStruk() {
-      if (keranjang.length === 0) {
-        alert("Belum ada item di keranjang!");
-        return;
-      }
+  function resetForm() {
+    document.getElementById("form").reset();
+    document.getElementById("harga").value = "";
+  }
 
-      let total = 0;
-      let struk = "🧾 STRUK BELANJA\n====================\n";
-      keranjang.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
-      });
+  function showQrisModal() {
+    document.getElementById("qrisModal").style.display = "block";
+  }
 
-      struk += "\n====================\n";
-      struk += "TOTAL: Rp " + total.toLocaleString() + "\n\n";
-      struk += "Terima kasih telah berbelanja di TOKO BUAH INDONESIA!\n";
+  function closeQrisModal() {
+    document.getElementById("qrisModal").style.display = "none";
+  }
 
-      alert(struk);
-      window.location.href = "dashboard.html";
-    }
-  </script>
+  function cetakStruk() {
+    closeQrisModal();
+
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    let total = 0;
+
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+    });
+
+    struk += "----------------------------\n";
+    struk += "TOTAL: Rp " + total.toLocaleString() + "\n";
+    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+
+    alert(struk);
+    window.location.href = "dashboard.html";
+  }
+</script>
 
 </body>
 </html>
