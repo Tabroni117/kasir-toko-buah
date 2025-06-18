@@ -94,7 +94,6 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
-      width: 100%;
     }
     button:hover {
       background-color: #43a047;
@@ -173,6 +172,14 @@
   <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
 </form>
 
+<!-- ✅ Tombol Tambahan -->
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+  <button onclick="simpanTransaksi()">💾 Simpan</button>
+  <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+  <button onclick="resetForm()">🔄 Reset Form</button>
+  <button onclick="updateTabel()">🔃 Refresh Tabel</button>
+</div>
+
 <h3>🛒 Daftar Belanja</h3>
 <div class="tabel-container">
   <table>
@@ -208,8 +215,8 @@
   </div>
 </div>
 
+<!-- Script -->
 <script>
-  // Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
     authDomain: "tokobuahkasir.firebaseapp.com",
@@ -232,7 +239,6 @@
     snapshot.forEach(doc => {
       const data = doc.data();
       buahData.push(data);
-
       const option = document.createElement("option");
       option.value = data.nama;
       option.textContent = data.nama;
@@ -267,7 +273,6 @@
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
-
       const row = `<tr>
         <td>${item.nama}</td>
         <td>Rp ${item.harga.toLocaleString()}</td>
@@ -305,9 +310,37 @@
     struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
 
     alert(struk);
-
-    // ✅ Redirect otomatis ke dashboard setelah cetak
     window.location.href = "dashboard.html";
+  }
+
+  function simpanTransaksi() {
+    if (keranjang.length === 0) {
+      alert("Keranjang masih kosong.");
+      return;
+    }
+
+    db.collection("transaksi").add({
+      tanggal: new Date(),
+      item: keranjang,
+      total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
+    }).then(() => {
+      alert("Transaksi berhasil disimpan!");
+    }).catch(err => {
+      alert("Gagal menyimpan transaksi.");
+      console.error(err);
+    });
+  }
+
+  function hapusSemua() {
+    if (confirm("Hapus semua item di keranjang?")) {
+      keranjang = [];
+      updateTabel();
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("form").reset();
+    document.getElementById("harga").value = "";
   }
 </script>
 </body>
