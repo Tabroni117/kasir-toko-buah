@@ -2,195 +2,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Stok Buah</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+  <title>Toko Buah Indonesia</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      background: #f8f9fa;
-    }
-    .sidebar {
-      min-height: 100vh;
-      background: #343a40;
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f4f6f9; }
+    header {
+      background: #00a74f;
       color: white;
+      padding: 1rem;
+      font-size: 1.5rem;
+      text-align: center;
     }
-    .sidebar a {
-      color: white;
-      text-decoration: none;
-      display: block;
-      padding: 10px 20px;
+    .container {
+      padding: 1rem;
     }
-    .sidebar a:hover {
-      background: #495057;
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .card-summary {
-      border-left: 5px solid #0d6efd;
+    .menu {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      margin-top: 1rem;
     }
-    .table thead {
-      background-color: #0d6efd;
-      color: white;
+    .menu button {
+      width: 30%;
+      margin: 0.5rem;
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      background: #fff;
+      color: #00a74f;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    .footer-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem;
+    }
+    .footer-nav button {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #00a74f;
     }
   </style>
 </head>
 <body>
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-md-2 sidebar">
-      <h4 class="text-center py-4">🍍 Toko Buah</h4>
-      <a href="#"><i class='bx bx-home'></i> Dashboard</a>
-      <a href="#"><i class='bx bx-cart'></i> Transaksi</a>
-      <a href="#"><i class='bx bx-bar-chart-alt'></i> Laporan</a>
-      <a href="#"><i class='bx bx-cog'></i> Pengaturan</a>
-    </div>
-    <div class="col-md-10 p-4">
-      <div class="row mb-3">
-        <div class="col-md-3">
-          <div class="card card-summary p-3">
-            <h6>Total Stok</h6>
-            <h3 id="totalStok">0</h3>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card card-summary p-3 border-start-success">
-            <h6>Total Jenis Buah</h6>
-            <h3 id="totalBuah">0</h3>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <canvas id="chartPenjualan"></canvas>
-        </div>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h5>Data Stok Buah</h5>
-        <button class="btn btn-primary" onclick="showFormTambah()"><i class='bx bx-plus'></i> Tambah</button>
-      </div>
-      <table class="table table-bordered">
-        <thead>
-          <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="tabelBuah"></tbody>
-      </table>
-      <div id="formInput" class="mt-4" style="display:none;">
-        <h5 id="judulForm">Tambah Buah</h5>
-        <div class="mb-2">
-          <input type="text" id="inputNama" class="form-control" placeholder="Nama Buah">
-        </div>
-        <div class="mb-2">
-          <input type="number" id="inputHarga" class="form-control" placeholder="Harga">
-        </div>
-        <div class="mb-2">
-          <input type="number" id="inputStok" class="form-control" placeholder="Stok">
-        </div>
-        <button class="btn btn-success" onclick="simpanData()">Simpan</button>
-        <button class="btn btn-secondary" onclick="batalInput()">Batal</button>
-      </div>
-    </div>
-  </div>
-</div><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script><script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const buahRef = db.collection("buah");
+  <header>🍉 Toko Buah Indonesia</header>  <div class="container">
+    <div class="card">
+      <h3>Statistik Penjualan</h3>
+      <canvas id="salesChart"></canvas>
+    </div><div class="card">
+  <h3>Daftar Stok Buah</h3>
+  <table id="stokTable">
+    <thead><tr><th>Nama</th><th>Harga</th><th>Stok</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
 
-  let editId = null;
+<div class="card">
+  <h3>Tambah Buah</h3>
+  <input id="nama" placeholder="Nama Buah" /><br><br>
+  <input id="harga" placeholder="Harga" type="number" /><br><br>
+  <input id="stok" placeholder="Stok" type="number" /><br><br>
+  <button onclick="tambahBuah()">Simpan</button>
+</div>
 
-  function loadData() {
-    buahRef.get().then(snapshot => {
-      let html = "";
-      let total = 0;
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        html += `<tr>
-          <td>${data.nama}</td>
-          <td>${data.harga}</td>
-          <td>${data.stok}</td>
-          <td>
-            <button class='btn btn-sm btn-warning' onclick="editData('${doc.id}', '${data.nama}', ${data.harga}, ${data.stok})">Edit</button>
-            <button class='btn btn-sm btn-danger' onclick="hapusData('${doc.id}')">Hapus</button>
-          </td>
-        </tr>`;
-        total += data.stok;
+  </div>  <div class="footer-nav">
+    <button onclick="alert('Dashboard')">🏠</button>
+    <button onclick="alert('Transaksi')">🧾</button>
+    <button onclick="alert('Stok')">📦</button>
+    <button onclick="alert('Laporan')">📊</button>
+  </div>  <script>
+    const firebaseConfig = {
+      apiKey: "ISI_SENDIRI",
+      authDomain: "ISI_SENDIRI",
+      projectId: "ISI_SENDIRI",
+      storageBucket: "ISI_SENDIRI",
+      messagingSenderId: "ISI_SENDIRI",
+      appId: "ISI_SENDIRI"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const buahRef = db.collection("buah");
+
+    function loadStok() {
+      buahRef.onSnapshot(snapshot => {
+        const tbody = document.querySelector("#stokTable tbody");
+        tbody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          tbody.innerHTML += `<tr><td>${data.nama}</td><td>${data.harga}</td><td>${data.stok}</td></tr>`;
+        });
       });
-      document.getElementById("tabelBuah").innerHTML = html;
-      document.getElementById("totalStok").textContent = total;
-      document.getElementById("totalBuah").textContent = snapshot.size;
+    }
+
+    function tambahBuah() {
+      const nama = document.getElementById("nama").value;
+      const harga = parseInt(document.getElementById("harga").value);
+      const stok = parseInt(document.getElementById("stok").value);
+      if(nama && !isNaN(harga) && !isNaN(stok)) {
+        buahRef.add({ nama, harga, stok }).then(() => {
+          alert("✅ Berhasil ditambah!");
+        });
+      }
+    }
+
+    // Chart Dummy Data
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei'],
+        datasets: [{
+          label: 'Penjualan',
+          data: [120, 190, 300, 250, 400],
+          borderColor: '#00a74f',
+          fill: false
+        }]
+      }
     });
-  }
 
-  function showFormTambah() {
-    editId = null;
-    document.getElementById("judulForm").textContent = "Tambah Buah";
-    document.getElementById("formInput").style.display = "block";
-    document.getElementById("inputNama").value = "";
-    document.getElementById("inputHarga").value = "";
-    document.getElementById("inputStok").value = "";
-  }
-
-  function simpanData() {
-    const nama = document.getElementById("inputNama").value;
-    const harga = parseInt(document.getElementById("inputHarga").value);
-    const stok = parseInt(document.getElementById("inputStok").value);
-    if (!nama || isNaN(harga) || isNaN(stok)) return alert("Isi semua data!");
-
-    const data = { nama, harga, stok };
-    if (editId) {
-      buahRef.doc(editId).update(data).then(() => {
-        batalInput();
-        loadData();
-      });
-    } else {
-      buahRef.add(data).then(() => {
-        batalInput();
-        loadData();
-      });
-    }
-  }
-
-  function editData(id, nama, harga, stok) {
-    editId = id;
-    document.getElementById("judulForm").textContent = "Edit Buah";
-    document.getElementById("formInput").style.display = "block";
-    document.getElementById("inputNama").value = nama;
-    document.getElementById("inputHarga").value = harga;
-    document.getElementById("inputStok").value = stok;
-  }
-
-  function hapusData(id) {
-    if (confirm("Hapus data ini?")) {
-      buahRef.doc(id).delete().then(loadData);
-    }
-  }
-
-  function batalInput() {
-    document.getElementById("formInput").style.display = "none";
-  }
-
-  // Grafik dummy
-  const chart = new Chart(document.getElementById('chartPenjualan'), {
-    type: 'line',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-      datasets: [{
-        label: 'Penjualan (Rp)',
-        data: [500000, 800000, 600000, 900000, 750000, 950000],
-        borderColor: '#0d6efd',
-        tension: 0.3
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-
-  loadData();
-</script></body>
+    loadStok();
+  </script></body>
 </html>
