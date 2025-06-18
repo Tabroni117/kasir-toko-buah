@@ -264,29 +264,31 @@
   let buahData = [];
   let keranjang = [];
 
-  const selectNama = document.getElementById("nama");
-  const inputHarga = document.getElementById("harga");
+ const selectNama = document.getElementById("nama");
+ selectNama.innerHTML = `<option value="">-- Pilih buah --</option>`;
+ const inputHarga = document.getElementById("harga");
 
   // MUAT DATA BUAH
   function loadBuah() {
-    db.collection("buah").get().then(snapshot => {
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        buahData.push(data);
+  selectNama.innerHTML = `<option value="">-- Pilih buah --</option>`; // ✅ Tambah opsi awal
 
-        const option = document.createElement("option");
-        option.value = data.nama;
-        option.textContent = data.nama;
-        selectNama.appendChild(option);
-      });
+  db.collection("buah").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      buahData.push(data);
 
-      // Setelah data selesai dimuat, tambahkan listener
-      selectNama.addEventListener("change", () => {
-        const selected = buahData.find(buah => buah.nama === selectNama.value);
-        inputHarga.value = selected ? selected.harga : '';
-      });
+      const option = document.createElement("option");
+      option.value = data.nama;
+      option.textContent = data.nama;
+      selectNama.appendChild(option);
     });
-  }
+
+    selectNama.addEventListener("change", () => {
+      const selected = buahData.find(buah => buah.nama === selectNama.value);
+      inputHarga.value = selected ? selected.harga : '';
+    });
+  });
+}
 
   loadBuah();
 
