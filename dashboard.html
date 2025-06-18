@@ -1,3 +1,4 @@
+<!-- ✅ FINAL: Stok Buah Dashboard -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -5,43 +6,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>📦 Stok Buah</title>
   <style>
-   * {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #eaf7f4;
-  margin: 0;
-  padding: 100px 10px 10px 10px; /* geser ke bawah px, KANAN 10px, BAWAH 20px, KIRI 20px */
-  display: flex;
-  justify-content: flex-start; /* Geser ke kiri */
-}
-
-.container {
-  background-color: #fff;
-  border: 2px solid #bfe5dc;
-  border-radius: 12px;
-  padding: 20px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  margin-left: 10px; /* Tambahan: geser container sedikit ke kanan */
-}
-
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #eaf7f4;
+      margin: 0;
+      padding: 100px 10px 10px 10px;
+      display: flex;
+      justify-content: flex-start;
+    }
+    .container {
+      background-color: #fff;
+      border: 2px solid #bfe5dc;
+      border-radius: 12px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      margin-left: 10px;
+    }
     .header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
     }
-
     h1 {
       color: #009688;
       font-size: 20px;
       margin: 0;
     }
-
     .marquee {
       font-size: 13px;
       color: green;
@@ -49,23 +43,19 @@ body {
       overflow: hidden;
       width: 160px;
     }
-
     .marquee span {
       display: inline-block;
       animation: slide 4s linear infinite, blink 1.2s step-start infinite alternate;
     }
-
     @keyframes slide {
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
     }
-
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0; }
       100% { opacity: 1; }
     }
-
     .input-row input {
       width: 100%;
       margin-bottom: 10px;
@@ -74,7 +64,6 @@ body {
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-
     .btn {
       font-size: 13px;
       padding: 8px 12px;
@@ -83,33 +72,20 @@ body {
       color: white;
       cursor: pointer;
     }
-
-    .btn-green {
-      background-color: #4CAF50;
-    }
-
-    .btn-red {
-      background-color: #f44336;
-    }
-
-    .btn-small {
-      padding: 5px 7px;
-      font-size: 12px;
-    }
-
+    .btn-green { background-color: #4CAF50; }
+    .btn-red { background-color: #f44336; }
+    .btn-small { padding: 5px 7px; font-size: 12px; }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 14px;
       font-size: 13px;
     }
-
     th, td {
       border: 1px solid #ddd;
       padding: 6px;
       text-align: center;
     }
-
     td input {
       width: 100%;
       font-size: 13px;
@@ -117,41 +93,26 @@ body {
       border: 1px solid #ddd;
       border-radius: 4px;
     }
-
     #loading {
       font-size: 12px;
       color: #666;
       margin-top: 8px;
       text-align: center;
     }
-
     .btn-group {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
     }
-
     .refresh {
       margin-top: 12px;
       width: 100%;
     }
-
     @media (max-width: 440px) {
-      .container {
-        padding: 16px;
-      }
-
-      h1 {
-        font-size: 18px;
-      }
-
-      .btn {
-        font-size: 12px;
-      }
-
-      .btn-small {
-        font-size: 11px;
-      }
+      .container { padding: 16px; }
+      h1 { font-size: 18px; }
+      .btn { font-size: 12px; }
+      .btn-small { font-size: 11px; }
     }
   </style>
 </head>
@@ -211,17 +172,16 @@ body {
     const buahRef = db.collection("buah");
 
     async function loadData() {
+      window.scrollTo(0, 0);
       document.getElementById("loading").style.display = "block";
       const snapshot = await buahRef.get();
       document.getElementById("loading").style.display = "none";
-
       const table = document.getElementById("buahTable");
       table.innerHTML = "";
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const id = doc.id;
-
         const row = document.createElement("tr");
         row.innerHTML = `
           <td id="nama-${id}">${data.nama}</td>
@@ -281,9 +241,10 @@ body {
         document.getElementById("newName").value = "";
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
+        document.getElementById("newName").focus();
         loadData();
       } else {
-        alert("Isi semua kolom dengan benar!");
+        alert("⚠️ Isi semua kolom dengan benar!");
       }
     }
 
@@ -331,6 +292,15 @@ body {
       alert("✅ Semua data berhasil disimpan!");
       loadData();
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const inputs = document.querySelectorAll(".input-row input");
+      inputs.forEach((input, idx) => {
+        input.addEventListener("keypress", e => {
+          if (e.key === "Enter") tambahBuah();
+        });
+      });
+    });
 
     loadData();
   </script>
