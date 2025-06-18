@@ -1,4 +1,3 @@
-<!-- ✅ FINAL: Stok Buah Dashboard -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,15 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>📦 Stok Buah</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #eaf7f4;
       margin: 0;
-      padding: 100px 10px 10px 10px;
-      display: flex;
-      justify-content: flex-start;
+      padding: 0;
     }
+
+    .wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 100px 10px 10px 10px;
+    }
+
     .container {
       background-color: #fff;
       border: 2px solid #bfe5dc;
@@ -23,19 +33,26 @@
       width: 100%;
       max-width: 420px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-      margin-left: 10px;
     }
+
+    .summary {
+      background-color: #f2fff9;
+      max-width: 250px;
+    }
+
     .header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
     }
+
     h1 {
       color: #009688;
       font-size: 20px;
       margin: 0;
     }
+
     .marquee {
       font-size: 13px;
       color: green;
@@ -43,19 +60,23 @@
       overflow: hidden;
       width: 160px;
     }
+
     .marquee span {
       display: inline-block;
       animation: slide 4s linear infinite, blink 1.2s step-start infinite alternate;
     }
+
     @keyframes slide {
       0% { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
     }
+
     @keyframes blink {
       0% { opacity: 1; }
       50% { opacity: 0; }
       100% { opacity: 1; }
     }
+
     .input-row input {
       width: 100%;
       margin-bottom: 10px;
@@ -64,6 +85,7 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
+
     .btn {
       font-size: 13px;
       padding: 8px 12px;
@@ -72,20 +94,33 @@
       color: white;
       cursor: pointer;
     }
-    .btn-green { background-color: #4CAF50; }
-    .btn-red { background-color: #f44336; }
-    .btn-small { padding: 5px 7px; font-size: 12px; }
+
+    .btn-green {
+      background-color: #4CAF50;
+    }
+
+    .btn-red {
+      background-color: #f44336;
+    }
+
+    .btn-small {
+      padding: 5px 7px;
+      font-size: 12px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 14px;
       font-size: 13px;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 6px;
       text-align: center;
     }
+
     td input {
       width: 100%;
       font-size: 13px;
@@ -93,67 +128,88 @@
       border: 1px solid #ddd;
       border-radius: 4px;
     }
+
     #loading {
       font-size: 12px;
       color: #666;
       margin-top: 8px;
       text-align: center;
     }
+
     .btn-group {
       display: flex;
       justify-content: space-between;
       margin-top: 10px;
     }
+
     .refresh {
       margin-top: 12px;
       width: 100%;
     }
-    @media (max-width: 440px) {
-      .container { padding: 16px; }
-      h1 { font-size: 18px; }
-      .btn { font-size: 12px; }
-      .btn-small { font-size: 11px; }
+
+    @media (max-width: 768px) {
+      .wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .summary {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header-row">
-      <h1>📦 Stok Buah</h1>
-      <div class="marquee"><span>RUJAK BUAH INDONESIA</span></div>
-    </div>
-
-    <div class="input-row">
-      <input type="text" id="newName" placeholder="Nama Buah" />
-      <input type="number" id="newPrice" placeholder="Harga" />
-      <input type="number" id="newStock" placeholder="Stok" />
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-red" onclick="hapusSemua()">🗑️</button>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn btn-green" onclick="simpanSemua()">💾</button>
-        <button class="btn btn-green" onclick="tambahBuah()">➕</button>
+  <div class="wrapper">
+    <!-- KIRI: Form & Tabel -->
+    <div class="container">
+      <div class="header-row">
+        <h1>📦 Stok Buah</h1>
+        <div class="marquee"><span>RUJAK BUAH INDONESIA</span></div>
       </div>
+
+      <div class="input-row">
+        <input type="text" id="newName" placeholder="Nama Buah" />
+        <input type="number" id="newPrice" placeholder="Harga" />
+        <input type="number" id="newStock" placeholder="Stok" />
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-red" onclick="hapusSemua()">🗑️</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-green" onclick="simpanSemua()">💾</button>
+          <button class="btn btn-green" onclick="tambahBuah()">➕</button>
+        </div>
+      </div>
+
+      <button class="btn btn-green refresh" onclick="loadData()">🔄 Refresh</button>
+
+      <div id="loading" style="display:none;">⏳ Memuat data...</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Harga</th>
+            <th>Stok</th>
+            <th>🛠️</th>
+          </tr>
+        </thead>
+        <tbody id="buahTable"></tbody>
+      </table>
     </div>
 
-    <button class="btn btn-green refresh" onclick="loadData()">🔄 Refresh</button>
-
-    <div id="loading" style="display:none;">⏳ Memuat data...</div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Harga</th>
-          <th>Stok</th>
-          <th>🛠️</th>
-        </tr>
-      </thead>
-      <tbody id="buahTable"></tbody>
-    </table>
+    <!-- KANAN: Ringkasan -->
+    <div class="container summary">
+      <h1>📊 Ringkasan Stok</h1>
+      <p id="totalJenis">Total Jenis Buah: 0</p>
+      <p id="totalStok">Total Jumlah Stok: 0</p>
+      <p id="totalNilai">Total Nilai (Rp): 0</p>
+    </div>
   </div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
@@ -172,16 +228,17 @@
     const buahRef = db.collection("buah");
 
     async function loadData() {
-      window.scrollTo(0, 0);
       document.getElementById("loading").style.display = "block";
       const snapshot = await buahRef.get();
       document.getElementById("loading").style.display = "none";
+
       const table = document.getElementById("buahTable");
       table.innerHTML = "";
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const id = doc.id;
+
         const row = document.createElement("tr");
         row.innerHTML = `
           <td id="nama-${id}">${data.nama}</td>
@@ -194,6 +251,26 @@
         `;
         table.appendChild(row);
       });
+
+      updateRingkasan(); // ✅ Tambahan: update kotak ringkasan
+    }
+
+    async function updateRingkasan() {
+      const snapshot = await buahRef.get();
+      let totalJenis = 0;
+      let totalStok = 0;
+      let totalNilai = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        totalJenis += 1;
+        totalStok += data.stok || 0;
+        totalNilai += (data.harga || 0) * (data.stok || 0);
+      });
+
+      document.getElementById("totalJenis").textContent = "Total Jenis Buah: " + totalJenis;
+      document.getElementById("totalStok").textContent = "Total Jumlah Stok: " + totalStok;
+      document.getElementById("totalNilai").textContent = "Total Nilai (Rp): " + totalNilai.toLocaleString("id-ID");
     }
 
     async function toggleEdit(id) {
@@ -223,13 +300,12 @@
           stokCell.innerHTML = newStok;
           editBtn.textContent = "✏️";
           alert("✅ Data berhasil diperbarui!");
+          updateRingkasan(); // Update ringkasan juga
         } else {
           alert("⚠️ Cek kembali data yang kamu isi!");
         }
       }
     }
-
-    window.toggleEdit = toggleEdit;
 
     async function tambahBuah() {
       const nama = document.getElementById("newName").value.trim();
@@ -241,10 +317,9 @@
         document.getElementById("newName").value = "";
         document.getElementById("newPrice").value = "";
         document.getElementById("newStock").value = "";
-        document.getElementById("newName").focus();
         loadData();
       } else {
-        alert("⚠️ Isi semua kolom dengan benar!");
+        alert("Isi semua kolom dengan benar!");
       }
     }
 
@@ -292,15 +367,6 @@
       alert("✅ Semua data berhasil disimpan!");
       loadData();
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const inputs = document.querySelectorAll(".input-row input");
-      inputs.forEach((input, idx) => {
-        input.addEventListener("keypress", e => {
-          if (e.key === "Enter") tambahBuah();
-        });
-      });
-    });
 
     loadData();
   </script>
