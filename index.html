@@ -267,23 +267,30 @@
   const selectNama = document.getElementById("nama");
   const inputHarga = document.getElementById("harga");
 
-  db.collection("buah").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      buahData.push({ id: doc.id, ...data });
+  // MUAT DATA BUAH
+  function loadBuah() {
+    db.collection("buah").get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        buahData.push(data);
 
-      const option = document.createElement("option");
-      option.value = data.nama;
-      option.textContent = data.nama;
-      selectNama.appendChild(option);
+        const option = document.createElement("option");
+        option.value = data.nama;
+        option.textContent = data.nama;
+        selectNama.appendChild(option);
+      });
+
+      // Setelah data selesai dimuat, tambahkan listener
+      selectNama.addEventListener("change", () => {
+        const selected = buahData.find(buah => buah.nama === selectNama.value);
+        inputHarga.value = selected ? selected.harga : '';
+      });
     });
-  });
+  }
 
-  selectNama.addEventListener("change", () => {
-    const selected = buahData.find(buah => buah.nama === selectNama.value);
-    inputHarga.value = selected ? selected.harga : '';
-  });
+  loadBuah();
 
+  // TAMBAH ITEM KE KERANJANG
   function tambahItem() {
     const nama = selectNama.value;
     const harga = parseInt(inputHarga.value);
@@ -298,6 +305,7 @@
     updateTabel();
   }
 
+  // UPDATE TABEL BELANJA
   function updateTabel() {
     const tabel = document.getElementById("tabelBelanja");
     tabel.innerHTML = "";
@@ -318,6 +326,9 @@
 
     document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
   }
+
+  // FUNGSI LAINNYA (hapus, simpan, dll) tetap seperti sebelumnya ya...
+</script>
   function simpanTransaksi() {
     if (keranjang.length === 0) {
       alert("Keranjang masih kosong.");
