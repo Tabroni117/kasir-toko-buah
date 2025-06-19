@@ -183,16 +183,16 @@
     <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
   </label>
   <label>Jumlah<input type="number" id="jumlah"></label>
-  <button id="btnTambah" type="button" onclick="tambahItem()">
-    <span id="spinner" style="display:none;
-      width:16px;height:16px;
-      border:2px solid white;
-      border-top:2px solid #4CAF50;
-      border-radius:50%;
-      animation:spin 1s linear infinite;
-      margin-right:6px;"></span>
-    + Tambah ke Keranjang
-  </button>
+<button id="btnTambah" type="button" onclick="tambahItem()">
+  <span id="spinner" style="display:none;
+    width:16px;height:16px;
+    border:2px solid white;
+    border-top:2px solid #4CAF50;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+    margin-right:6px;"></span>
+  + Tambah ke Keranjang
+</button>
 </form>
 
   <div class="custom-menu">
@@ -301,45 +301,41 @@ db.collection("buah").get().then(snapshot => {
 });
 
 function tambahItem() {
-  const btn = document.getElementById("btnKeranjang");
+  const nama = selectNama.value;
+  const harga = parseInt(inputHarga.value);
+  const jumlah = parseInt(document.getElementById("jumlah").value);
+  const sambal = document.getElementById("sambal").value;
+  const ukuran = document.getElementById("ukuran").value;
+  const bumbu = document.getElementById("bumbu").value;
+
+  const btn = document.getElementById("btnTambah");
   const spinner = document.getElementById("spinner");
-  const btnText = document.getElementById("btnText");
 
-  // Tampilkan loading
-  spinner.style.display = "inline-block";
-  btnText.textContent = "Menambahkan...";
+  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
+    alert("Mohon isi semua data dengan benar.");
+    return;
+  }
+
+  // Mulai loading
   btn.disabled = true;
+  spinner.style.display = "inline-block";
 
-  // Delay sedikit biar loading keliatan
   setTimeout(() => {
-    const nama = selectNama.value;
-    const harga = parseInt(inputHarga.value);
-    const jumlah = parseInt(document.getElementById("jumlah").value);
-    const sambal = document.getElementById("sambal").value;
-    const ukuran = document.getElementById("ukuran").value;
-    const bumbu = document.getElementById("bumbu").value;
-
-    if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
-      alert("Mohon isi semua data dengan benar.");
-
-      // Reset loading
-      spinner.style.display = "none";
-      btnText.textContent = "+ Tambah ke Keranjang";
-      btn.disabled = false;
-      return;
-    }
-
     keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
     updateTabel();
 
-    // Notifikasi sukses (opsional)
+    // Reset input
+    document.getElementById("form").reset();
+    inputHarga.value = "";
+    selectNama.value = "";
+    document.getElementById("jumlah").value = "";
+
     alert("✅ Berhasil ditambahkan ke keranjang!");
 
-    // Reset loading
-    spinner.style.display = "none";
-    btnText.textContent = "+ Tambah ke Keranjang";
+    // Selesai loading
     btn.disabled = false;
-  }, 700); // 700ms biar loading-nya sempat terlihat
+    spinner.style.display = "none";
+  }, 600); // delay 600ms buat efek loading
 }
 
 function updateTabel() {
