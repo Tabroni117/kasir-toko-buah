@@ -87,13 +87,22 @@
       margin: 10px 0;
     }
 
-    form, .tombol-aksi {
+    form, .custom-menu {
       background: white;
       padding: 10px;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       flex: 1 1 48%;
       box-sizing: border-box;
+      font-size: 13px;
+    }
+
+    .tombol-aksi {
+      margin-top: 6px;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       font-size: 13px;
     }
 
@@ -115,6 +124,7 @@
       cursor: pointer;
       font-size: 13px;
       width: 100%;
+      margin-top: 6px;
     }
 
     button:hover {
@@ -169,7 +179,7 @@
         justify-content: space-between;
       }
 
-      form, .tombol-aksi {
+      form, .custom-menu {
         flex: 1 1 48%;
       }
 
@@ -206,43 +216,44 @@
     <label>Jumlah
       <input type="number" id="jumlah" placeholder="Contoh: 2">
     </label>
-
-    <!-- 🔽 Custom menu hanya untuk buah bertuliskan 'Rujak' -->
-    <div id="customMenu" style="display: none; margin-top: 10px;">
-      <label>Sambal
-        <select id="sambal">
-          <option value="Tidak Pedas">Tidak Pedas</option>
-          <option value="Pedas">Pedas</option>
-          <option value="Extra Pedas">Extra Pedas</option>
-        </select>
-      </label>
-      <label>Ukuran
-        <select id="ukuran">
-          <option value="500ml">500 ml</option>
-          <option value="650ml">650 ml</option>
-          <option value="750ml">750 ml</option>
-          <option value="1000ml">1000 ml</option>
-        </select>
-      </label>
-      <label>Bumbu
-        <select id="bumbu">
-          <option value="Tanpa Kacang">Tanpa Kacang</option>
-          <option value="Pakai Kacang">Pakai Kacang</option>
-        </select>
-      </label>
-    </div>
-
     <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
   </form>
 
-  <div class="tombol-aksi">
-    <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
-    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-    <button onclick="resetForm()">🔄 Reset Form</button>
-    <button onclick="showQrisModal()">🧾 Cetak Struk</button>
-    <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
-    <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+  <div class="custom-menu" id="customMenu" style="display: none;">
+    <label>Pilih Sambal
+      <select id="sambal">
+        <option value="">-- Pilih Sambal --</option>
+        <option value="Tidak Pedas">Tidak Pedas</option>
+        <option value="Pedas">Pedas</option>
+        <option value="Extra Pedas">Extra Pedas</option>
+      </select>
+    </label>
+    <label>Ukuran
+      <select id="ukuran">
+        <option value="">-- Pilih Ukuran --</option>
+        <option value="500 ml">500 ml</option>
+        <option value="650 ml">650 ml</option>
+        <option value="750 ml">750 ml</option>
+        <option value="1000 ml">1000 ml</option>
+      </select>
+    </label>
+    <label>Bumbu
+      <select id="bumbu">
+        <option value="">-- Pilih Bumbu --</option>
+        <option value="Tanpa Kacang">Tanpa Kacang</option>
+        <option value="Pakai Kacang">Pakai Kacang</option>
+      </select>
+    </label>
   </div>
+</div>
+
+<div class="tombol-aksi">
+  <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+  <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+  <button onclick="resetForm()">🔄 Reset Form</button>
+  <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+  <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
+  <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
 </div>
 
 <h3>🛒 Daftar Belanja</h3>
@@ -300,6 +311,7 @@
     snapshot.forEach(doc => {
       const data = doc.data();
       buahData.push(data);
+
       const option = document.createElement("option");
       option.value = data.nama;
       option.textContent = data.nama;
@@ -309,11 +321,12 @@
     selectNama.addEventListener("change", () => {
       const selected = buahData.find(buah => buah.nama === selectNama.value);
       inputHarga.value = selected ? selected.harga : '';
-      // Tampilkan custom menu hanya untuk buah "Rujak"
+      // Tampilkan custom menu jika ada kata "Rujak"
+      const customMenu = document.getElementById("customMenu");
       if (selectNama.value.toLowerCase().includes("rujak")) {
-        document.getElementById("customMenu").style.display = "block";
+        customMenu.style.display = "block";
       } else {
-        document.getElementById("customMenu").style.display = "none";
+        customMenu.style.display = "none";
       }
     });
   });
@@ -322,22 +335,22 @@
     const nama = selectNama.value;
     const harga = parseInt(inputHarga.value);
     const jumlah = parseInt(document.getElementById("jumlah").value);
-    const sambal = document.getElementById("sambal").value;
-    const ukuran = document.getElementById("ukuran").value;
-    const bumbu = document.getElementById("bumbu").value;
 
     if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
       alert("Mohon isi semua data dengan benar.");
       return;
     }
 
-    keranjang.push({
-      nama,
-      harga,
-      jumlah,
-      custom: nama.toLowerCase().includes("rujak") ? { sambal, ukuran, bumbu } : null
-    });
+    const customMenu = document.getElementById("customMenu");
+    let sambal = "", ukuran = "", bumbu = "";
 
+    if (customMenu.style.display === "block") {
+      sambal = document.getElementById("sambal").value;
+      ukuran = document.getElementById("ukuran").value;
+      bumbu = document.getElementById("bumbu").value;
+    }
+
+    keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
     updateTabel();
   }
 
@@ -349,18 +362,10 @@
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
-      let customText = "";
 
-      if (item.custom) {
-        customText = `<br><small style="color:gray;">
-          Sambal: ${item.custom.sambal}, 
-          Ukuran: ${item.custom.ukuran}, 
-          Bumbu: ${item.custom.bumbu}
-        </small>`;
-      }
-
+      const custom = [item.sambal, item.ukuran, item.bumbu].filter(Boolean).join(", ");
       const row = `<tr>
-        <td>${item.nama}${customText}</td>
+        <td>${item.nama}${custom ? `<br><small>${custom}</small>` : ""}</td>
         <td>Rp ${item.harga.toLocaleString()}</td>
         <td>${item.jumlah}</td>
         <td>Rp ${subtotal.toLocaleString()}</td>
@@ -419,9 +424,6 @@
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
       struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
-      if (item.custom) {
-        struk += `  > Sambal: ${item.custom.sambal}, Ukuran: ${item.custom.ukuran}, Bumbu: ${item.custom.bumbu}\n`;
-      }
     });
 
     struk += "----------------------------\n";
@@ -432,69 +434,6 @@
     window.location.href = "dashboard.html";
   }
 </script>
-
-<style>
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background-color: #ffffff;
-    border-top: 1px solid #ccc;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    justify-content: space-around;
-    align-items: center;
-    z-index: 999;
-  }
-
-  .bottom-nav button {
-    background: none;
-    border: none;
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #4CAF50;
-    width: 100%;
-    height: 100%;
-  }
-
-  .bottom-nav button:hover {
-    color: #388e3c;
-  }
-
-  .bottom-nav i {
-    font-size: 18px;
-    margin-bottom: 2px;
-  }
-
-  @media screen and (orientation: landscape) and (max-height: 500px) {
-    .bottom-nav {
-      position: absolute;
-    }
-  }
-</style>
-
-<div class="bottom-nav">
-  <button onclick="window.location.reload()">
-    <i>🔃</i>
-    <span>Refresh</span>
-  </button>
-  <button onclick="document.getElementById('form').scrollIntoView()">
-    <i>🍓</i>
-    <span>Input</span>
-  </button>
-  <button onclick="showQrisModal()">
-    <i>💳</i>
-    <span>QRIS</span>
-  </button>
-  <button onclick="window.location.href='dashboard.html'">
-    <i>📊</i>
-    <span>Dashboard</span>
-  </button>
-</div>
 
 </body>
 </html>
