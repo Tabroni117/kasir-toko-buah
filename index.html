@@ -288,6 +288,10 @@ db.collection("buah").get().then(snapshot => {
 });
 
 function tambahItem() {
+  const tombol = event.target;
+  tombol.disabled = true;
+  tombol.textContent = "⏳ Menambahkan...";
+
   const nama = selectNama.value;
   const harga = parseInt(inputHarga.value);
   const jumlah = parseInt(document.getElementById("jumlah").value);
@@ -297,11 +301,18 @@ function tambahItem() {
 
   if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
     alert("Mohon isi semua data dengan benar.");
+    tombol.disabled = false;
+    tombol.textContent = "+ Tambah ke Keranjang";
     return;
   }
 
   keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
   updateTabel();
+
+  setTimeout(() => {
+    tombol.disabled = false;
+    tombol.textContent = "+ Tambah ke Keranjang";
+  }, 500); // efek loading selama 0.5 detik
 }
 
 function updateTabel() {
