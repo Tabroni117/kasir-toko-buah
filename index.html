@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -15,6 +14,15 @@
       padding: 10px;
       font-size: 14px;
     }
+ <!-- Tambahkan di dalam <style> di bagian atas (boleh setelah style tombol-aksi) -->
+<style>
+  .tombol-aksi {
+    transition: opacity 0.3s ease;
+  }
+  .tombol-aksi.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
     .running-text {
       width: 100%;
       overflow: hidden;
@@ -62,7 +70,7 @@
     .login-btn {
       background: white;
       color: #4CAF50;
-      border: none;
+      border: none
       padding: 6px 10px;
       border-radius: 6px;
       font-weight: bold;
@@ -356,21 +364,39 @@ function showQrisModal() {
 function closeQrisModal() {
   document.getElementById("qrisModal").style.display = "none";
 }
-function cetakStruk() {
-  closeQrisModal();
-  let struk = "=== TOKO BUAH INDONESIA ===\n";
-  let total = 0;
-  keranjang.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
-  });
-  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-  alert(struk);
-}
-</script>
+<!-- Tambahkan di bawah fungsi cetakStruk(), sebelum </script> -->
+<script>
+  // ...fungsi-fungsi sebelumnya...
 
+  function cetakStruk() {
+    closeQrisModal();
+    let struk = "=== TOKO BUAH INDONESIA ===\n";
+    let total = 0;
+    keranjang.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+    });
+    struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
+    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+    alert(struk);
+  }
+
+  // 🔽 Tambahan: efek tombol hijau sembunyi saat scroll ke atas
+  let lastScrollTop = 0;
+  const scrollBox = document.getElementById("scrollTabel");
+  const tombolAksi = document.querySelector(".tombol-aksi");
+
+  scrollBox.addEventListener("scroll", function () {
+    const scrollTop = this.scrollTop;
+    if (scrollTop > lastScrollTop) {
+      tombolAksi.classList.remove("hide"); // scroll ke bawah
+    } else {
+      tombolAksi.classList.add("hide"); // scroll ke atas
+    }
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+  });
+</script>
 <!-- 🔻 Navigator Bawah -->
 <style>
   .bottom-nav {
