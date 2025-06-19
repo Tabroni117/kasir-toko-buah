@@ -179,7 +179,17 @@
     <label>Pilih Buah<select id="nama"></select></label>
     <label>Harga Satuan (Rp)<input type="number" id="harga" readonly></label>
     <label>Jumlah<input type="number" id="jumlah"></label>
-    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+   <button id="btnKeranjang" type="button" onclick="tambahItem()">
+  <span id="spinner" style="display:none;
+             width:16px;
+             height:16px;
+             border:2px solid white;
+             border-top:2px solid #4CAF50;
+             border-radius:50%;
+             animation:spin 1s linear infinite;
+             margin-right:6px;"></span>
+  <span id="btnText">+ Tambah ke Keranjang</span>
+</button>
   </form>
 
   <div class="custom-menu">
@@ -288,20 +298,45 @@ db.collection("buah").get().then(snapshot => {
 });
 
 function tambahItem() {
-  const nama = selectNama.value;
-  const harga = parseInt(inputHarga.value);
-  const jumlah = parseInt(document.getElementById("jumlah").value);
-  const sambal = document.getElementById("sambal").value;
-  const ukuran = document.getElementById("ukuran").value;
-  const bumbu = document.getElementById("bumbu").value;
+  const btn = document.getElementById("btnKeranjang");
+  const spinner = document.getElementById("spinner");
+  const btnText = document.getElementById("btnText");
 
-  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
-    alert("Mohon isi semua data dengan benar.");
-    return;
-  }
+  // Tampilkan loading
+  spinner.style.display = "inline-block";
+  btnText.textContent = "Menambahkan...";
+  btn.disabled = true;
 
-  keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
-  updateTabel();
+  // Delay sedikit biar loading keliatan
+  setTimeout(() => {
+    const nama = selectNama.value;
+    const harga = parseInt(inputHarga.value);
+    const jumlah = parseInt(document.getElementById("jumlah").value);
+    const sambal = document.getElementById("sambal").value;
+    const ukuran = document.getElementById("ukuran").value;
+    const bumbu = document.getElementById("bumbu").value;
+
+    if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
+      alert("Mohon isi semua data dengan benar.");
+
+      // Reset loading
+      spinner.style.display = "none";
+      btnText.textContent = "+ Tambah ke Keranjang";
+      btn.disabled = false;
+      return;
+    }
+
+    keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
+    updateTabel();
+
+    // Notifikasi sukses (opsional)
+    alert("✅ Berhasil ditambahkan ke keranjang!");
+
+    // Reset loading
+    spinner.style.display = "none";
+    btnText.textContent = "+ Tambah ke Keranjang";
+    btn.disabled = false;
+  }, 700); // 700ms biar loading-nya sempat terlihat
 }
 
 function updateTabel() {
