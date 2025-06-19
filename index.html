@@ -1,8 +1,9 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOKO BUAH INDONESIA</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -14,35 +15,12 @@
       padding: 10px;
       font-size: 14px;
     }
- <!-- Tambahkan di dalam <style> di bagian atas (boleh setelah style tombol-aksi) -->
-<style>
-  .tombol-aksi {
-    transition: opacity 0.3s ease;
-  }
-  .tombol-aksi.hide {
-    opacity: 0;
-    pointer-events: none;
-  }
     .running-text {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      box-sizing: border-box;
-      padding: 5px 0;
-      color: green;
-      font-weight: bold;
-      font-size: 14px;
       background-color: #d0f0c0;
       text-align: center;
-    }
-    .running-text span {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 12s linear infinite;
-    }
-    @keyframes marquee {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(-100%, 0); }
+      font-weight: bold;
+      padding: 5px;
+      color: green;
     }
     header {
       display: flex;
@@ -63,14 +41,10 @@
       margin-right: 10px;
       border-radius: 50%;
     }
-    h1 {
-      font-size: 16px;
-      margin: 0;
-    }
     .login-btn {
       background: white;
       color: #4CAF50;
-      border: none
+      border: none;
       padding: 6px 10px;
       border-radius: 6px;
       font-weight: bold;
@@ -82,9 +56,9 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 6px;
-      margin: 10px 0;
+      margin: 10px 0 70px; /* supaya tidak ketutupan tombol */
     }
-    form, .custom-menu, .tombol-aksi {
+    form, .custom-menu {
       background: white;
       padding: 10px;
       border-radius: 10px;
@@ -153,30 +127,56 @@
       border-radius: 12px;
       max-width: 400px;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
-    @media screen and (max-width: 768px) {
-      .form-section {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
-      }
-      form, .custom-menu, .tombol-aksi {
-        flex: 1 1 48%;
-      }
-      .tabel-scroll {
-        max-height: 180px;
-      }
+
+    .tombol-aksi {
+      position: fixed;
+      bottom: 60px;
+      right: 10px;
+      z-index: 999;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      transition: opacity 0.3s ease;
+    }
+    .tombol-aksi.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .bottom-nav {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background-color: #ffffff;
+      border-top: 1px solid #ccc;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      justify-content: space-around;
+      align-items: center;
+      z-index: 998;
+    }
+    .bottom-nav button {
+      background: none;
+      border: none;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #4CAF50;
     }
   </style>
 </head>
 <body>
 
-<div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+<div class="running-text"> RUJAK BUAH INDONESIA</div>
 
 <header>
   <div class="logo-container">
-    <img src="rujak-logo.png" alt="Logo Rujak Buah">
+    <img src="rujak-logo.png" alt="Logo Rujak">
     <h1>TOKO BUAH INDONESIA</h1>
   </div>
   <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
@@ -191,80 +191,65 @@
   </form>
 
   <div class="custom-menu">
-    <label>Pilih Sambal
-      <select id="sambal">
-        <option value="Tanpa Custom">Tanpa Custom</option>
-        <option value="Tidak Pedas">Tidak Pedas</option>
-        <option value="Pedas">Pedas</option>
-        <option value="Extra Pedas">Extra Pedas</option>
-      </select>
-    </label>
-    <label>Pilih Ukuran
-      <select id="ukuran">
-        <option value="Tanpa Custom">Tanpa Custom</option>
-        <option value="500 ml">500 ml</option>
-        <option value="650 ml">650 ml</option>
-        <option value="750 ml">750 ml</option>
-        <option value="1000 ml">1000 ml</option>
-      </select>
-    </label>
-    <label>Pilih Bumbu
-      <select id="bumbu">
-        <option value="Tanpa Custom">Tanpa Custom</option>
-        <option value="Tanpa Kacang">Tanpa Kacang</option>
-        <option value="Pakai Kacang">Pakai Kacang</option>
-      </select>
-    </label>
-    <div class="tombol-aksi">
-      <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
-      <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-      <button onclick="resetForm()">🔄 Reset Form</button>
-      <button onclick="showQrisModal()">🧾 Cetak Struk</button>
-      <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
-      <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
-    </div>
+    <label>Pilih Sambal<select id="sambal">
+      <option value="Tanpa Custom">Tanpa Custom</option>
+      <option value="Tidak Pedas">Tidak Pedas</option>
+      <option value="Pedas">Pedas</option>
+    </select></label>
+    <label>Pilih Ukuran<select id="ukuran">
+      <option value="Tanpa Custom">Tanpa Custom</option>
+      <option value="500 ml">500 ml</option>
+    </select></label>
+    <label>Pilih Bumbu<select id="bumbu">
+      <option value="Tanpa Custom">Tanpa Custom</option>
+      <option value="Pakai Kacang">Pakai Kacang</option>
+    </select></label>
   </div>
+</div>
+
+<!-- Tombol Aksi Melayang -->
+<div class="tombol-aksi">
+  <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+  <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+  <button onclick="resetForm()">🔄 Reset Form</button>
+  <button onclick="showQrisModal()">🧾 Cetak Struk</button>
 </div>
 
 <h3>🛒 Daftar Belanja</h3>
 <div class="tabel-scroll" id="scrollTabel">
   <table>
     <thead>
-      <tr>
-        <th>Nama Buah</th>
-        <th>Harga Satuan</th>
-        <th>Jumlah</th>
-        <th>Subtotal</th>
-      </tr>
+      <tr><th>Nama Buah</th><th>Harga</th><th>Jumlah</th><th>Subtotal</th></tr>
     </thead>
     <tbody id="tabelBelanja"></tbody>
     <tfoot>
-      <tr>
-        <td colspan="3">Total</td>
-        <td id="totalBelanja">Rp 0</td>
-      </tr>
+      <tr><td colspan="3">Total</td><td id="totalBelanja">Rp 0</td></tr>
     </tfoot>
   </table>
 </div>
 
-<div id="qrisModal" class="modal">
+<!-- Modal QRIS -->
+<div class="modal" id="qrisModal">
   <div class="modal-content">
-    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-    <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
-    <br>
-    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <h3>Silakan Scan QRIS</h3>
+    <img src="qris.png" style="width: 100%">
+    <button onclick="cetakStruk()">✅ Cetak Struk</button>
     <button onclick="closeQrisModal()">Tutup</button>
   </div>
 </div>
 
+<!-- Navigasi bawah -->
+<div class="bottom-nav">
+  <button onclick="window.location.reload()">🔃<span>Refresh</span></button>
+  <button onclick="document.getElementById('form').scrollIntoView()">🍓<span>Input</span></button>
+  <button onclick="showQrisModal()">💳<span>QRIS</span></button>
+</div>
+
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-  authDomain: "tokobuahkasir.firebaseapp.com",
-  projectId: "tokobuahkasir",
-  storageBucket: "tokobuahkasir.appspot.com",
-  messagingSenderId: "731011133713",
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  apiKey: "xxx",
+  authDomain: "xxx",
+  projectId: "xxx"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -288,10 +273,6 @@ db.collection("buah").get().then(snapshot => {
   selectNama.addEventListener("change", () => {
     const selected = buahData.find(buah => buah.nama === selectNama.value);
     inputHarga.value = selected ? selected.harga : '';
-    const isRujak = selectNama.value.toLowerCase().includes("rujak");
-    document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";
-    document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";
-    document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";
   });
 });
 
@@ -302,12 +283,7 @@ function tambahItem() {
   const sambal = document.getElementById("sambal").value;
   const ukuran = document.getElementById("ukuran").value;
   const bumbu = document.getElementById("bumbu").value;
-
-  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
-    alert("Mohon isi semua data dengan benar.");
-    return;
-  }
-
+  if (!nama || isNaN(harga) || isNaN(jumlah)) return alert("Isi lengkap");
   keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
   updateTabel();
 }
@@ -319,37 +295,26 @@ function updateTabel() {
   keranjang.forEach(item => {
     const subtotal = item.harga * item.jumlah;
     total += subtotal;
-    const row = `<tr>
+    tabel.innerHTML += `<tr>
       <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
       <td>Rp ${item.harga.toLocaleString()}</td>
       <td>${item.jumlah}</td>
       <td>Rp ${subtotal.toLocaleString()}</td>
     </tr>`;
-    tabel.innerHTML += row;
   });
   document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
-
-  // Scroll ke bawah saat tambah item
-  const scrollBox = document.getElementById("scrollTabel");
-  scrollBox.scrollTop = scrollBox.scrollHeight;
 }
 
 function simpanTransaksi() {
-  if (keranjang.length === 0) return alert("Keranjang masih kosong.");
+  if (keranjang.length === 0) return alert("Keranjang kosong.");
   db.collection("transaksi").add({
     tanggal: new Date(),
     item: keranjang,
     total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
-  }).then(() => {
-    alert("Transaksi berhasil disimpan!");
-  }).catch(err => {
-    alert("Gagal menyimpan transaksi.");
-    console.error(err);
-  });
+  }).then(() => alert("Disimpan!"));
 }
-
 function hapusSemua() {
-  if (confirm("Hapus semua item di keranjang?")) {
+  if (confirm("Hapus semua?")) {
     keranjang = [];
     updateTabel();
   }
@@ -364,78 +329,32 @@ function showQrisModal() {
 function closeQrisModal() {
   document.getElementById("qrisModal").style.display = "none";
 }
-<!-- Tambahkan di bawah fungsi cetakStruk(), sebelum </script> -->
-<script>
-  // ...fungsi-fungsi sebelumnya...
-
-  function cetakStruk() {
-    closeQrisModal();
-    let struk = "=== TOKO BUAH INDONESIA ===\n";
-    let total = 0;
-    keranjang.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
-    });
-    struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-    struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-    alert(struk);
-  }
-
-  // 🔽 Tambahan: efek tombol hijau sembunyi saat scroll ke atas
-  let lastScrollTop = 0;
-  const scrollBox = document.getElementById("scrollTabel");
-  const tombolAksi = document.querySelector(".tombol-aksi");
-
-  scrollBox.addEventListener("scroll", function () {
-    const scrollTop = this.scrollTop;
-    if (scrollTop > lastScrollTop) {
-      tombolAksi.classList.remove("hide"); // scroll ke bawah
-    } else {
-      tombolAksi.classList.add("hide"); // scroll ke atas
-    }
-    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+function cetakStruk() {
+  closeQrisModal();
+  let struk = "TOKO BUAH INDONESIA\n";
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    struk += `${item.nama} x${item.jumlah} = Rp ${subtotal.toLocaleString()}\n`;
   });
+  struk += `TOTAL: Rp ${total.toLocaleString()}\nTerima kasih!`;
+  alert(struk);
+}
+
+// Efek scroll
+let lastScrollTop = 0;
+const scrollBox = document.getElementById("scrollTabel");
+const tombolAksi = document.querySelector(".tombol-aksi");
+scrollBox.addEventListener("scroll", function () {
+  const scrollTop = this.scrollTop;
+  if (scrollTop > lastScrollTop) {
+    tombolAksi.classList.remove("hide");
+  } else {
+    tombolAksi.classList.add("hide");
+  }
+  lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+});
 </script>
-<!-- 🔻 Navigator Bawah -->
-<style>
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background-color: #ffffff;
-    border-top: 1px solid #ccc;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    justify-content: space-around;
-    align-items: center;
-    z-index: 999;
-  }
-  .bottom-nav button {
-    background: none;
-    border: none;
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #4CAF50;
-    width: 100%;
-    height: 100%;
-  }
-  .bottom-nav i {
-    font-size: 18px;
-    margin-bottom: 2px;
-  }
-</style>
-
-<div class="bottom-nav">
-  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
-  <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>
-  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
-  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>
-</div>
-
 </body>
 </html>
