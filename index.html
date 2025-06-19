@@ -266,9 +266,12 @@
 
   const selectNama = document.getElementById("nama");
   const inputHarga = document.getElementById("harga");
+  
+    db.collection("buah").get().then(snapshot => {
+    buahData = []; // kosongkan dulu
+    selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
 
-  db.collection("buah").get().then(snapshot => {
-    snapshot.forEach(doc => {
+      snapshot.forEach(doc => {
       const data = doc.data();
       buahData.push(data);
 
@@ -277,11 +280,12 @@
       option.textContent = data.nama;
       selectNama.appendChild(option);
     });
-  });
 
-  selectNama.addEventListener("change", () => {
-    const selected = buahData.find(buah => buah.nama === selectNama.value);
-    inputHarga.value = selected ? selected.harga : '';
+    // Pasang event listener setelah semua buah ditambahkan
+    selectNama.addEventListener("change", () => {
+      const selected = buahData.find(buah => buah.nama === selectNama.value);
+      inputHarga.value = selected ? selected.harga : '';
+    });
   });
 
   function tambahItem() {
