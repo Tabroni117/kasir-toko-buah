@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -13,12 +14,6 @@
       margin: 0;
       padding: 10px;
       font-size: 14px;
-      overflow: hidden;
-    }
-    .scroll-container {
-      max-height: calc(100vh - 90px);
-      overflow-y: auto;
-      padding-bottom: 60px;
     }
     .running-text {
       width: 100%;
@@ -98,7 +93,7 @@
       border-radius: 6px;
       font-size: 13px;
     }
-    button, .btn {
+    button {
       background: #4CAF50;
       color: white;
       padding: 10px;
@@ -109,13 +104,20 @@
       width: 100%;
       margin-top: 6px;
     }
+    button:hover {
+      background-color: #43a047;
+    }
+    .tabel-scroll {
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       font-size: 12px;
     }
     th, td {
@@ -126,34 +128,24 @@
     th {
       background: #e8f5e9;
     }
-    .bottom-nav {
-      display: flex;
+    .modal {
+      display: none;
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      background-color: #ffffff;
-      border-top: 1px solid #ccc;
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-      justify-content: space-around;
-      align-items: center;
       z-index: 999;
-    }
-    .bottom-nav button {
-      background: none;
-      border: none;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #4CAF50;
+      left: 0;
+      top: 0;
       width: 100%;
       height: 100%;
+      background-color: rgba(0,0,0,0.5);
     }
-    .bottom-nav i {
-      font-size: 18px;
-      margin-bottom: 2px;
+    .modal-content {
+      background: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     @media screen and (max-width: 768px) {
       .form-section {
@@ -164,11 +156,16 @@
       form, .custom-menu, .tombol-aksi {
         flex: 1 1 48%;
       }
+      .tabel-scroll {
+        max-height: 180px;
+      }
     }
   </style>
 </head>
 <body>
+
 <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+
 <header>
   <div class="logo-container">
     <img src="rujak-logo.png" alt="Logo Rujak Buah">
@@ -176,13 +173,53 @@
   </div>
   <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
 </header>
-<div class="scroll-container">
-  <div class="form-section">
-    <!-- Form dan custom menu akan disisipkan di sini seperti versi sebelumnya -->
-    <!-- Seluruh bagian input buah, custom sambal, ukuran, bumbu, tombol-tombol, dan tabel daftar belanja -->
+
+<div class="form-section">
+  <form id="form">
+    <label>Pilih Buah<select id="nama"></select></label>
+    <label>Harga Satuan (Rp)<input type="number" id="harga" readonly></label>
+    <label>Jumlah<input type="number" id="jumlah"></label>
+    <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+  </form>
+
+  <div class="custom-menu">
+    <label>Pilih Sambal
+      <select id="sambal">
+        <option value="Tanpa Custom">Tanpa Custom</option>
+        <option value="Tidak Pedas">Tidak Pedas</option>
+        <option value="Pedas">Pedas</option>
+        <option value="Extra Pedas">Extra Pedas</option>
+      </select>
+    </label>
+    <label>Pilih Ukuran
+      <select id="ukuran">
+        <option value="Tanpa Custom">Tanpa Custom</option>
+        <option value="500 ml">500 ml</option>
+        <option value="650 ml">650 ml</option>
+        <option value="750 ml">750 ml</option>
+        <option value="1000 ml">1000 ml</option>
+      </select>
+    </label>
+    <label>Pilih Bumbu
+      <select id="bumbu">
+        <option value="Tanpa Custom">Tanpa Custom</option>
+        <option value="Tanpa Kacang">Tanpa Kacang</option>
+        <option value="Pakai Kacang">Pakai Kacang</option>
+      </select>
+    </label>
+    <div class="tombol-aksi">
+      <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+      <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+      <button onclick="resetForm()">🔄 Reset Form</button>
+      <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+      <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
+      <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+    </div>
   </div>
-  <!-- Daftar belanja -->
-  <h3>🛒 Daftar Belanja</h3>
+</div>
+
+<h3>🛒 Daftar Belanja</h3>
+<div class="tabel-scroll" id="scrollTabel">
   <table>
     <thead>
       <tr>
@@ -201,11 +238,178 @@
     </tfoot>
   </table>
 </div>
+
+<div id="qrisModal" class="modal">
+  <div class="modal-content">
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+    <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+    <br>
+    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+    <button onclick="closeQrisModal()">Tutup</button>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+  authDomain: "tokobuahkasir.firebaseapp.com",
+  projectId: "tokobuahkasir",
+  storageBucket: "tokobuahkasir.appspot.com",
+  messagingSenderId: "731011133713",
+  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let buahData = [], keranjang = [];
+
+const selectNama = document.getElementById("nama");
+const inputHarga = document.getElementById("harga");
+
+db.collection("buah").get().then(snapshot => {
+  buahData = [];
+  selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    buahData.push(data);
+    const option = document.createElement("option");
+    option.value = data.nama;
+    option.textContent = data.nama;
+    selectNama.appendChild(option);
+  });
+  selectNama.addEventListener("change", () => {
+    const selected = buahData.find(buah => buah.nama === selectNama.value);
+    inputHarga.value = selected ? selected.harga : '';
+    const isRujak = selectNama.value.toLowerCase().includes("rujak");
+    document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";
+    document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";
+    document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";
+  });
+});
+
+function tambahItem() {
+  const nama = selectNama.value;
+  const harga = parseInt(inputHarga.value);
+  const jumlah = parseInt(document.getElementById("jumlah").value);
+  const sambal = document.getElementById("sambal").value;
+  const ukuran = document.getElementById("ukuran").value;
+  const bumbu = document.getElementById("bumbu").value;
+
+  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
+    alert("Mohon isi semua data dengan benar.");
+    return;
+  }
+
+  keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
+  updateTabel();
+}
+
+function updateTabel() {
+  const tabel = document.getElementById("tabelBelanja");
+  tabel.innerHTML = "";
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    const row = `<tr>
+      <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
+      <td>Rp ${item.harga.toLocaleString()}</td>
+      <td>${item.jumlah}</td>
+      <td>Rp ${subtotal.toLocaleString()}</td>
+    </tr>`;
+    tabel.innerHTML += row;
+  });
+  document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+
+  // Scroll ke bawah saat tambah item
+  const scrollBox = document.getElementById("scrollTabel");
+  scrollBox.scrollTop = scrollBox.scrollHeight;
+}
+
+function simpanTransaksi() {
+  if (keranjang.length === 0) return alert("Keranjang masih kosong.");
+  db.collection("transaksi").add({
+    tanggal: new Date(),
+    item: keranjang,
+    total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
+  }).then(() => {
+    alert("Transaksi berhasil disimpan!");
+  }).catch(err => {
+    alert("Gagal menyimpan transaksi.");
+    console.error(err);
+  });
+}
+
+function hapusSemua() {
+  if (confirm("Hapus semua item di keranjang?")) {
+    keranjang = [];
+    updateTabel();
+  }
+}
+function resetForm() {
+  document.getElementById("form").reset();
+  inputHarga.value = "";
+}
+function showQrisModal() {
+  document.getElementById("qrisModal").style.display = "block";
+}
+function closeQrisModal() {
+  document.getElementById("qrisModal").style.display = "none";
+}
+function cetakStruk() {
+  closeQrisModal();
+  let struk = "=== TOKO BUAH INDONESIA ===\n";
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+  });
+  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
+  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+  alert(struk);
+}
+</script>
+
+<!-- 🔻 Navigator Bawah -->
+<style>
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #ffffff;
+    border-top: 1px solid #ccc;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 999;
+  }
+  .bottom-nav button {
+    background: none;
+    border: none;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #4CAF50;
+    width: 100%;
+    height: 100%;
+  }
+  .bottom-nav i {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+</style>
+
 <div class="bottom-nav">
   <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
   <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>
   <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
   <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>
 </div>
+
 </body>
 </html>
