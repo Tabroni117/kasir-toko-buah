@@ -82,18 +82,17 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
       gap: 6px;
       margin: 10px 0;
     }
 
-    form, .custom-menu {
+    form, .tombol-aksi {
       background: white;
       padding: 10px;
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       flex: 1 1 48%;
-      max-width: 48%;
       box-sizing: border-box;
       font-size: 13px;
     }
@@ -102,13 +101,12 @@
       width: 100%;
       padding: 8px;
       margin-top: 4px;
-      margin-bottom: 8px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 13px;
     }
 
-    button {
+    button, .btn {
       background: #4CAF50;
       color: white;
       padding: 10px;
@@ -117,7 +115,10 @@
       cursor: pointer;
       font-size: 13px;
       width: 100%;
-      margin-top: 6px;
+    }
+
+    button:hover {
+      background-color: #43a047;
     }
 
     table {
@@ -161,36 +162,22 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .bottom-nav {
-      display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      background-color: #ffffff;
-      border-top: 1px solid #ccc;
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-      justify-content: space-around;
-      align-items: center;
-      z-index: 999;
-    }
+    @media screen and (max-width: 768px) {
+      .form-section {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
 
-    .bottom-nav button {
-      background: none;
-      border: none;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #4CAF50;
-      width: 100%;
-      height: 100%;
-    }
+      form, .tombol-aksi {
+        flex: 1 1 48%;
+      }
 
-    .bottom-nav i {
-      font-size: 18px;
-      margin-bottom: 2px;
+      table {
+        display: block;
+        overflow-x: auto;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -209,48 +196,51 @@
 </header>
 
 <div class="form-section">
-  <!-- Form Kiri -->
   <form id="form">
     <label>Pilih Buah
       <select id="nama"></select>
     </label>
     <label>Harga Satuan (Rp)
-      <input type="number" id="harga" readonly>
+      <input type="number" id="harga" placeholder="Harga otomatis" readonly>
     </label>
     <label>Jumlah
       <input type="number" id="jumlah" placeholder="Contoh: 2">
     </label>
+
+    <!-- 🔽 Custom menu hanya untuk buah bertuliskan 'Rujak' -->
+    <div id="customMenu" style="display: none; margin-top: 10px;">
+      <label>Sambal
+        <select id="sambal">
+          <option value="Tidak Pedas">Tidak Pedas</option>
+          <option value="Pedas">Pedas</option>
+          <option value="Extra Pedas">Extra Pedas</option>
+        </select>
+      </label>
+      <label>Ukuran
+        <select id="ukuran">
+          <option value="500ml">500 ml</option>
+          <option value="650ml">650 ml</option>
+          <option value="750ml">750 ml</option>
+          <option value="1000ml">1000 ml</option>
+        </select>
+      </label>
+      <label>Bumbu
+        <select id="bumbu">
+          <option value="Tanpa Kacang">Tanpa Kacang</option>
+          <option value="Pakai Kacang">Pakai Kacang</option>
+        </select>
+      </label>
+    </div>
+
     <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
   </form>
 
-  <!-- Custom Menu Kanan -->
-  <div class="custom-menu">
-    <label>Pilih Sambal</label>
-    <select id="sambal">
-      <option value="tidak pedas">Tidak Pedas</option>
-      <option value="pedas">Pedas</option>
-      <option value="extra pedas">Extra Pedas</option>
-    </select>
-
-    <label>Pilih Ukuran</label>
-    <select id="ukuran">
-      <option value="500ml">500 ml</option>
-      <option value="650ml">650 ml</option>
-      <option value="750ml">750 ml</option>
-      <option value="1000ml">1000 ml</option>
-    </select>
-
-    <label>Pilih Bumbu</label>
-    <select id="bumbu">
-      <option value="pakai kacang">Pakai Kacang</option>
-      <option value="tanpa kacang">Tanpa Kacang</option>
-    </select>
-
+  <div class="tombol-aksi">
     <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
     <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
     <button onclick="resetForm()">🔄 Reset Form</button>
     <button onclick="showQrisModal()">🧾 Cetak Struk</button>
-    <button onclick="window.location.reload()">🔃 Refresh</button>
+    <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
     <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
   </div>
 </div>
@@ -260,7 +250,7 @@
   <thead>
     <tr>
       <th>Nama Buah</th>
-      <th>Harga</th>
+      <th>Harga Satuan</th>
       <th>Jumlah</th>
       <th>Subtotal</th>
     </tr>
@@ -278,25 +268,10 @@
   <div class="modal-content">
     <h3>Silakan Scan QRIS untuk Pembayaran</h3>
     <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
-    <br><br>
+    <br>
     <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
-    <button onclick="closeQrisModal()">Tutup</button>
+    <button class="btn btn-secondary" onclick="closeQrisModal()">Tutup</button>
   </div>
-</div>
-
-<div class="bottom-nav">
-  <button onclick="window.location.reload()">
-    <i>🔃</i><span>Refresh</span>
-  </button>
-  <button onclick="document.getElementById('form').scrollIntoView()">
-    <i>🍓</i><span>Input</span>
-  </button>
-  <button onclick="showQrisModal()">
-    <i>💳</i><span>QRIS</span>
-  </button>
-  <button onclick="window.location.href='dashboard.html'">
-    <i>📊</i><span>Dashboard</span>
-  </button>
 </div>
 
 <script>
@@ -332,8 +307,14 @@
     });
 
     selectNama.addEventListener("change", () => {
-      const selected = buahData.find(b => b.nama === selectNama.value);
+      const selected = buahData.find(buah => buah.nama === selectNama.value);
       inputHarga.value = selected ? selected.harga : '';
+      // Tampilkan custom menu hanya untuk buah "Rujak"
+      if (selectNama.value.toLowerCase().includes("rujak")) {
+        document.getElementById("customMenu").style.display = "block";
+      } else {
+        document.getElementById("customMenu").style.display = "none";
+      }
     });
   });
 
@@ -341,13 +322,22 @@
     const nama = selectNama.value;
     const harga = parseInt(inputHarga.value);
     const jumlah = parseInt(document.getElementById("jumlah").value);
+    const sambal = document.getElementById("sambal").value;
+    const ukuran = document.getElementById("ukuran").value;
+    const bumbu = document.getElementById("bumbu").value;
 
     if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
       alert("Mohon isi semua data dengan benar.");
       return;
     }
 
-    keranjang.push({ nama, harga, jumlah });
+    keranjang.push({
+      nama,
+      harga,
+      jumlah,
+      custom: nama.toLowerCase().includes("rujak") ? { sambal, ukuran, bumbu } : null
+    });
+
     updateTabel();
   }
 
@@ -359,9 +349,18 @@
     keranjang.forEach(item => {
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
+      let customText = "";
+
+      if (item.custom) {
+        customText = `<br><small style="color:gray;">
+          Sambal: ${item.custom.sambal}, 
+          Ukuran: ${item.custom.ukuran}, 
+          Bumbu: ${item.custom.bumbu}
+        </small>`;
+      }
 
       const row = `<tr>
-        <td>${item.nama}</td>
+        <td>${item.nama}${customText}</td>
         <td>Rp ${item.harga.toLocaleString()}</td>
         <td>${item.jumlah}</td>
         <td>Rp ${subtotal.toLocaleString()}</td>
@@ -400,6 +399,7 @@
   function resetForm() {
     document.getElementById("form").reset();
     inputHarga.value = "";
+    document.getElementById("customMenu").style.display = "none";
   }
 
   function showQrisModal() {
@@ -419,6 +419,9 @@
       const subtotal = item.harga * item.jumlah;
       total += subtotal;
       struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n`;
+      if (item.custom) {
+        struk += `  > Sambal: ${item.custom.sambal}, Ukuran: ${item.custom.ukuran}, Bumbu: ${item.custom.bumbu}\n`;
+      }
     });
 
     struk += "----------------------------\n";
@@ -429,6 +432,69 @@
     window.location.href = "dashboard.html";
   }
 </script>
+
+<style>
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #ffffff;
+    border-top: 1px solid #ccc;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 999;
+  }
+
+  .bottom-nav button {
+    background: none;
+    border: none;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #4CAF50;
+    width: 100%;
+    height: 100%;
+  }
+
+  .bottom-nav button:hover {
+    color: #388e3c;
+  }
+
+  .bottom-nav i {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    .bottom-nav {
+      position: absolute;
+    }
+  }
+</style>
+
+<div class="bottom-nav">
+  <button onclick="window.location.reload()">
+    <i>🔃</i>
+    <span>Refresh</span>
+  </button>
+  <button onclick="document.getElementById('form').scrollIntoView()">
+    <i>🍓</i>
+    <span>Input</span>
+  </button>
+  <button onclick="showQrisModal()">
+    <i>💳</i>
+    <span>QRIS</span>
+  </button>
+  <button onclick="window.location.href='dashboard.html'">
+    <i>📊</i>
+    <span>Dashboard</span>
+  </button>
+</div>
 
 </body>
 </html>
