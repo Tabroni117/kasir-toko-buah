@@ -180,6 +180,7 @@
     <label>Harga Satuan (Rp)<input type="number" id="harga" readonly></label>
     <label>Jumlah<input type="number" id="jumlah"></label>
     <button type="button" onclick="tambahItem()">+ Tambah ke Keranjang</button>
+    <div id="notifBerhasil" style="display:none; color:green; margin-top:6px; font-weight:bold;"></div>
   </form>
 
   <div class="custom-menu">
@@ -309,12 +310,21 @@ function tambahItem() {
   keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
   updateTabel();
 
+  // Tampilkan notifikasi sukses
+  const notifikasi = document.getElementById("notifBerhasil");
+  notifikasi.style.display = "block";
+  notifikasi.textContent = "✅ Berhasil ditambahkan ke keranjang!";
   setTimeout(() => {
-    tombol.disabled = false;
-    tombol.textContent = "+ Tambah ke Keranjang";
-  }, 500); // efek loading selama 0.5 detik
-}
+    notifikasi.style.display = "none";
+  }, 2000);
 
+  tombol.disabled = false;
+  tombol.textContent = "+ Tambah ke Keranjang";
+
+  // Reset form setelah tambah
+  document.getElementById("form").reset();
+  inputHarga.value = "";
+}
 function updateTabel() {
   const tabel = document.getElementById("tabelBelanja");
   tabel.innerHTML = "";
