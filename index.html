@@ -1,475 +1,444 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f0f8ff;
-      margin: 0;
-      padding: 10px;
-      font-size: 14px;
-    }
-    .running-text {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      box-sizing: border-box;
-      padding: 5px 0;
-      color: green;
-      font-weight: bold;
-      font-size: 14px;
-      background-color: #d0f0c0;
-      text-align: center;
-    }
-    .running-text span {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 12s linear infinite;
-    }
-    @keyframes spin {
-       0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #4CAF50;
-      color: white;
-      padding: 10px;
-      border-radius: 10px;
-      flex-wrap: wrap;
-    }
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-    .logo-container img {
-      height: 40px;
-      margin-right: 10px;
-      border-radius: 50%;
-    }
-    h1 {
-      font-size: 16px;
-      margin: 0;
-    }
-    .login-btn {
-      background: white;
-      color: #4CAF50;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .form-section {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 10px 0;
-    }
-    form, .custom-menu, .tombol-aksi {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      flex: 1 1 48%;
-      box-sizing: border-box;
-      font-size: 13px;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      width: 100%;
-      margin-top: 6px;
-    }
-    button:hover {
-      background-color: #43a047;
-    }
-    .tabel-scroll {
-      max-height: 200px;
-      overflow-y: auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-    th {
-      background: #e8f5e9;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-      background: #fff;
-      margin: 10% auto;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 400px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    @media screen and (max-width: 768px) {
-      .form-section {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
-      }
-      form, .custom-menu, .tombol-aksi {
-        flex: 1 1 48%;
-      }
-      .tabel-scroll {
-        max-height: 180px;
-      }
-    }
-  </style>
-</head>
-<body>
+<!DOCTYPE html>  <html lang="id">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">  
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>  
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  
+  <style>  
+    body {  
+      font-family: 'Poppins', sans-serif;  
+      background: #f0f8ff;  
+      margin: 0;  
+      padding: 10px;  
+      font-size: 14px;  
+    }  
+    .running-text {  
+      width: 100%;  
+      overflow: hidden;  
+      white-space: nowrap;  
+      box-sizing: border-box;  
+      padding: 5px 0;  
+      color: green;  
+      font-weight: bold;  
+      font-size: 14px;  
+      background-color: #d0f0c0;  
+      text-align: center;  
+    }  
+    .running-text span {  
+      display: inline-block;  
+      padding-left: 100%;  
+      animation: marquee 12s linear infinite;  
+    }  
+    @keyframes spin {  
+       0% { transform: rotate(0deg); }  
+      100% { transform: rotate(360deg); }  
+    }  
+    header {  
+      display: flex;  
+      justify-content: space-between;  
+      align-items: center;  
+      background: #4CAF50;  
+      color: white;  
+      padding: 10px;  
+      border-radius: 10px;  
+      flex-wrap: wrap;  
+    }  
+    .logo-container {  
+      display: flex;  
+      align-items: center;  
+    }  
+    .logo-container img {  
+      height: 40px;  
+      margin-right: 10px;  
+      border-radius: 50%;  
+    }  
+    h1 {  
+      font-size: 16px;  
+      margin: 0;  
+    }  
+    .login-btn {  
+      background: white;  
+      color: #4CAF50;  
+      border: none;  
+      padding: 6px 10px;  
+      border-radius: 6px;  
+      font-weight: bold;  
+      font-size: 12px;  
+      cursor: pointer;  
+    }  
+    .form-section {  
+      display: flex;  
+      justify-content: space-between;  
+      flex-wrap: wrap;  
+      gap: 6px;  
+      margin: 10px 0;  
+    }  
+    form, .custom-menu, .tombol-aksi {  
+      background: white;  
+      padding: 10px;  
+      border-radius: 10px;  
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);  
+      flex: 1 1 48%;  
+      box-sizing: border-box;  
+      font-size: 13px;  
+    }  
+    input, select {  
+      width: 100%;  
+      padding: 8px;  
+      margin-top: 4px;  
+      border: 1px solid #ccc;  
+      border-radius: 6px;  
+      font-size: 13px;  
+    }  
+    button {  
+      background: #4CAF50;  
+      color: white;  
+      padding: 10px;  
+      border: none;  
+      border-radius: 6px;  
+      cursor: pointer;  
+      font-size: 13px;  
+      width: 100%;  
+      margin-top: 6px;  
+    }  
+    button:hover {  
+      background-color: #43a047;  
+    }  
+    .tabel-scroll {  
+      max-height: 200px;  
+      overflow-y: auto;  
+      background: white;  
+      border-radius: 10px;  
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);  
+      margin-bottom: 10px;  
+    }  
+    table {  
+      width: 100%;  
+      border-collapse: collapse;  
+      font-size: 12px;  
+    }  
+    th, td {  
+      padding: 8px;  
+      border-bottom: 1px solid #eee;  
+      text-align: left;  
+    }  
+    th {  
+      background: #e8f5e9;  
+    }  
+    .modal {  
+      display: none;  
+      position: fixed;  
+      z-index: 999;  
+      left: 0;  
+      top: 0;  
+      width: 100%;  
+      height: 100%;  
+      background-color: rgba(0,0,0,0.5);  
+    }  
+    .modal-content {  
+      background: #fff;  
+      margin: 10% auto;  
+      padding: 20px;  
+      border-radius: 12px;  
+      max-width: 400px;  
+      text-align: center;  
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);  
+    }  
+    @media screen and (max-width: 768px) {  
+      .form-section {  
+        flex-direction: row;  
+        flex-wrap: wrap;  
+        justify-content: space-between;  
+      }  
+      form, .custom-menu, .tombol-aksi {  
+        flex: 1 1 48%;  
+      }  
+      .tabel-scroll {  
+        max-height: 180px;  
+      }  
+    }  
+  </style>  
+</head>  
+<body>  <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>  <header>  
+  <div class="logo-container">  
+    <img src="rujak-logo.png" alt="Logo Rujak Buah">  
+    <h1>TOKO BUAH INDONESIA</h1>  
+  </div>  
+  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>  
+</header>  <div class="form-section">  
+<form id="formBuah">  
+    <label>Pilih Buah<select id="nama"></select></label>  
+    <label>Harga Satuan (Rp)  
+      <input type="number" id="harga" placeholder="Harga Otomatis" readonly>  
+    </label>  
+    <label>Jumlah<input type="number" id="jumlah"></label>  
+    <button id="btnTambah" type="button" onclick="tambahItem()">  
+      <span id="spinner" style="display:none;  
+        width:16px;height:16px;  
+        border:2px solid white;  
+        border-top:2px solid #4CAF50;  
+        border-radius:50%;  
+        animation:spin 1s linear infinite;  
+        margin-right:6px;"></span>  
+      + Tambah ke Keranjang  
+    </button>  
+    <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>  
+  </form>  <!-- ✅ Bagian isian custom yang bisa disembunyikan -->  <div class="custom-menu" id="customMenu" style="display:none;">  
+  <label>Pilih Sambal  
+    <select id="sambal">  
+      <option value="Tanpa Custom">Tanpa Custom</option>  
+      <option value="Tidak Pedas">Tidak Pedas</option>  
+      <option value="Pedas">Pedas</option>  
+      <option value="Extra Pedas">Extra Pedas</option>  
+    </select>  
+  </label>  
+  <label>Pilih Ukuran  
+    <select id="ukuran">  
+      <option value="Tanpa Custom">Tanpa Custom</option>  
+      <option value="500 ml">500 ml</option>  
+      <option value="650 ml">650 ml</option>  
+      <option value="750 ml">750 ml</option>  
+      <option value="1000 ml">1000 ml</option>  
+    </select>  
+  </label>  
+  <label>Pilih Bumbu  
+    <select id="bumbu">  
+      <option value="Tanpa Custom">Tanpa Custom</option>  
+      <option value="Tanpa Kacang">Tanpa Kacang</option>  
+      <option value="Pakai Kacang">Pakai Kacang</option>  
+    </select>  
+  </label>  
+</div>  <!-- ❗Tetap selalu tampil: tombol aksi -->  <div class="tombol-aksi" style="margin-bottom: 5px;">  
+  <button onclick="hapusSemua()">🗑️ Hapus Semua</button>  
+  <button onclick="resetForm()">🔄 Reset Form</button>  
+</div>  </div>
 
-<div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
-
-<header>
-  <div class="logo-container">
-    <img src="rujak-logo.png" alt="Logo Rujak Buah">
-    <h1>TOKO BUAH INDONESIA</h1>
-  </div>
-  <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-</header>
-
-<div class="form-section">
-<form id="formBuah">
-    <label>Pilih Buah<select id="nama"></select></label>
-    <label>Harga Satuan (Rp)
-      <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
-    </label>
-    <label>Jumlah<input type="number" id="jumlah"></label>
-    <button id="btnTambah" type="button" onclick="tambahItem()">
-      <span id="spinner" style="display:none;
-        width:16px;height:16px;
-        border:2px solid white;
-        border-top:2px solid #4CAF50;
-        border-radius:50%;
-        animation:spin 1s linear infinite;
-        margin-right:6px;"></span>
-      + Tambah ke Keranjang
-    </button>
-    <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>
-  </form>
-
-<!-- ✅ Bagian isian custom yang bisa disembunyikan -->
-<div class="custom-menu" id="customMenu" style="display:none;">
-  <label>Pilih Sambal
-    <select id="sambal">
-      <option value="Tanpa Custom">Tanpa Custom</option>
-      <option value="Tidak Pedas">Tidak Pedas</option>
-      <option value="Pedas">Pedas</option>
-      <option value="Extra Pedas">Extra Pedas</option>
-    </select>
-  </label>
-  <label>Pilih Ukuran
-    <select id="ukuran">
-      <option value="Tanpa Custom">Tanpa Custom</option>
-      <option value="500 ml">500 ml</option>
-      <option value="650 ml">650 ml</option>
-      <option value="750 ml">750 ml</option>
-      <option value="1000 ml">1000 ml</option>
-    </select>
-  </label>
-  <label>Pilih Bumbu
-    <select id="bumbu">
-      <option value="Tanpa Custom">Tanpa Custom</option>
-      <option value="Tanpa Kacang">Tanpa Kacang</option>
-      <option value="Pakai Kacang">Pakai Kacang</option>
-    </select>
-  </label>
-</div>
-
-<!-- ❗Tetap selalu tampil: tombol aksi -->
-<div class="tombol-aksi" style="margin-bottom: 5px;">
-  <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-  <button onclick="resetForm()">🔄 Reset Form</button>
-</div>
-
-
-    </div>
-  </div>
-</div>
-
-<h3 style="margin-top: 10px;">🛒 Daftar Belanja</h3>
-<div class="tabel-scroll" id="scrollTabel" style="margin-top: 5px;">
-  <table>
-    <thead>
-      <tr>
-        <th>Nama Buah</th>
-        <th>Harga Satuan</th>
-        <th>Jumlah</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="tabelBelanja"></tbody>
-    <tfoot>
-      <tr>
-        <td colspan="3">Total</td>
-        <td id="totalBelanja">Rp 0</td>
-      </tr>
-    </tfoot>
-  </table>
-</div>
-
-<!-- ✅ Tombol Checkout & Pilihan -->
-<div style="text-align: right; margin: 10px 0 50px 0;">
-  <button onclick="toggleCheckoutOptions()">🛍️ Checkout</button>
-</div>
-<!-- QRIS Modal -->
-<div id="qrisModal" class="modal">
-  <div class="modal-content">
-    <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-    <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
-    <br>
-    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
-    <button onclick="closeQrisModal()">Tutup</button>
-  </div>
-</div>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-  authDomain: "tokobuahkasir.firebaseapp.com",
-  projectId: "tokobuahkasir",
-  storageBucket: "tokobuahkasir.appspot.com",
-  messagingSenderId: "731011133713",
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let buahData = [], keranjang = [];
-
-const selectNama = document.getElementById("nama");
-const inputHarga = document.getElementById("harga");
-
-db.collection("buah").get().then(snapshot => {
-  buahData = [];
-  selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
-  snapshot.forEach(doc => {
-    const data = doc.data();
-    buahData.push(data);
-    const option = document.createElement("option");
-    option.value = data.nama;
-    option.textContent = data.nama;
-    selectNama.appendChild(option);
-  });
-  selectNama.addEventListener("change", () => {
-    const selected = buahData.find(buah => buah.nama === selectNama.value);
-    inputHarga.value = selected ? selected.harga : '';
-   const isRujak = selectNama.value.toLowerCase().includes("rujak");
-   document.getElementById("customMenu").style.display = isRujak ? "block" : "none";
-   const customMenuBox = document.getElementById("customMenu");
-   const formBuah = document.getElementById("formBuah");
-
-customMenuBox.style.display = isRujak ? "block" : "none";
-
-// ✅ Atur lebar form buah
-if (isRujak) {
-  formBuah.style.flex = "1 1 48%";
-} else {
-  formBuah.style.flex = "1 1 100%";
-}
-    document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";
-    document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";
-    document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";
-  });
-});
-
-function tambahItem() {
-  const nama = selectNama.value;
-  const harga = parseInt(inputHarga.value);
-  const jumlah = parseInt(document.getElementById("jumlah").value);
-  const sambal = document.getElementById("sambal").value;
-  const ukuran = document.getElementById("ukuran").value;
-  const bumbu = document.getElementById("bumbu").value;
-
-  const btn = document.getElementById("btnTambah");
-  const spinner = document.getElementById("spinner");
-
-  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {
-    alert("Mohon isi semua data dengan benar.");
-    return;
-  }
-
-  btn.disabled = true;
-  spinner.style.display = "inline-block";
-
-  setTimeout(() => {
-    keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
-    updateTabel();
-
-    document.getElementById("formBuah").reset();
-    inputHarga.value = "";
-    selectNama.value = "";
-    document.getElementById("jumlah").value = "";
-
-    const notif = document.getElementById("notif");
-    notif.innerText = "✅ Berhasil ditambahkan ke keranjang!";
-    notif.style.display = "block";
-    setTimeout(() => {
-      notif.style.display = "none";
-    }, 2000);
-
-    btn.disabled = false;
-    spinner.style.display = "none";
-  }, 600);
-}
-
-function updateTabel() {
-  const tabel = document.getElementById("tabelBelanja");
-  tabel.innerHTML = "";
-  let total = 0;
-  keranjang.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    const row = `<tr>
-      <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
-      <td>Rp ${item.harga.toLocaleString()}</td>
-      <td>${item.jumlah}</td>
-      <td>Rp ${subtotal.toLocaleString()}</td>
-    </tr>`;
-    tabel.innerHTML += row;
-  });
-  document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
-  document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;
-}
-
-function simpanTransaksi() {
-  if (keranjang.length === 0) return alert("Keranjang masih kosong.");
-  db.collection("transaksi").add({
-    tanggal: new Date(),
-    item: keranjang,
-    total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
-  }).then(() => {
-    alert("Transaksi berhasil disimpan!");
-  }).catch(err => {
-    alert("Gagal menyimpan transaksi.");
-    console.error(err);
-  });
-}
-
-function hapusSemua() {
-  if (confirm("Hapus semua item di keranjang?")) {
-    keranjang = [];
-    updateTabel();
-  }
-}
-function resetForm() {
-  document.getElementById("formBuah").reset();
-  inputHarga.value = "";
-  selectNama.value = "";
-  document.getElementById("customMenu").style.display = "none";
-}
-}
-
-function showQrisModal() {
-  document.getElementById("qrisModal").style.display = "block";
-}
-
-function closeQrisModal() {
-  document.getElementById("qrisModal").style.display = "none";
-}
-
-function cetakStruk() {
-  closeQrisModal();
-  let struk = "=== TOKO BUAH INDONESIA ===\n";
-  let total = 0;
-  keranjang.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
-  });
-  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-  alert(struk);
-}
-
-
-</script>
-
-<!-- 🔻 Navigator Bawah -->
-<style>
-  .bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background-color: #ffffff;
-    border-top: 1px solid #ccc;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    justify-content: space-around;
-    align-items: center;
-    z-index: 999;
-  }
-  .bottom-nav button {
-    background: none;
-    border: none;
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #4CAF50;
-    width: 100%;
-    height: 100%;
-  }
-  .bottom-nav i {
-    font-size: 18px;
-    margin-bottom: 2px;
-  }
-</style>
-
-<div class="bottom-nav">
-  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
-  <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>
-  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
-  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>
-</div>
-
-</body>
-</html>
+  </div>  
+</div>  <h3 style="margin-top: 10px;">🛒 Daftar Belanja</h3>  
+<div class="tabel-scroll" id="scrollTabel" style="margin-top: 5px;">  
+  <table>  
+    <thead>  
+      <tr>  
+        <th>Nama Buah</th>  
+        <th>Harga Satuan</th>  
+        <th>Jumlah</th>  
+        <th>Subtotal</th>  
+      </tr>  
+    </thead>  
+    <tbody id="tabelBelanja"></tbody>  
+    <tfoot>  
+      <tr>  
+        <td colspan="3">Total</td>  
+        <td id="totalBelanja">Rp 0</td>  
+      </tr>  
+    </tfoot>  
+  </table>  
+</div>  <!-- ✅ Tombol Checkout & Pilihan -->  <div style="text-align: right; margin: 10px 0 50px 0;">  
+  <button onclick="toggleCheckoutOptions()">🛍️ Checkout</button>  
+</div>  
+<!-- QRIS Modal -->  
+<div id="qrisModal" class="modal">  
+  <div class="modal-content">  
+    <h3>Silakan Scan QRIS untuk Pembayaran</h3>  
+    <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">  
+    <br>  
+    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>  
+    <button onclick="closeQrisModal()">Tutup</button>  
+  </div>  
+</div>  <script>  
+const firebaseConfig = {  
+  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",  
+  authDomain: "tokobuahkasir.firebaseapp.com",  
+  projectId: "tokobuahkasir",  
+  storageBucket: "tokobuahkasir.appspot.com",  
+  messagingSenderId: "731011133713",  
+  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"  
+};  
+firebase.initializeApp(firebaseConfig);  
+const db = firebase.firestore();  
+  
+let buahData = [], keranjang = [];  
+  
+const selectNama = document.getElementById("nama");  
+const inputHarga = document.getElementById("harga");  
+  
+db.collection("buah").get().then(snapshot => {  
+  buahData = [];  
+  selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';  
+  snapshot.forEach(doc => {  
+    const data = doc.data();  
+    buahData.push(data);  
+    const option = document.createElement("option");  
+    option.value = data.nama;  
+    option.textContent = data.nama;  
+    selectNama.appendChild(option);  
+  });  
+  selectNama.addEventListener("change", () => {  
+    const selected = buahData.find(buah => buah.nama === selectNama.value);  
+    inputHarga.value = selected ? selected.harga : '';  
+   const isRujak = selectNama.value.toLowerCase().includes("rujak");  
+   document.getElementById("customMenu").style.display = isRujak ? "block" : "none";  
+   const customMenuBox = document.getElementById("customMenu");  
+   const formBuah = document.getElementById("formBuah");  
+  
+customMenuBox.style.display = isRujak ? "block" : "none";  
+  
+// ✅ Atur lebar form buah  
+if (isRujak) {  
+  formBuah.style.flex = "1 1 48%";  
+} else {  
+  formBuah.style.flex = "1 1 100%";  
+}  
+    document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";  
+    document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";  
+    document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";  
+  });  
+});  
+  
+function tambahItem() {  
+  const nama = selectNama.value;  
+  const harga = parseInt(inputHarga.value);  
+  const jumlah = parseInt(document.getElementById("jumlah").value);  
+  const sambal = document.getElementById("sambal").value;  
+  const ukuran = document.getElementById("ukuran").value;  
+  const bumbu = document.getElementById("bumbu").value;  
+  
+  const btn = document.getElementById("btnTambah");  
+  const spinner = document.getElementById("spinner");  
+  
+  if (!nama || isNaN(harga) || isNaN(jumlah) || jumlah <= 0) {  
+    alert("Mohon isi semua data dengan benar.");  
+    return;  
+  }  
+  
+  btn.disabled = true;  
+  spinner.style.display = "inline-block";  
+  
+  setTimeout(() => {  
+    keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });  
+    updateTabel();  
+  
+    document.getElementById("formBuah").reset();  
+    inputHarga.value = "";  
+    selectNama.value = "";  
+    document.getElementById("jumlah").value = "";  
+  
+    const notif = document.getElementById("notif");  
+    notif.innerText = "✅ Berhasil ditambahkan ke keranjang!";  
+    notif.style.display = "block";  
+    setTimeout(() => {  
+      notif.style.display = "none";  
+    }, 2000);  
+  
+    btn.disabled = false;  
+    spinner.style.display = "none";  
+  }, 600);  
+}  
+  
+function updateTabel() {  
+  const tabel = document.getElementById("tabelBelanja");  
+  tabel.innerHTML = "";  
+  let total = 0;  
+  keranjang.forEach(item => {  
+    const subtotal = item.harga * item.jumlah;  
+    total += subtotal;  
+    const row = `<tr>  
+      <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>  
+      <td>Rp ${item.harga.toLocaleString()}</td>  
+      <td>${item.jumlah}</td>  
+      <td>Rp ${subtotal.toLocaleString()}</td>  
+    </tr>`;  
+    tabel.innerHTML += row;  
+  });  
+  document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();  
+  document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;  
+}  
+  
+function simpanTransaksi() {  
+  if (keranjang.length === 0) return alert("Keranjang masih kosong.");  
+  db.collection("transaksi").add({  
+    tanggal: new Date(),  
+    item: keranjang,  
+    total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)  
+  }).then(() => {  
+    alert("Transaksi berhasil disimpan!");  
+  }).catch(err => {  
+    alert("Gagal menyimpan transaksi.");  
+    console.error(err);  
+  });  
+}  
+  
+function hapusSemua() {  
+  if (confirm("Hapus semua item di keranjang?")) {  
+    keranjang = [];  
+    updateTabel();  
+  }  
+}  
+  
+function resetForm() {  
+  document.getElementById("formBuah").reset();  
+  inputHarga.value = "";  
+}  
+  
+function showQrisModal() {  
+  document.getElementById("qrisModal").style.display = "block";  
+}  
+  
+function closeQrisModal() {  
+  document.getElementById("qrisModal").style.display = "none";  
+}  
+  
+function cetakStruk() {  
+  closeQrisModal();  
+  let struk = "=== TOKO BUAH INDONESIA ===\n";  
+  let total = 0;  
+  keranjang.forEach(item => {  
+    const subtotal = item.harga * item.jumlah;  
+    total += subtotal;  
+    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;  
+  });  
+  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";  
+  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";  
+  alert(struk);  
+}  
+  
+  
+</script>  <!-- 🔻 Navigator Bawah -->  <style>  
+  .bottom-nav {  
+    display: flex;  
+    position: fixed;  
+    bottom: 0;  
+    left: 0;  
+    right: 0;  
+    height: 50px;  
+    background-color: #ffffff;  
+    border-top: 1px solid #ccc;  
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);  
+    justify-content: space-around;  
+    align-items: center;  
+    z-index: 999;  
+  }  
+  .bottom-nav button {  
+    background: none;  
+    border: none;  
+    font-size: 12px;  
+    display: flex;  
+    flex-direction: column;  
+    align-items: center;  
+    color: #4CAF50;  
+    width: 100%;  
+    height: 100%;  
+  }  
+  .bottom-nav i {  
+    font-size: 18px;  
+    margin-bottom: 2px;  
+  }  
+</style>  <div class="bottom-nav">  
+  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>  
+  <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>  
+  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>  
+  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>  
+</div>  </body>  
+</html>  
