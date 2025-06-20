@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="id">
+<!-- ====== FILE FINAL: index.html ====== -->
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -182,45 +184,30 @@
     }
   </style>
 </head>
-<body><div class="running-text"><span>RUJAK BUAH INDONESIA</span></div><header>
+<body>
+<div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+
+<header>
   <div class="logo-container">
     <img src="rujak-logo.png" alt="Logo Rujak Buah">
     <h1>TOKO BUAH INDONESIA</h1>
   </div>
   <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-</header><!-- lanjutkan isi konten HTML dan JS sesuai file kamu -->
+</header>
 
 <div class="form-section">
   <form id="form">
-  <label>Pilih Buah<select id="nama"></select></label>
-  <label>Harga Satuan (Rp)
-    <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
-  </label>
-  <label>Jumlah<input type="number" id="jumlah"></label>
-    
-  <button id="btnTambah" type="button" onclick="tambahItem()">
-  <span id="spinner" style="display:none;
-    width:16px;height:16px;
-    border:2px solid white;
-    border-top:2px solid #4CAF50;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-    margin-right:6px;"></span>
-  + Tambah ke Keranjang
-</button>
-
-<div id="notif" style="display:none;
-  background: #d4edda;
-  color: #155724;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-</div>
-
-</form>
+    <label>Pilih Buah<select id="nama"></select></label>
+    <label>Harga Satuan (Rp)
+      <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
+    </label>
+    <label>Jumlah<input type="number" id="jumlah"></label>
+    <button id="btnTambah" type="button" onclick="tambahItem()">
+      <span id="spinner" style="display:none; width:16px;height:16px; border:2px solid white; border-top:2px solid #4CAF50; border-radius:50%; animation:spin 1s linear infinite; margin-right:6px;"></span>
+      + Tambah ke Keranjang
+    </button>
+    <div id="notif" style="display:none; background: #d4edda; color: #155724; padding: 10px; margin-top: 10px; border-radius: 6px; font-weight: bold; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+  </form>
 
   <div class="custom-menu">
     <label>Pilih Sambal
@@ -247,7 +234,7 @@
         <option value="Pakai Kacang">Pakai Kacang</option>
       </select>
     </label>
-   
+  </div>
 </div>
 
 <h3>🛒 Daftar Belanja</h3>
@@ -269,6 +256,9 @@
       </tr>
     </tfoot>
   </table>
+
+  <!-- ✅ TOMBOL CETAK STRUK BARU -->
+  <button class="btn-cetak-struk" onclick="printStruk()">🖨️ Cetak Struk</button>
 </div>
 
 <div id="qrisModal" class="modal">
@@ -335,7 +325,6 @@ function tambahItem() {
     return;
   }
 
-  // Mulai loading
   btn.disabled = true;
   spinner.style.display = "inline-block";
 
@@ -343,23 +332,21 @@ function tambahItem() {
     keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
     updateTabel();
 
-    // Reset input
     document.getElementById("form").reset();
     inputHarga.value = "";
     selectNama.value = "";
     document.getElementById("jumlah").value = "";
 
-const notif = document.getElementById("notif");
-notif.style.display = "block";
-notif.textContent = "✅ Berhasil ditambahkan ke keranjang!";
-setTimeout(() => {
-  notif.style.display = "none";
-}, 2000);
+    const notif = document.getElementById("notif");
+    notif.style.display = "block";
+    notif.textContent = "✅ Berhasil ditambahkan ke keranjang!";
+    setTimeout(() => {
+      notif.style.display = "none";
+    }, 2000);
 
-    // Selesai loading
     btn.disabled = false;
     spinner.style.display = "none";
-  }, 600); // delay 600ms buat efek loading
+  }, 600);
 }
 
 function updateTabel() {
@@ -379,53 +366,40 @@ function updateTabel() {
   });
   document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
 
-  // Scroll ke bawah saat tambah item
   const scrollBox = document.getElementById("scrollTabel");
   scrollBox.scrollTop = scrollBox.scrollHeight;
 }
 
-function simpanTransaksi() {
-  if (keranjang.length === 0) return alert("Keranjang masih kosong.");
-  db.collection("transaksi").add({
-    tanggal: new Date(),
-    item: keranjang,
-    total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)
-  }).then(() => {
-    alert("Transaksi berhasil disimpan!");
-  }).catch(err => {
-    alert("Gagal menyimpan transaksi.");
-    console.error(err);
-  });
-}
-
-function hapusSemua() {
-  if (confirm("Hapus semua item di keranjang?")) {
-    keranjang = [];
-    updateTabel();
-  }
-}
-function resetForm() {
-  document.getElementById("form").reset();
-  inputHarga.value = "";
-}
-function showQrisModal() {
-  document.getElementById("qrisModal").style.display = "block";
-}
-function closeQrisModal() {
-  document.getElementById("qrisModal").style.display = "none";
-}
-function cetakStruk() {
-  closeQrisModal();
-  let struk = "=== TOKO BUAH INDONESIA ===\n";
+function printStruk() {
+  let strukWindow = window.open('', '', 'width=600,height=700');
   let total = 0;
+  let isiStruk = `
+    <html><head><title>Struk</title>
+    <style>body{font-family:Arial,sans-serif;font-size:14px;padding:20px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:6px;border-bottom:1px solid #ccc;text-align:left}
+    .total{font-weight:bold}</style></head><body>
+    <h2 style="text-align:center;">TOKO BUAH INDONESIA</h2>
+    <p>Tanggal: ${new Date().toLocaleString()}</p>
+    <table><thead><tr><th>Buah</th><th>Jumlah</th><th>Harga</th><th>Subtotal</th></tr></thead><tbody>`;
   keranjang.forEach(item => {
     const subtotal = item.harga * item.jumlah;
     total += subtotal;
-    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+    isiStruk += `<tr>
+      <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
+      <td>${item.jumlah}</td>
+      <td>Rp ${item.harga.toLocaleString()}</td>
+      <td>Rp ${subtotal.toLocaleString()}</td></tr>`;
   });
-  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-  alert(struk);
+  isiStruk += `</tbody><tfoot><tr><td colspan="3" class="total">TOTAL</td>
+    <td class="total">Rp ${total.toLocaleString()}</td></tr></tfoot></table>
+    <p style="text-align:center; margin-top:20px;">Terima kasih telah berbelanja 🍍</p>
+    </body></html>`;
+  strukWindow.document.write(isiStruk);
+  strukWindow.document.close();
+  strukWindow.focus();
+  strukWindow.print();
+  strukWindow.close();
 }
 </script>
 
