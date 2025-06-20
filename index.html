@@ -194,7 +194,7 @@
     <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>
   </form>
 
-  <div class="custom-menu">
+<div class="custom-menu" id="customMenu" style="display:none;">
     <label>Pilih Sambal
       <select id="sambal">
         <option value="Tanpa Custom">Tanpa Custom</option>
@@ -294,13 +294,20 @@ db.collection("buah").get().then(snapshot => {
     selectNama.appendChild(option);
   });
   selectNama.addEventListener("change", () => {
-    const selected = buahData.find(buah => buah.nama === selectNama.value);
-    inputHarga.value = selected ? selected.harga : '';
-    const isRujak = selectNama.value.toLowerCase().includes("rujak");
-    document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";
-    document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";
-    document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";
-  });
+  const selected = buahData.find(buah => buah.nama === selectNama.value);
+  inputHarga.value = selected ? selected.harga : '';
+
+  const isRujak = selectNama.value.toLowerCase().includes("rujak");
+
+  // ✅ Tampilkan atau sembunyikan seluruh tabel custom
+  const customMenuBox = document.getElementById("customMenu");
+  customMenuBox.style.display = isRujak ? "block" : "none";
+
+  // ✅ Set default value jika Rujak
+  document.getElementById("sambal").value = isRujak ? "Tidak Pedas" : "Tanpa Custom";
+  document.getElementById("ukuran").value = isRujak ? "500 ml" : "Tanpa Custom";
+  document.getElementById("bumbu").value = isRujak ? "Pakai Kacang" : "Tanpa Custom";
+});
 });
 
 function tambahItem() {
