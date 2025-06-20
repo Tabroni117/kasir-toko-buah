@@ -160,12 +160,6 @@
         max-height: 180px;
       }
     }
-    /* Tambahan CSS untuk checkout */
-    .checkout-container {
-      display: none;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
     .checkout-btn {
       background: #4CAF50;
       color: white;
@@ -173,14 +167,11 @@
       border-radius: 5px;
       font-weight: bold;
       cursor: pointer;
+      display: none; /* Awalnya disembunyikan */
     }
-    .checkout-options {
-      display: none;
-      background: white;
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    .checkout-message {
+      color: red;
+      display: none; /* Awalnya disembunyikan */
     }
     .loading-screen {
       display: none;
@@ -293,14 +284,10 @@
   </table>
 </div>
 
-<!-- ✅ Tombol Checkout & Pilihan -->
+<!-- Tombol Checkout -->
 <div style="text-align: right; margin: 10px 0;">
-  <button onclick="toggleCheckoutOptions()">🛍️ Checkout</button>
-</div>
-
-<div id="checkoutOptions" class="checkout-options">
-  <button onclick="cekPesanan()">🧾 Cek Pesanan</button>
-  <button onclick="lanjutOrder()">➕ Lanjut Checkout</button>
+  <button id="checkoutButton" class="checkout-btn" onclick="toggleCheckoutOptions()">🛍️ Checkout</button>
+  <span id="checkoutMessage" class="checkout-message">Silakan tambahkan menu</span>
 </div>
 
 <!-- Loading Screen -->
@@ -342,6 +329,8 @@ let buahData = [], keranjang = [];
 
 const selectNama = document.getElementById("nama");
 const inputHarga = document.getElementById("harga");
+const checkoutButton = document.getElementById("checkoutButton");
+const checkoutMessage = document.getElementById("checkoutMessage");
 
 db.collection("buah").get().then(snapshot => {
   buahData = [];
@@ -421,6 +410,15 @@ function updateTabel() {
   });
   document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
   document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;
+
+  // Tampilkan tombol checkout atau pesan
+  if (keranjang.length > 0) {
+    checkoutButton.style.display = "block";
+    checkoutMessage.style.display = "none";
+  } else {
+    checkoutButton.style.display = "none";
+    checkoutMessage.style.display = "block";
+  }
 }
 
 function simpanTransaksi() {
@@ -480,14 +478,7 @@ function toggleCheckoutOptions() {
 function cekPesanan() {
   document.getElementById("scrollTabel").style.display = "block";
   document.getElementById("checkoutOptions").style.display = "none";
-  alert("Menampilkan kembali daftar belanja.");
 }
-
-function lanjutOrder() {
-  document.getElementById("checkoutOptions").style.display = "none";
-  document.getElementById("loadingScreen").style.display = "flex";
-
-  setTimeout(() => {
-    document.getElementById("loadingScreen").style.display = "none";
-    showReceipt();
-  }, 2000); // Simulasi proses loading
+</script>
+</body>
+</html>
