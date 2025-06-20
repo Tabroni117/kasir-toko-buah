@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -31,12 +32,8 @@
       padding-left: 100%;
       animation: marquee 12s linear infinite;
     }
-    @keyframes marquee {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-100%); }
-    }
     @keyframes spin {
-      0% { transform: rotate(0deg); }
+       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
     header {
@@ -79,7 +76,7 @@
       gap: 6px;
       margin: 10px 0;
     }
-    form, .custom-menu {
+    form, .custom-menu, .tombol-aksi {
       background: white;
       padding: 10px;
       border-radius: 10px;
@@ -117,23 +114,6 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       margin-bottom: 10px;
-      position: relative;
-    }
-    .btn-cetak-struk {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: #ff9800;
-      color: white;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 13px;
-    }
-    .btn-cetak-struk:hover {
-      background-color: #fb8c00;
     }
     table {
       width: 100%;
@@ -173,7 +153,7 @@
         flex-wrap: wrap;
         justify-content: space-between;
       }
-      form, .custom-menu {
+      form, .custom-menu, .tombol-aksi {
         flex: 1 1 48%;
       }
       .tabel-scroll {
@@ -182,45 +162,37 @@
     }
   </style>
 </head>
-<body><div class="running-text"><span>RUJAK BUAH INDONESIA</span></div><header>
+<body>
+
+<div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+
+<header>
   <div class="logo-container">
     <img src="rujak-logo.png" alt="Logo Rujak Buah">
     <h1>TOKO BUAH INDONESIA</h1>
   </div>
   <button class="login-btn" onclick="window.location.href='login.html'">🔐 Login</button>
-</header><!-- lanjutkan isi konten HTML dan JS sesuai file kamu -->
+</header>
 
 <div class="form-section">
   <form id="form">
-  <label>Pilih Buah<select id="nama"></select></label>
-  <label>Harga Satuan (Rp)
-    <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
-  </label>
-  <label>Jumlah<input type="number" id="jumlah"></label>
-    
-  <button id="btnTambah" type="button" onclick="tambahItem()">
-  <span id="spinner" style="display:none;
-    width:16px;height:16px;
-    border:2px solid white;
-    border-top:2px solid #4CAF50;
-    border-radius:50%;
-    animation:spin 1s linear infinite;
-    margin-right:6px;"></span>
-  + Tambah ke Keranjang
-</button>
-
-<div id="notif" style="display:none;
-  background: #d4edda;
-  color: #155724;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-</div>
-
-</form>
+    <label>Pilih Buah<select id="nama"></select></label>
+    <label>Harga Satuan (Rp)
+      <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
+    </label>
+    <label>Jumlah<input type="number" id="jumlah"></label>
+    <button id="btnTambah" type="button" onclick="tambahItem()">
+      <span id="spinner" style="display:none;
+        width:16px;height:16px;
+        border:2px solid white;
+        border-top:2px solid #4CAF50;
+        border-radius:50%;
+        animation:spin 1s linear infinite;
+        margin-right:6px;"></span>
+      + Tambah ke Keranjang
+    </button>
+    <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>
+  </form>
 
   <div class="custom-menu">
     <label>Pilih Sambal
@@ -247,7 +219,15 @@
         <option value="Pakai Kacang">Pakai Kacang</option>
       </select>
     </label>
-   
+    <div class="tombol-aksi">
+      <button onclick="simpanTransaksi()">💾 Simpan Transaksi</button>
+      <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+      <button onclick="resetForm()">🔄 Reset Form</button>
+      <button onclick="showQrisModal()">🧾 Cetak Struk</button>
+      <button onclick="window.location.reload()">🔃 Refresh Halaman</button>
+      <button onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
+    </div>
+  </div>
 </div>
 
 <h3>🛒 Daftar Belanja</h3>
@@ -271,6 +251,17 @@
   </table>
 </div>
 
+<!-- ✅ Tombol Checkout & Pilihan -->
+<div style="text-align: right; margin: 10px 0;">
+  <button onclick="toggleCheckoutOptions()">🛍️ Checkout</button>
+</div>
+
+<div id="checkoutOptions" style="display:none; text-align:center; margin: 10px 0;">
+  <button onclick="cekPesanan()">🧾 Cek Pesanan</button>
+  <button onclick="lanjutOrder()">➕ Lanjut Order</button>
+</div>
+
+<!-- QRIS Modal -->
 <div id="qrisModal" class="modal">
   <div class="modal-content">
     <h3>Silakan Scan QRIS untuk Pembayaran</h3>
@@ -335,7 +326,6 @@ function tambahItem() {
     return;
   }
 
-  // Mulai loading
   btn.disabled = true;
   spinner.style.display = "inline-block";
 
@@ -343,23 +333,21 @@ function tambahItem() {
     keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
     updateTabel();
 
-    // Reset input
     document.getElementById("form").reset();
     inputHarga.value = "";
     selectNama.value = "";
     document.getElementById("jumlah").value = "";
 
-const notif = document.getElementById("notif");
-notif.style.display = "block";
-notif.textContent = "✅ Berhasil ditambahkan ke keranjang!";
-setTimeout(() => {
-  notif.style.display = "none";
-}, 2000);
+    const notif = document.getElementById("notif");
+    notif.innerText = "✅ Berhasil ditambahkan ke keranjang!";
+    notif.style.display = "block";
+    setTimeout(() => {
+      notif.style.display = "none";
+    }, 2000);
 
-    // Selesai loading
     btn.disabled = false;
     spinner.style.display = "none";
-  }, 600); // delay 600ms buat efek loading
+  }, 600);
 }
 
 function updateTabel() {
@@ -378,10 +366,7 @@ function updateTabel() {
     tabel.innerHTML += row;
   });
   document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
-
-  // Scroll ke bawah saat tambah item
-  const scrollBox = document.getElementById("scrollTabel");
-  scrollBox.scrollTop = scrollBox.scrollHeight;
+  document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;
 }
 
 function simpanTransaksi() {
@@ -404,16 +389,20 @@ function hapusSemua() {
     updateTabel();
   }
 }
+
 function resetForm() {
   document.getElementById("form").reset();
   inputHarga.value = "";
 }
+
 function showQrisModal() {
   document.getElementById("qrisModal").style.display = "block";
 }
+
 function closeQrisModal() {
   document.getElementById("qrisModal").style.display = "none";
 }
+
 function cetakStruk() {
   closeQrisModal();
   let struk = "=== TOKO BUAH INDONESIA ===\n";
@@ -426,6 +415,25 @@ function cetakStruk() {
   struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
   struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
   alert(struk);
+}
+
+// ✅ Tambahan fungsi checkout
+function toggleCheckoutOptions() {
+  const box = document.getElementById("checkoutOptions");
+  const tabel = document.getElementById("scrollTabel");
+  box.style.display = box.style.display === "none" ? "block" : "none";
+  tabel.style.display = "none"; // opsional: sembunyikan daftar belanja
+}
+
+function cekPesanan() {
+  document.getElementById("scrollTabel").style.display = "block";
+  document.getElementById("checkoutOptions").style.display = "none";
+  alert("Menampilkan kembali daftar belanja.");
+}
+
+function lanjutOrder() {
+  document.getElementById("form").scrollIntoView({ behavior: 'smooth' });
+  document.getElementById("checkoutOptions").style.display = "none";
 }
 </script>
 
