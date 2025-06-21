@@ -236,7 +236,7 @@
 </head>
 <body>
 
-  <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+ <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
 
   <header>
     <div class="logo-container">
@@ -246,306 +246,266 @@
     <button class="login-btn" onclick="window.location.href='login.html'">🔑 Login</button>
   </header>
 
-  <!-- Lanjutkan isi HTML kamu di sini -->
+  <div class="form-section">
+
+    <!-- FORM INPUT BUAH -->
+    <form id="formBuah" class="form-container">
+      <label>Pilih Buah
+        <select id="nama"></select>
+      </label>
+      <label>Harga Satuan (Rp)
+        <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
+      </label>
+      <label>Jumlah
+        <input type="number" id="jumlah">
+      </label>
+
+      <button id="btnTambah" type="button" onclick="tambahItem()">
+        <span id="spinner" style="display:none;width:16px;height:16px;border:2px solid white;border-top:2px solid #4CAF50;border-radius:50%;animation:spin 1s linear infinite;margin-right:6px;"></span>
+        + Tambah ke Keranjang
+      </button>
+
+      <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>
+    </form>
+
+    <!-- FORM CUSTOM -->
+    <div class="custom-menu" id="customMenu" style="display:none;">
+      <label>Pilih Sambal
+        <select id="sambal">
+          <option value="">- Pilih Sambal -</option>
+          <option value="Tidak Pedas">Tidak Pedas</option>
+          <option value="Pedas">Pedas</option>
+          <option value="Extra Pedas">Extra Pedas</option>
+        </select>
+      </label>
+
+      <label>Pilih Ukuran
+        <select id="ukuran">
+          <option value="">- Pilih Ukuran -</option>
+          <option value="500 ml">500 ml</option>
+          <option value="650 ml">650 ml</option>
+          <option value="750 ml">750 ml</option>
+          <option value="1000 ml">1000 ml</option>
+        </select>
+      </label>
+
+      <label>Pilih Bumbu
+        <select id="bumbu">
+          <option value="">- Pilih Bumbu -</option>
+          <option value="Tanpa Kacang">Tanpa Kacang</option>
+          <option value="Pakai Kacang">Pakai Kacang</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- TOMBOL AKSI -->
+    <div class="tombol-aksi-vertikal">
+      <button onclick="resetForm()">🔄 Reset Form</button>
+      <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
+    </div>
+  </div>
+
+  <!-- DAFTAR BELANJA -->
+  <h3>🛒 Daftar Belanja</h3>
+  <div class="tabel-scroll" id="scrollTabel">
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Buah</th>
+          <th>Harga Satuan</th>
+          <th>Jumlah</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="tabelBelanja"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td id="totalBelanja">Rp 0</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- CHECKOUT -->
+  <div style="display: flex; justify-content: flex-end; margin: 10px 0 60px 0;">
+    <div style="flex: 1 1 48%; max-width: 48%;">
+      <button onclick="showQrisModal()">🛍️ Checkout</button>
+    </div>
+  </div>
+
+  <!-- QRIS MODAL -->
+  <div id="qrisModal" class="modal">
+    <div class="modal-content">
+      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+      <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+      <br>
+      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+      <button onclick="closeQrisModal()">Tutup</button>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let buahData = [], keranjang = [];
+
+    const selectNama = document.getElementById("nama");
+    const inputHarga = document.getElementById("harga");
+
+    db.collection("buah").get().then(snapshot => {
+      buahData = [];
+      selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        buahData.push(data);
+        const option = document.createElement("option");
+        option.value = data.nama;
+        option.textContent = data.nama;
+        selectNama.appendChild(option);
+      });
+
+      selectNama.addEventListener("change", () => {
+        const selected = buahData.find(buah => buah.nama === selectNama.value);
+        inputHarga.value = selected ? selected.harga : '';
+
+        const isRujak = selectNama.value.toLowerCase().includes("rujak");
+        const customMenuBox = document.getElementById("customMenu");
+
+        customMenuBox.style.display = isRujak ? "block" : "none";
+        customMenuBox.style.flex = "1 1 48%";
+
+        // Set default kosong
+        document.getElementById("sambal").value = "";
+        document.getElementById("ukuran").value = "";
+        document.getElementById("bumbu").value = "";
+      });
+    });
+
+    function tambahItem() {
+      const nama = selectNama.value;
+      const harga = parseInt(inputHarga.value);
+      const jumlah = parseInt(document.getElementById("jumlah").value);
+      const sambal = document.getElementById("sambal").value;
+      const ukuran = document.getElementById("ukuran").value;
+      const bumbu = document.getElementById("bumbu").value;
+
+      const btn = document.getElementById("btnTambah");
+      const spinner = document.getElementById("spinner");
+
+      if (document.getElementById("customMenu").style.display === "block") {
+        if (sambal === "" || ukuran === "" || bumbu === "") {
+          alert("Mohon pilih sambal, ukuran, dan bumbu terlebih dahulu.");
+          return;
+        }
+      }
+
+      btn.disabled = true;
+      spinner.style.display = "inline-block";
+
+      setTimeout(() => {
+        keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
+        updateTabel();
+        document.getElementById('scrollTabel').scrollIntoView({ behavior: 'smooth' });
+
+        document.getElementById("formBuah").reset();
+        inputHarga.value = "";
+        selectNama.value = "";
+        document.getElementById("jumlah").value = "";
+
+        document.getElementById("customMenu").style.display = "none";
+        document.getElementById("sambal").value = "";
+        document.getElementById("ukuran").value = "";
+        document.getElementById("bumbu").value = "";
+
+        const notif = document.getElementById("notif");
+        notif.innerText = "✅ Berhasil ditambahkan ke keranjang!";
+        notif.style.display = "block";
+        setTimeout(() => {
+          notif.style.display = "none";
+        }, 2000);
+
+        btn.disabled = false;
+        spinner.style.display = "none";
+      }, 600);
+    }
+
+    function updateTabel() {
+      const tabel = document.getElementById("tabelBelanja");
+      tabel.innerHTML = "";
+      let total = 0;
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        const row = `<tr>
+          <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${subtotal.toLocaleString()}</td>
+        </tr>`;
+        tabel.innerHTML += row;
+      });
+      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+      document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;
+    }
+
+    function hapusSemua() {
+      if (confirm("Hapus semua item di keranjang?")) {
+        keranjang = [];
+        updateTabel();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("formBuah").reset();
+      inputHarga.value = "";
+      selectNama.value = "";
+      document.getElementById("customMenu").style.display = "none";
+      document.getElementById("sambal").value = "";
+      document.getElementById("ukuran").value = "";
+      document.getElementById("bumbu").value = "";
+    }
+
+    function showQrisModal() {
+      document.getElementById("qrisModal").style.display = "block";
+    }
+
+    function closeQrisModal() {
+      document.getElementById("qrisModal").style.display = "none";
+    }
+
+    function cetakStruk() {
+      closeQrisModal();
+      let struk = "=== TOKO BUAH INDONESIA ===\n";
+      let total = 0;
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+      });
+      struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
+      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+      alert(struk);
+    }
+  </script>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
+    <button onclick="document.getElementById('formBuah').scrollIntoView()"><i>🍓</i><span>Input</span></button>
+    <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
+    <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>
+  </div>
 
 </body>
-</html>
-  
-  <div class="form-section">  
-<form id="formBuah" class="form-container">
-  <label>Pilih Buah<select id="nama"></select></label>
-  <label>Harga Satuan (Rp)
-    <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
-  </label>
-  <label>Jumlah<input type="number" id="jumlah"></label>
-
-  <button id="btnTambah" type="button" onclick="tambahItem()">
-    <span id="spinner" style="display:none;
-      width:16px;height:16px;
-      border:2px solid white;
-      border-top:2px solid #4CAF50;
-      border-radius:50%;
-      animation:spin 1s linear infinite;
-      margin-right:6px;"></span>
-    + Tambah ke Keranjang
-  </button>
-
-  <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;"></div>
-
-</form>  <!-- ✅ Bagian isian custom yang bisa disembunyikan -->  <div class="custom-menu" id="customMenu" style="display:none;">  
-  <label>Pilih Sambal  
-  <select id="sambal">  
-    <option value="">- Pilih Sambal -</option>  
-    <option value="Tidak Pedas">Tidak Pedas</option>  
-    <option value="Pedas">Pedas</option>  
-    <option value="Extra Pedas">Extra Pedas</option>  
-  </select>  
-</label>  
-<label>Pilih Ukuran  
-  <select id="ukuran">  
-    <option value="">- Pilih Ukuran -</option>  
-    <option value="500 ml">500 ml</option>  
-    <option value="650 ml">650 ml</option>  
-    <option value="750 ml">750 ml</option>  
-    <option value="1000 ml">1000 ml</option>  
-  </select>  
-</label>  
-<label>Pilih Bumbu  
-  <select id="bumbu">  
-    <option value="">- Pilih Bumbu -</option>  
-    <option value="Tanpa Kacang">Tanpa Kacang</option>  
-    <option value="Pakai Kacang">Pakai Kacang</option>  
-  </select>  
-</label>
-</div>  <!-- ❗Tetap selalu tampil: tombol aksi -->  
-
-
-  <!-- 🔻 Tombol tetap di kanan bawah -->
-  <div class="tombol-aksi-vertikal">
-    <button onclick="resetForm()">🔄 Reset Form</button>
-    <button onclick="hapusSemua()">🗑️ Hapus Semua</button>
-  </div>
-</div>
-
-  </div>  
-</div> 
- <h3>🛒 Daftar Belanja</h3>
-<div class="tabel-scroll" id="scrollTabel">
-  <table>
-    <thead>
-      <tr>
-        <th>Nama Buah</th>
-        <th>Harga Satuan</th>
-        <th>Jumlah</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="tabelBelanja"></tbody>
-    <tfoot>
-      <tr>
-        <td colspan="3">Total</td>
-        <td id="totalBelanja">Rp 0</td>
-      </tr>
-    </tfoot>
-  </table>
-</div>
-  <!-- ✅ Tombol Checkout & Pilihan --> <div style="display: flex; justify-content: flex-end; margin: 10px 0 60px 0;">
-  <div style="flex: 1 1 48%; max-width: 48%;">
-    <button onclick="showQrisModal()">🛍️ Checkout</button>
-  </div>
-</div>
-<!-- QRIS Modal -->  
-<div id="qrisModal" class="modal">  
-  <div class="modal-content">  
-    <h3>Silakan Scan QRIS untuk Pembayaran</h3>  
-    <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">  
-    <br>  
-    <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>  
-    <button onclick="closeQrisModal()">Tutup</button>  
-  </div>  
-</div>  <script>  
-const firebaseConfig = {  
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",  
-  authDomain: "tokobuahkasir.firebaseapp.com",  
-  projectId: "tokobuahkasir",  
-  storageBucket: "tokobuahkasir.appspot.com",  
-  messagingSenderId: "731011133713",  
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"  
-};  
-firebase.initializeApp(firebaseConfig);  
-const db = firebase.firestore();  
-  
-let buahData = [], keranjang = [];  
-  
-const selectNama = document.getElementById("nama");  
-const inputHarga = document.getElementById("harga");  
-  
-db.collection("buah").get().then(snapshot => {  
-  buahData = [];  
-  selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';  
-  snapshot.forEach(doc => {  
-    const data = doc.data();  
-    buahData.push(data);  
-    const option = document.createElement("option");  
-    option.value = data.nama;  
-    option.textContent = data.nama;  
-    selectNama.appendChild(option);  
-  });  
- selectNama.addEventListener("change", () => {
-  const selected = buahData.find(buah => buah.nama === selectNama.value);
-  inputHarga.value = selected ? selected.harga : '';
-  
-
-  const isRujak = selectNama.value.toLowerCase().includes("rujak");
-  const customMenuBox = document.getElementById("customMenu");
-  const formBuah = document.getElementById("formBuah");
-
-  // Tampilkan atau sembunyikan menu custom
-  customMenuBox.style.display = isRujak ? "block" : "none";
-
-  // Pastikan lebar tetap 48%
-  customMenuBox.style.flex = "1 1 48%";
-document.getElementById("sambal").value = "";
-document.getElementById("ukuran").value = "";
-document.getElementById("bumbu").value = "";
-}); 
-  
-function tambahItem() {  
-  const nama = selectNama.value;  
-  const harga = parseInt(inputHarga.value);  
-  const jumlah = parseInt(document.getElementById("jumlah").value);  
-  const sambal = document.getElementById("sambal").value;  
-  const ukuran = document.getElementById("ukuran").value;  
-  const bumbu = document.getElementById("bumbu").value;  
-  
-  const btn = document.getElementById("btnTambah");  
-  const spinner = document.getElementById("spinner");  
-  
-  if (document.getElementById("customMenu").style.display === "block") {
-    if (sambal === "" || ukuran === "" || bumbu === "") {
-      alert("Mohon pilih sambal, ukuran, dan bumbu terlebih dahulu.");
-      return;
-    }
-  }  
-  
-  btn.disabled = true;  
-  spinner.style.display = "inline-block";  
-  
-  setTimeout(() => {  
-    keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });  
-    updateTabel();  
-    document.getElementById('scrollTabel').scrollIntoView({ behavior: 'smooth' });
-  
-    document.getElementById("formBuah").reset();  
-    inputHarga.value = "";  
-    selectNama.value = "";  
-    document.getElementById("jumlah").value = "";  
-    
-    document.getElementById("customMenu").style.display = "none";
-    document.getElementById("sambal").value = "";  
-    document.getElementById("ukuran").value = "";  
-    document.getElementById("bumbu").value = "";
-   
-    
-    const notif = document.getElementById("notif");  
-    notif.innerText = "✅ Berhasil ditambahkan ke keranjang!";  
-    notif.style.display = "block";  
-    setTimeout(() => {  
-      notif.style.display = "none";  
-    }, 2000);  
-  
-    btn.disabled = false;  
-    spinner.style.display = "none";  
-  }, 600);  
-}  
-  
-function updateTabel() {  
-  const tabel = document.getElementById("tabelBelanja");  
-  tabel.innerHTML = "";  
-  let total = 0;  
-  keranjang.forEach(item => {  
-    const subtotal = item.harga * item.jumlah;  
-    total += subtotal;  
-    const row = `<tr>  
-      <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>  
-      <td>Rp ${item.harga.toLocaleString()}</td>  
-      <td>${item.jumlah}</td>  
-      <td>Rp ${subtotal.toLocaleString()}</td>  
-    </tr>`;  
-    tabel.innerHTML += row;  
-  });  
-  document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();  
-  document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;  
-}  
-  
-function simpanTransaksi() {  
-  if (keranjang.length === 0) return alert("Keranjang masih kosong.");  
-  db.collection("transaksi").add({  
-    tanggal: new Date(),  
-    item: keranjang,  
-    total: keranjang.reduce((sum, item) => sum + item.harga * item.jumlah, 0)  
-  }).then(() => {  
-    alert("Transaksi berhasil disimpan!");  
-  }).catch(err => {  
-    alert("Gagal menyimpan transaksi.");  
-    console.error(err);  
-  });  
-}  
-  
-function hapusSemua() {  
-  if (confirm("Hapus semua item di keranjang?")) {  
-    keranjang = [];  
-    updateTabel();  
-  }  
-}  
-  
-function resetForm() {  
-  document.getElementById("formBuah").reset();  
-  inputHarga.value = "";  
-  selectNama.value = "";  
-  document.getElementById("customMenu").style.display = "none";  
-  document.getElementById("sambal").value = "";  
-  document.getElementById("ukuran").value = "";  
-  document.getElementById("bumbu").value = "";  
-}
-  
-function showQrisModal() {  
-  document.getElementById("qrisModal").style.display = "block";  
-}  
-  
-function closeQrisModal() {  
-  document.getElementById("qrisModal").style.display = "none";  
-}  
-  
-function cetakStruk() {  
-  closeQrisModal();  
-  let struk = "=== TOKO BUAH INDONESIA ===\n";  
-  let total = 0;  
-  keranjang.forEach(item => {  
-    const subtotal = item.harga * item.jumlah;  
-    total += subtotal;  
-    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;  
-  });  
-  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";  
-  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";  
-  alert(struk);  
-}  
-  
-  
-</script>  <!-- 🔻 Navigator Bawah -->  <style>  
-  .bottom-nav {  
-    display: flex;  
-    position: fixed;  
-    bottom: 0;  
-    left: 0;  
-    right: 0;  
-    height: 50px;  
-    background-color: #ffffff;  
-    border-top: 1px solid #ccc;  
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);  
-    justify-content: space-around;  
-    align-items: center;  
-    z-index: 999;  
-  }  
-  .bottom-nav button {  
-    background: none;  
-    border: none;  
-    font-size: 12px;  
-    display: flex;  
-    flex-direction: column;  
-    align-items: center;  
-    color: #4CAF50;  
-    width: 100%;  
-    height: 100%;  
-  }  
-  .bottom-nav i {  
-    font-size: 18px;  
-    margin-bottom: 2px;  
-  }  
-</style>  <div class="bottom-nav">  
-  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>  
-  <button onclick="document.getElementById('formBuah').scrollIntoView()"><i>🍓</i><span>Input</span></button>  
-  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>  
-  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>  
-</div>  </body>  
 </html>
