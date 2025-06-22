@@ -104,9 +104,9 @@
       margin-bottom: 2px;
     }
 
-    /* Tombol Utama dan Pilihan Login */
     .tombol-utama,
-    .pilihan-login button {
+    .pilihan-login button,
+    .login-form button {
       padding: 12px 20px;
       font-size: 16px;
       border: none;
@@ -115,14 +115,6 @@
       margin: 10px auto;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       display: block;
-    }
-
-    .tombol-utama {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .pilihan-login button {
       background-color: #4CAF50;
       color: white;
     }
@@ -132,6 +124,31 @@
       justify-content: center;
       gap: 20px;
       margin-top: 50px;
+    }
+
+    .login-form {
+      display: none;
+      max-width: 300px;
+      margin: 50px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4CAF50;
     }
   </style>
 </head>
@@ -154,8 +171,17 @@
 
   <!-- Pilihan Login -->
   <div class="pilihan-login" id="pilihanLogin">
-    <button onclick="prosesLogin('pembeli')">Login Pembeli</button>
-    <button onclick="prosesLogin('penjual')">Login Penjual</button>
+    <button onclick="pilihRole('pembeli')">Login Pembeli</button>
+    <button onclick="pilihRole('penjual')">Login Penjual</button>
+  </div>
+
+  <!-- Form Login -->
+  <div class="login-form" id="loginForm">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="User">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="prosesLogin()">Login</button>
+    <p id="loginError" style="color: red; text-align: center; display: none;">User atau Password salah!</p>
   </div>
 
   <!-- Navigator Bawah -->
@@ -167,7 +193,7 @@
   </div>
 
   <script>
-    // Awal belum login
+    let selectedRole = '';
     localStorage.setItem('loginStatus', 'false');
 
     function tampilkanPilihan() {
@@ -175,14 +201,29 @@
       document.getElementById('pilihanLogin').style.display = 'flex';
     }
 
-    function prosesLogin(role) {
-      localStorage.setItem('loginStatus', 'true'); // Simpan status login
-      localStorage.setItem('loginRole', role); // Simpan tipe login
-
-      // Setelah klik login, tombol login menghilang
+    function pilihRole(role) {
+      selectedRole = role;
       document.getElementById('pilihanLogin').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+    }
 
-      alert('Berhasil login sebagai ' + role.toUpperCase());
+    function prosesLogin() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const loginError = document.getElementById('loginError');
+
+      loginError.style.display = 'none';
+
+      if ((selectedRole === 'pembeli' && user === 'pembeli' && pass === '12345') ||
+          (selectedRole === 'penjual' && user === 'penjual' && pass === '12345')) {
+        localStorage.setItem('loginStatus', 'true');
+        localStorage.setItem('loginRole', selectedRole);
+
+        alert('Login Berhasil sebagai ' + selectedRole.toUpperCase());
+        document.getElementById('loginForm').style.display = 'none';
+      } else {
+        loginError.style.display = 'block';
+      }
     }
 
     function cekLogin() {
@@ -190,7 +231,7 @@
 
       if (isLogin === 'true') {
         alert('Akses dashboard terbuka.');
-        // Kalau mau diarahkan, tambahkan window.location.href = 'dashboard.html';
+        // Jika mau diarahkan, silakan tambahkan: window.location.href = 'dashboard.html';
       } else {
         alert('Silakan login terlebih dahulu.');
       }
