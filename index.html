@@ -14,9 +14,6 @@
       margin: 0;
       padding: 10px;
       font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
     }
 
     .running-text {
@@ -56,9 +53,6 @@
       padding: 10px;
       border-radius: 10px;
       flex-wrap: wrap;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
     }
 
     .logo-container {
@@ -109,35 +103,25 @@
       margin-bottom: 2px;
     }
 
-    /* Container tombol agar posisi pas di tengah */
-    .container-tombol {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* Tombol Utama dan Pilihan Login */
     .tombol-utama {
       padding: 12px 20px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin: 20px auto;
+      margin: 80px auto 20px auto;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      display: block;
       background-color: #4CAF50;
       color: white;
-      display: block;
     }
 
     .pilihan-login {
       display: none;
       justify-content: center;
       align-items: center;
+      margin-top: 40px;
       gap: 20px;
-      margin-top: 20px;
     }
 
     .pilihan-login button {
@@ -149,6 +133,70 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       background-color: #4CAF50;
       color: white;
+    }
+
+    .login-form {
+      display: none;
+      max-width: 300px;
+      margin: 40px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4CAF50;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .login-form button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .login-form button:hover {
+      background: #43a047;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid white;
+      border-top: 2px solid #4CAF50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      transform: translateY(-50%);
+    }
+
+    @keyframes spin {
+      0% {
+        transform: translateY(-50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translateY(-50%) rotate(360deg);
+      }
     }
   </style>
 </head>
@@ -166,16 +214,24 @@
     </div>
   </header>
 
-  <!-- Container Tombol -->
-  <div class="container-tombol">
-    <!-- Tombol Utama -->
-    <button id="btnUtama" class="tombol-utama" onclick="tampilkanPilihan()">Login Sebagai</button>
+  <!-- Tombol Utama -->
+  <button class="tombol-utama" id="btnLoginSebagai" onclick="tampilkanPilihan()">Login Sebagai</button>
 
-    <!-- Pilihan Login -->
-    <div class="pilihan-login" id="pilihanLogin">
-      <button onclick="window.location.href='login-pembeli.html'">Login Pembeli</button>
-      <button onclick="window.location.href='login-penjual.html'">Login Penjual</button>
-    </div>
+  <!-- Pilihan Login -->
+  <div class="pilihan-login" id="pilihanLogin">
+    <button onclick="tampilkanForm('pembeli')">Login Pembeli</button>
+    <button onclick="tampilkanForm('penjual')">Login Penjual</button>
+  </div>
+
+  <!-- Form Login -->
+  <div class="login-form" id="formLogin">
+    <h2 id="judulForm">Form Login</h2>
+    <input type="text" id="username" placeholder="User">
+    <input type="password" id="password" placeholder="Password">
+    <button id="btnLogin" onclick="prosesLogin()">
+      Login
+    </button>
+    <p id="loginError" style="color: red; text-align: center; display: none; margin-top: 10px;">User atau Password salah!</p>
   </div>
 
   <!-- Navigator Bawah -->
@@ -186,10 +242,36 @@
     <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Dashboard</span></button>
   </div>
 
+  <!-- Script -->
   <script>
+    let role = '';
+
     function tampilkanPilihan() {
-      document.getElementById('btnUtama').style.display = 'none';
+      document.getElementById('btnLoginSebagai').style.display = 'none';
       document.getElementById('pilihanLogin').style.display = 'flex';
+    }
+
+    function tampilkanForm(pilihRole) {
+      document.getElementById('pilihanLogin').style.display = 'none';
+      document.getElementById('formLogin').style.display = 'block';
+      role = pilihRole;
+      document.getElementById('judulForm').innerText = 'Login ' + (role === 'pembeli' ? 'Pembeli' : 'Penjual');
+    }
+
+    function prosesLogin() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const loginError = document.getElementById('loginError');
+
+      loginError.style.display = 'none';
+
+      if (role === 'pembeli' && user === 'pembeli' && pass === '12345') {
+        window.location.href = 'dashboard.html';
+      } else if (role === 'penjual' && user === 'penjual' && pass === '12345') {
+        window.location.href = 'home.html';
+      } else {
+        loginError.style.display = 'block';
+      }
     }
   </script>
 
