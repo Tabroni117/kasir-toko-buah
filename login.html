@@ -98,10 +98,30 @@
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      position: relative;
     }
 
     .login-form button:hover {
       background: #43a047;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid white;
+      border-top: 2px solid #4CAF50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      transform: translateY(-50%);
+    }
+
+    @keyframes spin {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
     }
 
     .bottom-nav {
@@ -153,7 +173,10 @@
     <h2>Login Toko</h2>
     <input type="text" id="username" placeholder="User">
     <input type="password" id="password" placeholder="Password">
-    <button onclick="prosesLogin()">Login</button>
+    <button id="btnLogin" onclick="prosesLogin()">
+      <div class="spinner" id="spinner"></div>
+      Login
+    </button>
     <p id="loginError" style="color: red; text-align: center; display: none; margin-top: 10px;">User atau Password salah!</p>
   </div>
 
@@ -167,15 +190,29 @@
 
   <script>
     function prosesLogin() {
-      // Username dan Password simulasi
       const user = document.getElementById('username').value;
       const pass = document.getElementById('password').value;
 
-      if (user === 'admin' && pass === '12345') {
-        window.location.href = 'dashboard.html'; // arahkan ke dashboard jika login berhasil
-      } else {
-        document.getElementById('loginError').style.display = 'block';
-      }
+      const spinner = document.getElementById('spinner');
+      const btnLogin = document.getElementById('btnLogin');
+      const loginError = document.getElementById('loginError');
+
+      // Reset error
+      loginError.style.display = 'none';
+
+      // Tampilkan spinner dan disable tombol
+      spinner.style.display = 'inline-block';
+      btnLogin.disabled = true;
+
+      setTimeout(() => {
+        if (user === 'admin' && pass === '12345') {
+          window.location.href = 'dashboard.html';
+        } else {
+          spinner.style.display = 'none';
+          btnLogin.disabled = false;
+          loginError.style.display = 'block';
+        }
+      }, 1200); // 1.2 detik proses loading syantikkk
     }
   </script>
 
