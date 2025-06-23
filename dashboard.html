@@ -426,15 +426,23 @@ th {
     </div>
   </div>
   
-<!-- NOTA DIGITAL -->
-<div id="notaDigital" style="display:none; animation: fadeIn 0.5s;">
-  <div style="background: #4CAF50; color: white; padding: 16px; border-radius: 8px 8px 0 0;">
-    <h3 style="margin: 0;">🧾 NOTA PEMBAYARAN</h3>
-    <small id="tanggalNota"></small>
+  <!-- QRIS MODAL -->
+  <div id="qrisModal" class="modal">
+    <div class="modal-content">
+      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+      <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+      <br>
+      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+      <button onclick="closeQrisModal()">Tutup</button>
+    </div>
   </div>
+<!-- MODAL NOTA DIGITAL -->
+<div id="notaModal" class="modal">
+  <div class="modal-content">
+    <h3>🧾 NOTA PEMBAYARAN</h3>
+    <small id="tanggalNota"></small>
 
-  <div style="background: white; padding: 16px; border: 1px solid #ccc;">
-    <div id="isiNota"></div>
+    <div id="isiNota" style="margin-top: 16px;"></div>
     <hr style="margin: 12px 0;">
     <div style="display: flex; justify-content: space-between; font-weight: bold;">
       <span>Total Belanja</span>
@@ -447,22 +455,10 @@ th {
     </div>
 
     <button onclick="location.reload()" style="margin-top:10px; width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">➕ Pesan Lagi</button>
+    <br><br>
+    <button onclick="closeNotaModal()" style="margin-top:10px; width:100%; padding:10px; background: #f44336; color:white; border:none; border-radius:6px;">❌ Tutup</button>
   </div>
 </div>
-
-
-  
-
-  <!-- QRIS MODAL -->
-  <div id="qrisModal" class="modal">
-    <div class="modal-content">
-      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
-      <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
-      <br>
-      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
-      <button onclick="closeQrisModal()">Tutup</button>
-    </div>
-  </div>
 
   <!-- SCRIPT -->
   <script>
@@ -602,24 +598,35 @@ if (!jumlah || jumlah <= 0) {
       document.getElementById("bumbu").value = "";
     }
 function tampilkanNota() {
-  let struk = "=== TOKO BUAH INDONESIA ===\n";
+  document.getElementById("notaModal").style.display = "block";
+
+  const today = new Date();
+  const tanggal = today.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  document.getElementById("tanggalNota").innerText = tanggal;
+
+  let isi = "";
   let total = 0;
+
   keranjang.forEach(item => {
     const subtotal = item.harga * item.jumlah;
     total += subtotal;
-
-    struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+    isi += `<div style="margin-bottom:8px;">
+      <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+      <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
+      <strong>Subtotal:</strong> Rp ${subtotal.toLocaleString()}
+    </div>`;
   });
-  struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
-  struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
-  alert(struk);
+
+  document.getElementById("isiNota").innerHTML = isi;
+  document.getElementById("totalNota").innerText = "Rp " + total.toLocaleString();
 }
-
-
-
-
-    
-
+}
+  
     function showQrisModal() {
       document.getElementById("qrisModal").style.display = "block";
     }
@@ -642,11 +649,39 @@ function tampilkanNota() {
       struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
       struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
       alert(struk);
-    }
 
-function tampilkanNota() {
-  // Tampilkan elemen nota
-  document.getElementById('notaDigital').style.display = 'block';
+      
+   function closeNotaModal() {
+   document.getElementById("notaModal").style.display = "none";
+     
+  }
+      
+ function tampilkanNota() {
+  document.getElementById('notaModal').style.display = 'block';
+
+  // Isi tanggal dan isi nota
+  const now = new Date();
+  document.getElementById('tanggalNota').textContent = now.toLocaleString();
+
+  const isiNota = document.getElementById('isiNota');
+  isiNota.innerHTML = ''; // Reset isi nota
+
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+
+    const itemHTML = `
+      <div style="margin-bottom:8px;">
+        <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+        <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small>
+      </div>
+    `;
+    isiNota.innerHTML += itemHTML;
+  });
+
+  document.getElementById('totalNota').textContent = "Rp " + total.toLocaleString();
+};
 
   // Isi waktu checkout
   const now = new Date();
