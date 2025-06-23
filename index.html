@@ -34,12 +34,34 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
     <style>
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes runningText {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
         .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .running-text-container {
+            background-color: #22c55e;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .running-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: runningText 12s linear infinite;
+        }
 
         .role-card {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -51,10 +73,50 @@
             border-color: #22c55e;
             box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
         }
+
+        .bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background-color: #ffffff;
+            border-top: 1px solid #ccc;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            justify-content: space-around;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .bottom-nav button {
+            background: none;
+            border: none;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #4CAF50;
+            width: 100%;
+            height: 100%;
+        }
+
+        .bottom-nav i {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen flex flex-col items-center p-4 transition-colors duration-300">
+
+    <!-- 🔻 Running Text dengan Logo -->
+    <div class="running-text-container w-full mb-6">
+        <img src="Rujak.png" alt="Logo Rujak" class="h-8 mr-4">
+        <div class="running-text">RUJAK BUAH INDONESIA • RUJAK BUAH INDONESIA • RUJAK BUAH INDONESIA • </div>
+    </div>
+
+    <!-- Pilihan Role -->
     <div class="w-full max-w-md">
 
         <!-- Header -->
@@ -104,152 +166,106 @@
         </div>
     </div>
 
-<!-- Modal -->
-<div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md animate-fadeIn">
-        <div class="bg-primary-500 p-6 text-white flex justify-between items-center">
-            <h2 class="text-xl font-semibold"><i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication</h2>
-            <button onclick="closeAuthModal()" class="text-white hover:text-primary-200"><i class="fas fa-times"></i></button>
+    <!-- Modal Login -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md animate-fadeIn">
+            <div class="bg-primary-500 p-6 text-white flex justify-between items-center">
+                <h2 class="text-xl font-semibold"><i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication</h2>
+                <button onclick="closeAuthModal()" class="text-white hover:text-primary-200"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><i class="fas fa-user mr-2 text-primary-500"></i>Login User</label>
+                    <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Username">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><i class="fas fa-lock mr-2 text-primary-500"></i>Password</label>
+                    <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Password">
+                </div>
+
+                <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center transition-colors">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </div>
         </div>
+    </div>
 
-        <!-- Form container yang benar -->
-        <div class="p-6">
+    <!-- Navigasi Bawah -->
+    <div class="bottom-nav">
+        <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
+        <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>
+        <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
+        <button onclick="goToPage('dashboard.html')"><i>📊</i><span>Pembeli</span></button>
+        <button onclick="goToPage('home.html')"><i>📊</i><span>Penjual</span></button>
+    </div>
 
-            <!-- Username -->
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><i class="fas fa-user mr-2 text-primary-500"></i>Login User</label>
-                <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Username">
-            </div>
+    <script>
+        let selectedRole = null;
+        let isLoggedIn = false;
 
-            <!-- Password -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <i class="fas fa-lock mr-2 text-primary-500"></i>Password
-                </label>
-                <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Password">
-            </div>
-
-            <!-- Tombol Login -->
-            <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center transition-colors">
-                <i class="fas fa-sign-in-alt mr-2"></i>Login
-            </button>
-
-        </div> <!-- Tutup form container di sini -->
-
-    </div> <!-- Tutup card -->
-</div> <!-- Tutup modal -->
-
-<script>
-
-    let selectedRole = null;
-    let isLoggedIn = false; // ✅ Penanda status login
-
-    function selectRole(role) {
-        selectedRole = role;
-        document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
-        document.getElementById(`${role}Option`).classList.add('selected');
-        document.getElementById('continueBtn').disabled = false;
-        document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-    }
-
-    function continueToAuth() {
-        if (!selectedRole) return;
-        document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
-        document.getElementById('authModal').classList.remove('hidden');
-    }
-
-    function closeAuthModal() {
-        document.getElementById('authModal').classList.add('hidden');
-    }
-
-    document.getElementById('authSubmitBtn').addEventListener('click', function () {
-        const username = document.getElementById('authUsername').value.trim();
-        const password = document.getElementById('authPassword').value.trim();
-        const submitBtn = this;
-
-        if (!username || !password) {
-            alert('Silakan isi Username dan Password!');
-            return;
+        function selectRole(role) {
+            selectedRole = role;
+            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+            document.getElementById(`${role}Option`).classList.add('selected');
+            document.getElementById('continueBtn').disabled = false;
+            document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        let valid = false;
-        let redirectUrl = '';
-
-        if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
-            valid = true;
-            redirectUrl = 'home.html';
-        } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
-            valid = true;
-            redirectUrl = 'dashboard.html';
+        function continueToAuth() {
+            if (!selectedRole) return;
+            document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
+            document.getElementById('authModal').classList.remove('hidden');
         }
 
-        if (valid) {
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
-            submitBtn.disabled = true;
-
-            setTimeout(() => {
-                alert('Login Berhasil!');
-                isLoggedIn = true; // ✅ Tandai sudah login
-                window.location.href = redirectUrl;
-            }, 1500);
-        } else {
-            alert('Username atau Password salah!');
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
         }
-    });
 
-    // ✅ Fungsi pengaman navigator
-    function goToPage(page) {
-        if (!isLoggedIn) {
-            alert('Silakan login terlebih dahulu!');
-            return;
+        document.getElementById('authSubmitBtn').addEventListener('click', function () {
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const submitBtn = this;
+
+            if (!username || !password) {
+                alert('Silakan isi Username dan Password!');
+                return;
+            }
+
+            let valid = false;
+            let redirectUrl = '';
+
+            if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+                valid = true;
+                redirectUrl = 'home.html';
+            } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+                valid = true;
+                redirectUrl = 'dashboard.html';
+            }
+
+            if (valid) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+                submitBtn.disabled = true;
+
+                setTimeout(() => {
+                    alert('Login Berhasil!');
+                    isLoggedIn = true;
+                    window.location.href = redirectUrl;
+                }, 1500);
+            } else {
+                alert('Username atau Password salah!');
+            }
+        });
+
+        function goToPage(page) {
+            if (!isLoggedIn) {
+                alert('Silakan login terlebih dahulu!');
+                return;
+            }
+            window.location.href = page;
         }
-        window.location.href = page;
-    }
-
-</script>
-<!-- ✅ DITAMBAHKAN penutup script di sini -->
-<!-- 🔻 Navigator Bawah -->
-<style>
-    .bottom-nav {
-        display: flex;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 50px;
-        background-color: #ffffff;
-        border-top: 1px solid #ccc;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-        justify-content: space-around;
-        align-items: center;
-        z-index: 999;
-    }
-
-    .bottom-nav button {
-        background: none;
-        border: none;
-        font-size: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        color: #4CAF50;
-        width: 100%;
-        height: 100%;
-    }
-
-    .bottom-nav i {
-        font-size: 18px;
-        margin-bottom: 2px;
-    }
-</style>
-
-<div class="bottom-nav">
-    <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
-    <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>
-    <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
-    <button onclick="goToPage('dashboard.html')"><i>📊</i><span>Pembeli</span></button>
-    <button onclick="goToPage('home.html')"><i>📊</i><span>Penjual</span></button>
-</div>
+    </script>
 
 </body>
 </html>
