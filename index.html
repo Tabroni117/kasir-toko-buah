@@ -118,71 +118,79 @@
                     <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Username">
                 </div>
 
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"><i class="fas fa-lock mr-2 text-primary-500"></i>Password</label>
-                    <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Password">
-                </div>
+          </div>
 
-                <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center transition-colors"><i class="fas fa-sign-in-alt mr-2"></i>Login</button>
-            </div>
-        </div>
-    </div>
+<div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <i class="fas fa-lock mr-2 text-primary-500"></i>Password
+    </label>
+    <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" placeholder="Masukkan Password">
+</div>
 
-    <script>
-        let selectedRole = null;
+<button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center transition-colors">
+    <i class="fas fa-sign-in-alt mr-2"></i>Login
+</button>
+</div>
+</div>
+</div>
 
-        function selectRole(role) {
-            selectedRole = role;
-            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
-            document.getElementById(`${role}Option`).classList.add('selected');
-            document.getElementById('continueBtn').disabled = false;
-            document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+<script>
+    let selectedRole = null;
+
+    function selectRole(role) {
+        selectedRole = role;
+        document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+        document.getElementById(`${role}Option`).classList.add('selected');
+        document.getElementById('continueBtn').disabled = false;
+        document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function continueToAuth() {
+        if (!selectedRole) return;
+        document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
+        document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+        document.getElementById('authModal').classList.add('hidden');
+    }
+
+    document.getElementById('authSubmitBtn').addEventListener('click', function () {
+        const username = document.getElementById('authUsername').value.trim();
+        const password = document.getElementById('authPassword').value.trim();
+        const submitBtn = this;
+
+        if (!username || !password) {
+            alert('Silakan isi Username dan Password!');
+            return;
         }
 
-        function continueToAuth() {
-            if (!selectedRole) return;
-            document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
-            document.getElementById('authModal').classList.remove('hidden');
+        let valid = false;
+        let redirectUrl = '';
+
+        if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+            valid = true;
+            redirectUrl = 'home.html';
+        } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+            valid = true;
+            redirectUrl = 'dashboard.html';
         }
 
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.add('hidden');
+        if (valid) {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+            submitBtn.disabled = true;
+
+            setTimeout(() => {
+                alert('Login Berhasil!');
+                window.location.href = redirectUrl;
+            }, 1500);
+        } else {
+            alert('Username atau Password salah!');
         }
+    });
+</script> <!-- ✅ DITAMBAHKAN penutup script di sini -->
 
-        document.getElementById('authSubmitBtn').addEventListener('click', function () {
-            const username = document.getElementById('authUsername').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            const submitBtn = this;
-
-            if (!username || !password) {
-                alert('Silakan isi Username dan Password!');
-                return;
-            }
-
-            let valid = false;
-            let redirectUrl = '';
-
-            if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
-                valid = true;
-                redirectUrl = 'home.html';
-            } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
-                valid = true;
-                redirectUrl = 'dashboard.html';
-            }
-
-            if (valid) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
-                submitBtn.disabled = true;
-
-                setTimeout(() => {
-                    alert('Login Berhasil!');
-                    window.location.href = redirectUrl;
-                }, 1500);
-            } else {
-                alert('Username atau Password salah!');
-            }
-        });
-  <!-- 🔻 Navigator Bawah -->
+<!-- 🔻 Navigator Bawah -->
 <style>
     .bottom-nav {
         display: flex;
