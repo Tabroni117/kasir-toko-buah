@@ -425,6 +425,33 @@ th {
      <button class="glow" onclick="tampilkanNota()">🛍️ Checkout</button>
     </div>
   </div>
+  
+<!-- NOTA DIGITAL -->
+<div id="notaDigital" style="display:none; animation: fadeIn 0.5s;">
+  <div style="background: #4CAF50; color: white; padding: 16px; border-radius: 8px 8px 0 0;">
+    <h3 style="margin: 0;">🧾 NOTA PEMBAYARAN</h3>
+    <small id="tanggalNota"></small>
+  </div>
+
+  <div style="background: white; padding: 16px; border: 1px solid #ccc;">
+    <div id="isiNota"></div>
+    <hr style="margin: 12px 0;">
+    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+      <span>Total Belanja</span>
+      <span id="totalNota"></span>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 10px;">
+      <button onclick="window.print()" style="flex:1; background:#4CAF50; color:white; padding:10px; border:none; border-radius:6px;">🖨️ Cetak</button>
+      <button onclick="alert('Nota telah dikirim ke email Anda.')" style="flex:1; background:#FF9800; color:white; padding:10px; border:none; border-radius:6px;">✉️ Email</button>
+    </div>
+
+    <button onclick="location.reload()" style="margin-top:10px; width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">➕ Pesan Lagi</button>
+  </div>
+</div>
+
+
+  
 
   <!-- QRIS MODAL -->
   <div id="qrisModal" class="modal">
@@ -616,6 +643,33 @@ function tampilkanNota() {
       struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
       alert(struk);
     }
+
+function tampilkanNota() {
+  // Tampilkan elemen nota
+  document.getElementById('notaDigital').style.display = 'block';
+
+  // Isi waktu checkout
+  const now = new Date();
+  const waktu = now.toLocaleString();
+  document.getElementById('tanggalNota').textContent = waktu;
+
+  // Isi daftar belanja
+  let isi = '';
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div style="margin-bottom:8px;">
+              ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+              <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
+              <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
+            </div><hr>`;
+  });
+
+  document.getElementById('isiNota').innerHTML = isi;
+  document.getElementById('totalNota').textContent = 'Rp ' + total.toLocaleString();
+}
+    
   </script>
   
   <div class="bottom-nav">  
