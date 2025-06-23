@@ -1,260 +1,719 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RUJAK BUAH INDONESIA | Sistem Nota Digital</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #22c55e;
-            --primary-dark: #16a34a;
-            --accent: #f97316;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        
-        .card {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .receipt-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        }
-        
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-        }
-        
-        .btn-accent {
-            background: linear-gradient(135deg, var(--accent), #ea580c);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-accent:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        .badge {
-            background-color: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TOKO BUAH INDONESIA – Aplikasi Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  
+ <style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f0f8ff;
+  margin: 0;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.running-text {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 5px 0;
+  color: #2196F3;
+  font-weight: bold;
+  font-size: 14px;
+  background-color: #cce7ff;
+  text-align: center;
+}
+
+.running-text span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 12s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-100%, 0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2196F3;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo-container img {
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+h1 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.login-btn {
+  background: white;
+  color: #2196F3;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.form-section {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+form, .custom-menu, .tombol-aksi {
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  flex: 1 1 48%;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+button {
+  background: #2196F3;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+button:hover {
+  background-color: #1976D2;
+}
+
+.tombol-aksi-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.tabel-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+th, td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+th {
+  background: #e8f5e9;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+@media screen and (max-width: 768px) {
+  .form-section {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  form, .custom-menu, .tombol-aksi {
+    flex: 1 1 48%;
+  }
+
+  .tabel-scroll {
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: block;
+  }
+
+  .tabel-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .tabel-scroll::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+}
+
+.tombol-aksi-vertikal {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.tombol-aksi-vertikal button {
+  background: white;
+  color: #2196F3;
+  border: 1px solid #2196F3;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+  width: 100%;
+}
+
+.form-container, .custom-menu {
+  flex: 0 0 48%;
+  max-width: 48%;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(33, 150, 243, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+}
+
+.glow {
+  animation: pulseGlow 2s infinite;
+}
+
+.kontainer-tombol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+  justify-content: space-around;
+}
+
+.kontainer-tombol button {
+  background-color: #EFF8FF;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 22px;
+  color: #2196F3;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.kontainer-tombol button:hover {
+  background-color: #d0eaff;
+}
+
+.bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: #ffffff;
+  border-top: 1px solid #ccc;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: space-around;
+  align-items: center;
+  z-index: 999;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #2196F3;
+  width: 100%;
+  height: 100%;
+}
+
+.bottom-nav i {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+</style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-md mb-4">
-                <i class="fas fa-leaf text-3xl text-green-500"></i>
-            </div>
-            <h1 class="text-3xl font-bold text-gray-800">RUJAK BUAH <span class="text-green-600">INDONESIA</span></h1>
-            <p class="text-gray-600 mt-1">Sistem Nota Digital Terintegrasi</p>
-        </div>
+<body>
 
-        <!-- Shopping Cart -->
-        <div class="card bg-white p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold flex items-center">
-                    <i class="fas fa-shopping-cart mr-2 text-green-500"></i> 
-                    Daftar Belanja
-                </h2>
-                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                    <span id="itemCount">2</span> items
-                </span>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="text-left border-b border-gray-200">
-                            <th class="pb-3 font-medium text-gray-600">Produk</th>
-                            <th class="pb-3 font-medium text-gray-600 text-right">Harga</th>
-                            <th class="pb-3 font-medium text-gray-600 text-center">Qty</th>
-                            <th class="pb-3 font-medium text-gray-600 text-right">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3">
-                                <div class="font-medium">Rujak Mangga Mengkal</div>
-                                <div class="text-sm text-gray-500">650ml, Pedas, Pakai Kacang</div>
-                            </td>
-                            <td class="py-3 text-right">Rp 45.500</td>
-                            <td class="py-3 text-center">2</td>
-                            <td class="py-3 text-right font-medium">Rp 91.000</td>
-                        </tr>
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3">
-                                <div class="font-medium">Rujak Buah Campur</div>
-                                <div class="text-sm text-gray-500">500ml, Manis, Pakai Kacang</div>
-                            </td>
-                            <td class="py-3 text-right">Rp 20.000</td>
-                            <td class="py-3 text-center">1</td>
-                            <td class="py-3 text-right font-medium">Rp 20.000</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="mt-6 flex justify-end">
-                <button id="checkoutBtn" class="btn-primary text-white px-6 py-3 rounded-lg font-medium">
-                    <i class="fas fa-credit-card mr-2"></i> Proses Pembayaran
-                </button>
-            </div>
-        </div>
+ <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
 
-        <!-- Digital Receipt -->
-        <div id="receiptContainer" class="hidden animate-fadeIn card bg-white">
-            <!-- Receipt Header -->
-            <div class="receipt-header text-white p-6">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h2 class="text-xl font-bold flex items-center">
-                            <i class="fas fa-receipt mr-2"></i> NOTA PEMBAYARAN
-                        </h2>
-                        <p class="text-green-100 text-sm mt-1">
-                            <i class="far fa-calendar-alt mr-1"></i>
-                            <span id="receiptDate">-</span>
-                        </p>
-                    </div>
-                    <div class="badge px-3 py-1 rounded-full text-xs font-medium">
-                        #<span id="receiptNumber">-</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Receipt Body -->
-            <div class="p-6">
-                <!-- Order Items -->
-                <div class="mb-6">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                        Daftar Pesanan
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center pb-3">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-md bg-green-50 flex items-center justify-center mr-3">
-                                    <i class="fas fa-leaf text-green-500"></i>
-                                </div>
-                                <div>
-                                    <div class="font-medium">2x Rujak Mangga Mengkal</div>
-                                    <div class="text-sm text-gray-500">650ml, Pedas, Pakai Kacang</div>
-                                </div>
-                            </div>
-                            <div class="font-medium">Rp 91.000</div>
-                        </div>
-                        <div class="flex justify-between items-center pb-3">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-md bg-green-50 flex items-center justify-center mr-3">
-                                    <i class="fas fa-leaf text-green-500"></i>
-                                </div>
-                                <div>
-                                    <div class="font-medium">1x Rujak Buah Campur</div>
-                                    <div class="text-sm text-gray-500">500ml, Manis, Pakai Kacang</div>
-                                </div>
-                            </div>
-                            <div class="font-medium">Rp 20.000</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Payment Summary -->
-                <div class="bg-gray-50 rounded-xl p-4 mb-6">
-                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                        Ringkasan Pembayaran
-                    </h3>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Subtotal</span>
-                            <span id="subtotal" class="font-medium">Rp 111.000</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">PPN (10%)</span>
-                            <span id="tax" class="font-medium">Rp 11.100</span>
-                        </div>
-                        <div class="divider my-2"></div>
-                        <div class="flex justify-between">
-                            <span class="font-semibold">Total Pembayaran</span>
-                            <span id="totalAmount" class="text-lg font-bold text-green-600">Rp 122.100</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Receipt Actions -->
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="window.print()" class="btn-primary text-white py-3 rounded-lg font-medium flex items-center justify-center">
-                        <i class="fas fa-print mr-2"></i> Cetak
-                    </button>
-                    <button onclick="alert('Nota akan dikirim ke email Anda')" class="btn-accent text-white py-3 rounded-lg font-medium flex items-center justify-center">
-                        <i class="fas fa-paper-plane mr-2"></i> Email
-                    </button>
-                    <button onclick="location.reload()" class="col-span-2 py-3 rounded-lg border border-gray-200 font-medium hover:bg-gray-50 transition-colors">
-                        <i class="fas fa-plus-circle mr-2"></i> Pesan Lagi
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Receipt Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 text-center">
-                <p class="text-xs text-gray-500">
-                    Terima kasih telah berbelanja di <span class="font-medium text-green-600">Rujak Buah Indonesia</span>
-                </p>
-            </div>
-        </div>
+  <header>
+    <div class="logo-container">
+      <img src="rujak-logo.png" alt="Logo Rujak Buah">
+      <h1>TOKO BUAH INDONESIA</h1>
+    </div>
+    <button class="login-btn" onclick="window.location.href='index.html'">Logout Penjual</button>
+  </header>
+
+  <div class="form-section">
+
+    <!-- FORM INPUT BUAH -->
+    <form id="formBuah" class="form-container">
+      <label>Pilih Buah
+        <select id="nama"></select>
+      </label>
+      <label>Harga Satuan (Rp)
+        <input type="number" id="harga" placeholder="Harga Otomatis" readonly>
+      </label>
+      <label>Jumlah
+        <input type="number" id="jumlah">
+      </label>
+
+    <button id="btnTambah" class="glow" type="button" onclick="tambahItem()">
+  + Tambah ke Keranjang
+
+        <span id="spinner" style="display:none;width:16px;height:16px;border:2px solid white;border-top:2px solid #4CAF50;border-radius:50%;animation:spin 1s linear infinite;margin-right:6px;"></span>
+        🛒🛒🛒
+    </button>
+      
+ <div id="notif" style="display:none; margin-top:10px; color:green; font-weight:bold;">
+  <div id="notifText"></div>
+  <button id="btnLanjut" style="display:none; margin-top: 8px;" onclick="lanjutCheckout()">
+    <span id="loadingLanjut" style="display:none;width:16px;height:16px;border:2px solid white;border-top:2px solid #4CAF50;border-radius:50%;animation:spin 1s linear infinite;margin-right:6px;"></span>
+    Lanjut Checkout
+  </button>
+</div>
+    </form>
+
+    <!-- FORM CUSTOM -->
+    <div class="custom-menu" id="customMenu" style="display:none;">
+      <label>Pilih Sambal
+        <select id="sambal">
+          <option value="">- Pilih Sambal -</option>
+          <option value="Tidak Pedas">Tidak Pedas</option>
+          <option value="Pedas">Pedas</option>
+          <option value="Extra Pedas">Extra Pedas</option>
+        </select>
+      </label>
+
+      <label>Pilih Ukuran
+        <select id="ukuran">
+          <option value="">- Pilih Ukuran -</option>
+          <option value="500 ml">500 ml</option>
+          <option value="650 ml">650 ml</option>
+          <option value="750 ml">750 ml</option>
+          <option value="1000 ml">1000 ml</option>
+        </select>
+      </label>
+
+      <label>Pilih Bumbu
+        <select id="bumbu">
+          <option value="">- Pilih Bumbu -</option>
+          <option value="Tanpa Kacang">Tanpa Kacang</option>
+          <option value="Pakai Kacang">Pakai Kacang</option>
+        </select>
+      </label>
     </div>
 
-    <script>
-        // Checkout button handler
-        document.getElementById("checkoutBtn").addEventListener("click", () => {
-            // Generate receipt data
-            const noNota = 'INV-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            const now = new Date();
-            const receiptDate = now.toLocaleString('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            document.getElementById("receiptNumber").textContent = noNota;
-            document.getElementById("receiptDate").textContent = receiptDate;
-            
-            // Show receipt
-            document.getElementById("receiptContainer").classList.remove("hidden");
-            document.getElementById("receiptContainer").scrollIntoView({ behavior: 'smooth' });
-        });
-    </script>
+    <!-- TOMBOL AKSI -->
+    <div class="tombol-aksi-vertikal">
+      <button onclick="resetForm()"> </button>
+    </div>
+  </div>
+
+
+<div class="kontainer-tombol" id="iconButtons" style="display:flex;">
+  <button title="Order">🛒</button>
+  <button title="Menu">📋</button>
+  <button title="Banking">🏦</button>
+  <button title="Marketing">📣</button>
+  <button title="Employees">👥</button>
+  <button title="Store">🏬</button>
+  <button title="Insights">📊</button>
+  <button title="Feedback">💬</button>
+  <button title="Supplies">📦</button>
+  <button title="Finance">💰</button>
+</div>
+  
+
+  <!-- DAFTAR BELANJA -->
+  <h3>🛒 Daftar Belanja</h3>
+  <div class="tabel-scroll" id="scrollTabel">
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Buah</th>
+          <th>Harga Satuan</th>
+          <th>Jumlah</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="tabelBelanja"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td id="totalBelanja">Rp 0</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- CHECKOUT -->
+  <div style="display: flex; justify-content: flex-end; margin: 10px 0 60px 0;">
+    <div style="flex: 1 1 48%; max-width: 48%;">
+     <button class="glow" onclick="tampilkanNota()">🛍️ Checkout</button>
+    </div>
+  </div>
+  
+  <!-- QRIS MODAL -->
+  <div id="qrisModal" class="modal">
+    <div class="modal-content">
+      <h3>Silakan Scan QRIS untuk Pembayaran</h3>
+      <img src="qris.png" alt="QRIS Pembayaran" style="max-width: 100%;">
+      <br>
+      <button onclick="cetakStruk()">✅ Lanjutkan Cetak Struk</button>
+      <button onclick="closeQrisModal()">Tutup</button>
+    </div>
+  </div>
+<!-- MODAL NOTA DIGITAL -->
+<div id="notaModal" class="modal">
+  <div class="modal-content">
+    <h3>🧾 NOTA PEMBAYARAN</h3>
+    <small id="tanggalNota"></small>
+
+    <div id="isiNota" style="margin-top: 16px;"></div>
+    <hr style="margin: 12px 0;">
+    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+      <span>Total Belanja</span>
+      <span id="totalNota"></span>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 10px;">
+      <button onclick="window.print()" style="flex:1; background:#4CAF50; color:white; padding:10px; border:none; border-radius:6px;">🖨️ Cetak</button>
+      <button onclick="alert('Nota telah dikirim ke email Anda.')" style="flex:1; background:#FF9800; color:white; padding:10px; border:none; border-radius:6px;">✉️ Email</button>
+    </div>
+
+    <button onclick="location.reload()" style="margin-top:10px; width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;">➕ Pesan Lagi</button>
+    <br><br>
+    <button onclick="closeNotaModal()" style="margin-top:10px; width:100%; padding:10px; background: #f44336; color:white; border:none; border-radius:6px;">❌ Tutup</button>
+  </div>
+</div>
+
+  <!-- SCRIPT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let buahData = [], keranjang = [];
+
+    const selectNama = document.getElementById("nama");
+    const inputHarga = document.getElementById("harga");
+
+    db.collection("buah").get().then(snapshot => {
+      buahData = [];
+      selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        buahData.push(data);
+        const option = document.createElement("option");
+        option.value = data.nama;
+        option.textContent = data.nama;
+        selectNama.appendChild(option);
+      });
+
+      selectNama.addEventListener("change", () => {
+        const selected = buahData.find(buah => buah.nama === selectNama.value);
+        inputHarga.value = selected ? selected.harga : '';
+
+        const isRujak = selectNama.value.toLowerCase().includes("rujak");
+        const customMenuBox = document.getElementById("customMenu");
+
+        customMenuBox.style.display = isRujak ? "block" : "none";
+        customMenuBox.style.flex = "1 1 48%";
+
+        // Set default kosong
+        document.getElementById("sambal").value = "";
+        document.getElementById("ukuran").value = "";
+        document.getElementById("bumbu").value = "";
+      });
+    });
+
+    function tambahItem() {
+      const nama = selectNama.value;
+      const harga = parseInt(inputHarga.value);
+      const jumlah = parseInt(document.getElementById("jumlah").value);
+      const sambal = document.getElementById("sambal").value;
+      const ukuran = document.getElementById("ukuran").value;
+      const bumbu = document.getElementById("bumbu").value;
+
+      const btn = document.getElementById("btnTambah");
+      const spinner = document.getElementById("spinner");
+
+      if (document.getElementById("customMenu").style.display === "block") {
+        if (sambal === "" || ukuran === "" || bumbu === "") {
+          alert("Mohon pilih sambal, ukuran, dan bumbu terlebih dahulu.");
+          return;
+        }
+      }
+if (!jumlah || jumlah <= 0) {
+  alert("Mohon masukkan jumlah yang valid.");
+  return;
+}
+      btn.disabled = true;
+      spinner.style.display = "inline-block";
+
+      setTimeout(() => {
+        keranjang.push({ nama, harga, jumlah, sambal, ukuran, bumbu });
+        updateTabel();
+        document.getElementById('scrollTabel').scrollIntoView({ behavior: 'smooth' });
+
+        document.getElementById("formBuah").reset();
+        inputHarga.value = "";
+        selectNama.value = "";
+        document.getElementById("jumlah").value = "";
+
+        document.getElementById("customMenu").style.display = "none";
+        document.getElementById("sambal").value = "";
+        document.getElementById("ukuran").value = "";
+        document.getElementById("bumbu").value = "";
+
+        const notif = document.getElementById("notif");
+       document.getElementById("notifText").innerText = "✅ Berhasil ditambahkan ke keranjang!";
+       notif.style.display = "block";
+
+      // Tampilkan tombol lanjut
+      document.getElementById("btnLanjut").style.display = "inline-block";
+        
+       setTimeout(() => {
+       notif.style.display = "none";
+        }, 2000);
+
+        btn.disabled = false;
+        spinner.style.display = "none";
+      }, 600);
+    }
+
+    function updateTabel() {
+      const tabel = document.getElementById("tabelBelanja");
+      tabel.innerHTML = "";
+      let total = 0;
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        const row = `<tr>
+          <td>${item.nama}<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small></td>
+          <td>Rp ${item.harga.toLocaleString()}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp ${subtotal.toLocaleString()}</td>
+        </tr>`;
+        tabel.innerHTML += row;
+      });
+      document.getElementById("totalBelanja").textContent = "Rp " + total.toLocaleString();
+      document.getElementById("scrollTabel").scrollTop = document.getElementById("scrollTabel").scrollHeight;
+    }
+
+    function hapusSemua() {
+      if (confirm("Hapus semua item di keranjang?")) {
+        keranjang = [];
+        updateTabel();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("formBuah").reset();
+      inputHarga.value = "";
+      selectNama.value = "";
+      document.getElementById("customMenu").style.display = "none";
+      document.getElementById("sambal").value = "";
+      document.getElementById("ukuran").value = "";
+      document.getElementById("bumbu").value = "";
+    }
+function tampilkanNota() {
+  document.getElementById("notaModal").style.display = "block";
+
+  const today = new Date();
+  const tanggal = today.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  document.getElementById("tanggalNota").innerText = tanggal;
+
+  let isi = "";
+  let total = 0;
+
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div style="margin-bottom:8px;">
+      <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+      <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
+      <strong>Subtotal:</strong> Rp ${subtotal.toLocaleString()}
+    </div>`;
+  });
+
+  document.getElementById("isiNota").innerHTML = isi;
+  document.getElementById("totalNota").innerText = "Rp " + total.toLocaleString();
+}
+}
+  
+    function showQrisModal() {
+      document.getElementById("qrisModal").style.display = "block";
+    }
+
+    function closeQrisModal() {
+      document.getElementById("qrisModal").style.display = "none";
+    }
+
+    function cetakStruk() {
+      closeQrisModal();
+      let struk = "=== TOKO BUAH INDONESIA ===\n";
+      let total = 0;
+      keranjang.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+
+        
+        struk += `${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()}) = Rp ${subtotal.toLocaleString()}\n - ${item.sambal}, ${item.ukuran}, ${item.bumbu}\n`;
+      });
+      struk += "----------------------------\nTOTAL: Rp " + total.toLocaleString() + "\n";
+      struk += "Terima kasih belanja di TOKO BUAH INDONESIA!\n";
+      alert(struk);
+
+      
+   function closeNotaModal() {
+   document.getElementById("notaModal").style.display = "none";
+     
+  }
+      
+ function tampilkanNota() {
+  document.getElementById('notaModal').style.display = 'block';
+
+  // Isi tanggal dan isi nota
+  const now = new Date();
+  document.getElementById('tanggalNota').textContent = now.toLocaleString();
+
+  const isiNota = document.getElementById('isiNota');
+  isiNota.innerHTML = ''; // Reset isi nota
+
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+
+    const itemHTML = `
+      <div style="margin-bottom:8px;">
+        <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+        <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small>
+      </div>
+    `;
+    isiNota.innerHTML += itemHTML;
+  });
+
+  document.getElementById('totalNota').textContent = "Rp " + total.toLocaleString();
+};
+
+  // Isi waktu checkout
+  const now = new Date();
+  const waktu = now.toLocaleString();
+  document.getElementById('tanggalNota').textContent = waktu;
+
+  // Isi daftar belanja
+  let isi = '';
+  let total = 0;
+  keranjang.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div style="margin-bottom:8px;">
+              ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+              <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
+              <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
+            </div><hr>`;
+  });
+
+  document.getElementById('isiNota').innerHTML = isi;
+  document.getElementById('totalNota').textContent = 'Rp ' + total.toLocaleString();
+}
+    
+  </script>
+  
+  <div class="bottom-nav">  
+  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>  
+  <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>  
+  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>  
+  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>  
+  <button onclick="window.location.href='home.html'"><i>📊</i><span>Penjual</span></button>  
+</div>
 </body>
 </html>
+    
