@@ -461,54 +461,45 @@ th {
 </div>
 
   <!-- SCRIPT -->
-  <script>
-   
-   db.collection("stok_buah").get().then(snapshot => {
-      buahData = [];
-      selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        buahData.push(data);
-        const option = document.createElement("option");
-        option.value = data.nama;
-        option.textContent = data.nama;
-        selectNama.appendChild(option);
-      });
 
-      selectNama.addEventListener("change", () => {
-        const selected = buahData.find(buah => buah.nama === selectNama.value);
-        inputHarga.value = selected ? selected.harga : '';
+<script>
+window.addEventListener("DOMContentLoaded", function() {
+  const selectNama = document.getElementById("nama");
+  const inputHarga = document.getElementById("harga");
+  const keranjang = [];
 
-        const isRujak = selectNama.value.toLowerCase().includes("rujak");
-        const customMenuBox = document.getElementById("customMenu");
-
-        customMenuBox.style.display = isRujak ? "block" : "none";
-        customMenuBox.style.flex = "1 1 48%";
-
-        // Set default kosong
-        document.getElementById("sambal").value = "";
-        document.getElementById("ukuran").value = "";
-        document.getElementById("bumbu").value = "";
-      });
+  db.collection("stok_buah").get().then(snapshot => {
+    const buahData = [];
+    selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      buahData.push(data);
+      const option = document.createElement("option");
+      option.value = data.nama;
+      option.textContent = data.nama;
+      selectNama.appendChild(option);
     });
 
+    selectNama.addEventListener("change", () => {
+      const selected = buahData.find(buah => buah.nama === selectNama.value);
+      inputHarga.value = selected ? selected.harga : '';
 
-      selectNama.addEventListener("change", () => {
-        const selected = buahData.find(buah => buah.nama === selectNama.value);
-        inputHarga.value = selected ? selected.harga : '';
+      const isRujak = selectNama.value.toLowerCase().includes("rujak");
+      const customMenuBox = document.getElementById("customMenu");
 
-        const isRujak = selectNama.value.toLowerCase().includes("rujak");
-        const customMenuBox = document.getElementById("customMenu");
+      customMenuBox.style.display = isRujak ? "block" : "none";
+      customMenuBox.style.flex = "1 1 48%";
 
-        customMenuBox.style.display = isRujak ? "block" : "none";
-        customMenuBox.style.flex = "1 1 48%";
-
-        // Set default kosong
-        document.getElementById("sambal").value = "";
-        document.getElementById("ukuran").value = "";
-        document.getElementById("bumbu").value = "";
-      });
+      document.getElementById("sambal").value = "";
+      document.getElementById("ukuran").value = "";
+      document.getElementById("bumbu").value = "";
     });
+  });
+
+  // lanjutkan fungsi tambahItem, updateTabel, dll di sini...
+
+});
+</script>
 
     function tambahItem() {
       const nama = selectNama.value;
