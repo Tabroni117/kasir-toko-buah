@@ -462,23 +462,8 @@ th {
 
   <!-- SCRIPT -->
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let buahData = [], keranjang = [];
-
-    const selectNama = document.getElementById("nama");
-    const inputHarga = document.getElementById("harga");
-
-    db.collection("stok_buah").get().then(snapshot => {
+   
+    db.collection("buah").get().then(snapshot => {
       buahData = [];
       selectNama.innerHTML = '<option value="">-- Pilih Buah --</option>';
       snapshot.forEach(doc => {
@@ -489,6 +474,24 @@ th {
         option.textContent = data.nama;
         selectNama.appendChild(option);
       });
+
+      selectNama.addEventListener("change", () => {
+        const selected = buahData.find(buah => buah.nama === selectNama.value);
+        inputHarga.value = selected ? selected.harga : '';
+
+        const isRujak = selectNama.value.toLowerCase().includes("rujak");
+        const customMenuBox = document.getElementById("customMenu");
+
+        customMenuBox.style.display = isRujak ? "block" : "none";
+        customMenuBox.style.flex = "1 1 48%";
+
+        // Set default kosong
+        document.getElementById("sambal").value = "";
+        document.getElementById("ukuran").value = "";
+        document.getElementById("bumbu").value = "";
+      });
+    });
+
 
       selectNama.addEventListener("change", () => {
         const selected = buahData.find(buah => buah.nama === selectNama.value);
