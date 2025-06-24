@@ -1,190 +1,224 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --primary: #16a34a;
-      --primary-dark: #15803d;
-      --primary-light: #22c55e;
-      --secondary: #64748b;
-      --light: #f0fdf4;
-      --white: #ffffff;
       --dark: #1e293b;
-      --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
-      font-size: 12px;
+      --light: #f0fdf4;
+      --gray: #64748b;
     }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
+
     body {
-      background-color: #f8fafc;
+      background: #f8fafc;
       color: var(--dark);
-      min-height: 100vh;
-      padding-bottom: 70px;
+      padding: 10px;
     }
-    .main-container {
-      max-width: 1200px;
+
+    .container {
+      max-width: 700px;
       margin: auto;
-      padding: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
-    .header, .stats-container, .order-container {
-      margin-bottom: 20px;
-    }
-    .header {
+
+    .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 15px;
     }
-    .logo h1 {
-      font-size: 20px;
-      color: var(--primary);
-    }
-    .stats-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 15px;
-    }
-    .stat-card {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: var(--card-shadow);
-      border-left: 5px solid var(--primary);
-    }
-    .stat-card h3 {
-      font-size: 14px;
-      margin-bottom: 8px;
-      color: var(--secondary);
-    }
-    .stat-card .value {
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .stat-card .change {
-      font-size: 11px;
-      color: var(--primary);
-    }
-    .order-container {
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: var(--card-shadow);
-    }
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 15px;
-      background: var(--light);
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .order-header button {
+
+    .header-top a, .header-top button {
       font-size: 12px;
-      padding: 6px 10px;
-      border: 1px solid var(--primary);
-      background: white;
+      padding: 5px 10px;
       border-radius: 5px;
+      text-decoration: none;
+      border: none;
       cursor: pointer;
     }
-    .order-list .order-item {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e5e7eb;
+
+    .back-btn {
+      background: var(--primary);
+      color: white;
     }
-    .order-item .info {
+
+    .refresh-btn {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      background: white;
+    }
+
+    h1 {
+      font-size: 16px;
+      margin-bottom: 2px;
+      color: var(--primary);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat-box {
+      background: var(--light);
+      border-left: 5px solid var(--primary);
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .stat-box h3 {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .stat-box p {
+      font-size: 12px;
+      color: var(--gray);
+    }
+
+    .filters {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
-    .order-item .items {
+
+    .filters button {
+      flex: 1;
+      padding: 6px;
       font-size: 11px;
-      color: #444;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      cursor: pointer;
     }
+
+    .filters .active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .order-list .order {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 0;
+    }
+
+    .order .name {
+      font-weight: 600;
+    }
+
+    .order .detail {
+      font-size: 11px;
+      color: var(--gray);
+    }
+
+    .order .item {
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       background: white;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #ddd;
       display: flex;
       justify-content: space-around;
-      padding: 10px 0;
-      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+      padding: 8px 0;
       z-index: 999;
     }
+
     .bottom-nav button {
       background: none;
       border: none;
-      text-align: center;
-      font-size: 18px;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #555;
     }
+
     .bottom-nav span {
-      display: block;
       font-size: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="main-container">
-    <div class="header">
-      <div class="logo">
-        <h1>Rujak Buah Indonesia</h1>
-      </div>
-    </div><div class="stats-container">
-  <div class="stat-card">
-    <h3>Total Pesanan</h3>
-    <div class="value" id="totalOrders">0</div>
-    <div class="change">+10% dari kemarin</div>
-  </div>
-  <div class="stat-card">
-    <h3>Pendapatan Hari Ini</h3>
-    <div class="value" id="todayIncome">Rp0</div>
-    <div class="change">+5% dari kemarin</div>
-  </div>
-  <div class="stat-card">
-    <h3>Rata-rata Pesanan</h3>
-    <div class="value" id="avgOrder">Rp0</div>
-    <div class="change">Real-time</div>
-  </div>
-  <div class="stat-card">
-    <h3>Pesanan Terakhir</h3>
-    <div class="value" id="lastOrder">-</div>
-    <div class="change">Real-time</div>
-  </div>
-</div>
+  <div class="container">
+    <div class="header-top">
+      <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Kembali</a>
+      <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
 
-<div class="order-container">
-  <div class="order-header">
-    <strong>Daftar Pesanan Terbaru</strong>
-    <div>
-      <button>Hari Ini</button>
+    <div style="text-align: center; margin-bottom: 15px;">
+      <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
+      <h1>RUJAK BUAH INDONESIA</h1>
+      <p style="font-size: 11px;">Dashboard Pesanan Masuk</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <h3 id="totalOrders">0</h3>
+        <p>Total Pesanan</p>
+      </div>
+      <div class="stat-box">
+        <h3 id="todayIncome">Rp0</h3>
+        <p>Pendapatan Hari Ini</p>
+      </div>
+      <div class="stat-box">
+        <h3 id="avgOrder">Rp0</h3>
+        <p>Rata-rata Pesanan</p>
+      </div>
+      <div class="stat-box">
+        <h3 id="lastOrder">-</h3>
+        <p>Pesanan Terakhir</p>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="active">Hari Ini</button>
       <button>Minggu Ini</button>
       <button>Semua</button>
     </div>
-  </div>
-  <div class="order-list" id="daftarPesanan">
-    <div style="text-align:center; padding:20px">Memuat data...</div>
-  </div>
-</div>
 
-  </div>  <div class="bottom-nav">
-    <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
-    <button onclick="document.getElementById('form')?.scrollIntoView()"><i>🍓</i><span>Input</span></button>
-    <button onclick="alert('QRIS dibuka')"><i>💳</i><span>QRIS</span></button>
-    <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>
-    <button onclick="window.location.href='home.html'"><i>👤</i><span>Penjual</span></button>
-  </div>  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  <script>
+    <div class="order-list" id="daftarPesanan">
+      <p style="text-align: center; color: #888;">Memuat data pesanan...</p>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button onclick="loadData()"><i>🔃</i><span>Refresh</span></button>  
+    <button onclick="document.getElementById('form')?.scrollIntoView()"><i>🍓</i><span>Input</span></button>  
+    <button onclick="alert('QRIS modal coming soon')"><i>💳</i><span>QRIS</span></button>  
+    <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>  
+    <button onclick="window.location.href='home.html'"><i>📊</i><span>Penjual</span></button>  
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir"
+      projectId: "tokobuahkasir",
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -195,44 +229,72 @@
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
 
-    const formatCurrency = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
-    const formatDate = date => new Date(date).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+      }).format(value);
+    }
 
-    db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
-      daftar.innerHTML = "";
-      if (snapshot.empty) {
-        daftar.innerHTML = '<div style="text-align:center; padding:20px">Belum ada pesanan masuk.</div>';
-        return;
-      }
-      let total = 0;
-      let hariIni = 0;
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const waktu = data.waktu?.toDate?.() || new Date();
-        const isToday = waktu >= now;
-        const totalHarga = data.total || 0;
-        total += totalHarga;
-        if (isToday) hariIni += totalHarga;
-        const nama = data.nama || "Pelanggan";
-        const nomor = data.nomor || "-";
-        const status = data.status || "Menunggu";
-        const isiItem = (data.items || []).map(item => `🍉 ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString("id-ID")})`).join("<br>");
-        daftar.innerHTML += `
-          <div class="order-item">
-            <div class="info">
-              <strong>${nama}</strong> (${nomor}) - ${status} <span style="font-size:11px; color:#999">${formatDate(waktu)}</span>
-            </div>
-            <div class="items">${isiItem}</div>
-          </div>
-        `;
+    function formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleString("id-ID", {
+        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
       });
-      const count = snapshot.size;
-      totalOrdersEl.textContent = count;
-      todayIncomeEl.textContent = formatCurrency(hariIni);
-      avgOrderEl.textContent = formatCurrency(count > 0 ? total / count : 0);
-      lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu.toDate());
-    });
-  </script></body>
+    }
+
+    function loadData() {
+      daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        if (snapshot.empty) {
+          daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
+          return;
+        }
+
+        let total = 0, count = 0, today = 0;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        daftar.innerHTML = "";
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = data.waktu?.toDate?.() || new Date();
+          const isToday = waktu >= now;
+          const totalHarga = data.total || 0;
+          const nama = data.nama || "Pelanggan";
+          const nomor = data.nomor || "-";
+          const status = data.status || "Menunggu";
+
+          if (isToday) today += totalHarga;
+          total += totalHarga;
+          count++;
+
+          const itemsHTML = (data.items || []).map(i => `
+            <div class="item">
+              🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})
+              <br><small style="color:#666;">${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small>
+            </div>
+          `).join("");
+
+          daftar.innerHTML += `
+            <div class="order">
+              <div class="name">${nama} - <span class="detail">${nomor}</span></div>
+              <div class="detail">${status} • ${formatDate(waktu)}</div>
+              ${itemsHTML}
+            </div>
+          `;
+        });
+
+        totalOrdersEl.textContent = count;
+        todayIncomeEl.textContent = formatCurrency(today);
+        avgOrderEl.textContent = formatCurrency(total / count);
+        lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu?.toDate());
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadData);
+  </script>
+</body>
 </html>
