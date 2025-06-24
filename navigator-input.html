@@ -2,71 +2,616 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Pesanan Masuk</title>
+  <title>Premium Order Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f0f8ff;
+    :root {
+      --primary: #16a34a;
+      --primary-light: #22c55e;
+      --primary-dark: #15803d;
+      --secondary: #64748b;
+      --accent: #84cc16;
+      --light: #f0fdf4;
+      --white: #ffffff;
+      --dark: #1e293b;
+      --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
-    h2 {
-      color: #2196F3;
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    
+    body {
+      background-color: #f8fafc;
+      color: var(--dark);
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo-icon {
+      font-size: 28px;
+      color: var(--primary);
+    }
+    
+    .logo-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      letter-spacing: -0.5px;
+    }
+    
+    .logo-text p {
+      font-size: 14px;
+      color: var(--secondary);
+      margin-top: 2px;
+    }
+    
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .notification-bell {
+      position: relative;
+      font-size: 20px;
+      color: var(--secondary);
+      cursor: pointer;
+    }
+    
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+    
+    .stat-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s ease;
+      border-top: 4px solid var(--primary);
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    
+    .stat-title {
+      font-size: 14px;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 5px 0;
+    }
+    
+    .stat-change {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    
+    .order-container {
+      background: var(--white);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 30px;
+    }
+    
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      background: var(--light);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .order-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    .order-filter {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .filter-btn {
+      padding: 8px 15px;
+      border-radius: 8px;
+      background: var(--white);
+      border: 1px solid #e2e8f0;
+      color: var(--secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .filter-btn:hover {
+      background: #f1f5f9;
+    }
+    
+    .filter-btn.active:hover {
+      background: var(--primary-dark);
+    }
+    
+    .order-list {
+      padding: 0;
+    }
+    
+    .order-item {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+      padding: 20px 30px;
+      border-bottom: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      align-items: center;
+    }
+    
+    .order-item:last-child {
+      border-bottom: none;
+    }
+    
+    .order-item:hover {
+      background: #f8fafc;
+    }
+    
+    .customer-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .customer-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    
+    .customer-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .customer-name {
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    
+    .customer-meta {
+      font-size: 13px;
+      color: var(--secondary);
+    }
+    
+    .order-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #dcfce7;
+      color: var(--primary-dark);
+    }
+    
+    .text-primary {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .text-success {
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+    
+    .order-time {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .time-main {
+      font-weight: 500;
+    }
+    
+    .time-sub {
+      font-size: 12px;
+      color: var(--secondary);
+      margin-top: 3px;
+    }
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
       text-align: center;
     }
-    .pesanan {
-      background: white;
-      padding: 12px;
-      margin-bottom: 12px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    
+    .empty-icon {
+      font-size: 60px;
+      color: #cbd5e1;
+      margin-bottom: 20px;
     }
-    .pesanan small {
-      color: gray;
+    
+    .empty-text h3 {
+      font-size: 18px;
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+    
+    .empty-text p {
+      color: var(--secondary);
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 50px;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(0, 0, 0, 0.05);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsiveness */
+    @media (max-width: 1200px) {
+      .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+      
+      .user-profile {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      
+      .order-item {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 20px;
+      }
+      
+      .customer-info {
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-leaf"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Toko Buah Premium</h1>
+          <p>Dashboard Pesanan Masuk</p>
+        </div>
+      </div>
+      
+      <div class="user-profile">
+        <div class="notification-bell">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">3</span>
+        </div>
+        <div class="user-avatar">AD</div>
+      </div>
+    </header>
+    
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div>
+            <div class="stat-title">Total Pesanan</div>
+            <div class="stat-value" id="totalOrders">0</div>
+            <div class="stat-change"><i class="fas fa-arrow-up"></i> 12% dari kemarin</div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-shopping-basket"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div>
+            <div class="stat-title">Pendapatan Hari Ini</div>
+            <div class="stat-value" id="todayIncome">Rp0</div>
+            <div class="stat-change"><i class="fas fa-arrow-up"></i> 8% dari kemarin</div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-coins"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div>
+            <div class="stat-title">Rata-rata Pesanan</div>
+            <div class="stat-value" id="avgOrder">Rp0</div>
+            <div class="stat-change"><i class="fas fa-arrow-up"></i> 5% dari kemarin</div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div>
+            <div class="stat-title">Pesanan Terakhir</div>
+            <div class="stat-value" id="lastOrder">-</div>
+            <div class="stat-change"><i class="fas fa-clock"></i> Real-time</div>
+          </div>
+          <div class="stat-icon">
+            <i class="fas fa-history"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="order-container">
+      <div class="order-header">
+        <div class="order-title">
+          <i class="fas fa-clipboard-list"></i> Daftar Pesanan Terbaru
+        </div>
+        <div class="order-filter">
+          <button class="filter-btn active">Hari Ini</button>
+          <button class="filter-btn">Minggu Ini</button>
+          <button class="filter-btn">Semua</button>
+        </div>
+      </div>
+      
+      <div class="order-list">
+        <div id="daftarPesanan">
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<h2>📥 Pesanan Masuk</h2>
-<div id="daftarPesanan">Memuat data...</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const daftar = document.getElementById("daftarPesanan");
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    // Statistics elements
+    const totalOrdersEl = document.getElementById("totalOrders");
+    const todayIncomeEl = document.getElementById("todayIncome");
+    const avgOrderEl = document.getElementById("avgOrder");
+    const lastOrderEl = document.getElementById("lastOrder");
 
-  const daftar = document.getElementById("daftarPesanan");
+    // Format currency
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('id-ID', { 
+        style: 'currency', 
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(value);
+    };
 
-  db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
-    daftar.innerHTML = "";
-    if (snapshot.empty) {
-      daftar.innerHTML = "<p>Tidak ada pesanan masuk.</p>";
-      return;
-    }
+    // Format date
+    const formatDate = (date) => {
+      if (!date) return '-';
+      
+      const options = { 
+        day: 'numeric', 
+        month: 'short', 
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(date).toLocaleDateString('id-ID', options);
+    };
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "pesanan";
-      div.innerHTML = `
-        <strong>${data.nama}</strong><br>
-        Jumlah: ${data.jumlah}<br>
-        Harga: Rp ${data.harga.toLocaleString()}<br>
-        Subtotal: Rp ${data.subtotal.toLocaleString()}<br>
-        <small>${new Date(data.waktu?.toDate()).toLocaleString()}</small><br>
-        <small>${data.sambal || ""} | ${data.ukuran || ""} | ${data.bumbu || ""}</small>
-      `;
-      daftar.appendChild(div);
-    });
-  });
-</script>
+    // Format full date
+    const formatFullDate = (date) => {
+      if (!date) return '-';
+      
+      const options = { 
+        weekday: 'long',
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(date).toLocaleDateString('id-ID', options);
+    };
 
-</body>
-</html>
+    // Calculate stats
+    let totalIncome = 0;
+    let orderCount = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+      daftar.innerHTML = "";
+      totalIncome = 0;
+      orderCount = 0;
+      let todayIncome = 0;
+
+      if (snapshot.empty) {
+        daftar.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="far fa-clipboard"></i>
+            </div>
+            <div class="empty-text">
+              <h3>Tidak ada pesanan masuk</h3>
+              <p>Belum ada pesanan yang tercatat saat ini</p>
+            </div>
+          </div>
+        `;
+        
+        totalOrdersEl.textContent = "0";
+        todayIncomeEl.textContent = formatCurrency(0);
+        avgOrderEl.textContent = formatCurrency(0);
+        lastOrderEl.textContent = "-";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const waktu = data.waktu?.toDate();
+        const isToday = waktu >= today;
+        
+        totalIncome += data.subtotal || 0;
+        orderCount++;
+        
+        if (isToday) {
+          todayIncome += data.subtotal || 0;
+        }
+
+        const div = document.createElement("div");
+        div.className = "order-item";
+        
+        // Get first letter of name for avatar
+        const nameLetter = data.nama ? data.nama.charAt(0).toUpperCase() : 'P';
+        
+        // Prepare meta data
+        const metaItems = [];
+        if (data.sambal) metaItems.push(data.sambal);
+        if (data.ukuran) metaItems.push(data.ukuran);
+        if (data.bumbu) metaItems.push(data.bumbu);
+        
+        div.innerHTML = `
+          <div class="customer-info">
+            <div class="customer-avatar">${nameLetter}</div>
+            <div class="customer-details">
+              <div class="customer-name">${data.nama || 'Pelanggan'}</div>
+              ${metaItems.length > 0 ? 
+                `<div class="customer-meta">${metaItems.join(' • ')}</div>` : 
+                ''}
+            </div>
+          </div>
+          <div>${data.jumlah || 0}</div>
+          <div class="text-primary">${formatCurrency(data.harga
