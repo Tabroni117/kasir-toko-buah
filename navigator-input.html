@@ -568,7 +568,7 @@
   </div>
 
   <script>
-    const firebaseConfig = {
+  const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
       projectId: "tokobuahkasir"
@@ -579,13 +579,11 @@
     const daftar = document.getElementById("daftarPesanan");
     const refreshBtn = document.getElementById("refreshBtn");
 
-    // Statistik elements
     const totalOrdersEl = document.getElementById("totalOrders");
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
 
-    // Format Rupiah
     const formatCurrency = (value) => {
       return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -594,7 +592,6 @@
       }).format(value);
     };
 
-    // Format tanggal
     const formatDate = (date) => {
       if (!date) return '-';
       const options = {
@@ -606,7 +603,6 @@
       return new Date(date).toLocaleDateString('id-ID', options);
     };
 
-    // Proses data pesanan
     const processData = (snapshot) => {
       daftar.innerHTML = "";
       let totalIncome = 0;
@@ -641,6 +637,13 @@
         const nama = data.nama || "Pelanggan";
         const status = data.status || "Menunggu";
 
+        const isiItem = (data.items || []).map(item => `
+          <div style="font-size:12px; margin-top:6px; padding-left:4px;">
+            🍉 ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString("id-ID")})<br>
+            <small style="color:#666;">${item.sambal || "-"}, ${item.ukuran || "-"}, ${item.bumbu || "-"}</small>
+          </div>
+        `).join("");
+
         daftar.innerHTML += `
           <div class="order-item">
             <div class="customer-info">
@@ -656,6 +659,7 @@
               <div class="time-main">${formatDate(waktu)}</div>
               <div class="time-sub">${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
             </div>
+            <div style="grid-column: 1 / -1; padding-left: 40px;">${isiItem}</div>
           </div>
         `;
       });
@@ -666,7 +670,6 @@
       lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu?.toDate());
     };
 
-    // Fungsi ambil data dari Firestore
     const loadData = () => {
       daftar.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
       db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
@@ -674,12 +677,10 @@
       });
     };
 
-    // Tombol refresh manual
     refreshBtn.addEventListener("click", () => {
       loadData();
     });
 
-    // Pertama kali jalan
     loadData();
   </script>
 </body>
