@@ -682,6 +682,34 @@
     });
 
     loadData();
+
+    const notifBell = document.querySelector(".notification-bell");
+
+    function cekPesananBaru() {
+      db.collection("pesanan")
+        .orderBy("waktu", "desc")
+        .limit(1)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            const waktuPesanan = data.waktu?.toDate?.() || new Date();
+            const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+            if (waktuPesanan > waktuBuka) {
+              notifBell.classList.add("animate-bounce", "text-red-500");
+            } else {
+              notifBell.classList.remove("animate-bounce", "text-red-500");
+            }
+          }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const sekarang = new Date().toISOString();
+      localStorage.setItem("pesananSudahDibuka", sekarang);
+      cekPesananBaru();
+      setInterval(cekPesananBaru, 30000);
+    });
   </script>
 </body>
 </html>
