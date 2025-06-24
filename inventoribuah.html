@@ -112,6 +112,22 @@
       color: white;  
     }  
   
+    /* Tombol Kembali */  
+    .btn-back {  
+      background: var(--emerald);  
+      color: white;  
+      padding: 10px 15px;  
+      border: none;  
+      border-radius: var(--radius-sm);  
+      cursor: pointer;  
+      transition: background 0.3s;  
+      margin: var(--space-md) 0;  
+    }  
+  
+    .btn-back:hover {  
+      background: var(--emerald-light);  
+    }  
+  
     /* Responsive Form */  
     .premium-form {  
       padding: var(--space-md);  
@@ -389,7 +405,14 @@
         AD  
       </div>  
     </header>  
-  
+
+    <!-- Tombol Kembali -->  
+    <div class="premium-form">  
+      <button class="btn-back" onclick="window.location.href='dashboard.html'">  
+        <i class="fas fa-arrow-left"></i> Kembali  
+      </button>  
+    </div>  
+
     <!-- Premium Form -->  
     <section class="premium-form">  
       <h2 class="form-title fade-in" style="animation-delay: 0.1s">  
@@ -484,82 +507,4 @@
   
     // Format currency  
     const formatCurrency = (value) => {  
-      return new Intl.NumberFormat('id-ID', {  
-        style: 'currency',  
-        currency: 'IDR',  
-        minimumFractionDigits: 0  
-      }).format(value);  
-    };  
-  
-    // Load fruits data  
-    function loadFruits() {  
-      db.collection("buah").orderBy("nama").onSnapshot((snapshot) => {  
-        fruitList.innerHTML = '';  
-          
-        if (snapshot.empty) {  
-          fruitList.innerHTML = `  
-            <tr>  
-              <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">  
-                <i class="fas fa-box-open" style="font-size: 30px; margin-bottom: 10px; display: block;"></i>  
-                Belum ada data buah  
-              </td>  
-            </tr>  
-          `;  
-          return;  
-        }  
-  
-        snapshot.forEach((doc) => {  
-          const data = doc.data();  
-          const status = data.stok > 0 ? "Tersedia" : "Habis";  
-          const statusClass = data.stok > 0 ? "badge-available" : "badge-out";  
-            
-          fruitList.innerHTML += `  
-            <tr class="fade-in">  
-              <td>${data.nama}</td>  
-              <td>${formatCurrency(data.harga)}</td>  
-              <td>${data.stok} kg</td>  
-              <td><span class="luxury-badge ${statusClass}">${status}</span></td>  
-              <td>  
-                <div class="luxury-actions">  
-                  <button class="action-btn edit-btn" onclick="editFruit('${doc.id}')">  
-                    <i class="fas fa-edit"></i>  
-                  </button>  
-                  <button class="action-btn delete-btn" onclick="deleteFruit('${doc.id}')">  
-                    <i class="fas fa-trash-alt"></i>  
-                  </button>  
-                </div>  
-              </td>  
-            </tr>  
-          `;  
-        });  
-      });  
-    }  
-  
-    // Add new fruit  
-    fruitForm.addEventListener('submit', (e) => {  
-      e.preventDefault();  
-        
-      const name = document.getElementById('fruitName').value;  
-      const price = parseInt(document.getElementById('fruitPrice').value);  
-      const stock = parseInt(document.getElementById('fruitStock').value);  
-  
-      db.collection("buah").add({  
-        nama: name,  
-        harga: price,  
-        stok: stock,  
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()  
-      }).then(() => {  
-        fruitForm.reset();  
-      }).catch((error) => {  
-        alert("Error adding document: " + error);  
-      });  
-    });  
-  
-    // Delete fruit  
-    function deleteFruit(id) {  
-      if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {  
-        db.collection("buah").doc(id).delete();  
-      }  
-    }  
-  
-    // Edit function would go here  
+      return new Intl.NumberFormat('id-ID
