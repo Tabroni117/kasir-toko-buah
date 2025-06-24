@@ -1,759 +1,319 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Premium Order Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pesanan – Toko Buah Indonesia</title>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Style -->
   <style>
     :root {
       --primary: #16a34a;
-      --primary-light: #22c55e;
       --primary-dark: #15803d;
       --secondary: #64748b;
-      --accent: #84cc16;
       --light: #f0fdf4;
       --white: #ffffff;
       --dark: #1e293b;
-      --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
-      font-size: 11.5px;
+      font-size: 12px;
     }
-    
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', sans-serif;
     }
-    
+
     body {
-      background-color: #f8fafc;
+      background: #f8fafc;
       color: var(--dark);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-      padding-bottom: 80px
+      padding-bottom: 80px; /* untuk space navigasi bawah */
     }
-    
+
     .main-container {
-      width: 100%;
       max-width: 1100px;
-      margin: 0 auto;
-    }
-    
-    .container {
-      width: 100%;
+      margin: auto;
       padding: 20px;
-      position: relative;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
-    
-    .back-btn {
+
+    .back-btn, .refresh-btn {
+      padding: 6px 10px;
+      font-size: 10px;
+      border-radius: 5px;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      margin-bottom: 10px;
-      padding: 6px 10px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .back-btn {
       background: var(--primary);
       color: white;
       border: none;
-      border-radius: 5px;
-      font-size: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s;
     }
-    
-    .back-btn:hover {
-      background: var(--primary-dark);
-    }
-    
+
     .refresh-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-left: 10px;
-      padding: 6px 10px;
-      background: var(--white);
+      background: white;
       color: var(--primary);
       border: 1px solid var(--primary);
-      border-radius: 5px;
-      font-size: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
     }
-    
-    .refresh-btn:hover {
-      background: var(--primary);
-      color: white;
-    }
-    
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin: 20px 0;
     }
-    
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .logo-icon {
-      font-size: 18px;
-      color: var(--primary);
-    }
-    
-    .logo-text h1 {
+
+    .logo h1 {
       font-size: 16px;
-      font-weight: 700;
       color: var(--primary-dark);
-      letter-spacing: -0.3px;
     }
-    
-    .logo-text p {
-      font-size: 9px;
+
+    .logo p {
+      font-size: 10px;
       color: var(--secondary);
-      margin-top: 1px;
     }
-    
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
+
     .notification-bell {
       position: relative;
       font-size: 14px;
       color: var(--secondary);
       cursor: pointer;
     }
-    
+
+    .notification-bell.animate-bounce {
+      animation: bounce 1s infinite;
+      color: red;
+    }
+
     .notification-badge {
       position: absolute;
       top: -2px;
       right: -2px;
-      width: 12px;
-      height: 12px;
       background: var(--primary);
       color: white;
+      font-size: 8px;
       border-radius: 50%;
-      font-size: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 2px 4px;
     }
-    
-    .user-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 11px;
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
     }
-    
-    .stats-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .stat-card {
-      background: var(--white);
-      border-radius: 10px;
+
+    .order-item {
+      background: white;
       padding: 15px;
-      box-shadow: var(--card-shadow);
-      transition: all 0.3s ease;
-      border-top: 2px solid var(--primary);
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-    
-    .stat-card:hover {
-      transform: translateY(-2px);
-    }
-    
-    .stat-header {
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e2e8f0;
       display: flex;
-      justify-content: space-between;
+      justify-content: space-around;
+      padding: 10px 0;
+      z-index: 999;
+      box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
+    }
+
+    .bottom-nav button {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #64748b;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .stat-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      background: var(--light);
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-    
-    .stat-title {
-      font-size: 9px;
-      color: var(--secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      font-weight: 500;
-    }
-    
-    .stat-value {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--dark);
-      margin: 2px 0;
-    }
-    
-    .stat-change {
-      font-size: 9px;
-      color: var(--primary);
-      font-weight: 500;
-    }
-    
-    .order-container {
-      background: var(--white);
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: var(--card-shadow);
-      margin-bottom: 15px;
-    }
-    
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 15px;
-      background: var(--light);
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .order-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--primary-dark);
-    }
-    
-    .order-filter {
-      display: flex;
-      gap: 6px;
-    }
-    
-    .filter-btn {
-      padding: 5px 9px;
-      border-radius: 5px;
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      color: var(--secondary);
-      font-size: 9px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
     }
-    
-    .filter-btn.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
+
+    .bottom-nav button span {
+      font-size: 10px;
     }
-    
-    .filter-btn:hover {
-      background: #f1f5f9;
-    }
-    
-    .filter-btn.active:hover {
-      background: var(--primary-dark);
-    }
-    
-    .order-list {
-      padding: 0;
-    }
-    
-    .order-item {
+
+    .stats {
       display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
-      padding: 12px 15px;
-      border-bottom: 1px solid #e2e8f0;
-      transition: all 0.3s ease;
-      align-items: center;
-    }
-    
-    .order-item:last-child {
-      border-bottom: none;
-    }
-    
-    .order-item:hover {
-      background: #f8fafc;
-    }
-    
-    .customer-info {
-      display: flex;
-      align-items: center;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
+      margin-bottom: 20px;
     }
-    
-    .customer-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--primary);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      font-size: 11px;
+
+    .stat {
+      background: white;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    
-    .customer-details {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .customer-name {
-      font-weight: 600;
-      margin-bottom: 1px;
-      font-size: 11px;
-    }
-    
-    .customer-meta {
-      font-size: 9px;
+
+    .stat-title {
+      font-size: 10px;
       color: var(--secondary);
     }
-    
-    .order-status {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 15px;
-      font-size: 8px;
-      font-weight: 500;
-      background: #dcfce7;
-      color: var(--primary-dark);
-    }
-    
-    .text-primary {
-      color: var(--primary);
-      font-weight: 600;
-      font-size: 11px;
-    }
-    
-    .text-success {
-      color: var(--primary-dark);
-      font-weight: 600;
-      font-size: 11px;
-    }
-    
-    .order-time {
-      display: flex;
-      flex-direction: column;
-      font-size: 11px;
-    }
-    
-    .time-main {
-      font-weight: 500;
-    }
-    
-    .time-sub {
-      font-size: 9px;
-      color: var(--secondary);
-      margin-top: 1px;
-    }
-    
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 30px 15px;
-      text-align: center;
-    }
-    
-    .empty-icon {
-      font-size: 35px;
-      color: #cbd5e1;
-      margin-bottom: 12px;
-    }
-    
-    .empty-text h3 {
-      font-size: 12px;
+
+    .stat-value {
+      font-size: 16px;
+      font-weight: bold;
       color: var(--dark);
-      margin-bottom: 6px;
     }
-    
-    .empty-text p {
-      color: var(--secondary);
-      max-width: 250px;
-      margin: 0 auto;
-      font-size: 9px;
-    }
-    
-    .loading {
-      display: flex;
-      justify-content: center;
-      padding: 35px;
-    }
-    
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid rgba(0, 0, 0, 0.05);
-      border-radius: 50%;
-      border-top-color: var(--primary);
-      animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Responsiveness */
-    @media (max-width: 1200px) {
-      .stats-container {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-      
-      .container {
-        padding: 15px;
-      }
-      
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      
-      .user-profile {
-        width: 100%;
-        justify-content: flex-end;
-      }
-      
-      .order-item {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 10px;
-      }
-      
-      .customer-info {
-        margin-bottom: 5px;
-      }
 
- .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #ffffff;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
-  z-index: 999;
-  box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
-}
-
- .bottom-nav button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: #64748b;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.bottom-nav button span {
-  font-size: 10px;
-
-
- }
-   }
   </style>
 </head>
 <body>
+
   <div class="main-container">
-    <div class="container">
-      <div>
-        <a href="dashboard.html" class="back-btn">
-          <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-        </a>
-        <button class="refresh-btn" id="refreshBtn">
-          <i class="fas fa-sync-alt"></i> Refresh
-        </button>
+    <div>
+      <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Kembali</a>
+      <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+
+    <header>
+      <div class="logo">
+        <h1>RUJAK BUAH INDONESIA</h1>
+        <p>Dashboard Pesanan</p>
       </div>
-      
-      <header>
-        <div class="logo">
-          <div class="logo-icon">
-            <i class="fas fa-leaf"></i>
-          </div>
-          <div class="logo-text">
-            <h1>RUJAK BUAH INDONESIA</h1>
-            <p>Dashboard Pesanan Masuk</p>
-          </div>
-        </div>
-        
-        <div class="user-profile">
-          <div class="notification-bell">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
-          </div>
-          <div class="user-avatar">AD</div>
-        </div>
-      </header>
-      
-      <div class="stats-container">
-        <div class="stat-card">
-          <div class="stat-header">
-            <div>
-              <div class="stat-title">Total Pesanan</div>
-              <div class="stat-value" id="totalOrders">0</div>
-              <div class="stat-change"><i class="fas fa-arrow-up"></i> 12% dari kemarin</div>
-            </div>
-            <div class="stat-icon">
-              <i class="fas fa-shopping-basket"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div>
-              <div class="stat-title">Pendapatan Hari Ini</div>
-              <div class="stat-value" id="todayIncome">Rp0</div>
-              <div class="stat-change"><i class="fas fa-arrow-up"></i> 8% dari kemarin</div>
-            </div>
-            <div class="stat-icon">
-              <i class="fas fa-coins"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div>
-              <div class="stat-title">Rata-rata Pesanan</div>
-              <div class="stat-value" id="avgOrder">Rp0</div>
-              <div class="stat-change"><i class="fas fa-arrow-up"></i> 5% dari kemarin</div>
-            </div>
-            <div class="stat-icon">
-              <i class="fas fa-chart-line"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-header">
-            <div>
-              <div class="stat-title">Pesanan Terakhir</div>
-              <div class="stat-value" id="lastOrder">-</div>
-              <div class="stat-change"><i class="fas fa-clock"></i> Real-time</div>
-            </div>
-            <div class="stat-icon">
-              <i class="fas fa-history"></i>
-            </div>
-          </div>
-        </div>
+      <div class="notification-bell" id="notifBell">
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge" id="notifCount">0</span>
       </div>
-      
-      <div class="order-container">
-        <div class="order-header">
-          <div class="order-title">
-            <i class="fas fa-clipboard-list"></i> Daftar Pesanan Terbaru
-          </div>
-          <div class="order-filter">
-            <button class="filter-btn active">Hari Ini</button>
-            <button class="filter-btn">Minggu Ini</button>
-            <button class="filter-btn">Semua</button>
-          </div>
-        </div>
-        
-        <div class="order-list">
-          <div id="daftarPesanan">
-            <div class="loading">
-              <div class="spinner"></div>
-            </div>
-          </div>
-        </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-title">Total Pesanan</div>
+        <div class="stat-value" id="totalOrders">0</div>
       </div>
+      <div class="stat">
+        <div class="stat-title">Pendapatan Hari Ini</div>
+        <div class="stat-value" id="todayIncome">Rp0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Rata-rata Pesanan</div>
+        <div class="stat-value" id="avgOrder">Rp0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Pesanan Terakhir</div>
+        <div class="stat-value" id="lastOrder">-</div>
+      </div>
+    </div>
+
+    <div id="daftarPesanan">
+      <p>Memuat pesanan...</p>
     </div>
   </div>
 
+  <!-- Navigasi bawah -->
+  <div class="bottom-nav">
+    <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i>🍓</i><span>Atas</span></button>
+    <button onclick="alert('QRIS modal')"><i>💳</i><span>QRIS</span></button>
+    <button onclick="location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>
+    <button onclick="location.href='home.html'"><i>📊</i><span>Penjual</span></button>
+  </div>
+
+  <!-- Firebase Script -->
   <script>
-  const firebaseConfig = {
+    const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
       projectId: "tokobuahkasir"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const daftar = document.getElementById("daftarPesanan");
-    const refreshBtn = document.getElementById("refreshBtn");
 
+    const daftar = document.getElementById("daftarPesanan");
     const totalOrdersEl = document.getElementById("totalOrders");
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
+    const notifBell = document.getElementById("notifBell");
+    const notifCount = document.getElementById("notifCount");
 
-    const formatCurrency = (value) => {
+    function formatCurrency(value) {
       return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
+        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
       }).format(value);
-    };
+    }
 
-    const formatDate = (date) => {
+    function formatDate(date) {
       if (!date) return '-';
-      const options = {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit'
-      };
-      return new Date(date).toLocaleDateString('id-ID', options);
-    };
-
-    const processData = (snapshot) => {
-      daftar.innerHTML = "";
-      let totalIncome = 0;
-      let orderCount = 0;
-      let todayIncome = 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (snapshot.empty) {
-        daftar.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
-            <div class="empty-text">
-              <h3>Belum ada pesanan</h3>
-              <p>Pesanan yang masuk akan tampil otomatis di sini</p>
-            </div>
-          </div>
-        `;
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const waktu = data.waktu?.toDate?.() || new Date();
-        const isToday = waktu >= today;
-        const totalHarga = data.total || 0;
-
-        totalIncome += totalHarga;
-        if (isToday) todayIncome += totalHarga;
-        orderCount++;
-
-        const nama = data.nama || "Pelanggan";
-        const status = data.status || "Menunggu";
-
-        const isiItem = (data.items || []).map(item => `
-          <div style="font-size:12px; margin-top:6px; padding-left:4px;">
-            🍉 ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString("id-ID")})<br>
-            <small style="color:#666;">${item.sambal || "-"}, ${item.ukuran || "-"}, ${item.bumbu || "-"}</small>
-          </div>
-        `).join("");
-
-        daftar.innerHTML += `
-          <div class="order-item">
-            <div class="customer-info">
-              <div class="customer-avatar">${nama[0].toUpperCase()}</div>
-              <div class="customer-details">
-                <div class="customer-name">${nama}</div>
-                <div class="customer-meta">${data.nomor || "-"}</div>
-              </div>
-            </div>
-            <div class="text-primary">${formatCurrency(totalHarga)}</div>
-            <div class="text-success">${status}</div>
-            <div class="order-time">
-              <div class="time-main">${formatDate(waktu)}</div>
-              <div class="time-sub">${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
-            </div>
-            <div style="grid-column: 1 / -1; padding-left: 40px;">${isiItem}</div>
-          </div>
-        `;
+      return new Date(date).toLocaleString("id-ID", {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
       });
+    }
 
-      totalOrdersEl.textContent = orderCount;
-      todayIncomeEl.textContent = formatCurrency(todayIncome);
-      avgOrderEl.textContent = orderCount > 0 ? formatCurrency(totalIncome / orderCount) : "Rp0";
-      lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu?.toDate());
-    };
-
-    const loadData = () => {
-      daftar.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    function loadData() {
       db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
-        processData(snapshot);
+        let html = "";
+        let total = 0, count = 0, todayTotal = 0;
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = data.waktu?.toDate?.() || new Date();
+          const totalHarga = data.total || 0;
+          const nama = data.nama || "Pelanggan";
+
+          if (waktu >= today) todayTotal += totalHarga;
+          total += totalHarga;
+          count++;
+
+          html += `
+            <div class="order-item">
+              <b>${nama}</b> - ${formatCurrency(totalHarga)}<br>
+              <small>${formatDate(waktu)}</small>
+            </div>`;
+        });
+
+        daftar.innerHTML = html || "<p>Belum ada pesanan masuk.</p>";
+        totalOrdersEl.textContent = count;
+        todayIncomeEl.textContent = formatCurrency(todayTotal);
+        avgOrderEl.textContent = count > 0 ? formatCurrency(total / count) : "Rp0";
+        lastOrderEl.textContent = snapshot.docs[0]?.data()?.waktu?.toDate?.().toLocaleTimeString("id-ID") || "-";
+        notifCount.textContent = count;
       });
-    };
-
-    refreshBtn.addEventListener("click", () => {
-      loadData();
-    });
-
-    loadData();
-
-    const notifBell = document.querySelector(".notification-bell");
+    }
 
     function cekPesananBaru() {
-      db.collection("pesanan")
-        .orderBy("waktu", "desc")
-        .limit(1)
-        .get()
-        .then(snapshot => {
-          if (!snapshot.empty) {
-            const data = snapshot.docs[0].data();
-            const waktuPesanan = data.waktu?.toDate?.() || new Date();
-            const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-            if (waktuPesanan > waktuBuka) {
-              notifBell.classList.add("animate-bounce", "text-red-500");
-            } else {
-              notifBell.classList.remove("animate-bounce", "text-red-500");
-            }
-          }
-        });
+      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+        const data = snapshot.docs[0]?.data();
+        const waktu = data?.waktu?.toDate?.();
+        const terakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+        if (waktu > terakhir) {
+          notifBell.classList.add("animate-bounce");
+        } else {
+          notifBell.classList.remove("animate-bounce");
+        }
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-      const sekarang = new Date().toISOString();
-      localStorage.setItem("pesananSudahDibuka", sekarang);
+      localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+      loadData();
       cekPesananBaru();
       setInterval(cekPesananBaru, 30000);
     });
+
+    document.getElementById("refreshBtn").onclick = loadData;
   </script>
-
-
-<div class="bottom-nav">  
-  <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>  
-  <button onclick="document.getElementById('form').scrollIntoView()"><i>🍓</i><span>Input</span></button>  
-  <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>  
-  <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>  
-  <button onclick="window.location.href='home.html'"><i>📊</i><span>Penjual</span></button>  
-
-</div>
-
 </body>
 </html>
