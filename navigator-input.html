@@ -1,237 +1,186 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Pesanan – Toko Buah Indonesia</title>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <!-- Icon -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
-  <!-- Style -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --primary: #16a34a;
       --primary-dark: #15803d;
+      --primary-light: #22c55e;
       --secondary: #64748b;
       --light: #f0fdf4;
       --white: #ffffff;
       --dark: #1e293b;
+      --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
       font-size: 12px;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Inter', sans-serif;
     }
-
     body {
-      background: #f8fafc;
+      background-color: #f8fafc;
       color: var(--dark);
       min-height: 100vh;
-      padding-bottom: 80px; /* untuk space navigasi bawah */
+      padding-bottom: 70px;
     }
-
     .main-container {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: auto;
       padding: 20px;
     }
-
-    .back-btn, .refresh-btn {
-      padding: 6px 10px;
-      font-size: 10px;
-      border-radius: 5px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      text-decoration: none;
+    .header, .stats-container, .order-container {
+      margin-bottom: 20px;
     }
-
-    .back-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-    }
-
-    .refresh-btn {
-      background: white;
-      color: var(--primary);
-      border: 1px solid var(--primary);
-    }
-
-    header {
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 20px 0;
     }
-
     .logo h1 {
-      font-size: 16px;
-      color: var(--primary-dark);
+      font-size: 20px;
+      color: var(--primary);
     }
-
-    .logo p {
-      font-size: 10px;
-      color: var(--secondary);
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 15px;
     }
-
-    .notification-bell {
-      position: relative;
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: var(--card-shadow);
+      border-left: 5px solid var(--primary);
+    }
+    .stat-card h3 {
       font-size: 14px;
+      margin-bottom: 8px;
       color: var(--secondary);
+    }
+    .stat-card .value {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .stat-card .change {
+      font-size: 11px;
+      color: var(--primary);
+    }
+    .order-container {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: var(--light);
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .order-header button {
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid var(--primary);
+      background: white;
+      border-radius: 5px;
       cursor: pointer;
     }
-
-    .notification-bell.animate-bounce {
-      animation: bounce 1s infinite;
-      color: red;
+    .order-list .order-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e5e7eb;
     }
-
-    .notification-badge {
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      background: var(--primary);
-      color: white;
-      font-size: 8px;
-      border-radius: 50%;
-      padding: 2px 4px;
+    .order-item .info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
     }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
+    .order-item .items {
+      font-size: 11px;
+      color: #444;
     }
-
-    .order-item {
-      background: white;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
       background: white;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #ccc;
       display: flex;
       justify-content: space-around;
       padding: 10px 0;
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
       z-index: 999;
-      box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
     }
-
     .bottom-nav button {
       background: none;
       border: none;
+      text-align: center;
       font-size: 18px;
-      color: #64748b;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-weight: 500;
-      cursor: pointer;
     }
-
-    .bottom-nav button span {
+    .bottom-nav span {
+      display: block;
       font-size: 10px;
     }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .stat {
-      background: white;
-      border-left: 4px solid var(--primary);
-      border-radius: 8px;
-      padding: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .stat-title {
-      font-size: 10px;
-      color: var(--secondary);
-    }
-
-    .stat-value {
-      font-size: 16px;
-      font-weight: bold;
-      color: var(--dark);
-    }
-
   </style>
 </head>
 <body>
-
   <div class="main-container">
-    <div>
-      <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Kembali</a>
-      <button class="refresh-btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-    </div>
-
-    <header>
+    <div class="header">
       <div class="logo">
-        <h1>RUJAK BUAH INDONESIA</h1>
-        <p>Dashboard Pesanan</p>
+        <h1>Rujak Buah Indonesia</h1>
       </div>
-      <div class="notification-bell" id="notifBell">
-        <i class="fas fa-bell"></i>
-        <span class="notification-badge" id="notifCount">0</span>
-      </div>
-    </header>
+    </div><div class="stats-container">
+  <div class="stat-card">
+    <h3>Total Pesanan</h3>
+    <div class="value" id="totalOrders">0</div>
+    <div class="change">+10% dari kemarin</div>
+  </div>
+  <div class="stat-card">
+    <h3>Pendapatan Hari Ini</h3>
+    <div class="value" id="todayIncome">Rp0</div>
+    <div class="change">+5% dari kemarin</div>
+  </div>
+  <div class="stat-card">
+    <h3>Rata-rata Pesanan</h3>
+    <div class="value" id="avgOrder">Rp0</div>
+    <div class="change">Real-time</div>
+  </div>
+  <div class="stat-card">
+    <h3>Pesanan Terakhir</h3>
+    <div class="value" id="lastOrder">-</div>
+    <div class="change">Real-time</div>
+  </div>
+</div>
 
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-title">Total Pesanan</div>
-        <div class="stat-value" id="totalOrders">0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Pendapatan Hari Ini</div>
-        <div class="stat-value" id="todayIncome">Rp0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Rata-rata Pesanan</div>
-        <div class="stat-value" id="avgOrder">Rp0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Pesanan Terakhir</div>
-        <div class="stat-value" id="lastOrder">-</div>
-      </div>
-    </div>
-
-    <div id="daftarPesanan">
-      <p>Memuat pesanan...</p>
+<div class="order-container">
+  <div class="order-header">
+    <strong>Daftar Pesanan Terbaru</strong>
+    <div>
+      <button>Hari Ini</button>
+      <button>Minggu Ini</button>
+      <button>Semua</button>
     </div>
   </div>
+  <div class="order-list" id="daftarPesanan">
+    <div style="text-align:center; padding:20px">Memuat data...</div>
+  </div>
+</div>
 
-  <!-- Navigasi bawah -->
-  <div class="bottom-nav">
+  </div>  <div class="bottom-nav">
     <button onclick="window.location.reload()"><i>🔃</i><span>Refresh</span></button>
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i>🍓</i><span>Atas</span></button>
-    <button onclick="alert('QRIS modal')"><i>💳</i><span>QRIS</span></button>
-    <button onclick="location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>
-    <button onclick="location.href='home.html'"><i>📊</i><span>Penjual</span></button>
-  </div>
-
-  <!-- Firebase Script -->
-  <script>
+    <button onclick="document.getElementById('form')?.scrollIntoView()"><i>🍓</i><span>Input</span></button>
+    <button onclick="alert('QRIS dibuka')"><i>💳</i><span>QRIS</span></button>
+    <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>
+    <button onclick="window.location.href='home.html'"><i>👤</i><span>Penjual</span></button>
+  </div>  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
@@ -245,75 +194,45 @@
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
-    const notifBell = document.getElementById("notifBell");
-    const notifCount = document.getElementById("notifCount");
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-      }).format(value);
-    }
+    const formatCurrency = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
+    const formatDate = date => new Date(date).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-    function formatDate(date) {
-      if (!date) return '-';
-      return new Date(date).toLocaleString("id-ID", {
-        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+      daftar.innerHTML = "";
+      if (snapshot.empty) {
+        daftar.innerHTML = '<div style="text-align:center; padding:20px">Belum ada pesanan masuk.</div>';
+        return;
+      }
+      let total = 0;
+      let hariIni = 0;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const waktu = data.waktu?.toDate?.() || new Date();
+        const isToday = waktu >= now;
+        const totalHarga = data.total || 0;
+        total += totalHarga;
+        if (isToday) hariIni += totalHarga;
+        const nama = data.nama || "Pelanggan";
+        const nomor = data.nomor || "-";
+        const status = data.status || "Menunggu";
+        const isiItem = (data.items || []).map(item => `🍉 ${item.nama} (${item.jumlah} x Rp ${item.harga.toLocaleString("id-ID")})`).join("<br>");
+        daftar.innerHTML += `
+          <div class="order-item">
+            <div class="info">
+              <strong>${nama}</strong> (${nomor}) - ${status} <span style="font-size:11px; color:#999">${formatDate(waktu)}</span>
+            </div>
+            <div class="items">${isiItem}</div>
+          </div>
+        `;
       });
-    }
-
-    function loadData() {
-      db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
-        let html = "";
-        let total = 0, count = 0, todayTotal = 0;
-        const today = new Date(); today.setHours(0,0,0,0);
-
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const waktu = data.waktu?.toDate?.() || new Date();
-          const totalHarga = data.total || 0;
-          const nama = data.nama || "Pelanggan";
-
-          if (waktu >= today) todayTotal += totalHarga;
-          total += totalHarga;
-          count++;
-
-          html += `
-            <div class="order-item">
-              <b>${nama}</b> - ${formatCurrency(totalHarga)}<br>
-              <small>${formatDate(waktu)}</small>
-            </div>`;
-        });
-
-        daftar.innerHTML = html || "<p>Belum ada pesanan masuk.</p>";
-        totalOrdersEl.textContent = count;
-        todayIncomeEl.textContent = formatCurrency(todayTotal);
-        avgOrderEl.textContent = count > 0 ? formatCurrency(total / count) : "Rp0";
-        lastOrderEl.textContent = snapshot.docs[0]?.data()?.waktu?.toDate?.().toLocaleTimeString("id-ID") || "-";
-        notifCount.textContent = count;
-      });
-    }
-
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        const data = snapshot.docs[0]?.data();
-        const waktu = data?.waktu?.toDate?.();
-        const terakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-        if (waktu > terakhir) {
-          notifBell.classList.add("animate-bounce");
-        } else {
-          notifBell.classList.remove("animate-bounce");
-        }
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-      loadData();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 30000);
+      const count = snapshot.size;
+      totalOrdersEl.textContent = count;
+      todayIncomeEl.textContent = formatCurrency(hariIni);
+      avgOrderEl.textContent = formatCurrency(count > 0 ? total / count : 0);
+      lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu.toDate());
     });
-
-    document.getElementById("refreshBtn").onclick = loadData;
-  </script>
-</body>
+  </script></body>
 </html>
