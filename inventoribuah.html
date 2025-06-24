@@ -1,510 +1,136 @@
-<!DOCTYPE html>  
-<html lang="id">  
-<head>  
-  <meta charset="UTF-8">  
-  <title>LUXURY FRUIT | Premium Dashboard</title>  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>  
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
-  <style>  
-    :root {  
-      /* Luxury Color Palette */  
-      --emerald: #10b981;  
-      --emerald-light: #34e0a1;  
-      --emerald-dark: #047857;  
-      --gold: #f5b014;  
-      --gold-light: #fcd34d;  
-      --platinum: #f8fafc;  
-      --diamond: #ffffff;  
-      --crystal: rgba(255,255,255,0.9);  
-        
-      /* Spacing */  
-      --space-xs: 8px;  
-      --space-sm: 16px;  
-      --space-md: 24px;  
-      --space-lg: 32px;  
-        
-      /* Responsive Radius */  
-      --radius-sm: 8px;  
-      --radius-md: 12px;  
-      --radius-lg: 16px;  
-        
-      /* Shadows */  
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);  
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);  
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);  
-    }  
-  
-    /* Base Styles */  
-    * {  
-      margin: 0;  
-      padding: 0;  
-      box-sizing: border-box;  
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;  
-      -webkit-tap-highlight-color: transparent;  
-    }  
-  
-    body {  
-      background: linear-gradient(135deg, #f0fdf4, #f8fafc);  
-      color: #0f172a;  
-      min-height: 100vh;  
-      padding: var(--space-sm);  
-      font-size: 14px;  
-      line-height: 1.5;  
-    }  
-  
-    /* Luxury Container - Responsive */  
-    .luxury-container {  
-      width: 100%;  
-      max-width: 100%;  
-      margin: 0 auto;  
-      background: var(--diamond);  
-      border-radius: var(--radius-lg);  
-      box-shadow: var(--shadow-lg);  
-      overflow: hidden;  
-      border: 1px solid rgba(16, 185, 129, 0.1);  
-    }  
-  
-    /* Premium Header */  
-    .luxury-header {  
-      background: linear-gradient(135deg, var(--emerald), var(--emerald-light));  
-      color: white;  
-      padding: var(--space-md);  
-      display: flex;  
-      justify-content: space-between;  
-      align-items: center;  
-      position: relative;  
-      overflow: hidden;  
-    }  
-  
-    .brand {  
-      display: flex;  
-      align-items: center;  
-      gap: var(--space-sm);  
-    }  
-  
-    .brand-icon {  
-      font-size: 28px;  
-      color: var(--gold-light);  
-    }  
-  
-    .brand-text h1 {  
-      font-size: 1.25rem;  
-      font-weight: 600;  
-      line-height: 1.3;  
-    }  
-  
-    .brand-text p {  
-      font-size: 0.75rem;  
-      opacity: 0.9;  
-    }  
-  
-    .user-avatar {  
-      width: 40px;  
-      height: 40px;  
-      border-radius: 50%;  
-      background: rgba(255,255,255,0.2);  
-      display: flex;  
-      align-items: center;  
-      justify-content: center;  
-      font-weight: 600;  
-      color: white;  
-    }  
-  
-    /* Tombol Kembali */  
-    .btn-back {  
-      background: var(--emerald);  
-      color: white;  
-      padding: 10px 15px;  
-      border: none;  
-      border-radius: var(--radius-sm);  
-      cursor: pointer;  
-      transition: background 0.3s;  
-      margin: var(--space-md) 0;  
-    }  
-  
-    .btn-back:hover {  
-      background: var(--emerald-light);  
-    }  
-  
-    /* Responsive Form */  
-    .premium-form {  
-      padding: var(--space-md);  
-      border-bottom: 1px solid rgba(16, 185, 129, 0.1);  
-    }  
-  
-    .form-title {  
-      font-size: 1.125rem;  
-      margin-bottom: var(--space-md);  
-      color: var(--emerald-dark);  
-      display: flex;  
-      align-items: center;  
-      gap: var(--space-xs);  
-    }  
-  
-    .form-group {  
-      margin-bottom: var(--space-md);  
-    }  
-  
-    .luxury-label {  
-      display: block;  
-      margin-bottom: var(--space-xs);  
-      color: var(--emerald-dark);  
-      font-weight: 500;  
-    }  
-  
-    .luxury-input {  
-      width: 100%;  
-      padding: 12px 16px;  
-      border: 1px solid rgba(16, 185, 129, 0.3);  
-      border-radius: var(--radius-sm);  
-      font-size: 1rem;  
-      transition: all 0.2s;  
-      background: white;  
-    }  
-  
-    .luxury-input:focus {  
-      border-color: var(--emerald);  
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);  
-      outline: none;  
-    }  
-  
-    /* Premium Buttons - Responsive */  
-    .btn-group {  
-      display: flex;  
-      gap: var(--space-sm);  
-      margin-top: var(--space-lg);  
-    }  
-  
-    .premium-btn {  
-      padding: 12px 20px;  
-      border-radius: var(--radius-sm);  
-      font-weight: 600;  
-      font-size: 0.875rem;  
-      display: inline-flex;  
-      align-items: center;  
-      justify-content: center;  
-      gap: 8px;  
-      border: none;  
-      cursor: pointer;  
-      transition: all 0.2s;  
-      flex: 1;  
-    }  
-  
-    .btn-emerald {  
-      background: linear-gradient(135deg, var(--emerald), var(--emerald-light));  
-      color: white;  
-      box-shadow: var(--shadow-sm);  
-    }  
-  
-    .btn-gold {  
-      background: linear-gradient(135deg, var(--gold), var(--gold-light));  
-      color: white;  
-      box-shadow: var(--shadow-sm);  
-    }  
-  
-    /* Premium Table - Responsive */  
-    .data-section {  
-      overflow-x: auto;  
-      -webkit-overflow-scrolling: touch;  
-    }  
-  
-    .table-container {  
-      min-width: 600px;  
-    }  
-  
-    .luxury-table {  
-      width: 100%;  
-      border-collapse: collapse;  
-    }  
-  
-    .luxury-table th {  
-      padding: 12px 16px;  
-      text-align: left;  
-      background: var(--platinum);  
-      color: var(--emerald-dark);  
-      font-weight: 600;  
-      position: sticky;  
-      top: 0;  
-    }  
-  
-    .luxury-table td {  
-      padding: 12px 16px;  
-      border-bottom: 1px solid rgba(16, 185, 129, 0.1);  
-    }  
-  
-    .luxury-table tr:last-child td {  
-      border-bottom: none;  
-    }  
-  
-    /* Status Badges */  
-    .luxury-badge {  
-      display: inline-block;  
-      padding: 6px 12px;  
-      border-radius: 20px;  
-      font-size: 0.75rem;  
-      font-weight: 600;  
-    }  
-  
-    .badge-available {  
-      background: var(--emerald-light);  
-      color: white;  
-    }  
-  
-    .badge-out {  
-      background: #fee2e2;  
-      color: #b91c1c;  
-    }  
-  
-    /* Action Buttons */  
-    .luxury-actions {  
-      display: flex;  
-      gap: 8px;  
-    }  
-  
-    .action-btn {  
-      width: 32px;  
-      height: 32px;  
-      border-radius: 8px;  
-      display: flex;  
-      align-items: center;  
-      justify-content: center;  
-      cursor: pointer;  
-      transition: all 0.2s;  
-      border: none;  
-      font-size: 14px;  
-    }  
-  
-    .edit-btn {  
-      background: rgba(16, 185, 129, 0.1);  
-      color: var(--emerald);  
-    }  
-  
-    .delete-btn {  
-      background: rgba(239, 68, 68, 0.1);  
-      color: #dc2626;  
-    }  
-  
-    /* Bottom Navigation - Responsive */  
-    .luxury-nav {  
-      position: fixed;  
-      bottom: 0;  
-      left: 0;  
-      right: 0;  
-      background: var(--diamond);  
-      display: flex;  
-      justify-content: space-around;  
-      padding: 12px 0;  
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);  
-      z-index: 100;  
-    }  
-  
-    .nav-btn {  
-      display: flex;  
-      flex-direction: column;  
-      align-items: center;  
-      color: var(--emerald);  
-      text-decoration: none;  
-      font-size: 0.625rem;  
-      padding: 4px 8px;  
-      border-radius: 8px;  
-      transition: all 0.2s;  
-    }  
-  
-    .nav-btn i {  
-      font-size: 20px;  
-      margin-bottom: 2px;  
-    }  
-  
-    .nav-btn.active {  
-      color: white;  
-      background: linear-gradient(135deg, var(--emerald), var(--emerald-light));  
-      transform: translateY(-5px);  
-    }  
-  
-    /* Responsive Breakpoints */  
-    @media (min-width: 480px) {  
-      body {  
-        padding: var(--space-md);  
-        padding-bottom: 80px;  
-      }  
-        
-      .luxury-container {  
-        max-width: 480px;  
-      }  
-        
-      .luxury-input {  
-        padding: 14px 16px;  
-      }  
-        
-      .premium-btn {  
-        padding: 14px 20px;  
-        font-size: 1rem;  
-      }  
-    }  
-  
-    @media (min-width: 768px) {  
-      .luxury-container {  
-        max-width: 768px;  
-      }  
-        
-      .luxury-header {  
-        padding: var(--space-lg);  
-      }  
-        
-      .premium-form {  
-        padding: var(--space-lg);  
-      }  
-        
-      .form-title {  
-        font-size: 1.25rem;  
-      }  
-        
-      .luxury-label {  
-        font-size: 0.875rem;  
-      }  
-        
-      .table-container {  
-        min-width: auto;  
-      }  
-    }  
-  
-    @media (min-width: 1024px) {  
-      .luxury-container {  
-        max-width: 900px;  
-      }  
-    }  
-  
-    /* Animations */  
-    @keyframes fadeIn {  
-      from { opacity: 0; transform: translateY(10px); }  
-      to { opacity: 1; transform: translateY(0); }  
-    }  
-  
-    .fade-in {  
-      animation: fadeIn 0.4s ease-out forwards;  
-    }  
-  </style>  
-</head>  
-<body>  
-  <!-- Luxury Container -->  
-  <div class="luxury-container fade-in">  
-    <!-- Premium Header -->  
-    <header class="luxury-header">  
-      <div class="brand">  
-        <div class="brand-icon">  
-          <i class="fas fa-apple-alt"></i>  
-        </div>  
-        <div class="brand-text">  
-          <h1>RUJAK BUAH PREMIUM</h1>  
-          <p>Management System</p>  
-        </div>  
-      </div>  
-      <div class="user-avatar">  
-        AD  
-      </div>  
-    </header>  
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <!-- Head content remains the same -->
+</head>
+<body>
+    <!-- Rest of your HTML remains the same -->
 
-    <!-- Tombol Kembali -->  
-    <div class="premium-form">  
-      <button class="btn-back" onclick="window.location.href='dashboard.html'">  
-        <i class="fas fa-arrow-left"></i> Kembali  
-      </button>  
-    </div>  
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.appspot.com",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+        };
 
-    <!-- Premium Form -->  
-    <section class="premium-form">  
-      <h2 class="form-title fade-in" style="animation-delay: 0.1s">  
-        <i class="fas fa-plus-circle"></i> Input Buah Premium  
-      </h2>  
-        
-      <form id="fruitForm">  
-        <div class="form-group fade-in" style="animation-delay: 0.2s">  
-          <label class="luxury-label">Nama Buah</label>  
-          <input type="text" id="fruitName" class="luxury-input" placeholder="Contoh: Apel Fuji" required>  
-        </div>  
-          
-        <div class="form-group fade-in" style="animation-delay: 0.3s">  
-          <label class="luxury-label">Harga (Rp)</label>  
-          <input type="number" id="fruitPrice" class="luxury-input" placeholder="Contoh: 50000" required>  
-        </div>  
-          
-        <div class="form-group fade-in" style="animation-delay: 0.4s">  
-          <label class="luxury-label">Stok (kg)</label>  
-          <input type="number" id="fruitStock" class="luxury-input" placeholder="Contoh: 50" required>  
-        </div>  
-          
-        <div class="btn-group fade-in" style="animation-delay: 0.5s">  
-          <button type="submit" class="premium-btn btn-emerald">  
-            <i class="fas fa-save"></i> Simpan  
-          </button>  
-          <button type="reset" class="premium-btn btn-gold">  
-            <i class="fas fa-redo"></i> Reset  
-          </button>  
-        </div>  
-      </form>  
-    </section>  
-  
-    <!-- Premium Table -->  
-    <section class="data-section">  
-      <div class="table-container">  
-        <table class="luxury-table">  
-          <thead>  
-            <tr>  
-              <th>Nama Buah</th>  
-              <th>Harga</th>  
-              <th>Stok</th>  
-              <th>Status</th>  
-              <th>Aksi</th>  
-            </tr>  
-          </thead>  
-          <tbody id="fruitList">  
-            <!-- Data akan dimuat di sini -->  
-            <tr>  
-              <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">  
-                <i class="fas fa-box-open" style="font-size: 30px; margin-bottom: 10px; display: block;"></i>  
-                Belum ada data buah  
-              </td>  
-            </tr>  
-          </tbody>  
-        </table>  
-      </div>  
-    </section>  
-  </div>  
-  
-  <!-- Bottom Navigation -->  
-  <nav class="luxury-nav">  
-    <button class="nav-btn active">  
-      <i class="fas fa-home"></i>  
-      <span>Beranda</span>  
-    </button>  
-    <button class="nav-btn">  
-      <i class="fas fa-plus-circle"></i>  
-      <span>Tambah</span>  
-    </button>  
-    <button class="nav-btn">  
-      <i class="fas fa-chart-line"></i>  
-      <span>Laporan</span>  
-    </button>  
-    <button class="nav-btn">  
-      <i class="fas fa-cog"></i>  
-      <span>Pengaturan</span>  
-    </button>  
-  </nav>  
-  
-  <script>  
-    const firebaseConfig = {  
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",  
-      authDomain: "tokobuahkasir.firebaseapp.com",  
-      projectId: "tokobuahkasir"  
-    };  
-  
-    firebase.initializeApp(firebaseConfig);  
-    const db = firebase.firestore();  
-    const fruitList = document.getElementById("fruitList");  
-    const fruitForm = document.getElementById("fruitForm");  
-  
-    // Format currency  
-    const formatCurrency = (value) => {  
-      return new Intl.NumberFormat('id-ID
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Format currency function
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(value);
+        };
+
+        // Form submission handler
+        document.getElementById('fruitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const namaBuah = document.getElementById('fruitName').value;
+            const harga = parseFloat(document.getElementById('fruitPrice').value);
+            const stok = parseInt(document.getElementById('fruitStock').value);
+            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+            
+            // Validate input
+            if (!namaBuah || isNaN(harga) || isNaN(stok)) {
+                alert('Harap isi semua field dengan benar!');
+                return;
+            }
+            
+            // Show loading state
+            document.getElementById('btnTambah').disabled = true;
+            document.getElementById('spinner').style.display = 'inline-block';
+            
+            // Save to Firestore
+            db.collection("buah").add({
+                nama: namaBuah,
+                harga: harga,
+                stok: stok,
+                createdAt: timestamp,
+                updatedAt: timestamp
+            })
+            .then(() => {
+                // Success
+                document.getElementById('fruitForm').reset();
+                document.getElementById('notifText').textContent = "✔️ Data berhasil disimpan!";
+                document.getElementById('notif').style.display = "block";
+                document.getElementById('btnLanjut').style.display = "inline-block";
+                
+                // Refresh the list
+                loadFruits();
+            })
+            .catch((error) => {
+                console.error("Error adding document: ", error);
+                alert("Terjadi kesalahan saat menyimpan data: " + error.message);
+            })
+            .finally(() => {
+                document.getElementById('btnTambah').disabled = false;
+                document.getElementById('spinner').style.display = 'none';
+            });
+        });
+
+        // Load fruits data
+        function loadFruits() {
+            db.collection("buah").orderBy("nama").get()
+            .then((querySnapshot) => {
+                const fruitList = document.getElementById('fruitList');
+                fruitList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    fruitList.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data buah</td></tr>';
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    fruitList.innerHTML += `
+                        <tr>
+                            <td>${data.nama}</td>
+                            <td>${formatCurrency(data.harga)}</td>
+                            <td>${data.stok} kg</td>
+                            <td><span class="${data.stok > 0 ? 'badge-available' : 'badge-out'}">
+                                ${data.stok > 0 ? 'Tersedia' : 'Habis'}
+                            </span></td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="editFruit('${doc.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteFruit('${doc.id}')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        // Delete function
+        function deleteFruit(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                db.collection("buah").doc(id).delete()
+                .then(() => {
+                    alert("Data berhasil dihapus!");
+                    loadFruits();
+                })
+                .catch((error) => {
+                    alert("Gagal menghapus data: " + error.message);
+                });
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFruits();
+        });
+    </script>
+</body>
+</html>
