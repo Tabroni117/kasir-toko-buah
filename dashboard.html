@@ -625,21 +625,17 @@ if (!jumlah || jumlah <= 0) {
     }  
   
 function tampilkanNota() {
-  // Cek apakah keranjang kosong
   if (keranjang.length === 0) {
     alert("Keranjang kosong.");
     return;
   }
 
-  // Tampilkan elemen nota
   document.getElementById('notaDigital').style.display = 'block';
 
-  // Isi waktu checkout
   const now = new Date();
   const waktu = now.toLocaleString();
   document.getElementById('tanggalNota').textContent = waktu;
 
-  // Isi daftar belanja
   let isi = '';
   let total = 0;
   keranjang.forEach(item => {
@@ -654,8 +650,25 @@ function tampilkanNota() {
 
   document.getElementById('isiNota').innerHTML = isi;
   document.getElementById('totalNota').textContent = 'Rp ' + total.toLocaleString();
-}
 
+  // ✅ TAMBAHKAN BAGIAN INI
+  db.collection("pesanan").add({
+    waktu: now,
+    total: total,
+    items: keranjang.map(item => ({
+      nama: item.nama,
+      harga: item.harga,
+      jumlah: item.jumlah,
+      sambal: item.sambal,
+      ukuran: item.ukuran,
+      bumbu: item.bumbu
+    }))
+  }).then(() => {
+    console.log("✅ Pesanan berhasil disimpan ke Firestore.");
+  }).catch(error => {
+    console.error("❌ Gagal menyimpan pesanan:", error);
+  });
+}
 // ✅ FUNGSI INI HARUS DI LUAR tampilkanNota()
 function closeNota() {
   document.getElementById('notaDigital').style.display = 'none';
