@@ -573,50 +573,40 @@
       authDomain: "tokobuahkasir.firebaseapp.com",
       projectId: "tokobuahkasir"
     };
-    
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const daftar = document.getElementById("daftarPesanan");
     const refreshBtn = document.getElementById("refreshBtn");
 
-    // Statistics elements
+    // Statistik elements
     const totalOrdersEl = document.getElementById("totalOrders");
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
 
-    // Function to load data
-    const loadData = () => {
-      daftar.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-      
-      db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
-        processData(snapshot);
-      });
-    };
-
-    // Format currency
+    // Format Rupiah
     const formatCurrency = (value) => {
-      return new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
         currency: 'IDR',
         minimumFractionDigits: 0
       }).format(value);
     };
 
-    // Format date
+    // Format tanggal
     const formatDate = (date) => {
       if (!date) return '-';
-      
-      const options = { 
-        day: 'numeric', 
-        month: 'short', 
+      const options = {
+        day: 'numeric',
+        month: 'short',
         hour: '2-digit',
         minute: '2-digit'
       };
       return new Date(date).toLocaleDateString('id-ID', options);
     };
 
-    // Process data function
+    // Proses data pesanan
     const processData = (snapshot) => {
       daftar.innerHTML = "";
       let totalIncome = 0;
@@ -625,4 +615,72 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      if
+      if (snapshot.empty) {
+        daftar.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+            <div class="empty-text">
+              <h3>Belum ada pesanan</h3>
+              <p>Pesanan yang masuk akan tampil otomatis di sini</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const waktu = data.waktu?.toDate?.() || new Date();
+        const isToday = waktu >= today;
+        const totalHarga = data.total || 0;
+
+        totalIncome += totalHarga;
+        if (isToday) todayIncome += totalHarga;
+        orderCount++;
+
+        const nama = data.nama || "Pelanggan";
+        const status = data.status || "Menunggu";
+
+        daftar.innerHTML += `
+          <div class="order-item">
+            <div class="customer-info">
+              <div class="customer-avatar">${nama[0].toUpperCase()}</div>
+              <div class="customer-details">
+                <div class="customer-name">${nama}</div>
+                <div class="customer-meta">${data.nomor || "-"}</div>
+              </div>
+            </div>
+            <div class="text-primary">${formatCurrency(totalHarga)}</div>
+            <div class="text-success">${status}</div>
+            <div class="order-time">
+              <div class="time-main">${formatDate(waktu)}</div>
+              <div class="time-sub">${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      totalOrdersEl.textContent = orderCount;
+      todayIncomeEl.textContent = formatCurrency(todayIncome);
+      avgOrderEl.textContent = orderCount > 0 ? formatCurrency(totalIncome / orderCount) : "Rp0";
+      lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu?.toDate());
+    };
+
+    // Fungsi ambil data dari Firestore
+    const loadData = () => {
+      daftar.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+        processData(snapshot);
+      });
+    };
+
+    // Tombol refresh manual
+    refreshBtn.addEventListener("click", () => {
+      loadData();
+    });
+
+    // Pertama kali jalan
+    loadData();
+  </script>
+</body>
+</html>
