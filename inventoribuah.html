@@ -1,136 +1,256 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <!-- Head content remains the same -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventori Buah | Dashboard</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome (ikon edit/hapus) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f1f5f9;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #0f172a;
+    }
+
+    form input, form button {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+    }
+
+    form button {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f0fdf4;
+      color: #065f46;
+    }
+
+    .badge-available {
+      background: #34d399;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+
+    .badge-out {
+      background: #f87171;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin: 0 4px;
+      font-size: 16px;
+    }
+
+    .edit-btn i {
+      color: #f59e0b;
+    }
+
+    .delete-btn i {
+      color: #ef4444;
+    }
+
+    #notif {
+      margin-top: 10px;
+      padding: 10px;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 6px;
+    }
+
+    #spinner {
+      display: none;
+      margin-left: 10px;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      background: #94a3b8;
+    }
+  </style>
 </head>
 <body>
-    <!-- Rest of your HTML remains the same -->
+  <h2>📦 Tambah Stok Buah</h2>
+  <form id="fruitForm">
+    <input type="text" id="fruitName" placeholder="Nama Buah" required />
+    <input type="number" id="fruitPrice" placeholder="Harga per Kg (Rp)" required />
+    <input type="number" id="fruitStock" placeholder="Jumlah Stok (Kg)" required />
+    <button type="submit" id="btnTambah">Tambah</button>
+    <span id="spinner">⏳ Menyimpan...</span>
+  </form>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.appspot.com",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-        };
+  <div id="notif" style="display: none;">
+    <span id="notifText"></span>
+    <button id="btnLanjut" onclick="document.getElementById('notif').style.display='none'">Tutup</button>
+  </div>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  <h2 style="margin-top: 40px;">📋 Daftar Buah</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga</th>
+        <th>Stok</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="fruitList"></tbody>
+  </table>
 
-        // Format currency function
-        const formatCurrency = (value) => {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(value);
-        };
+  <button class="back-btn" onclick="window.location.href='dashboard.html'">← Kembali ke Dashboard</button>
 
-        // Form submission handler
-        document.getElementById('fruitForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Get form values
-            const namaBuah = document.getElementById('fruitName').value;
-            const harga = parseFloat(document.getElementById('fruitPrice').value);
-            const stok = parseInt(document.getElementById('fruitStock').value);
-            const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-            
-            // Validate input
-            if (!namaBuah || isNaN(harga) || isNaN(stok)) {
-                alert('Harap isi semua field dengan benar!');
-                return;
-            }
-            
-            // Show loading state
-            document.getElementById('btnTambah').disabled = true;
-            document.getElementById('spinner').style.display = 'inline-block';
-            
-            // Save to Firestore
-            db.collection("buah").add({
-                nama: namaBuah,
-                harga: harga,
-                stok: stok,
-                createdAt: timestamp,
-                updatedAt: timestamp
-            })
-            .then(() => {
-                // Success
-                document.getElementById('fruitForm').reset();
-                document.getElementById('notifText').textContent = "✔️ Data berhasil disimpan!";
-                document.getElementById('notif').style.display = "block";
-                document.getElementById('btnLanjut').style.display = "inline-block";
-                
-                // Refresh the list
-                loadFruits();
-            })
-            .catch((error) => {
-                console.error("Error adding document: ", error);
-                alert("Terjadi kesalahan saat menyimpan data: " + error.message);
-            })
-            .finally(() => {
-                document.getElementById('btnTambah').disabled = false;
-                document.getElementById('spinner').style.display = 'none';
-            });
-        });
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
 
-        // Load fruits data
-        function loadFruits() {
-            db.collection("buah").orderBy("nama").get()
-            .then((querySnapshot) => {
-                const fruitList = document.getElementById('fruitList');
-                fruitList.innerHTML = '';
-                
-                if (querySnapshot.empty) {
-                    fruitList.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data buah</td></tr>';
-                    return;
-                }
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    fruitList.innerHTML += `
-                        <tr>
-                            <td>${data.nama}</td>
-                            <td>${formatCurrency(data.harga)}</td>
-                            <td>${data.stok} kg</td>
-                            <td><span class="${data.stok > 0 ? 'badge-available' : 'badge-out'}">
-                                ${data.stok > 0 ? 'Tersedia' : 'Habis'}
-                            </span></td>
-                            <td>
-                                <button class="action-btn edit-btn" onclick="editFruit('${doc.id}')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn delete-btn" onclick="deleteFruit('${doc.id}')">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
+    // Inisialisasi Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(value);
+    };
+
+    // Simpan data buah
+    document.getElementById('fruitForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const namaBuah = document.getElementById('fruitName').value;
+      const harga = parseFloat(document.getElementById('fruitPrice').value);
+      const stok = parseInt(document.getElementById('fruitStock').value);
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      if (!namaBuah || isNaN(harga) || isNaN(stok)) {
+        alert('Harap isi semua field dengan benar!');
+        return;
+      }
+
+      document.getElementById('btnTambah').disabled = true;
+      document.getElementById('spinner').style.display = 'inline-block';
+
+      db.collection("buah").add({
+        nama: namaBuah,
+        harga: harga,
+        stok: stok,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      })
+      .then(() => {
+        document.getElementById('fruitForm').reset();
+        document.getElementById('notifText').textContent = "✔️ Data berhasil disimpan!";
+        document.getElementById('notif').style.display = "block";
+        document.getElementById('btnLanjut').style.display = "inline-block";
+        loadFruits();
+      })
+      .catch((error) => {
+        alert("Gagal menyimpan: " + error.message);
+      })
+      .finally(() => {
+        document.getElementById('btnTambah').disabled = false;
+        document.getElementById('spinner').style.display = 'none';
+      });
+    });
+
+    function loadFruits() {
+      db.collection("buah").orderBy("nama").get()
+      .then((querySnapshot) => {
+        const fruitList = document.getElementById('fruitList');
+        fruitList.innerHTML = '';
+        if (querySnapshot.empty) {
+          fruitList.innerHTML = '<tr><td colspan="5">Tidak ada data buah</td></tr>';
+          return;
         }
 
-        // Delete function
-        function deleteFruit(id) {
-            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-                db.collection("buah").doc(id).delete()
-                .then(() => {
-                    alert("Data berhasil dihapus!");
-                    loadFruits();
-                })
-                .catch((error) => {
-                    alert("Gagal menghapus data: " + error.message);
-                });
-            }
-        }
-
-        // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFruits();
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          fruitList.innerHTML += `
+            <tr>
+              <td>${data.nama}</td>
+              <td>${formatCurrency(data.harga)}</td>
+              <td>${data.stok} kg</td>
+              <td><span class="${data.stok > 0 ? 'badge-available' : 'badge-out'}">
+                ${data.stok > 0 ? 'Tersedia' : 'Habis'}
+              </span></td>
+              <td>
+                <button class="action-btn edit-btn" onclick="alert('Edit: ${doc.id}')"><i class="fas fa-edit"></i></button>
+                <button class="action-btn delete-btn" onclick="deleteFruit('${doc.id}')"><i class="fas fa-trash-alt"></i></button>
+              </td>
+            </tr>
+          `;
         });
-    </script>
+      });
+    }
+
+    function deleteFruit(id) {
+      if (confirm("Apakah yakin ingin menghapus data ini?")) {
+        db.collection("buah").doc(id).delete()
+        .then(() => {
+          alert("Data berhasil dihapus!");
+          loadFruits();
+        })
+        .catch((error) => {
+          alert("Gagal menghapus: " + error.message);
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFruits();
+    });
+  </script>
 </body>
 </html>
