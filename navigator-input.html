@@ -30,22 +30,31 @@
     body {
       background: #f8fafc;
       color: var(--dark);
+      padding: 0;
+      margin: 0;
+    }
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      z-index: 1000;
       padding: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .container {
       max-width: 700px;
-      margin: auto;
+      margin: 0 auto;
       background: white;
       padding: 15px;
       border-radius: 10px;
-      box-shadow: var(--card-shadow);
-      padding-bottom: 70px;
     }
-    .header-top {
+    .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     .header-top a, .header-top button {
       font-size: 12px;
@@ -105,6 +114,13 @@
       font-size: 20px;
       color: var(--primary);
       opacity: 0.7;
+    }
+    .scrollable-content {
+      margin-top: 220px; /* Sesuaikan dengan tinggi header */
+      margin-bottom: 60px; /* Sesuaikan dengan tinggi bottom-nav */
+      padding: 10px;
+      overflow-y: auto;
+      max-height: calc(100vh - 280px); /* Tinggi viewport - tinggi header dan footer */
     }
     .order-item-upgrade {
       border: 1px solid #e2e8f0;
@@ -216,8 +232,8 @@
 
     /* Media Queries for Responsiveness */
     @media (max-width: 768px) {
-      .container {
-        padding: 10px;
+      .scrollable-content {
+        margin-top: 200px;
       }
       h1 {
         font-size: 14px;
@@ -247,66 +263,68 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header-top">
-      <button class="back-btn" onclick="window.location.href='dashboard.html'">
-        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-      </button>
-      <button class="refresh-btn" onclick="loadData()">
-        <i class="fas fa-sync-alt"></i> Refresh
-      </button>
-    </div>
+  <div class="fixed-header">
+    <div class="container">
+      <div class="header-content">
+        <button class="back-btn" onclick="window.location.href='dashboard.html'">
+          <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+        </button>
+        <button class="refresh-btn" onclick="loadData()">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+      </div>
 
-    <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
-        <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
+          <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
+        </div>
+        <p style="font-size: 11px; margin-left: 26px;">Dashboard Pesanan Masuk</p>
       </div>
-      <p style="font-size: 11px; margin-left: 26px;">Dashboard Pesanan Masuk</p>
-    </div>
 
-    <div class="stats">
-      <div class="stat-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h3 id="totalOrders">0</h3>
-            <p>Total Pesanan</p>
+      <div class="stats">
+        <div class="stat-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 id="totalOrders">0</h3>
+              <p>Total Pesanan</p>
+            </div>
+            <i class="fas fa-shopping-basket stat-icon"></i>
           </div>
-          <i class="fas fa-shopping-basket stat-icon"></i>
         </div>
-      </div>
-      <div class="stat-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h3 id="todayIncome">Rp0</h3>
-            <p>Pendapatan Hari Ini</p>
+        <div class="stat-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 id="todayIncome">Rp0</h3>
+              <p>Pendapatan Hari Ini</p>
+            </div>
+            <i class="fas fa-coins stat-icon"></i>
           </div>
-          <i class="fas fa-coins stat-icon"></i>
         </div>
-      </div>
-      <div class="stat-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h3 id="avgOrder">Rp0</h3>
-            <p>Rata-rata Pesanan</p>
+        <div class="stat-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 id="avgOrder">Rp0</h3>
+              <p>Rata-rata Pesanan</p>
+            </div>
+            <i class="fas fa-chart-line stat-icon"></i>
           </div>
-          <i class="fas fa-chart-line stat-icon"></i>
         </div>
-      </div>
-      <div class="stat-box">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h3 id="lastOrder">-</h3>
-            <p>Pesanan Terakhir</p>
+        <div class="stat-box">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 id="lastOrder">-</h3>
+              <p>Pesanan Terakhir</p>
+            </div>
+            <i class="fas fa-clock stat-icon"></i>
           </div>
-          <i class="fas fa-clock stat-icon"></i>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="order-list" id="daftarPesanan">
-      <p style="text-align:center;">Memuat data pesanan...</p>
-    </div>
+  <div class="scrollable-content" id="daftarPesanan">
+    <p style="text-align:center;">Memuat data pesanan...</p>
   </div>
 
   <div class="bottom-nav">
