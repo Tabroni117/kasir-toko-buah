@@ -680,38 +680,52 @@ if (!jumlah || jumlah <= 0) {
 
     const notifEl = document.getElementById("notifLonceng");
 
-    function cekPesananBaru() {
-      db.collection("pesanan")
-        .orderBy("waktu", "desc")
-        .limit(1)
-        .get()
-        .then(snapshot => {
-          if (!snapshot.empty) {
-            const data = snapshot.docs[0].data();
-            const waktuPesanan = data.waktu?.toDate?.() || new Date();
-            const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+   function cekPesananBaru() {
+  db.collection("pesanan")
+    .orderBy("waktu", "desc")
+    .limit(1)
+    .get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+        const sound = document.getElementById("notifSound");
 
-            if (waktuPesanan > waktuBuka) {
-              notifEl.style.display = "inline";
-            } else {
-              notifEl.style.display = "none";
-            }
-          }
-        });
-    }
+        if (waktuPesanan > waktuBuka) {
+          notifEl.style.display = "inline";
+          sound.play(); // 🔊 Tambahkan ini untuk bunyi otomatis
+        } else {
+          notifEl.style.display = "none";
+          sound.pause(); // 🔇 Hentikan jika tidak ada pesanan baru
+          sound.currentTime = 0;
+        }
+      }
+    });
+}
     
 document.addEventListener("DOMContentLoaded", () => {
   cekPesananBaru(); // Cek pertama kali saat halaman dibuka
   setInterval(cekPesananBaru, 30000); // Cek setiap 30 detik
 });
 
-// Saat user klik tombol, anggap sudah melihat pesanan
-document.getElementById("btnCekPesanan").addEventListener("click", () => {
+    // Saat user klik tombol, anggap sudah melihat pesanan
+    
+  document.getElementById("btnCekPesanan").addEventListener("click", () => {
+  // Simpan waktu terakhir membuka pesanan
   const sekarang = new Date().toISOString();
   localStorage.setItem("pesananSudahDibuka", sekarang);
   console.log("📥 Pesanan dianggap sudah dilihat:", sekarang);
+
+  // Hentikan suara notifikasi
+  const sound = document.getElementById("notifSound");
+  sound.pause();
+  sound.currentTime = 0;
+
+  // Lanjut ke halaman pesanan
+  window.location.href = 'navigator-input.html';
 });
-   
+    
   </script>    
   
   <div class="bottom-nav">    
@@ -721,5 +735,8 @@ document.getElementById("btnCekPesanan").addEventListener("click", () => {
   <button onclick="window.location.href='dashboard.html'"><i>📊</i><span>Pembeli</span></button>    
   <button onclick="window.location.href='home.html'"><i>📊</i><span>Penjual</span></button>    
 </div>  
+  
+  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+
 </body>  
 </html>
