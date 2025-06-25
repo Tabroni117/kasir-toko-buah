@@ -1,398 +1,289 @@
-<!DOCTYPE html>  
-<html lang="id">  
-<head>  
-    <meta charset="UTF-8">  
-    <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>  
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>  
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
- 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4ADE80;
+      --primary-light: #6EE7B7;
+      --primary-dark: #22C55E;
+      --primary-bg: #F0FDF4;
+      --accent: #F59E0B;
+      --white: #FFFFFF;
+      --light-gray: #F8FAFC;
+      --dark: #1E293B;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --radius-sm: 0.5rem;
+      --radius-md: 1rem;
+      --radius-lg: 1.5rem;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-<style> 
-:root {
-            /* Modern Light Green Color Palette */
-            --primary: #4ADE80;          /* Light green */
-            --primary-light: #6EE7B7;    /* Lighter green */
-            --primary-dark: #22C55E;     /* Darker green */
-            --primary-bg: #F0FDF4;       /* Very light green background */
-            --accent: #F59E0B;           /* Golden yellow for accents */
-            --white: #FFFFFF;
-            --light-gray: #F8FAFC;
-            --dark: #1E293B;
-            
-            /* Spacing */
-            --space-sm: 0.5rem;
-            --space-md: 1rem;
-            --space-lg: 1.5rem;
-            --space-xl: 2rem;
-            
-            /* Radius */
-            --radius-sm: 0.5rem;
-            --radius-md: 1rem;
-            --radius-lg: 1.5rem;
-            
-            /* Shadows */
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
-            
-            /* Transition */
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    body {
+      background-color: var(--primary-bg);
+      color: var(--dark);
+      padding-top: 90px; /* ✅ untuk ruang di bawah header */
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+      min-height: 100vh;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+    .app-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
+      padding: var(--space-lg) var(--space-xl);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      margin: 1rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      z-index: 1000;
+      height: 70px;
+      width: calc(100% - 2rem); /* ✅ kurangi 2rem (1rem kiri + 1rem kanan) */
+    }
 
-        body {
-            background-color: var(--primary-bg);
-            color: var(--dark);
-            line-height: 1.5;
-            padding: var(--space-md);
-            padding-top:6rem;
-            min-height: 100vh;
-            padding-top: 90px
-        }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
 
-   ..app-header {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: var(--white);
-  padding: var(--space-lg) var(--space-xl);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: var(--shadow-md);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 70px;
+    .brand-icon {
+      font-size: 2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 
-  margin: 1rem;              /* ✅ beri jarak dari atas dan samping */
-  border-radius: var(--radius-lg); /* ✅ sudut membulat */
-  width: calc(100% - 2rem);  /* ✅ supaya tidak melebihi layar karena ada margin */
-}
+    .brand-text h1 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
 
-        .header-space {
-         height: 70px; /* sesuai tinggi header agar tidak ketumpuk */
-        }
+    .brand-text p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-        }
+    .btn {
+      background-color: var(--white);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-        .brand-icon {
-            font-size: 2rem;
-            color: var(--white);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
+    .btn:hover {
+      background-color: var(--light-gray);
+    }
 
-        .brand-text h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            letter-spacing: -0.5px;
-        }
+    .app-container {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      margin-top: var(--space-lg);
+      padding: var(--space-xl);
+    }
 
-        .brand-text p {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            font-weight: 300;
-        }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+      font-weight: bold;
+    }
 
-        /* Main Container */
-        .app-container {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            margin-bottom: 5rem;
-        }
+    .section-description {
+      text-align: center;
+      color: var(--dark);
+      opacity: 0.8;
+      margin-top: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
 
-        /* Content Section */
-        .content-section {
-            padding: var(--space-xl);
-            text-align: center;
-        }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      font-weight: bold;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-        .section-title {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-sm);
-            color: var(--primary-dark);
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: var(--space-lg);
-        }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
 
-        .section-title i {
-            color: var(--primary);
-        }
+    .app-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
 
-        .section-description {
-            color: var(--dark);
-            margin-bottom: var(--space-xl);
-            opacity: 0.8;
-            line-height: 1.6;
-        }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--primary-dark);
+      text-decoration: none;
+    }
 
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            transition: var(--transition);
-            gap: 0.5rem;
-        }
+    .nav-btn i {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
 
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            box-shadow: var(--shadow-sm);
-        }
+    .nav-btn.active {
+      color: var(--white);
+      background: var(--primary);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
 
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
 
-        /* Bottom Navigation */
-        .app-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--white);
-            display: flex;
-            justify-content: space-around;
-            padding: var(--space-sm) 0;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid rgba(16, 185, 129, 0.2);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
 
-        .nav-btn {
-            display: fixed;
-            flex-direction: column;
-            align-items: center;
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 0.75rem;
-            padding: 0.5rem;
-            border-radius: var(--radius-sm);
-            transition: var(--transition);
-            width: 100%;
-        }
-
-        .nav-btn i {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-btn.active {
-            color: var(--white);
-            background: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
-        }
-
-
-           #loadingSpinner {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-           .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 4px solid rgba(16, 185, 129, 0.2);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Responsive Design */
-        @media (min-width: 768px) {
-            body {
-                padding: var(--space-xl);
-                max-width: 1200px;
-                margin: 0 auto;
-            }
-            
-            .app-container {
-                margin-bottom: 0;
-            }
-            
-            .app-nav {
-                border-radius: var(--radius-lg);
-                margin-top: var(--space-xl);
-            }
-            
-            .section-title {
-                font-size: 2rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
-
-
-
 </head>
 <body>
 
-    <div id="loadingSpinner">
-    <div class="spinner"></div>
-    </div>
+<div id="loadingSpinner"><div class="spinner"></div></div>
 
-
-<div class="header-space"></div>
 <header class="app-header">
-        <div class="brand">
-            <div class="brand-icon">
-                <i class="fas fa-leaf"></i>
-            </div>
-            <div class="brand-text">
-                <h1>RUJAK BUAH INDONESIA</h1>
-                <p>Aplikasi Kasir Premium</p>
-            </div>
-        </div>
-        <button class="btn" onclick="window.location.href='dashboard.html'">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </button>
-    </header>
-
-
-    
-
- <div class="app-container animate-fade">
-        <section class="content-section">
-            <h2 class="section-title">
-                <i class="fas fa-crown"></i> Dashboard Premium
-            </h2>
-            <p class="section-description">
-                Selamat datang di dashboard premium Rujak Buah Indonesia. Nikmati fitur-fitur eksklusif yang tersedia khusus untuk Anda.
-            </p>
-            <button class="btn btn-primary">
-                <i class="fas fa-rocket"></i> Mulai Sekarang
-            </button>
-        </section>
+  <div class="brand">
+    <div class="brand-icon"><i class="fas fa-leaf"></i></div>
+    <div class="brand-text">
+      <h1>RUJAK BUAH INDONESIA</h1>
+      <p>Aplikasi Kasir Premium</p>
+    </div>
   </div>
+  <button class="btn" onclick="window.location.href='dashboard.html'">
+    <i class="fas fa-arrow-left"></i> Kembali
+  </button>
+</header>
 
-  
-  
-        <nav class="app-nav">
-        <a href="#" class="nav-btn active">
-            <i class="fas fa-home"></i>
-            <span>Beranda</span>
-        </a>
-        <a href="#" class="nav-btn">
-            <i class="fas fa-boxes"></i>
-            <span>Inventori</span>
-        </a>
-        <a href="#" class="nav-btn">
-            <i class="fas fa-chart-line"></i>
-            <span>Laporan</span>
-        </a>
-        <a href="#" class="nav-btn">
-            <i class="fas fa-cog"></i>
-            <span>Pengaturan</span>
-        </a>
-        </nav>
+<div class="app-container">
+  <h2 class="section-title">
+    <i class="fas fa-crown"></i> Dashboard Premium
+  </h2>
+  <p class="section-description">
+    Selamat datang di dashboard premium Rujak Buah Indonesia. Nikmati fitur-fitur eksklusif yang tersedia khusus untuk Anda.
+  </p>
+  <button class="btn-primary">
+    <i class="fas fa-rocket"></i> Mulai Sekarang
+  </button>
+</div>
 
-    
+<nav class="app-nav">
+  <a href="#" class="nav-btn active">
+    <i class="fas fa-home"></i>
+    <span>Beranda</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-boxes"></i>
+    <span>Inventori</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-chart-line"></i>
+    <span>Laporan</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-cog"></i>
+    <span>Pengaturan</span>
+  </a>
+</nav>
 
-    <script>
-        // Inisialisasi Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.appspot.com",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-        };
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  function showLoading() { loadingSpinner.style.display = 'flex'; }
+  function hideLoading() { loadingSpinner.style.display = 'none'; }
 
-
-        
-
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        function showLoading() {
-            loadingSpinner.style.display = 'flex';
-       }
-
-        function hideLoading() {
-            loadingSpinner.style.display = 'none';
-        }
-
-
-
-        
-        
-        // Fungsi utilitas untuk format mata uang
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
-        }
-    </script>
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  }
+</script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
- 
-        
-
-
-
-
-
