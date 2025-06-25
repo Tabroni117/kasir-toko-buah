@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            /* Modern Green Color Palette */
-            --primary: #10B581;          /* Vibrant green */
-            --primary-light: #34D399;    /* Lighter green */
-            --primary-dark: #059669;     /* Darker green */
-            --primary-bg: #ECFDF5;       /* Very light green background */
+            /* Modern Light Green Color Palette */
+            --primary: #4ADE80;          /* Light green */
+            --primary-light: #6EE7B7;    /* Lighter green */
+            --primary-dark: #22C55E;     /* Darker green */
+            --primary-bg: #F0FDF4;       /* Very light green background */
             --accent: #F59E0B;           /* Golden yellow for accents */
             --white: #FFFFFF;
             --light-gray: #F8FAFC;
@@ -341,6 +341,34 @@
             box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
         }
 
+        /* Loading Spinner */
+        #loadingSpinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid rgba(16, 185, 129, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (min-width: 768px) {
             body {
@@ -372,9 +400,9 @@
     </style>
 </head>
 <body>
-    <!-- Hidden spinner for loading state -->
-    <div id="loadingSpinner" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center;">
-        <div style="width: 3rem; height: 3rem; border: 4px solid rgba(16, 185, 129, 0.2); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner">
+        <div class="spinner"></div>
     </div>
 
     <div class="app-container animate-fade">
@@ -474,7 +502,7 @@
     </nav>
 
     <script>
-        // Your existing Firebase configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -497,8 +525,19 @@
         function formatCurrency(amount) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
-                currency: 'IDR'
+                currency: 'IDR',
+                minimumFractionDigits: 0
             }).format(amount);
+        }
+
+        // Show loading spinner
+        function showLoading() {
+            loadingSpinner.style.display = 'flex';
+        }
+
+        // Hide loading spinner
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
         }
 
         // Load fruits data from Firestore
@@ -511,4 +550,4 @@
                     if (querySnapshot.empty) {
                         fruitList.innerHTML = `
                             <tr>
-                  
+                                <td colspan="5" style="text-align: center; padding: 2
