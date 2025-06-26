@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4ADE80;
+      --primary-light: #6EE7B7;
+      --primary-dark: #22C55E;
+      --primary-bg: #F0FDF4;
+      --accent: #F59E0B;
+      --white: #FFFFFF;
+      --light-gray: #F8FAFC;
+      --dark: #1E293B;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2rem;
+      --radius-sm: 0.5rem;
+      --radius-md: 1rem;
+      --radius-lg: 1.5rem;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--primary-bg);
+      color: var(--dark);
+      padding-top: 90px; /* ✅ untuk ruang di bawah header */
+      padding-left: var(--space-md);
+      padding-right: var(--space-md);
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
+      padding: var(--space-lg) var(--space-xl);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      margin: 1rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      z-index: 1000;
+      height: 70px;
+      width: calc(100% - 2rem); /* ✅ kurangi 2rem (1rem kiri + 1rem kanan) */
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .brand-text h1 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .brand-text p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .btn {
+      background-color: var(--white);
+      color: var(--primary-dark);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background-color: var(--light-gray);
+    }
+
+    .app-container {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      margin-top: var(--space-lg);
+      padding: var(--space-xl);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+      font-weight: bold;
+    }
+
+    .section-description {
+      text-align: center;
+      color: var(--dark);
+      opacity: 0.8;
+      margin-top: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      font-weight: bold;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .app-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--primary-dark);
+      text-decoration: none;
+    }
+
+    .nav-btn i {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-btn.active {
+      color: var(--white);
+      background: var(--primary);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+    }
+
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid rgba(16, 185, 129, 0.2);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingSpinner"><div class="spinner"></div></div>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-icon"><i class="fas fa-leaf"></i></div>
+    <div class="brand-text">
+      <h1>RUJAK BUAH INDONESIA</h1>
+      <p>Aplikasi Kasir Premium</p>
+    </div>
+  </div>
+</header>
+
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center p-0 transition-colors duration-300">
+
+  <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
+
+  <header>
+    <div class="logo-container">
+      <img src="rujak-logo.png" alt="Logo Rujak Buah">
+      <h1>TOKO BUAH INDONESIA</h1>
+    </div>
+  </header>
+
+  
+  <div class="w-full max-w-sm scale-90 flex-grow flex items-start justify-center mt-10">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full">
+      <div class="p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+          <i class="fas fa-user-shield mr-2 text-primary-500"></i>Pilih Jenis Akun
+        </h2>
+
+        <div class="space-y-4">
+          <div id="pembeliOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-primary-400"
+            onclick="selectRole('pembeli')">
+            <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mr-4">
+              <i class="fas fa-user-tag text-xl text-primary-600"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-gray-800">Pembeli</h3>
+              <p class="text-xs text-gray-500">Customer Portal</p>
+            </div>
+          </div>
+
+          <div id="penjualOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-primary-400"
+            onclick="selectRole('penjual')">
+            <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mr-4">
+              <i class="fas fa-store-alt text-xl text-primary-600"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-gray-800">Penjual</h3>
+              <p class="text-xs text-gray-500">Merchant Dashboard</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="continueBtn" onclick="continueToAuth()" class="w-full mt-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-semibold flex items-center justify-center opacity-50 cursor-not-allowed" disabled>
+          <i class="fas fa-arrow-right mr-3"></i>Lanjutkan
+        </button>
+      </div>
+
+      <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-center">
+        <p class="text-xs text-gray-500">© 2023. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Login -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div class="bg-primary-500 p-6 text-white flex justify-between items-center">
+        <h2 class="text-xl font-semibold"><i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication</h2>
+        <button onclick="closeAuthModal()" class="text-white hover:text-primary-200"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-user mr-2 text-primary-500"></i>Login User</label>
+          <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Masukkan Username">
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-lock mr-2 text-primary-500"></i>Password</label>
+          <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Masukkan Password">
+        </div>
+
+        <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center">
+          <i class="fas fa-sign-in-alt mr-2"></i>Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedRole = null;
+    let isLoggedIn = false;
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+      document.getElementById(`${role}Option`).classList.add('selected');
+      document.getElementById('continueBtn').disabled = false;
+      document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+
+    function continueToAuth() {
+      if (!selectedRole) return;
+      document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    document.getElementById('authSubmitBtn').addEventListener('click', function () {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const submitBtn = this;
+
+      if (!username || !password) {
+        alert('Silakan isi Username dan Password!');
+        return;
+      }
+
+      let valid = false;
+      let redirectUrl = '';
+
+      if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+        valid = true;
+        redirectUrl = 'home.html';
+      } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+        valid = true;
+        redirectUrl = 'dashboard.html';
+      }
+
+      if (valid) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          alert('Login Berhasil!');
+          isLoggedIn = true;
+          window.location.href = redirectUrl;
+        }, 1500);
+      } else {
+        alert('Username atau Password salah!');
+      }
+    });
+
+    function goToPage(page) {
+      if (!isLoggedIn) {
+        alert('Silakan login terlebih dahulu!');
+        return;
+      }
+      window.location.href = page;
+    }
+
+    function showQrisModal() {
+      alert('Fitur QRIS sedang dikembangkan.');
+    }
+
+    // Pause marquee on touch for mobile
+    document.addEventListener("DOMContentLoaded", () => {
+      const marqueeSpan = document.querySelector('.running-text span');
+      marqueeSpan.addEventListener('touchstart', () => {
+        marqueeSpan.style.animationPlayState = 'paused';
+      });
+      marqueeSpan.addEventListener('touchend', () => {
+        marqueeSpan.style.animationPlayState = 'running';
+      });
+    });
+
+<nav class="app-nav">
+  <a href="#" class="nav-btn active">
+    <i class="fas fa-home"></i>
+    <span>Beranda</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-boxes"></i>
+    <span>Inventori</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-chart-line"></i>
+    <span>Laporan</span>
+  </a>
+  <a href="#" class="nav-btn">
+    <i class="fas fa-cog"></i>
+    <span>Pengaturan</span>
+  </a>
+</nav>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  function showLoading() { loadingSpinner.style.display = 'flex'; }
+  function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(amount);
+  }
+</script>
+
+</body>
+</html>
