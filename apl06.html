@@ -1,454 +1,380 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700&family=Inter:wght@300;400;500;600&family=Poppins&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --primary: #4ADE80;
-      --primary-light: #6EE7B7;
-      --primary-dark: #22C55E;
-      --primary-bg: #F0FDF4;
-      --accent: #F59E0B;
-      --white: #FFFFFF;
-      --light-gray: #F8FAFC;
-      --dark: #1E293B;
-      --space-sm: 0.5rem;
-      --space-md: 1rem;
-      --space-lg: 1.5rem;
-      --space-xl: 2rem;
-      --radius-sm: 0.5rem;
-      --radius-md: 1rem;
-      --radius-lg: 1.5rem;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
-      --transition: all 0.3s ease;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      background-color: var(--primary-bg);
-      color: var(--dark);
-      padding-top: 90px; /* ✅ untuk ruang di bawah header */
-      padding-left: var(--space-md);
-      padding-right: var(--space-md);
-      min-height: 100vh;
-    }
-
-    .app-header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: var(--white);
-      padding: var(--space-lg) var(--space-xl);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      margin: 1rem;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-      z-index: 1000;
-      height: 70px;
-      width: calc(100% - 2rem); /* ✅ kurangi 2rem (1rem kiri + 1rem kanan) */
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: var(--space-md);
-    }
-
-    .brand-icon {
-      font-size: 2rem;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .brand-text h1 {
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-
-    .brand-text p {
-      font-size: 0.8rem;
-      opacity: 0.9;
-    }
-
-    .btn {
-      background-color: var(--white);
-      color: var(--primary-dark);
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn:hover {
-      background-color: var(--light-gray);
-    }
-
-    .app-container {
-      background: var(--white);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg);
-      margin-top: var(--space-lg);
-      padding: var(--space-xl);
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-size: 1.5rem;
-      color: var(--primary-dark);
-      font-weight: bold;
-    }
-
-    .section-description {
-      text-align: center;
-      color: var(--dark);
-      opacity: 0.8;
-      margin-top: var(--space-md);
-      margin-bottom: var(--space-xl);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      font-weight: bold;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      border: none;
-      transition: var(--transition);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .app-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--white);
-      display: flex;
-      justify-content: space-around;
-      padding: 0.5rem 0;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-      z-index: 100;
-    }
-
-    .nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 0.75rem;
-      color: var(--primary-dark);
-      text-decoration: none;
-    }
-
-    .nav-btn i {
-      font-size: 1.25rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .nav-btn.active {
-      color: var(--white);
-      background: var(--primary);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--radius-sm);
-    }
-
-    #loadingSpinner {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255,255,255,0.8);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .spinner {
-      width: 3rem;
-      height: 3rem;
-      border: 4px solid rgba(16, 185, 129, 0.2);
-      border-top: 4px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-   body {
-      font-family: 'Poppins', sans-serif;
-      background: #f0f8ff;
-      margin: 0;
-      padding: 10px;
-      font-size: 14px;
-    }
-
-    .running-text {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-      box-sizing: border-box;
-      padding: 5px 0;
-      color: #2196F3;
-      font-weight: bold;
-      font-size: 14px;
-      background-color: #cce7ff;
-      position: relative;
-    }
-
-    .running-text span {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 12s linear infinite;
-      will-change: transform;
-    }
-
-    .running-text:hover span {
-      animation-play-state: paused;
-    }
-
-    @keyframes marquee {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-100%); }
-    }
-    
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #2196F3;
-      color: white;
-      padding: 12px 16px;
-      margin: 8px; /* kasih sedikit space kiri-kanan */
-      border-radius: 12px;
-      flex-wrap: wrap;
-      width: calc(100% - 16px); /* biar tetap responsif tapi gak mentok */
-      box-sizing: border-box;
-
-    }
-    
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo-container img {
-      height: 40px;
-      margin-right: 10px;
-      border-radius: 50%;
-    }
-
-    h1 {
-      font-size: 16px;
-      margin: 0;
-    }
-
-    .bottom-nav {
-      display: flex;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      background-color: #ffffff;
-      border-top: 1px solid #ccc;
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-      justify-content: space-around;
-      align-items: center;
-      z-index: 999;
-    }
-
-    .bottom-nav button {
-      background: none;
-      border: none;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #4CAF50;
-      width: 100%;
-      height: 100%;
-    }
-
-    .bottom-nav i {
-      font-size: 18px;
-      margin-bottom: 2px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Rujak Buah Indonesia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+            background-color: #f4f4f4;
+            color: #333;
+            padding-bottom: 60px;
+        }
+        .header {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 28px 25px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            font-family: 'Montserrat', sans-serif;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            border-bottom: 3px solid rgba(255,255,255,0.1);
+        }
+        .restaurant-info {
+            background: white;
+            padding: 25px;
+            margin: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .restaurant-name {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .restaurant-desc {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .menu-category {
+            margin: 15px 0;
+        }
+        .category-title {
+            background-color: #e0f7fa;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-left: 4px solid #00C853;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .menu-item {
+            background: white;
+            margin: 0 20px 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .menu-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border-color: rgba(0,200,83,0.3);
+        }
+        .item-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .item-desc {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .item-price {
+            color: #00C853;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .spicy-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .spicy-option {
+            padding: 6px 12px;
+            border-radius: 15px;
+            background: #f0f0f0;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+        .spicy-option.selected {
+            background: #00C853;
+            color: white;
+        }
+        .food-counter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .counter-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #00C853;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .counter-btn:hover {
+            background-color: #009940;
+            transform: scale(1.1);
+        }
+        .order-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 25px;
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 24px rgba(0,177,79,0.4);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+        }
+        .order-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 24px rgba(0,177,79,0.4);
+        }
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        }
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+            letter-spacing: 1px;
+        }
+        .delivery-text {
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+        .time {
+            font-weight: 700;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #888;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 0;
+        }
+        .nav-item:hover {
+            color: #00C853;
+        }
+        .nav-item.active {
+            color: #00b14f;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center p-0 transition-colors duration-300">
-<div id="loadingSpinner"><div class="spinner"></div></div>
-
-<header class="app-header">
-  <div class="brand">
-    <div class="brand-icon"><i class="fas fa-leaf"></i></div>
-    <div class="brand-text">
-      <h1>RUJAK BUAH INDONESIA</h1>
-      <p>Aplikasi Kasir Premium</p>
-    </div>
-  </div>
-  </header>
-<div class="w-full max-w-sm scale-90 flex-grow flex items-start justify-center mt-10">
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full">
-      <div class="p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">
-          <i class="fas fa-user-shield mr-2 text-primary-500"></i>Pilih Jenis Akun
-        </h2>
-
-        <div class="space-y-4">
-          <div id="pembeliOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-primary-400"
-            onclick="selectRole('pembeli')">
-            <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mr-4">
-              <i class="fas fa-user-tag text-xl text-primary-600"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="font-semibold text-gray-800">Pembeli</h3>
-              <p class="text-xs text-gray-500">Customer Portal</p>
-            </div>
-          </div>
-
-          <div id="penjualOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-primary-400"
-            onclick="selectRole('penjual')">
-            <div class="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center mr-4">
-              <i class="fas fa-store-alt text-xl text-primary-600"></i>
-            </div>
-            <div class="flex-1">
-              <h3 class="font-semibold text-gray-800">Penjual</h3>
-              <p class="text-xs text-gray-500">Merchant Dashboard</p>
-            </div>
-          </div>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">🥗 RUJAK BUAH INDONESIA</div>
+            <div class="delivery-text">Delivery in <span class="time">30 minutes</span> ⚡</div>
         </div>
-
-        <button id="continueBtn" onclick="continueToAuth()" class="w-full mt-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-semibold flex items-center justify-center opacity-50 cursor-not-allowed" disabled>
-          <i class="fas fa-arrow-right mr-3"></i>Lanjutkan
-        </button>
-      </div>
-
-      <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-center">
-        <p class="text-xs text-gray-500">© 2023. All rights reserved.</p>
-      </div>
     </div>
-  </div>
- <!-- Modal Login -->
-  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
-      <div class="bg-primary-500 p-6 text-white flex justify-between items-center">
-        <h2 class="text-xl font-semibold"><i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication</h2>
-        <button onclick="closeAuthModal()" class="text-white hover:text-primary-200"><i class="fas fa-times"></i></button>
-      </div>
-
-      <div class="p-6">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-user mr-2 text-primary-500"></i>Login User</label>
-          <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Masukkan Username">
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2"><i class="fas fa-lock mr-2 text-primary-500"></i>Password</label>
-          <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="Masukkan Password">
-        </div>
-
-        <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium flex items-center justify-center">
-          <i class="fas fa-sign-in-alt mr-2"></i>Login
-        </button>
-      </div>
+    
+    <div class="restaurant-info">
+        <div class="restaurant-name">RUJAK BUAH KHAS INDONESIA</div>
+        <div class="restaurant-desc">Rujak buah segar dengan bumbu kacang spesial khas Indonesia</div>
     </div>
-  </div>
+    
+    <div class="menu-section">
+        <div class="menu-category">
+            <div class="category-title">Makanan</div>
+            
+            <div class="menu-item">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/4ea029da-9cfd-4a4f-83c7-cd3572c630b3.png" alt="Nasi Padang" class="item-image">
+                <div class="item-details">
+                    <div class="item-name">Nasi Padang</div>
+                    <div class="item-desc">Nasi padang dengan rendang daging sapi, daun singkong, dan sambal hijau.</div>
+                    <div class="item-price">Rp 35.000</div>
+                    <div class="spicy-options">
+                        <div class="spicy-option selected">Tidak Pedas</div>
+                        <div class="spicy-option">Pedas</div>
+                        <div class="spicy-option">Sangat Pedas</div>
+                    </div>
+                    <div class="food-counter">
+                        <button class="counter-btn">-</button>
+                        <span>0</span>
+                        <button class="counter-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/7b8f534a-2542-46fe-a63d-5a33ef951b43.png" alt="Soto Ayam" class="item-image">
+                <div class="item-details">
+                    <div class="item-name">Soto Ayam Lamongan</div>
+                    <div class="item-desc">Soto ayam dengan suwiran daging ayam, tauge, dan bawang goreng.</div>
+                    <div class="item-price">Rp 25.000</div>
+                    <div class="spicy-options">
+                        <div class="spicy-option selected">Original</div>
+                        <div class="spicy-option">Sedikit Pedas</div>
+                    </div>
+                    <div class="food-counter">
+                        <button class="counter-btn">-</button>
+                        <span>0</span>
+                        <button class="counter-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/852b7697-be5c-46a2-8f75-2aee5bf063b4.png" alt="Gado-Gado" class="item-image">
+                <div class="item-details">
+                    <div class="item-name">Gado-Gado</div>
+                    <div class="item-desc">Sayuran segar dengan bumbu kacang, lontong, dan kerupuk.</div>
+                    <div class="item-price">Rp 20.000</div>
+                    <div class="spicy-options">
+                        <div class="spicy-option selected">Tahu/Tempe Biasa</div>
+                        <div class="spicy-option">Tahu/Tempe Pedas</div>
+                    </div>
+                    <div class="food-counter">
+                        <button class="counter-btn">-</button>
+                        <span>0</span>
+                        <button class="counter-btn">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="menu-category">
+            <div class="category-title">Minuman</div>
+            
+            <div class="menu-item">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e3b25ecb-567d-48fe-b31f-f5b9d7b31802.png" alt="Es Teh Manis" class="item-image">
+                <div class="item-details">
+                    <div class="item-name">Es Teh Manis</div>
+                    <div class="item-desc">Es teh segar dengan gula.</div>
+                    <div class="item-price">Rp 8.000</div>
+                    <div class="spicy-options">
+                        <div class="spicy-option selected">Normal</div>
+                        <div class="spicy-option">Kurang Manis</div>
+                        <div class="spicy-option">Extra Manis</div>
+                    </div>
+                    <div class="food-counter">
+                        <button class="counter-btn">-</button>
+                        <span>0</span>
+                        <button class="counter-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="menu-item">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/ef708d2c-c45f-4339-81bf-7b8ae70a5a49.png" alt="Jus Alpukat" class="item-image">
+                <div class="item-details">
+                    <div class="item-name">Jus Alpukat</div>
+                    <div class="item-desc">Jus alpukat dengan susu kental manis.</div>
+                    <div class="item-price">Rp 15.000</div>
+                    <div class="spicy-options">
+                        <div class="spicy-option selected">Susu Biasa</div>
+                        <div class="spicy-option">Susu Kurang</div>
+                        <div class="spicy-option">Susu Extra</div>
+                    </div>
+                    <div class="food-counter">
+                        <button class="counter-btn">-</button>
+                        <span>0</span>
+                        <button class="counter-btn">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="order-btn">Order</button>
+    
+    <div class="navigation">
+        <div class="nav-item active">
+            <span>Home</span>
+        </div>
+        <div class="nav-item">
+            <span>Search</span>
+        </div>
+        <div class="nav-item">
+            <span>Orders</span>
+        </div>
+        <div class="nav-item">
+            <span>Profile</span>
+        </div>
+    </div>
 
-<nav class="app-nav">
-  <a href="#" class="nav-btn active">
-    <i class="fas fa-home"></i>
-    <span>Beranda</span>
-  </a>
-  <a href="#" class="nav-btn">
-    <i class="fas fa-boxes"></i>
-    <span>Inventori</span>
-  </a>
-  <a href="#" class="nav-btn">
-    <i class="fas fa-chart-line"></i>
-    <span>Laporan</span>
-  </a>
-  <a href="#" class="nav-btn">
-    <i class="fas fa-cog"></i>
-    <span>Pengaturan</span>
-  </a>
-</nav>
+    <script>
+        document.querySelectorAll('.counter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const container = this.parentElement;
+                const countElement = container.querySelector('span');
+                let count = parseInt(countElement.textContent);
+                
+                if (this.textContent === '+') {
+                    count++;
+                } else if (this.textContent === '-' && count > 0) {
+                    count--;
+                }
+                
+                countElement.textContent = count;
+            });
+        });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.appspot.com",
-    messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const loadingSpinner = document.getElementById('loadingSpinner');
-  function showLoading() { loadingSpinner.style.display = 'flex'; }
-  function hideLoading() { loadingSpinner.style.display = 'none'; }
-
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
-</script>
-
+        document.querySelectorAll('.spicy-option').forEach(option => {
+            option.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.spicy-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+    </script>
 </body>
 </html>
