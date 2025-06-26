@@ -226,60 +226,52 @@
 
   <script>
     let selectedRole = null;
-    let isLoggedIn = false;
+let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // ✅ pakai localStorage
 
-    function selectRole(role) {
-      selectedRole = role;
-      document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
-      document.getElementById(`${role}Option`).classList.add('selected');
-      document.getElementById('continueBtn').disabled = false;
-      document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-    }
+function goToPage(page) {
+  if (!localStorage.getItem('isLoggedIn')) {
+    alert('Silakan login terlebih dahulu!');
+    return;
+  }
+  window.location.href = page;
+}
 
-    function continueToAuth() {
-      if (!selectedRole) return;
-      document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
-      document.getElementById('authModal').classList.remove('hidden');
-    }
+document.getElementById('authSubmitBtn').addEventListener('click', function () {
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  const submitBtn = this;
 
-    function closeAuthModal() {
-      document.getElementById('authModal').classList.add('hidden');
-    }
+  if (!username || !password) {
+    alert('Silakan isi Username dan Password!');
+    return;
+  }
 
-    document.getElementById('authSubmitBtn').addEventListener('click', function () {
-      const username = document.getElementById('authUsername').value.trim();
-      const password = document.getElementById('authPassword').value.trim();
-      const submitBtn = this;
+  let valid = false;
+  let redirectUrl = '';
 
-      if (!username || !password) {
-        alert('Silakan isi Username dan Password!');
-        return;
-      }
+  if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+    valid = true;
+    redirectUrl = 'home.html';
+  } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+    valid = true;
+    redirectUrl = 'dashboard.html';
+  }
 
-      let valid = false;
-      let redirectUrl = '';
+  if (valid) {
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+    submitBtn.disabled = true;
 
-      if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
-        valid = true;
-        redirectUrl = 'home.html';
-      } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
-        valid = true;
-        redirectUrl = 'dashboard.html';
-      }
-
-      if (valid) {
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
-        submitBtn.disabled = true;
-
-        setTimeout(() => {
-          alert('Login Berhasil!');
-          isLoggedIn = true;
-          window.location.href = redirectUrl;
-        }, 1500);
-      } else {
-        alert('Username atau Password salah!');
-      }
-    });
+    setTimeout(() => {
+      alert('Login Berhasil!');
+      isLoggedIn = true;
+      localStorage.setItem('isLoggedIn', 'true'); // ✅ simpan status
+      localStorage.setItem('userRole', selectedRole); // ✅ simpan role (optional)
+      window.location.href = redirectUrl;
+    }, 1500);
+  } else {
+    alert('Username atau Password salah!');
+  }
+});
 
     function goToPage(page) {
       if (!isLoggedIn) {
