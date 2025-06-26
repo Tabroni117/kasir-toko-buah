@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RUJAK BUAH INDONESIA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00C853',
+            secondary: '#64DD17'
+          },
+          fontFamily: {
+            montserrat: ['Montserrat', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-montserrat pb-24">  <header class="bg-gradient-to-r from-primary to-secondary text-white text-center py-6 shadow-md rounded-b-2xl">
+    <h1 class="text-2xl font-bold">RUJAK BUAH INDONESIA</h1>
+  </header>  <main class="p-4 max-w-2xl mx-auto">
+    <section class="mb-6">
+      <h2 class="text-xl font-semibold mb-2">Menu Makanan</h2>
+      <div class="bg-white p-4 rounded-xl shadow mb-4 flex flex-col gap-4">
+        <div class="flex gap-4 items-center">
+          <img src="https://...nasi.png" alt="Nasi Padang" class="w-20 h-20 rounded-lg object-cover" />
+          <div class="flex-1">
+            <h3 class="font-semibold">Nasi Padang</h3>
+            <p class="text-sm text-gray-600">Rendang, daun singkong, sambal hijau</p>
+            <div class="text-primary font-bold">Rp 35.000</div>
+            <select id="spice-nasi" class="mt-2 w-full border rounded px-2 py-1 text-sm">
+              <option value="Tidak Pedas">Tidak Pedas</option>
+              <option value="Pedas">Pedas</option>
+              <option value="Extra Pedas">Extra Pedas</option>
+            </select>
+          </div>
+          <button onclick="addToCart('Nasi Padang', 35000, document.getElementById('spice-nasi').value)" class="bg-primary text-white px-3 py-1 rounded-full hover:bg-green-700">+ Keranjang</button>
+        </div><div class="flex gap-4 items-center">
+      <img src="https://...soto.png" alt="Soto Ayam" class="w-20 h-20 rounded-lg object-cover" />
+      <div class="flex-1">
+        <h3 class="font-semibold">Soto Ayam</h3>
+        <p class="text-sm text-gray-600">Suwiran ayam, tauge, bawang goreng</p>
+        <div class="text-primary font-bold">Rp 25.000</div>
+        <select id="spice-soto" class="mt-2 w-full border rounded px-2 py-1 text-sm">
+          <option value="Tidak Pedas">Tidak Pedas</option>
+          <option value="Pedas">Pedas</option>
+          <option value="Extra Pedas">Extra Pedas</option>
+        </select>
+      </div>
+      <button onclick="addToCart('Soto Ayam', 25000, document.getElementById('spice-soto').value)" class="bg-primary text-white px-3 py-1 rounded-full hover:bg-green-700">+ Keranjang</button>
+    </div>
+  </div>
+</section>
+
+<section class="mb-6">
+  <h2 class="text-xl font-semibold mb-2">Keranjang</h2>
+  <div id="cartItems" class="bg-white p-4 rounded-xl shadow space-y-3">
+    <p class="text-gray-500">Belum ada item dalam keranjang.</p>
+  </div>
+  <div class="mt-4 text-right">
+    <div class="text-lg font-bold">Total: <span id="cartTotal">Rp 0</span></div>
+    <button onclick="checkout()" class="mt-2 bg-primary text-white px-5 py-2 rounded-xl hover:bg-green-700">Checkout</button>
+  </div>
+</section>
+
+  </main>  <script>
+    let cart = [];
+
+    function addToCart(name, price, spice) {
+      const existing = cart.find(item => item.name === name && item.spice === spice);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ name, price, spice, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItems');
+      const totalEl = document.getElementById('cartTotal');
+      container.innerHTML = '';
+      if (cart.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">Belum ada item dalam keranjang.</p>';
+        totalEl.textContent = 'Rp 0';
+        return;
+      }
+      let total = 0;
+      cart.forEach(item => {
+        total += item.price * item.qty;
+        const itemEl = document.createElement('div');
+        itemEl.className = 'flex justify-between items-start';
+        itemEl.innerHTML = `
+          <div>
+            <p class="font-medium">${item.name}</p>
+            <p class="text-sm text-gray-500">${item.qty} x Rp ${item.price.toLocaleString()} (${item.spice})</p>
+          </div>
+          <div class="text-primary font-bold">Rp ${(item.price * item.qty).toLocaleString()}</div>
+        `;
+        container.appendChild(itemEl);
+      });
+      totalEl.textContent = `Rp ${total.toLocaleString()}`;
+    }
+
+    function checkout() {
+      if (cart.length === 0) {
+        alert('Keranjang masih kosong.');
+        return;
+      }
+      alert('Pesanan berhasil diproses! Terima kasih.');
+      cart = [];
+      renderCart();
+    }
+  </script></body>
+</html>
