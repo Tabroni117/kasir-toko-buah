@@ -70,7 +70,7 @@
       0% { transform: translateX(0%); }
       100% { transform: translateX(-100%); }
     }
-    
+
     header {
       display: flex;
       justify-content: space-between;
@@ -78,14 +78,13 @@
       background: #2196F3;
       color: white;
       padding: 12px 16px;
-      margin: 8px; /* kasih sedikit space kiri-kanan */
+      margin: 8px;
       border-radius: 12px;
       flex-wrap: wrap;
-      width: calc(100% - 16px); /* biar tetap responsif tapi gak mentok */
+      width: calc(100% - 16px);
       box-sizing: border-box;
-
     }
-    
+
     .logo-container {
       display: flex;
       align-items: center;
@@ -135,7 +134,7 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center p-0 transition-colors duration-300">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center p-0">
 
   <div class="running-text"><span>RUJAK BUAH INDONESIA</span></div>
 
@@ -146,7 +145,6 @@
     </div>
   </header>
 
-  
   <div class="w-full max-w-sm scale-90 flex-grow flex items-start justify-center mt-10">
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden w-full">
       <div class="p-6">
@@ -222,59 +220,70 @@
     <button onclick="showQrisModal()"><i>💳</i><span>QRIS</span></button>
     <button onclick="goToPage('dashboard.html')"><i>📊</i><span>Pembeli</span></button>
     <button onclick="goToPage('home.html')"><i>📊</i><span>Penjual</span></button>
+    <button onclick="logout()"><i>🚪</i><span>Logout</span></button>
   </div>
 
   <script>
     let selectedRole = null;
-let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // ✅ pakai localStorage
+    let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-function goToPage(page) {
-  if (!localStorage.getItem('isLoggedIn')) {
-    alert('Silakan login terlebih dahulu!');
-    return;
-  }
-  window.location.href = page;
-}
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+      document.getElementById(`${role}Option`).classList.add('selected');
+      document.getElementById('continueBtn').disabled = false;
+      document.getElementById('continueBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+    }
 
-document.getElementById('authSubmitBtn').addEventListener('click', function () {
-  const username = document.getElementById('authUsername').value.trim();
-  const password = document.getElementById('authPassword').value.trim();
-  const submitBtn = this;
+    function continueToAuth() {
+      if (!selectedRole) return;
+      document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
+      document.getElementById('authModal').classList.remove('hidden');
+    }
 
-  if (!username || !password) {
-    alert('Silakan isi Username dan Password!');
-    return;
-  }
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
 
-  let valid = false;
-  let redirectUrl = '';
+    document.getElementById('authSubmitBtn').addEventListener('click', function () {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const submitBtn = this;
 
-  if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
-    valid = true;
-    redirectUrl = 'home.html';
-  } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
-    valid = true;
-    redirectUrl = 'dashboard.html';
-  }
+      if (!username || !password) {
+        alert('Silakan isi Username dan Password!');
+        return;
+      }
 
-  if (valid) {
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
-    submitBtn.disabled = true;
+      let valid = false;
+      let redirectUrl = '';
 
-    setTimeout(() => {
-      alert('Login Berhasil!');
-      isLoggedIn = true;
-      localStorage.setItem('isLoggedIn', 'true'); // ✅ simpan status
-      localStorage.setItem('userRole', selectedRole); // ✅ simpan role (optional)
-      window.location.href = redirectUrl;
-    }, 1500);
-  } else {
-    alert('Username atau Password salah!');
-  }
-});
+      if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+        valid = true;
+        redirectUrl = 'home.html';
+      } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+        valid = true;
+        redirectUrl = 'dashboard.html';
+      }
+
+      if (valid) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          alert('Login Berhasil!');
+          isLoggedIn = true;
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', selectedRole);
+          window.location.href = redirectUrl;
+        }, 1500);
+      } else {
+        alert('Username atau Password salah!');
+      }
+    });
 
     function goToPage(page) {
-      if (!isLoggedIn) {
+      if (!localStorage.getItem('isLoggedIn')) {
         alert('Silakan login terlebih dahulu!');
         return;
       }
@@ -285,7 +294,13 @@ document.getElementById('authSubmitBtn').addEventListener('click', function () {
       alert('Fitur QRIS sedang dikembangkan.');
     }
 
-    // Pause marquee on touch for mobile
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userRole');
+      alert('Anda telah logout!');
+      location.reload();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       const marqueeSpan = document.querySelector('.running-text span');
       marqueeSpan.addEventListener('touchstart', () => {
@@ -296,6 +311,5 @@ document.getElementById('authSubmitBtn').addEventListener('click', function () {
       });
     });
   </script>
-
 </body>
 </html>
