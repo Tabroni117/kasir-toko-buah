@@ -1,47 +1,193 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test Popup</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notifikasi Pesanan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    #popupNotifikasi {
-      display: none;
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #16a34a;
-      color: white;
-      padding: 10px 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      z-index: 1000;
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f0fdf4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #15803d;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .data-table th, .data-table td {
+      padding: 8px;
+      border: 1px solid #ddd;
       font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.5s ease, bottom 0.5s ease;
     }
 
-    #popupNotifikasi.show {
-      display: block;
-      opacity: 1;
-      bottom: 100px;
+    /* Spinner */
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    .spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 4px solid rgba(16, 185, 129, 0.2);
+      border-top: 4px solid #16a34a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Popup */
+    #popupNotifikasi {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ff5252;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+      animation: fadeInOut 4s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-10px); }
+      10% { opacity: 1; transform: translateY(0); }
+      90% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-10px); }
     }
   </style>
 </head>
 <body>
-
-  <button onclick="tampilkanNotifikasi()">Tes Popup</button>
+  <div id="loadingSpinner"><div class="spinner"></div></div>
   <div id="popupNotifikasi">📢 Pesanan baru masuk!</div>
 
+  <div class="container">
+    <h2>Daftar Buah</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Harga</th>
+          <th>Stok</th>
+        </tr>
+      </thead>
+      <tbody id="fruitList"></tbody>
+    </table>
+  </div>
+
+  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
-    function tampilkanNotifikasi() {
-      const popup = document.getElementById("popupNotifikasi");
-      popup.classList.add("show");
-      setTimeout(() => {
-        popup.classList.remove("show");
-      }, 3000);
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const fruitList = document.getElementById("fruitList");
+    const popup = document.getElementById("popupNotifikasi");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const notifSound = document.getElementById("notifSound");
+
+    let userInteracted = false;
+    let waitingToPlay = false;
+
+    document.addEventListener("click", () => {
+      userInteracted = true;
+      if (waitingToPlay) {
+        notifSound.play().catch(() => {});
+        waitingToPlay = false;
+      }
+    }, { once: true });
+
+    function showLoading() {
+      loadingSpinner.style.display = "flex";
     }
+
+    function hideLoading() {
+      loadingSpinner.style.display = "none";
+    }
+
+    function loadFruits() {
+      showLoading();
+      db.collection("buah").orderBy("nama").get()
+        .then(snapshot => {
+          fruitList.innerHTML = "";
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            fruitList.innerHTML += `
+              <tr>
+                <td>${data.nama}</td>
+                <td>Rp ${data.harga.toLocaleString()}</td>
+                <td>${data.stok} kg</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => alert("Gagal memuat data: " + err.message))
+        .finally(hideLoading);
+    }
+
+    function tampilkanPopup() {
+      popup.style.display = "block";
+      setTimeout(() => {
+        popup.style.display = "none";
+      }, 4000);
+    }
+
+    function tampilkanNotifikasi() {
+      if (userInteracted) {
+        notifSound.play().catch(() => {});
+      } else {
+        waitingToPlay = true;
+      }
+      tampilkanPopup();
+    }
+
+    function sembunyikanNotifikasi() {
+      notifSound.pause();
+      notifSound.currentTime = 0;
+    }
+
+    db.collection("pesanan").where("status", "==", "baru")
+      .onSnapshot(snapshot => {
+        if (!snapshot.empty) {
+          tampilkanNotifikasi();
+        } else {
+          sembunyikanNotifikasi();
+        }
+      });
+
+    window.addEventListener("DOMContentLoaded", loadFruits);
   </script>
 </body>
 </html>
