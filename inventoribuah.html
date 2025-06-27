@@ -196,7 +196,33 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+          }
+
+ .notif-lonceng {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 50%;
+}
+
+.berkedip-kuat {
+  animation: kedipHebat 1s infinite;
+  background-color: #ff5252 !important;
+  color: white !important;
+  font-weight: bold;
+  border: 2px solid white !important;
+  box-shadow: 0 0 10px #ff5252;
+}
+
+@keyframes kedipHebat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
   </style>
 </head>
 <body>
@@ -250,7 +276,13 @@
   <nav class="app-nav">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
     <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-    <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+    
+  <a href="navigator-input.html" class="nav-btn active" style="position: relative;">
+  <i class="fas fa-receipt"></i>
+  <span>Pesanan</span>
+  <span class="notif-lonceng berkedip-kuat">🔔</span>
+  </a>
+    
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
   </nav>  
 
@@ -332,6 +364,22 @@
         .finally(hideLoading);
     });
 
+    const notifEl = document.querySelector(".notif-lonceng");
+const notifSound = document.getElementById("notifSound");
+
+// Misalnya ada pesanan baru
+function tampilkanNotifikasi() {
+  notifEl.style.display = "inline";
+  notifSound.play().catch(() => {});
+}
+
+// Tidak ada pesanan baru
+function sembunyikanNotifikasi() {
+  notifEl.style.display = "none";
+  notifSound.pause();
+  notifSound.currentTime = 0;
+}
+
     function deleteFruit(id) {
       if (confirm("Hapus data buah ini?")) {
         showLoading();
@@ -341,8 +389,20 @@
           .finally(hideLoading);
       }
     }
-
+// GANTI "pesanan" sesuai dengan nama koleksi kamu di Firestore
+// dan "status" == "baru" adalah contoh filter data pesanan baru
+db.collection("pesanan")
+  .where("status", "==", "baru")
+  .onSnapshot((snapshot) => {
+    if (!snapshot.empty) {
+      tampilkanNotifikasi();
+    } else {
+      sembunyikanNotifikasi();
+    }
+  });
     window.addEventListener("DOMContentLoaded", loadFruits);
   </script>
+  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+
 </body>
 </html>
