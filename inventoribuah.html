@@ -137,45 +137,40 @@
       color: var(--primary-dark);
     }
     .app-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--white);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-
-        .nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 0.75rem;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--transition);
-            width: 100%;
-        }
-
-        .nav-btn i {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-btn.active {
-            color: var(--white);
-            background: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
-        }
-    
-        
-     #loadingSpinner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      transition: var(--transition);
+      width: 100%;
+    }
+    .nav-btn i {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .nav-btn.active {
+      color: var(--white);
+      background: var(--primary);
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+    }
+    #loadingSpinner {
       display: none;
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -238,35 +233,16 @@
             <th>Aksi</th>
           </tr>
         </thead>
-        <tbody id="fruitList">
-          <tr>
-            <td colspan="5" style="text-align:center; color:#888; padding:20px;">
-              <i class="fas fa-box-open" style="color:var(--primary);"></i><br>
-              Data buah belum tersedia
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="fruitList"></tbody>
       </table>
     </section>
   </div>
 
   <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn">
-      <i class="fas fa-home"></i>
-      <div>Beranda</div>
-    </a>
-    <a href="inventoribuah.html" class="nav-btn">
-      <i class="fas fa-boxes"></i>
-      <div>Inventori</div>
-    </a>
-    <a href="navigator-input.html" class="nav-btn active">
-      <i class="fas fa-receipt"></i>
-      <div>Pesanan</div>
-    </a>
-    <a href="pengaturan.html" class="nav-btn">
-      <i class="fas fa-cog"></i>
-      <div>Pengaturan</div>
-    </a>
+    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+    <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+    <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
   </nav>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -280,12 +256,13 @@
       messagingSenderId: "731011133713",
       appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
     };
-
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const fruitForm = document.getElementById('fruitForm');
     const fruitList = document.getElementById('fruitList');
+    const loadingSpinner = document.getElementById('loadingSpinner');
 
     function formatCurrency(amount) {
       return new Intl.NumberFormat('id-ID', {
@@ -293,7 +270,16 @@
       }).format(amount);
     }
 
+    function showLoading() {
+      loadingSpinner.style.display = 'flex';
+    }
+
+    function hideLoading() {
+      loadingSpinner.style.display = 'none';
+    }
+
     function loadFruits() {
+      showLoading();
       db.collection("buah").orderBy("nama").get()
         .then((querySnapshot) => {
           fruitList.innerHTML = '';
@@ -313,6 +299,10 @@
                 </tr>`;
             });
           }
+          hideLoading();
+        }).catch((err) => {
+          alert("Gagal memuat data: " + err.message);
+          hideLoading();
         });
     }
 
@@ -321,29 +311,29 @@
       const nama = document.getElementById("fruitName").value.trim();
       const harga = parseInt(document.getElementById("fruitPrice").value);
       const stok = parseInt(document.getElementById("fruitStock").value);
+      showLoading();
       db.collection("buah").add({ nama, harga, stok })
         .then(() => {
           fruitForm.reset();
           loadFruits();
-        });
+        })
+        .catch((err) => {
+          alert("Gagal menambahkan data: " + err.message);
+        })
+        .finally(hideLoading);
     });
 
     function deleteFruit(id) {
       if (confirm("Hapus data buah ini?")) {
+        showLoading();
         db.collection("buah").doc(id).delete()
-          .then(() => loadFruits());
+          .then(() => loadFruits())
+          .catch((err) => alert("Gagal menghapus: " + err.message))
+          .finally(hideLoading);
       }
     }
 
     window.addEventListener("DOMContentLoaded", loadFruits);
-    
-    function showLoading() {
-      loadingSpinner.style.display = 'flex';
-    }
-    function hideLoading() {
-      loadingSpinner.style.display = 'none';
-    }
-
   </script>
 </body>
 </html>
