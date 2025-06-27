@@ -286,7 +286,7 @@
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
   </nav>  
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
@@ -304,6 +304,8 @@
     const fruitForm = document.getElementById('fruitForm');
     const fruitList = document.getElementById('fruitList');
     const loadingSpinner = document.getElementById('loadingSpinner');
+    const notifEl = document.querySelector(".notif-lonceng");
+    const notifSound = document.getElementById("notifSound");
 
     function formatCurrency(amount) {
       return new Intl.NumberFormat('id-ID', {
@@ -364,21 +366,21 @@
         .finally(hideLoading);
     });
 
-    const notifEl = document.querySelector(".notif-lonceng");
-const notifSound = document.getElementById("notifSound");
+    function tampilkanNotifikasi() {
+      notifEl.style.display = "inline";
+      if (userInteracted) {
+        notifSound.play().catch(() => {});
+      } else {
+        // tunda pemutaran sampai user interaksi
+        waitingToPlay = true;
+      }
+    }
 
-// Misalnya ada pesanan baru
-function tampilkanNotifikasi() {
-  notifEl.style.display = "inline";
-  notifSound.play().catch(() => {});
-}
-
-// Tidak ada pesanan baru
-function sembunyikanNotifikasi() {
-  notifEl.style.display = "none";
-  notifSound.pause();
-  notifSound.currentTime = 0;
-}
+    function sembunyikanNotifikasi() {
+      notifEl.style.display = "none";
+      notifSound.pause();
+      notifSound.currentTime = 0;
+    }
 
     function deleteFruit(id) {
       if (confirm("Hapus data buah ini?")) {
@@ -389,34 +391,33 @@ function sembunyikanNotifikasi() {
           .finally(hideLoading);
       }
     }
-// GANTI "pesanan" sesuai dengan nama koleksi kamu di Firestore
-// dan "status" == "baru" adalah contoh filter data pesanan baru
-db.collection("pesanan")
-  .where("status", "==", "baru")
-  .onSnapshot((snapshot) => {
-    if (!snapshot.empty) {
-      tampilkanNotifikasi();
-    } else {
-      sembunyikanNotifikasi();
-    }
-  });
+
+    // Autoplay permission dan delay handling
+    let userInteracted = false;
+    let waitingToPlay = false;
+
+    document.addEventListener('click', () => {
+      userInteracted = true;
+      if (waitingToPlay) {
+        notifSound.play().catch(() => {});
+        waitingToPlay = false;
+      }
+    }, { once: true });
+
+    // Deteksi pesanan baru dari Firestore
+    db.collection("pesanan")
+      .where("status", "==", "baru")
+      .onSnapshot((snapshot) => {
+        if (!snapshot.empty) {
+          tampilkanNotifikasi();
+        } else {
+          sembunyikanNotifikasi();
+        }
+      });
+
     window.addEventListener("DOMContentLoaded", loadFruits);
   </script>
- <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+</body>
+</html>
 
-<script>
-  // Aktifkan izin audio setelah user klik
-  document.addEventListener('click', () => {
-    const audio = document.getElementById("notifSound");
-    audio.play().then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-    }).catch((e) => {
-      console.warn("Autoplay diblokir: " + e.message);
-    });
-  }, { once: true });
-</script>
-</body>
-</html>
-</body>
-</html>
