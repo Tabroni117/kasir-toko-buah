@@ -1,261 +1,25 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RUJAK BUAH INDONESIA | Input Buah</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #16a34a;
+      --primary-light: #22c55e;
       --primary-dark: #15803d;
-      --white: #ffffff;
+      --secondary: #64748b;
+      --accent: #84cc16;
       --light: #f0fdf4;
+      --white: #ffffff;
+      --dark: #1e293b;
       --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
       --transition: all 0.2s ease-in-out;
     }
-
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      background-color: var(--light);
-      color: #1e293b;
-      padding: 1rem;
-      min-height: 100vh;
-    }
-
-    /* Loading */
-    #loadingSpinner {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.8);
-      z-index: 999;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .spinner {
-      width: 3rem;
-      height: 3rem;
-      border: 4px solid rgba(16, 185, 129, 0.2);
-      border-top: 4px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: var(--white);
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      box-shadow: var(--card-shadow);
-      margin-bottom: 1rem;
-    }
-
-    .back-btn,
-    .refresh-btn {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 0.375rem;
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: var(--transition);
-    }
-
-    .back-btn:hover,
-    .refresh-btn:hover {
-      background-color: var(--primary-dark);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 700;
-    }
-
-    .app-container {
-      background: var(--white);
-      border-radius: 1rem;
-      box-shadow: var(--card-shadow);
-      overflow: hidden;
-      margin-bottom: 6rem;
-    }
-
-    .form-section {
-      padding: 1.5rem;
-    }
-
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--primary-dark);
-      margin-bottom: 1rem;
-    }
-
-    .section-title i {
-      margin-right: 0.5rem;
-      color: var(--primary);
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-      color: var(--primary-dark);
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid rgba(16, 181, 129, 0.3);
-      border-radius: 0.5rem;
-      background: #f8fafc;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: var(--white);
-    }
-
-    .btn-secondary {
-      background: var(--white);
-      color: var(--primary);
-      border: 1px solid var(--primary);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .data-section {
-      overflow-x: auto;
-      padding: 1rem;
-    }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .data-table thead th {
-      text-align: left;
-      padding: 1rem;
-      background: #f0fdf4;
-      color: var(--primary-dark);
-    }
-
-    .data-table tbody td {
-      padding: 1rem;
-      border-bottom: 1px solid rgba(16, 185, 129, 0.05);
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 1rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .status-available {
-      background-color: rgba(16, 185, 129, 0.1);
-      color: var(--primary-dark);
-    }
-
-    .status-out {
-      background-color: rgba(239, 68, 68, 0.1);
-      color: #DC2626;
-    }
-
-    .action-btn {
-      border: none;
-      background: none;
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-    }
-
-    .action-delete {
-      color: #DC2626;
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .action-delete:hover {
-      background: rgba(239, 68, 68, 0.2);
-    }
-
-    .app-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--white);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0.75rem 0;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-      z-index: 100;
-      height: 60px;
-    }
-
-    .nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 0.75rem;
-      color: var(--primary);
-      width: 25%;
-      transition: var(--transition);
-    }
-
-    .nav-btn i {
-      font-size: 1.25rem;
-      margin-bottom: 0.25rem;
-    }
- {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -281,11 +45,10 @@
       align-items: center;
       margin-bottom: 15px;
     }
-    .header-top a, .header-top button {
+    .header-top button {
       font-size: 12px;
       padding: 5px 10px;
       border-radius: 5px;
-      text-decoration: none;
       border: none;
       cursor: pointer;
       transition: background 0.3s, color 0.3s;
@@ -306,120 +69,74 @@
       background: var(--primary-light);
       color: white;
     }
-    h1 {
-      font-size: 16px;
-      margin-bottom: 2px;
-      color: var(--primary);
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .stat-box {
-      background: var(--light);
-      border-left: 5px solid var(--primary);
-      padding: 10px;
-      border-radius: 6px;
-      transition: transform 0.2s;
-    }
-    .stat-box:hover {
-      transform: scale(1.02);
-    }
-    .stat-box h3 {
+    .judul {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 14px;
-      margin-bottom: 5px;
-    }
-    .stat-box p {
-      font-size: 12px;
-      color: var(--secondary);
-    }
-    .stat-icon {
-      font-size: 20px;
       color: var(--primary);
-      opacity: 0.7;
+      margin-bottom: 10px;
     }
-    .order-item-upgrade {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px 16px;
+    .judul i {
+      font-size: 18px;
+    }
+    h2.section-title {
+      font-size: 14px;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+    }
+    label, input {
+      font-size: 12px;
+    }
+    .form-group {
       margin-bottom: 12px;
-      background: #ffffff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease;
     }
-    .order-item-upgrade:hover {
-      transform: scale(1.01);
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid rgba(16, 181, 129, 0.3);
+      border-radius: 6px;
+      background: #f8fafc;
+      font-size: 12px;
     }
-    .order-row-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
+    .btn {
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
     }
-    .customer {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .customer .avatar {
-      width: 32px;
-      height: 32px;
+    .btn-primary {
       background: var(--primary);
       color: white;
-      border-radius: 50%;
+    }
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    .btn-group {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
+      gap: 10px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
       font-size: 12px;
     }
-    .customer .info .name {
-      font-weight: 600;
-      font-size: 12px;
+    .data-table th, .data-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
     }
-    .customer .info .phone {
-      font-size: 10px;
-      color: var(--secondary);
-    }
-    .meta .total {
-      font-weight: bold;
-      color: var(--primary-dark);
-      font-size: 13px;
-    }
-    .meta .status {
+    .status-badge {
       padding: 3px 8px;
-      font-size: 10px;
       border-radius: 20px;
-      margin-top: 4px;
-      text-align: center;
-      font-weight: 500;
+      font-size: 10px;
       background: #e0fce2;
       color: var(--primary-dark);
     }
-    .order-row-bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .time {
-      font-size: 10px;
-      color: var(--secondary);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .items {
-      margin-top: 5px;
-      font-size: 11px;
-      line-height: 1.4;
-      background: #f9fafb;
-      padding: 8px;
-      border-radius: 6px;
-      color: #1e293b;
-    }
-    .bottom-nav {
+    .app-nav {
       position: fixed;
       bottom: 0;
       left: 0;
@@ -428,141 +145,63 @@
       border-top: 1px solid #ddd;
       display: flex;
       justify-content: space-around;
-      padding: 8px 0;
-      z-index: 999;
+      padding: 10px 0;
+      z-index: 1000;
     }
-    .bottom-nav button {
-      background: none;
-      border: none;
-      font-size: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #555;
-      transition: color 0.3s;
-    }
-    .bottom-nav button:hover {
-      color: var(--primary);
-    }
-    .bottom-nav span {
+    .nav-btn {
+      text-align: center;
       font-size: 10px;
+      color: #555;
+      text-decoration: none;
     }
-.app-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--white);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-
-        .nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 0.75rem;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            transition: var(--transition);
-            width: 100%;
-        }
-
-        .nav-btn i {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-btn.active {
-            color: var(--white);
-            background: var(--primary);
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
-        }
-    /* Media Queries for Responsiveness */
-    @media (max-width: 768px) {
-      .container {
-        padding: 10px;
-      }
-      h1 {
-        font-size: 14px;
-      }
-      .stat-box h3 {
-        font-size: 12px;
-      }
-      .stat-box p {
-        font-size: 10px;
-      }
-      .customer .info .name {
-        font-size: 11px;
-      }
-      .customer .info .phone {
-        font-size: 9px;
-      }
-      .meta .total {
-        font-size: 12px;
-      }
-      .time {
-        font-size: 9px;
-      }
-      .items {
-        font-size: 10px;
-      }
+    .nav-btn i {
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+    .nav-btn.active {
+      color: white;
+      background: var(--primary);
+      padding: 8px 12px;
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
-  <div id="loadingSpinner"><div class="spinner"></div></div>
-
-  <div class="header-top">
-    <button class="back-btn" onclick="window.location.href='dashboard.html'">
-      <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-    </button>
-    <button class="refresh-btn" onclick="loadFruits()">
-      <i class="fas fa-sync-alt"></i> Refresh
-    </button>
-  </div>
-
-  <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
-    <div style="display: flex; align-items: center; gap: 6px;">
-      <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
-      <h1>RUJAK BUAH INDONESIA</h1>
+  <div class="container">
+    <div class="header-top">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Dashboard</button>
+      <button class="refresh-btn" onclick="loadFruits()"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
-  </div>
+    <div class="judul">
+      <i class="fas fa-leaf"></i>
+      <span>RUJAK BUAH INDONESIA</span>
+    </div>
 
-  <div class="app-container">
-    <section class="form-section">
+    <section>
       <h2 class="section-title"><i class="fas fa-plus-circle"></i> Input Buah Premium</h2>
       <form id="fruitForm">
         <div class="form-group">
-          <label for="fruitName" class="form-label">Nama Buah</label>
+          <label for="fruitName">Nama Buah</label>
           <input type="text" id="fruitName" class="form-input" placeholder="Contoh: Apel Fuji" required>
         </div>
         <div class="form-group">
-          <label for="fruitPrice" class="form-label">Harga (Rp)</label>
+          <label for="fruitPrice">Harga (Rp)</label>
           <input type="number" id="fruitPrice" class="form-input" placeholder="Contoh: 50000" required>
         </div>
         <div class="form-group">
-          <label for="fruitStock" class="form-label">Stok (kg)</label>
+          <label for="fruitStock">Stok (kg)</label>
           <input type="number" id="fruitStock" class="form-input" placeholder="Contoh: 50" required>
         </div>
         <div class="btn-group">
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Data</button>
-          <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset Form</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
+          <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
         </div>
       </form>
-    </section>
 
-    <section class="data-section">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Nama Buah</th>
+            <th>Nama</th>
             <th>Harga</th>
             <th>Stok</th>
             <th>Status</th>
@@ -571,8 +210,8 @@
         </thead>
         <tbody id="fruitList">
           <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">
-              <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: var(--primary);"></i>
+            <td colspan="5" style="text-align:center; color:#888; padding:20px;">
+              <i class="fas fa-box-open" style="color:var(--primary);"></i><br>
               Data buah belum tersedia
             </td>
           </tr>
@@ -584,22 +223,24 @@
   <nav class="app-nav">
     <a href="apl05.html" class="nav-btn">
       <i class="fas fa-home"></i>
-      <span>Beranda</span>
+      <div>Beranda</div>
     </a>
     <a href="inventoribuah.html" class="nav-btn">
       <i class="fas fa-boxes"></i>
-      <span>Inventori</span>
+      <div>Inventori</div>
     </a>
     <a href="navigator-input.html" class="nav-btn active">
       <i class="fas fa-receipt"></i>
-      <span>Pesanan</span>
+      <div>Pesanan</div>
     </a>
     <a href="pengaturan.html" class="nav-btn">
       <i class="fas fa-cog"></i>
-      <span>Pengaturan</span>
+      <div>Pengaturan</div>
     </a>
   </nav>
 
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
@@ -615,37 +256,19 @@
 
     const fruitForm = document.getElementById('fruitForm');
     const fruitList = document.getElementById('fruitList');
-    const loadingSpinner = document.getElementById('loadingSpinner');
 
     function formatCurrency(amount) {
       return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
+        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
       }).format(amount);
     }
 
-    function showLoading() {
-      loadingSpinner.style.display = 'flex';
-    }
-
-    function hideLoading() {
-      loadingSpinner.style.display = 'none';
-    }
-
     function loadFruits() {
-      showLoading();
       db.collection("buah").orderBy("nama").get()
         .then((querySnapshot) => {
           fruitList.innerHTML = '';
           if (querySnapshot.empty) {
-            fruitList.innerHTML = `
-              <tr>
-                <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">
-                  <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: var(--primary);"></i>
-                  Data buah belum tersedia
-                </td>
-              </tr>`;
+            fruitList.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888; padding:20px;"><i class='fas fa-box-open' style='color:var(--primary);'></i><br>Data buah belum tersedia</td></tr>`;
           } else {
             querySnapshot.forEach((doc) => {
               const data = doc.data();
@@ -655,30 +278,16 @@
                   <td>${data.nama}</td>
                   <td>${formatCurrency(data.harga)}</td>
                   <td>${data.stok} kg</td>
-                  <td>
-                    <span class="status-badge ${data.stok > 0 ? 'status-available' : 'status-out'}">
-                      ${status}
-                    </span>
-                  </td>
-                  <td>
-                    <button class="action-btn action-delete" onclick="deleteFruit('${doc.id}')">
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </td>
+                  <td><span class="status-badge">${status}</span></td>
+                  <td><button onclick="deleteFruit('${doc.id}')" style="color:red; border:none; background:none;"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>`;
             });
           }
-          hideLoading();
-        })
-        .catch((error) => {
-          console.error("Error mengambil data:", error);
-          hideLoading();
         });
     }
 
-    fruitForm.addEventListener("submit", function (e) {
+    fruitForm.addEventListener("submit", function(e) {
       e.preventDefault();
-      showLoading();
       const nama = document.getElementById("fruitName").value.trim();
       const harga = parseInt(document.getElementById("fruitPrice").value);
       const stok = parseInt(document.getElementById("fruitStock").value);
@@ -686,22 +295,13 @@
         .then(() => {
           fruitForm.reset();
           loadFruits();
-        })
-        .catch((error) => {
-          console.error("Gagal menambahkan data:", error);
-        })
-        .finally(() => {
-          hideLoading();
         });
     });
 
     function deleteFruit(id) {
       if (confirm("Hapus data buah ini?")) {
         db.collection("buah").doc(id).delete()
-          .then(() => loadFruits())
-          .catch((error) => {
-            console.error("Gagal menghapus:", error);
-          });
+          .then(() => loadFruits());
       }
     }
 
