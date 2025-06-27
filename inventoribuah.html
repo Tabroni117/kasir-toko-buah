@@ -17,6 +17,7 @@
       --white: #ffffff;
       --dark: #1e293b;
       --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+      --transition: all 0.2s ease-in-out;
     }
     * {
       margin: 0;
@@ -50,6 +51,7 @@
       border-radius: 5px;
       border: none;
       cursor: pointer;
+      transition: background 0.3s, color 0.3s;
     }
     .back-btn {
       background: var(--primary);
@@ -75,6 +77,9 @@
       color: var(--primary);
       margin-bottom: 10px;
     }
+    .judul i {
+      font-size: 18px;
+    }
     h2.section-title {
       font-size: 14px;
       color: var(--primary-dark);
@@ -92,6 +97,7 @@
       border: 1px solid rgba(16, 181, 129, 0.3);
       border-radius: 6px;
       background: #f8fafc;
+      font-size: 12px;
     }
     .btn {
       font-size: 12px;
@@ -130,85 +136,49 @@
       background: #e0fce2;
       color: var(--primary-dark);
     }
-    .app-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--white);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.3rem 0;
-      z-index: 100;
-      border-top: 1px solid #e5e7eb;
-    }
-    .nav-btn {
-      flex: 1;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 0.6rem;
-      color: var(--primary);
-      padding: 0.3rem 0;
-    }
-    .nav-btn i {
-      font-size: 0.9rem;
-      margin-bottom: 2px;
-    }
-    .nav-btn.active {
-      color: var(--primary);
-    }
+   .app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  z-index: 100;
+  border-top: 1px solid #e5e7eb;
+}
 
-    .notif-lonceng {
-      position: absolute;
-      top: 2px;
-      right: 6px;
-      font-size: 0.75rem;
-      padding: 2px 4px;
-      border-radius: 50%;
-    }
+.nav-btn {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 0.6rem;
+  color: var(--primary);
+  padding: 0.3rem 0;
+  transition: background 0.3s ease;
+}
 
-    .berkedip-kuat {
-      animation: kedipHebat 1s infinite;
-      background-color: #ff5252 !important;
-      color: white !important;
-      font-weight: bold;
-      border: 2px solid white !important;
-      box-shadow: 0 0 10px #ff5252;
-    }
+.nav-btn i {
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
 
-    @keyframes kedipHebat {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.2; }
-    }
+.nav-btn.active {
+  color: var(--primary);
+  background: none;
+  border-radius: 0;
+  transform: none;
+  padding: 0.3rem 0;
+  box-shadow: none;
 
-    #popupNotifikasi {
-      display: none;
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #16a34a;
-      color: white;
-      padding: 10px 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      z-index: 1000;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.5s ease, bottom 0.5s ease;
-    }
 
-    #popupNotifikasi.show {
-      display: block;
-      opacity: 1;
-      bottom: 100px;
     }
-
     #loadingSpinner {
       display: none;
       position: fixed;
@@ -218,7 +188,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .spinner {
       width: 3rem;
       height: 3rem;
@@ -227,37 +196,35 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-
   <div id="loadingSpinner"><div class="spinner"></div></div>
-  <div id="popupNotifikasi">📢 Pesanan baru masuk!</div>
-
   <div class="container">
     <div class="header-top">
       <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Dashboard</button>
       <button class="refresh-btn" onclick="loadFruits()"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
-
-    <div class="judul"><i class="fas fa-leaf"></i><span>RUJAK BUAH INDONESIA</span></div>
+    <div class="judul">
+      <i class="fas fa-leaf"></i>
+      <span>RUJAK BUAH INDONESIA</span>
+    </div>
 
     <section>
       <h2 class="section-title"><i class="fas fa-plus-circle"></i> Input Buah Premium</h2>
       <form id="fruitForm">
         <div class="form-group">
           <label for="fruitName">Nama Buah</label>
-          <input type="text" id="fruitName" class="form-input" required>
+          <input type="text" id="fruitName" class="form-input" placeholder="Contoh: Apel Fuji" required>
         </div>
         <div class="form-group">
           <label for="fruitPrice">Harga (Rp)</label>
-          <input type="number" id="fruitPrice" class="form-input" required>
+          <input type="number" id="fruitPrice" class="form-input" placeholder="Contoh: 50000" required>
         </div>
         <div class="form-group">
           <label for="fruitStock">Stok (kg)</label>
-          <input type="number" id="fruitStock" class="form-input" required>
+          <input type="number" id="fruitStock" class="form-input" placeholder="Contoh: 50" required>
         </div>
         <div class="btn-group">
           <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
@@ -283,12 +250,9 @@
   <nav class="app-nav">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
     <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-    <a href="navigator-input.html" class="nav-btn active" style="position: relative;">
-      <i class="fas fa-receipt"></i><span>Pesanan</span>
-      <span class="notif-lonceng berkedip-kuat">🔔</span>
-    </a>
+    <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i><span>Pengaturan</span></a>
-  </nav>
+  </nav>  
 
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -301,16 +265,19 @@
       messagingSenderId: "731011133713",
       appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
     };
-
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const fruitForm = document.getElementById('fruitForm');
     const fruitList = document.getElementById('fruitList');
     const loadingSpinner = document.getElementById('loadingSpinner');
-    const notifEl = document.querySelector(".notif-lonceng");
-    const popup = document.getElementById("popupNotifikasi");
-    const notifSound = document.getElementById("notifSound");
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
+      }).format(amount);
+    }
 
     function showLoading() {
       loadingSpinner.style.display = 'flex';
@@ -320,104 +287,62 @@
       loadingSpinner.style.display = 'none';
     }
 
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-      }).format(amount);
-    }
-
     function loadFruits() {
       showLoading();
       db.collection("buah").orderBy("nama").get()
-        .then(snapshot => {
+        .then((querySnapshot) => {
           fruitList.innerHTML = '';
-          if (snapshot.empty) {
-            fruitList.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Data belum tersedia</td></tr>`;
+          if (querySnapshot.empty) {
+            fruitList.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888; padding:20px;"><i class='fas fa-box-open' style='color:var(--primary);'></i><br>Data buah belum tersedia</td></tr>`;
           } else {
-            snapshot.forEach(doc => {
+            querySnapshot.forEach((doc) => {
               const data = doc.data();
+              const status = data.stok > 0 ? 'Tersedia' : 'Habis';
               fruitList.innerHTML += `
                 <tr>
                   <td>${data.nama}</td>
                   <td>${formatCurrency(data.harga)}</td>
                   <td>${data.stok} kg</td>
-                  <td><span class="status-badge">${data.stok > 0 ? 'Tersedia' : 'Habis'}</span></td>
-                  <td><button onclick="deleteFruit('${doc.id}')" style="color:red; background:none; border:none;"><i class="fas fa-trash-alt"></i></button></td>
+                  <td><span class="status-badge">${status}</span></td>
+                  <td><button onclick="deleteFruit('${doc.id}')" style="color:red; border:none; background:none;"><i class="fas fa-trash-alt"></i></button></td>
                 </tr>`;
             });
           }
           hideLoading();
-        }).catch(err => {
-          alert("Gagal memuat: " + err.message);
+        }).catch((err) => {
+          alert("Gagal memuat data: " + err.message);
           hideLoading();
         });
     }
 
-    fruitForm.addEventListener("submit", e => {
+    fruitForm.addEventListener("submit", function(e) {
       e.preventDefault();
-      const nama = fruitForm.fruitName.value.trim();
-      const harga = parseInt(fruitForm.fruitPrice.value);
-      const stok = parseInt(fruitForm.fruitStock.value);
+      const nama = document.getElementById("fruitName").value.trim();
+      const harga = parseInt(document.getElementById("fruitPrice").value);
+      const stok = parseInt(document.getElementById("fruitStock").value);
       showLoading();
       db.collection("buah").add({ nama, harga, stok })
         .then(() => {
           fruitForm.reset();
           loadFruits();
         })
-        .catch(err => alert("Gagal simpan: " + err.message))
+        .catch((err) => {
+          alert("Gagal menambahkan data: " + err.message);
+        })
         .finally(hideLoading);
     });
 
-    function tampilkanNotifikasi() {
-      notifEl.style.display = "inline";
-      popup.classList.add("show");
-      if (userInteracted) {
-        notifSound.play().catch(() => {});
-      } else {
-        waitingToPlay = true;
-      }
-      setTimeout(() => popup.classList.remove("show"), 3000);
-    }
-
-    function sembunyikanNotifikasi() {
-      notifEl.style.display = "none";
-      notifSound.pause();
-      notifSound.currentTime = 0;
-    }
-
     function deleteFruit(id) {
-      if (confirm("Hapus data ini?")) {
+      if (confirm("Hapus data buah ini?")) {
         showLoading();
         db.collection("buah").doc(id).delete()
-          .then(loadFruits)
-          .catch(err => alert("Gagal hapus: " + err.message))
+          .then(() => loadFruits())
+          .catch((err) => alert("Gagal menghapus: " + err.message))
           .finally(hideLoading);
       }
     }
 
-    let userInteracted = false;
-    let waitingToPlay = false;
-
-    document.addEventListener('click', () => {
-      userInteracted = true;
-      if (waitingToPlay) {
-        notifSound.play().catch(() => {});
-        waitingToPlay = false;
-      }
-    }, { once: true });
-
-    db.collection("pesanan").where("status", "==", "baru")
-      .onSnapshot(snapshot => {
-        if (!snapshot.empty) {
-          tampilkanNotifikasi();
-        } else {
-          sembunyikanNotifikasi();
-        }
-      });
-
     window.addEventListener("DOMContentLoaded", loadFruits);
   </script>
-
-  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 </body>
 </html>
