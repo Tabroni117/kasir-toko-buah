@@ -2,14 +2,124 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>RUJAK BUAH INDONESIA | Dashboard Premium</title>
+  <title>RUJAK BUAH INDONESIA | Notifikasi Pesanan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* Tetap pakai semua CSS asli dari file kamu */
-    /* (sudah diambil dari kode sebelumnya, tidak dipotong untuk menjaga tampilan penuh) */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 90px 10px 60px;
+      font-size: 14px;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #4ADE80, #22C55E);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      margin: 1rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      height: 70px;
+      z-index: 1000;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+    }
+
+    .btn {
+      background-color: white;
+      color: #22C55E;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .glow {
+      animation: pulseGlow 2s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
+      70% { box-shadow: 0 0 0 12px rgba(33, 150, 243, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+    }
+
+    .berkedip-kuat {
+      animation: kedipHebat 1s infinite;
+      background-color: #ff5252 !important;
+      color: white !important;
+      font-weight: bold;
+      border: 2px solid white !important;
+      box-shadow: 0 0 10px #ff5252;
+    }
+
+    @keyframes kedipHebat {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* Popup modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 400px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    #btnCekPesanan {
+      width: auto;
+      padding: 12px 20px;
+    }
   </style>
 </head>
 <body>
@@ -18,8 +128,8 @@
   <div class="brand">
     <div class="brand-icon"><i class="fas fa-leaf"></i></div>
     <div class="brand-text">
-      <h1>RUJAK BUAH INDONESIA</h1>
-      <p>Aplikasi Kasir Premium</p>
+      <h1 style="font-size: 1.2rem; margin:0;">RUJAK BUAH INDONESIA</h1>
+      <p style="font-size: 0.8rem; margin:0;">Pesanan Masuk</p>
     </div>
   </div>
   <button class="btn" onclick="window.location.href='dashboard.html'">
@@ -27,15 +137,22 @@
   </button>
 </header>
 
-<!-- Tombol Cek Pesanan Masuk -->
-<div style="padding: 100px 20px 60px 20px;">
+<div style="padding: 30px; text-align: center;">
   <button id="btnCekPesanan" class="glow" onclick="window.location.href='navigator-input.html'" style="position: relative;">
     🛒 Cek Pesanan Masuk
-    <span id="notifLonceng" class="berkedip" style="display: none; position: absolute; top: -5px; right: -5px;">🔔</span>
+    <span id="notifLonceng" style="display:none; position: absolute; top: -5px; right: -5px;">🔔</span>
   </button>
 </div>
 
-<!-- Audio Notifikasi -->
+<!-- POPUP PESANAN MASUK -->
+<div id="popupPesanan" class="modal">
+  <div class="modal-content">
+    <h3>📥 Pesanan Baru Masuk!</h3>
+    <div id="popupIsiPesanan"></div>
+    <button onclick="tutupPopup()">Tutup</button>
+  </div>
+</div>
+
 <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
 <script>
@@ -53,6 +170,32 @@
   const notifEl = document.getElementById("notifLonceng");
   const tombolPesanan = document.getElementById("btnCekPesanan");
 
+  let terakhirDitampilkan = "";
+
+  function tampilkanPopupPesanan(data) {
+    const items = data.items || [];
+    let isi = "";
+    let total = 0;
+    items.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      isi += `
+        <div>
+          <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
+          <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
+          <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
+        </div><hr>`;
+    });
+    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+
+    document.getElementById("popupIsiPesanan").innerHTML = isi;
+    document.getElementById("popupPesanan").style.display = "block";
+  }
+
+  function tutupPopup() {
+    document.getElementById("popupPesanan").style.display = "none";
+  }
+
   function cekPesananBaru() {
     db.collection("pesanan")
       .orderBy("waktu", "desc")
@@ -61,6 +204,7 @@
       .then(snapshot => {
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
+          const idPesanan = snapshot.docs[0].id;
           const waktuPesanan = data.waktu?.toDate?.() || new Date();
           const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
           const sound = document.getElementById("notifSound");
@@ -69,6 +213,11 @@
             notifEl.style.display = "inline";
             tombolPesanan.classList.add("berkedip-kuat");
             sound.play();
+
+            if (idPesanan !== terakhirDitampilkan) {
+              tampilkanPopupPesanan(data);
+              terakhirDitampilkan = idPesanan;
+            }
           } else {
             notifEl.style.display = "none";
             tombolPesanan.classList.remove("berkedip-kuat");
