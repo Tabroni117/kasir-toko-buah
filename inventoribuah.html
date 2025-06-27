@@ -38,7 +38,6 @@
             min-height: 100vh;
         }
 
-        /* App Container */
         .app-container {
             background: var(--white);
             border-radius: 1rem;
@@ -47,7 +46,6 @@
             margin-bottom: 6rem;
         }
 
-        /* Form Section */
         .form-section {
             padding: 2rem;
         }
@@ -113,7 +111,6 @@
             margin-top: 1rem;
         }
 
-        /* Table */
         .data-section {
             overflow-x: auto;
         }
@@ -174,7 +171,6 @@
             background: rgba(239, 68, 68, 0.2);
         }
 
-        /* Loading */
         #loadingSpinner {
             display: none;
             position: fixed;
@@ -198,7 +194,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Bottom Navigation */
         .app-nav {
             position: fixed;
             bottom: 0;
@@ -244,202 +239,77 @@
     </style>
 </head>
 <body>
-   <!-- Loading -->
     <div id="loadingSpinner"><div class="spinner"></div></div>
 
+
 <div class="container">
-    <div class="header-top">
-      <button class="back-btn" onclick="window.location.href='dashboard.html'">
-        <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
-      </button>
-      <button class="refresh-btn" onclick="loadData()">
-        <i class="fas fa-sync-alt"></i> Refresh
-      </button>
-    </div>
+  <div class="header-top">
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">
+      <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
+    </button>
+    <button class="refresh-btn" onclick="loadFruits()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
 
-    <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
-        <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
+  <!-- Judul -->
+  <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
+      <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
+    </div>
+  </div>
+
+  <!-- Container utama -->
+  <div class="app-container">
+    <!-- Form Input -->
+    <section class="form-section">
+      <h2 class="section-title"><i class="fas fa-plus-circle"></i> Input Buah Premium</h2>
+      <form id="fruitForm">
+        <div class="form-group">
+          <label for="fruitName" class="form-label">Nama Buah</label>
+          <input type="text" id="fruitName" class="form-input" placeholder="Contoh: Apel Fuji" required>
+        </div>
+        <div class="form-group">
+          <label for="fruitPrice" class="form-label">Harga (Rp)</label>
+          <input type="number" id="fruitPrice" class="form-input" placeholder="Contoh: 50000" required>
+        </div>
+        <div class="form-group">
+          <label for="fruitStock" class="form-label">Stok (kg)</label>
+          <input type="number" id="fruitStock" class="form-input" placeholder="Contoh: 50" required>
+        </div>
+        <div class="btn-group">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Data</button>
+          <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset Form</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Tabel Data Buah -->
+    <section class="data-section">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nama Buah</th>
+              <th>Harga</th>
+              <th>Stok</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="fruitList">
+            <tr>
+              <td colspan="5" style="text-align:center; padding:2rem;">
+                <i class="fas fa-box-open" style="font-size:2rem; color:var(--primary);"></i><br>
+                Data buah belum tersedia
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-
-    <!-- Container -->
-    <div class="app-container">
-        <section class="form-section">
-            <h2 class="section-title"><i class="fas fa-plus-circle"></i> Input Buah Premium</h2>
-            <form id="fruitForm">
-                <div class="form-group">
-                    <label for="fruitName" class="form-label">Nama Buah</label>
-                    <input type="text" id="fruitName" class="form-input" placeholder="Contoh: Apel Fuji" required>
-                </div>
-                <div class="form-group">
-                    <label for="fruitPrice" class="form-label">Harga (Rp)</label>
-                    <input type="number" id="fruitPrice" class="form-input" placeholder="Contoh: 50000" required>
-                </div>
-                <div class="form-group">
-                    <label for="fruitStock" class="form-label">Stok (kg)</label>
-                    <input type="number" id="fruitStock" class="form-input" placeholder="Contoh: 50" required>
-                </div>
-                <div class="btn-group">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Data</button>
-                    <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset Form</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="data-section">
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Nama Buah</th>
-                            <th>Harga</th>
-                            <th>Stok</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fruitList">
-                        <tr>
-                            <td colspan="5" style="text-align:center; padding:2rem;">
-                                <i class="fas fa-box-open" style="font-size:2rem; color:var(--primary);"></i><br>
-                                Data buah belum tersedia
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <!-- Bottom Navigator -->
-    <nav class="app-nav">
-        <a href="apl05.html" class="nav-btn">
-            <i class="fas fa-home"></i>
-            <span>Beranda</span>
-        </a>
-        <a href="inventoribuah.html" class="nav-btn">
-            <i class="fas fa-boxes"></i>
-            <span>Inventori</span>
-        </a>
-        <a href="navigator-input.html" class="nav-btn active">
-            <i class="fas fa-receipt"></i>
-            <span>Pesanan</span>
-        </a>
-        <a href="pengaturan.html" class="nav-btn">
-            <i class="fas fa-cog"></i>
-            <span>Pengaturan</span>
-        </a>
-    </nav>
-
-    <!-- Script Firebase -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.appspot.com",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        const fruitForm = document.getElementById('fruitForm');
-        const fruitList = document.getElementById('fruitList');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
-        }
-
-        function showLoading() {
-            loadingSpinner.style.display = 'flex';
-        }
-
-        function hideLoading() {
-            loadingSpinner.style.display = 'none';
-        }
-
-        function loadFruits() {
-            showLoading();
-            db.collection("buah").orderBy("nama").get()
-                .then((querySnapshot) => {
-                    fruitList.innerHTML = '';
-                    if (querySnapshot.empty) {
-                        fruitList.innerHTML = `
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">
-                                    <i class="fas fa-box-open" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: var(--primary);"></i>
-                                    Data buah belum tersedia
-                                </td>
-                            </tr>`;
-                    } else {
-                        querySnapshot.forEach((doc) => {
-                            const data = doc.data();
-                            const status = data.stok > 0 ? 'Tersedia' : 'Habis';
-                            fruitList.innerHTML += `
-                                <tr>
-                                    <td>${data.nama}</td>
-                                    <td>${formatCurrency(data.harga)}</td>
-                                    <td>${data.stok} kg</td>
-                                    <td>
-                                        <span class="status-badge ${data.stok > 0 ? 'status-available' : 'status-out'}">
-                                            ${status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="action-btn action-delete" onclick="deleteFruit('${doc.id}')">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </td>
-                                </tr>`;
-                        });
-                    }
-                    hideLoading();
-                })
-                .catch((error) => {
-                    console.error("Error mengambil data:", error);
-                    hideLoading();
-                });
-        }
-
-        fruitForm.addEventListener("submit", function (e) {
-            e.preventDefault();
-            showLoading();
-            const nama = document.getElementById("fruitName").value.trim();
-            const harga = parseInt(document.getElementById("fruitPrice").value);
-            const stok = parseInt(document.getElementById("fruitStock").value);
-            db.collection("buah").add({ nama, harga, stok })
-                .then(() => {
-                    fruitForm.reset();
-                    loadFruits();
-                })
-                .catch((error) => {
-                    console.error("Gagal menambahkan data:", error);
-                })
-                .finally(() => {
-                    hideLoading();
-                });
-        });
-
-        function deleteFruit(id) {
-            if (confirm("Hapus data buah ini?")) {
-                db.collection("buah").doc(id).delete()
-                    .then(() => loadFruits())
-                    .catch((error) => {
-                        console.error("Gagal menghapus:", error);
-                    });
-            }
-        }
-
-        window.addEventListener("DOMContentLoaded", loadFruits);
-    </script>
-</body>
-</html>
+    </section>
+  </div>
+  <!-- End Container -->
+</div>
+<!-- End .container -->
