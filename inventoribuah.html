@@ -338,7 +338,7 @@
     <div class="header-top">
   <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
   <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
-  <i id="notifLonceng" class="fa-solid fa-bell berkedip-kuat" style="font-size: 20px; color: #16a34a;"></i>
+  <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 20px; color: #16a34a;"></i>
 </div>
     <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
@@ -465,27 +465,35 @@
       document.getElementById("popupPesanan").style.display = "flex";
     }
 
-    function tutupPopup() {
-      document.getElementById("popupPesanan").style.display = "none";
-      document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-    }
+  function tutupPopup() {
+  document.getElementById("popupPesanan").style.display = "none";
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+  sound.pause();
+  sound.currentTime = 0;
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+}
 
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          const data = doc.data();
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-            sound.play();
-            tampilkanPopupPesanan(data);
-            terakhirDitampilkan = doc.id;
-          }
-        }
-      });
-    }
+   function cekPesananBaru() {
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const waktuPesanan = data.waktu?.toDate?.() || new Date();
+      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
 
+      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+        terakhirDitampilkan = doc.id;
+        sound.play();
+        tampilkanPopupPesanan(data);
+        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+      } else {
+        // Tidak ada pesanan baru, matikan suara & kedipan
+        sound.pause();
+        document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+      }
+    }
+  });
+}
     window.addEventListener("DOMContentLoaded", () => {
       loadFruits();
       cekPesananBaru();
