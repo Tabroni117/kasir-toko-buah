@@ -451,26 +451,31 @@
     const sound = document.getElementById("notifSound");
     let terakhirDitampilkan = "";
 
-    function tampilkanPopupPesanan(data) {
-      const items = data.items || [];
-      let isi = "";
-      let total = 0;
-      items.forEach(item => {
-        const subtotal = item.harga * item.jumlah;
-        total += subtotal;
-        isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-      });
-      isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-      document.getElementById("popupIsiPesanan").innerHTML = isi;
-      document.getElementById("popupPesanan").style.display = "flex";
-    }
+   function tampilkanPopupPesanan(data) {
+  const items = data.items || [];
+  let isi = "";
+  let total = 0;
+  items.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+  });
+  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+  document.getElementById("popupIsiPesanan").innerHTML = isi;
+
+  // ✅ Tambahkan baris ini untuk menyimpan waktu dibuka
+  localStorage.setItem("pesananSudahDibuka", data.waktu?.toDate?.() || new Date());
+
+  document.getElementById("popupPesanan").style.display = "flex";
+}
 
   function tutupPopup() {
   document.getElementById("popupPesanan").style.display = "none";
   document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+  // ✅ Tambahkan ini
   sound.pause();
   sound.currentTime = 0;
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
 }
 
    function cekPesananBaru() {
