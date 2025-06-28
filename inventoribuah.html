@@ -451,6 +451,11 @@
   // === NOTIFIKASI PESANAN ===
   const sound = document.getElementById("notifSound");
   let terakhirDitampilkan = "";
+  document.addEventListener("touchstart", () => {
+  sound.play().catch(() => {});
+  sound.pause();
+  sound.currentTime = 0;
+}, { once: true });
 
   function tampilkanPopupPesanan(data) {
     const items = data.items || [];
@@ -492,27 +497,31 @@
     }
   }
 
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const waktuPesanan = data.waktu?.toDate?.() || new Date();
-        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+function cekPesananBaru() {
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const waktuPesanan = data.waktu?.toDate?.() || new Date();
+      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
 
-        if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-          terakhirDitampilkan = doc.id;
-          sound.play();
-          tampilkanPopupPesanan(data);
-          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        } else {
-          sound.pause();
-          document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-        }
+      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+        terakhirDitampilkan = doc.id;
+        sound.play();
+        tampilkanPopupPesanan(data);
+        const lonceng = document.getElementById("notifLonceng");
+        lonceng.style.display = "inline-block";
+        lonceng.classList.add("berkedip-kuat");
+      } else {
+        sound.pause();
+        sound.currentTime = 0;
+        const lonceng = document.getElementById("notifLonceng");
+        lonceng.classList.remove("berkedip-kuat");
+        lonceng.style.display = "none"; // sembunyikan kalau tidak ada pesanan baru
       }
-    });
-  }
-
+    }
+  });
+}
   document.addEventListener("DOMContentLoaded", () => {
     loadFruits();
     cekPesananBaru();
