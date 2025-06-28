@@ -1,206 +1,202 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>RUJAK BUAH INDONESIA | Notifikasi Pesanan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Rujak Buah Indonesia</title>
+
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
   <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #f0f8ff;
-      margin: 0;
-      padding: 90px 10px 60px;
-      font-size: 14px;
+      padding-bottom: 70px;
     }
 
-    .btn {
-      background-color: white;
-      color: #22C55E;
-      border: none;
-      border-radius: 0.5rem;
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .glow {
-      animation: pulseGlow 2s infinite;
-    }
-
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); }
-      70% { box-shadow: 0 0 0 12px rgba(33, 150, 243, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
-    }
-
-    .berkedip-kuat {
-      animation: kedipHebat 1s infinite;
-      background-color: #ff5252 !important;
-      color: white !important;
-      font-weight: bold;
-      border: 2px solid white !important;
-      box-shadow: 0 0 10px #ff5252;
-    }
-
-    @keyframes kedipHebat {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.2; }
-    }
-
-    /* Popup modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1001;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-
-    .modal-content {
-      background: #fff;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      max-width: 400px;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    button {
-      background: #4CAF50;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      width: 100%;
-      margin-top: 10px;
-    }
-
-    #btnCekPesanan {
-      width: auto;
-      padding: 12px 20px;
+    .custom-header {
+      background: linear-gradient(135deg, #00C853, #64DD17);
     }
   </style>
 </head>
-<body>
+<body class="bg-green-50 min-h-screen flex flex-col">
 
-<div style="padding: 30px; text-align: center;">
-  <button id="btnCekPesanan" class="glow" onclick="window.location.href='navigator-input.html'" style="position: relative;">
-    🛒 Cek Pesanan Masuk
-    <span id="notifLonceng" style="display:none; position: absolute; top: -5px; right: -5px;">🔔</span>
-  </button>
-</div>
-
-<!-- POPUP PESANAN MASUK -->
-<div id="popupPesanan" class="modal">
-  <div class="modal-content">
-    <h3>📥 Pesanan Baru Masuk!</h3>
-    <div id="popupIsiPesanan"></div>
-    <button onclick="tutupPopup()">Tutup</button>
-  </div>
-</div>
-
-<audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.appspot.com",
-    messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const notifEl = document.getElementById("notifLonceng");
-  const tombolPesanan = document.getElementById("btnCekPesanan");
-
-  let terakhirDitampilkan = "";
-
-  function tampilkanPopupPesanan(data) {
-    const items = data.items || [];
-    let isi = "";
-    let total = 0;
-    items.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      isi += `
+  <!-- Header -->
+  <header class="text-white p-4 rounded-b-2xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-leaf text-2xl"></i>
         <div>
-          <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
-          <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
-          <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
-        </div><hr>`;
-    });
-    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+          <h1 class="font-bold text-lg">RUJAK BUAH INDONESIA</h1>
+          <p class="text-sm">Aplikasi Kasir Premium</p>
+        </div>
+      </div>
+      <button onclick="window.location.href='dashboard.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
+        <i class="fas fa-arrow-left mr-1"></i> Kembali
+      </button>
+    </div>
+  </header>
 
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
-    document.getElementById("popupPesanan").style.display = "block";
-  }
+  <!-- Main Content -->
+  <main class="flex-1 flex items-center justify-center pt-32 px-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+        <i class="fas fa-user-shield mr-2 text-green-500"></i>Pilih Jenis Akun
+      </h2>
 
-  function tutupPopup() {
-    document.getElementById("popupPesanan").style.display = "none";
-  }
+      <div class="space-y-4">
+        <div id="pembeliOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-green-400"
+          onclick="selectRole('pembeli')">
+          <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mr-4">
+            <i class="fas fa-user-tag text-xl text-green-600"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-800">Pembeli</h3>
+            <p class="text-xs text-gray-500">Customer Portal</p>
+          </div>
+        </div>
 
-  function cekPesananBaru() {
-    db.collection("pesanan")
-      .orderBy("waktu", "desc")
-      .limit(1)
-      .get()
-      .then(snapshot => {
-        if (!snapshot.empty) {
-          const data = snapshot.docs[0].data();
-          const idPesanan = snapshot.docs[0].id;
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-          const sound = document.getElementById("notifSound");
+        <div id="penjualOption" class="role-card cursor-pointer p-4 border-2 border-gray-200 rounded-xl flex items-center hover:border-green-400"
+          onclick="selectRole('penjual')">
+          <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mr-4">
+            <i class="fas fa-store-alt text-xl text-green-600"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-gray-800">Penjual</h3>
+            <p class="text-xs text-gray-500">Merchant Dashboard</p>
+          </div>
+        </div>
+      </div>
 
-          if (waktuPesanan > waktuBuka) {
-            notifEl.style.display = "inline";
-            tombolPesanan.classList.add("berkedip-kuat");
-            sound.play();
+      <button id="continueBtn" onclick="continueToAuth()" disabled
+        class="w-full mt-6 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold flex items-center justify-center opacity-50 cursor-not-allowed transition">
+        <i class="fas fa-arrow-right mr-3"></i>Lanjutkan
+      </button>
+    </div>
+  </main>
 
-            if (idPesanan !== terakhirDitampilkan) {
-              tampilkanPopupPesanan(data);
-              terakhirDitampilkan = idPesanan;
-            }
-          } else {
-            notifEl.style.display = "none";
-            tombolPesanan.classList.remove("berkedip-kuat");
-            sound.pause();
-            sound.currentTime = 0;
-          }
-        }
+  <!-- Modal Login -->
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div class="bg-green-500 p-6 text-white flex justify-between items-center">
+        <h2 class="text-xl font-semibold">
+          <i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication
+        </h2>
+        <button onclick="closeAuthModal()" class="text-white hover:text-green-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-user mr-2 text-green-500"></i>Login User
+          </label>
+          <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Masukkan Username">
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-lock mr-2 text-green-500"></i>Password
+          </label>
+          <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Masukkan Password">
+        </div>
+        <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center">
+          <i class="fas fa-sign-in-alt mr-2"></i>Login
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigasi Bawah -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-md flex justify-around items-center py-2 z-40">
+    <a href="#" class="flex flex-col items-center text-green-600 text-sm">
+      <i class="fas fa-home text-xl mb-1"></i>
+      <span>Beranda</span>
+    </a>
+    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+      <i class="fas fa-boxes text-xl mb-1"></i>
+      <span>Inventori</span>
+    </a>
+    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+      <i class="fas fa-chart-line text-xl mb-1"></i>
+      <span>Laporan</span>
+    </a>
+    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+      <i class="fas fa-cog text-xl mb-1"></i>
+      <span>Pengaturan</span>
+    </a>
+  </nav>
+
+  <!-- Script Login -->
+  <script>
+    let selectedRole = null;
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card').forEach(card => {
+        card.classList.remove('border-green-400', 'bg-green-50');
       });
-  }
+      document.getElementById(`${role}Option`).classList.add('border-green-400', 'bg-green-50');
+      const btn = document.getElementById('continueBtn');
+      btn.disabled = false;
+      btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    cekPesananBaru();
-    setInterval(cekPesananBaru, 5000);
-  });
+    function continueToAuth() {
+      if (!selectedRole) return;
+      document.getElementById('authRoleTitle').textContent = selectedRole === 'pembeli' ? 'Pembeli' : 'Penjual';
+      document.getElementById('authModal').classList.remove('hidden');
+      document.getElementById('authModal').classList.add('flex');
+    }
 
-  document.getElementById("btnCekPesanan").addEventListener("click", () => {
-    const sekarang = new Date().toISOString();
-    localStorage.setItem("pesananSudahDibuka", sekarang);
-    const sound = document.getElementById("notifSound");
-    sound.pause();
-    sound.currentTime = 0;
-    window.location.href = 'navigator-input.html';
-  });
-</script>
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+      document.getElementById('authModal').classList.remove('flex');
+    }
 
+    document.getElementById('authSubmitBtn').addEventListener('click', function () {
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+
+      if (!username || !password) {
+        alert('Silakan isi Username dan Password!');
+        return;
+      }
+
+      let valid = false;
+      let redirectUrl = '';
+
+      if (selectedRole === 'penjual' && username === 'penjual' && password === '12345') {
+        valid = true;
+        redirectUrl = 'navigator-input.html';
+      } else if (selectedRole === 'pembeli' && username === 'pembeli' && password === '12345') {
+        valid = true;
+        redirectUrl = 'dashboard.html';
+      }
+
+      if (valid) {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memeriksa...';
+        this.disabled = true;
+        setTimeout(() => {
+          alert('Login Berhasil!');
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userRole', selectedRole);
+          window.location.href = redirectUrl;
+        }, 1500);
+      } else {
+        alert('Username atau Password salah!');
+      }
+    });
+  </script>
 </body>
 </html>
