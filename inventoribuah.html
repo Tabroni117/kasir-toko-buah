@@ -324,143 +324,140 @@
   </style>
 </head>
 <body>
-<div id="popupPesanan" class="modal">
+
   <div class="modal-content berkedip-kuat">
     <h3>📥 Pesanan Baru Masuk!</h3>
     <div id="popupIsiPesanan"></div>
-   <button onclick="tutupPopup()" class="btn btn-secondary">Tutup</button>
-   <button onclick="lihatPesananMasuk()" class="btn btn-primary">Lihat Pesanan Masuk</button>
+    <button onclick="lihatPesananMasuk()" class="btn btn-primary">Lihat Pesanan Masuk</button>
   </div>
 </div>
 
-  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+<audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
-  <div class="container">
-    <div class="header-top">
-  <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
-  <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
-  <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 20px; color: #16a34a;"></i>
-</div>
-    <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
-
-    <form id="fruitForm">
-      <div class="form-group">
-        <label>Nama Buah</label>
-        <input type="text" id="fruitName" class="form-input" required />
-      </div>
-      <div class="form-group">
-        <label>Harga (Rp)</label>
-        <input type="number" id="fruitPrice" class="form-input" required />
-      </div>
-      <div class="form-group">
-        <label>Stok (kg)</label>
-        <input type="number" id="fruitStock" class="form-input" required />
-      </div>
-      <div>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
-        <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
-      </div>
-    </form>
-
-    <table class="data-table">
-      <thead>
-        <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>
-      </thead>
-      <tbody id="fruitList"></tbody>
-    </table>
+<div class="container">
+  <div class="header-top">
+    <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
+    <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
+    <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 20px; color: #16a34a;"></i>
   </div>
 
-  <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
-    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
-    <a href="navigator-input.html" class="nav-btn"><i class="fas fa-receipt"></i> Pesanan</a>
-    <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
-  </nav>
+  <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  <form id="fruitForm">
+    <div class="form-group">
+      <label>Nama Buah</label>
+      <input type="text" id="fruitName" class="form-input" required />
+    </div>
+    <div class="form-group">
+      <label>Harga (Rp)</label>
+      <input type="number" id="fruitPrice" class="form-input" required />
+    </div>
+    <div class="form-group">
+      <label>Stok (kg)</label>
+      <input type="number" id="fruitStock" class="form-input" required />
+    </div>
+    <div>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
+      <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
+    </div>
+  </form>
 
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
-    }
+  <table class="data-table">
+    <thead>
+      <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>
+    </thead>
+    <tbody id="fruitList"></tbody>
+  </table>
+</div>
 
-   function loadFruits() {
-  console.log("Memuat buah dari Firestore...");
-  db.collection("buah").orderBy("nama").get().then(snapshot => {
-    console.log("Snapshot:", snapshot);
-    const fruitList = document.getElementById("fruitList");
-    fruitList.innerHTML = '';
-    if (snapshot.empty) {
-      fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
-    } else {
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        console.log("Buah:", d);
-        fruitList.innerHTML += `
-          <tr>
-            <td>${d.nama}</td>
-            <td>${formatCurrency(d.harga)}</td>
-            <td>${d.stok} kg</td>
-            <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-            <td><button onclick="editFruit('${doc.id}')">Edit</button> <button onclick="deleteFruit('${doc.id}')">Hapus</button></td>
-          </tr>`;
-      });
-    }
-  }).catch(err => {
-    console.error("Gagal memuat buah:", err);
-  });
-}
+<nav class="app-nav">
+  <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
+  <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
+  <a href="navigator-input.html" class="nav-btn"><i class="fas fa-receipt"></i> Pesanan</a>
+  <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
+</nav>
 
-    document.getElementById("fruitForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const nama = fruitName.value;
-      const harga = parseInt(fruitPrice.value);
-      const stok = parseInt(fruitStock.value);
-      const docId = fruitForm.dataset.editId;
-      const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-      const data = { nama, harga, stok };
-      (docId ? ref.update(data) : ref.add(data)).then(() => {
-        fruitForm.reset();
-        delete fruitForm.dataset.editId;
-        loadFruits();
-      });
-    });
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-    function editFruit(id) {
-      db.collection("buah").doc(id).get().then(doc => {
-        const d = doc.data();
-        fruitName.value = d.nama;
-        fruitPrice.value = d.harga;
-        fruitStock.value = d.stok;
-        fruitForm.dataset.editId = id;
-      });
-    }
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+  }
 
-    function deleteFruit(id) {
-      if (confirm("Hapus buah ini?")) {
-        db.collection("buah").doc(id).delete().then(loadFruits);
+  function loadFruits() {
+    db.collection("buah").orderBy("nama").get().then(snapshot => {
+      const fruitList = document.getElementById("fruitList");
+      fruitList.innerHTML = '';
+      if (snapshot.empty) {
+        fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
+      } else {
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          fruitList.innerHTML += `
+            <tr>
+              <td>${d.nama}</td>
+              <td>${formatCurrency(d.harga)}</td>
+              <td>${d.stok} kg</td>
+              <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
+              <td><button onclick="editFruit('${doc.id}')">Edit</button> <button onclick="deleteFruit('${doc.id}')">Hapus</button></td>
+            </tr>`;
+        });
       }
+    }).catch(err => {
+      console.error("❌ Gagal load buah:", err);
+    });
+  }
+
+  document.getElementById("fruitForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const nama = fruitName.value;
+    const harga = parseInt(fruitPrice.value);
+    const stok = parseInt(fruitStock.value);
+    const docId = fruitForm.dataset.editId;
+    const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
+    const data = { nama, harga, stok };
+    (docId ? ref.update(data) : ref.add(data)).then(() => {
+      fruitForm.reset();
+      delete fruitForm.dataset.editId;
+      loadFruits();
+    });
+  });
+
+  function editFruit(id) {
+    db.collection("buah").doc(id).get().then(doc => {
+      const d = doc.data();
+      fruitName.value = d.nama;
+      fruitPrice.value = d.harga;
+      fruitStock.value = d.stok;
+      fruitForm.dataset.editId = id;
+    });
+  }
+
+  function deleteFruit(id) {
+    if (confirm("Hapus buah ini?")) {
+      db.collection("buah").doc(id).delete().then(loadFruits);
     }
+  }
 
-    // === NOTIFIKASI PESANAN ===
-    const sound = document.getElementById("notifSound");
-    let terakhirDitampilkan = "";
+  // === NOTIFIKASI PESANAN ===
+  const sound = document.getElementById("notifSound");
+  let terakhirDitampilkan = "";
 
-    function tampilkanPopupPesanan(data) {
+  function tampilkanPopupPesanan(data) {
+    try {
       const items = data.items || [];
-      let isi = "";
-      let total = 0;
+      let isi = "", total = 0;
       items.forEach(item => {
         const subtotal = item.harga * item.jumlah;
         total += subtotal;
@@ -469,59 +466,44 @@
       isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
       document.getElementById("popupIsiPesanan").innerHTML = isi;
       document.getElementById("popupPesanan").style.display = "flex";
+      sound.play().catch(err => console.warn("🔇 Tidak bisa play:", err));
+    } catch (e) {
+      console.warn("❗ Error tampilkan popup:", e);
     }
+  }
 
-  function tutupPopup() {
-  document.getElementById("popupPesanan").style.display = "none";
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-  sound.pause();
-  sound.currentTime = 0;
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-}
+  function lihatPesananMasuk() {
+    sound.pause();
+    sound.currentTime = 0;
+    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+    document.getElementById("popupPesanan").style.display = "none";
+    window.location.href = 'navigator-input.html';
+  }
 
-   function cekPesananBaru() {
-  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const data = doc.data();
-      const waktuPesanan = data.waktu?.toDate?.() || new Date();
-      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-
-      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-        terakhirDitampilkan = doc.id;
-        sound.play();
-        tampilkanPopupPesanan(data);
-        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-     } else {
-  // Tidak ada pesanan baru, tidak lakukan apa-apa
-   }
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data() || {};
+        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+        if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+          terakhirDitampilkan = doc.id;
+          tampilkanPopupPesanan(data);
+          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+        }
       }
-    }
-  });
-}
-    window.addEventListener("DOMContentLoaded", () => {
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 5000);
+    }).catch(err => {
+      console.error("❌ Gagal cek pesanan:", err);
     });
-function lihatPesananMasuk() {
-  // Stop suara
-  sound.pause();
-  sound.currentTime = 0;
+  }
 
-  // Matikan kedipan
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-  // Simpan waktu buka
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  // Tutup popup
-  document.getElementById("popupPesanan").style.display = "none";
-
-  // Arahkan ke halaman pesanan
-  window.location.href = 'navigator-input.html';
-}
-    
-  </script>
+  window.addEventListener("DOMContentLoaded", () => {
+    loadFruits();
+    cekPesananBaru();
+    setInterval(cekPesananBaru, 5000);
+  });
+</script>
 </body>
 </html>
