@@ -8,14 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #16a34a;
-      --primary-light: #22c55e;
-      --primary-dark: #15803d;
-      --secondary: #64748b;
-      --accent: #84cc16;
-      --light: #f0fdf4;
-      --white: #ffffff;
-      --dark: #1e293b;
+      --primary: linear-gradient(135deg, #00C853, #64DD17); /* Gradasi hijau muda cerah */
+      --primary-light: #34D399;
+      --primary-dark: #059669;
+      --secondary: #6B7280;
+      --accent: #84CC16;
+      --light: #F3F4F6;
+      --white: #FFFFFF;
+      --dark: #1F2937;
       --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
       --transition: all 0.2s ease-in-out;
     }
@@ -101,21 +101,35 @@
       margin-bottom: 1rem;
     }
 
-    label, input {
-      font-size: 12px;
+    label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 8px;
+      display: block;
     }
 
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 20px;
+      position: relative;
     }
 
     .form-input {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid rgba(16, 181, 129, 0.3);
-      border-radius: 6px;
-      background: #f8fafc;
-      font-size: 12px;
+      padding: 14px 18px;
+      border: 1px solid #D1D5DB;
+      border-radius: 10px;
+      background: white;
+      font-size: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      color: var(--dark);
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15);
+      outline: none;
     }
 
     .btn {
@@ -144,26 +158,45 @@
 
     .data-table {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 12px;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 1.5rem;
+      font-size: 14px;
       table-layout: fixed;
       word-wrap: break-word;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .data-table th {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 20px;
+      border-bottom: 2px solid var(--primary-light);
       text-align: left;
       vertical-align: middle;
       font-weight: 600;
-      background-color: #f8fafc;
+      background-color: var(--primary);
+      color: white;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+
     .data-table td {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 20px;
+      border-bottom: 1px solid #E5E7EB;
       vertical-align: middle;
-      text-align: left;
+      font-size: 15px;
+      color: var(--dark);
+      background-color: white;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background-color: #f8fafc;
     }
     
     .action-buttons {
@@ -207,14 +240,16 @@
     }
 
     .status-badge {
-      padding: 4px 8px;
+      padding: 6px 12px;
       border-radius: 20px;
-      font-size: 10px;
-      background: #e0fce2;
-      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--primary-light);
+      color: white;
       display: inline-block;
       white-space: nowrap;
       text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     /* ✅ Navigasi bawah tetap di tempat */
@@ -294,6 +329,13 @@
       }
       .form-input, .btn {
         font-size: 14px;
+        padding: 12px 16px;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 10px 12px;
+        font-size: 13px;
       }
       .data-table {
         font-size: 10px;
@@ -485,49 +527,4 @@
       const operation = fruitId ? fruitRef.update({ nama, harga, stok }) : fruitRef.add({ nama, harga, stok });
       
       operation.then(() => {
-          fruitForm.reset();
-          delete fruitForm.dataset.editId;
-          loadFruits();
-        })
-        .catch((err) => {
-          alert("Gagal menambahkan data: " + err.message);
-        })
-        .finally(hideLoading);
-    });
-
-    function editFruit(id) {
-      showLoading();
-      db.collection("buah").doc(id).get().then((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          document.getElementById("fruitName").value = data.nama;
-          document.getElementById("fruitPrice").value = data.harga;
-          document.getElementById("fruitStock").value = data.stok;
-          
-          // Scroll to form
-          document.getElementById("fruitForm").scrollIntoView({ behavior: "smooth" });
-          
-          // Optionally set some flag for edit mode
-          fruitForm.dataset.editId = id;
-        }
-        hideLoading();
-      }).catch((error) => {
-        alert("Error getting document:", error);
-        hideLoading();
-      });
-    }
-
-    function deleteFruit(id) {
-      if (confirm("Hapus data buah ini?")) {
-        showLoading();
-        db.collection("buah").doc(id).delete()
-          .then(() => loadFruits())
-          .catch((err) => alert("Gagal menghapus: " + err.message))
-          .finally(hideLoading);
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", loadFruits);
-  </script>
-</body>
-</html>
+          fruitForm
