@@ -328,7 +328,7 @@
   <div class="modal-content berkedip-kuat">
     <h3>📥 Pesanan Baru Masuk!</h3>
     <div id="popupIsiPesanan"></div>
-    <button onclick="window.location.href='navigator-input.html'" class="btn btn-primary">Lihat Pesanan Masuk</button>
+   <button id="btnCekPesanan" class="btn btn-primary">Lihat Pesanan Masuk</button>
   </div>
 </div>
 
@@ -499,11 +499,27 @@
     }
   });
 }
-    window.addEventListener("DOMContentLoaded", () => {
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 5000);
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+  loadFruits();
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 5000);
+
+  document.getElementById("btnCekPesanan").addEventListener("click", () => {
+  const sekarang = new Date().toISOString();
+  localStorage.setItem("pesananSudahDibuka", sekarang);
+  console.log("📥 Pesanan dianggap sudah dilihat:", sekarang);
+
+  const sound = document.getElementById("notifSound");
+  sound.pause();
+  sound.currentTime = 0;
+
+  document.getElementById("popupPesanan").style.display = "none";
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+  // 👇 Arahkan ke halaman pesanan
+  window.location.href = 'navigator-input.html';
+});
+    
   </script>
 </body>
 </html>
