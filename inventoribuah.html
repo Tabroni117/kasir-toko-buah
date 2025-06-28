@@ -449,53 +449,50 @@
   }
 
   // === NOTIFIKASI PESANAN ===
-  const sound = document.getElementById("notifSound");
-  let terakhirDitampilkan = "";
-  document.addEventListener("touchstart", () => {
-  sound.play().catch(() => {});
-  sound.pause();
-  sound.currentTime = 0;
+ const sound = document.getElementById("notifSound");
+let terakhirDitampilkan = "";
+
+// Izinkan audio dimulai di HP
+document.addEventListener("touchstart", () => {
+  sound.play().then(() => {
+    sound.pause();
+    sound.currentTime = 0;
+  }).catch(() => {});
 }, { once: true });
 
-  function tampilkanPopupPesanan(data) {
-    const items = data.items || [];
-    let isi = "";
-    let total = 0;
-    items.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-    });
-    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
+function tampilkanPopupPesanan(data) {
+  const items = data.items || [];
+  let isi = "", total = 0;
+  items.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+  });
+  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+  document.getElementById("popupIsiPesanan").innerHTML = isi;
 
-    // Set waktu buka pesanan
-    localStorage.setItem("pesananSudahDibuka", data.waktu?.toDate?.() || new Date());
+  localStorage.setItem("pesananSudahDibuka", data.waktu?.toDate?.() || new Date());
+  document.getElementById("popupPesanan").style.display = "flex";
+  setupCekPesananButton();
+}
 
-    document.getElementById("popupPesanan").style.display = "flex";
+function setupCekPesananButton() {
+  const btn = document.getElementById("btnCekPesanan");
+  if (btn) {
+    btn.onclick = () => {
+      const sekarang = new Date().toISOString();
+      localStorage.setItem("pesananSudahDibuka", sekarang);
+      sound.pause();
+      sound.loop = false;
+      sound.currentTime = 0;
 
-    // Panggil fungsi untuk setup tombol
-    setupCekPesananButton();
+      document.getElementById("popupPesanan").style.display = "none";
+      document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+      window.location.href = 'navigator-input.html';
+    };
   }
-
-  function setupCekPesananButton() {
-    const btn = document.getElementById("btnCekPesanan");
-    if (btn) {
-      btn.onclick = () => {
-        const sekarang = new Date().toISOString();
-        localStorage.setItem("pesananSudahDibuka", sekarang);
-        console.log("📥 Pesanan dianggap sudah dilihat:", sekarang);
-
-        sound.pause();
-        sound.currentTime = 0;
-
-        document.getElementById("popupPesanan").style.display = "none";
-        document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-        window.location.href = 'navigator-input.html';
-      };
-    }
-  }
+}
 
 function cekPesananBaru() {
   db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
@@ -504,27 +501,29 @@ function cekPesananBaru() {
       const data = doc.data();
       const waktuPesanan = data.waktu?.toDate?.() || new Date();
       const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+      const lonceng = document.getElementById("notifLonceng");
 
       if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
         terakhirDitampilkan = doc.id;
-        sound.play();
+        sound.loop = true;
+        sound.play().catch(() => {});
         tampilkanPopupPesanan(data);
-        const lonceng = document.getElementById("notifLonceng");
-        lonceng.style.display = "inline-block";
         lonceng.classList.add("berkedip-kuat");
+        lonceng.style.display = "inline-block";
       } else {
         sound.pause();
         sound.currentTime = 0;
-        const lonceng = document.getElementById("notifLonceng");
         lonceng.classList.remove("berkedip-kuat");
-        lonceng.style.display = "none"; // sembunyikan kalau tidak ada pesanan baru
       }
     }
   });
 }
-  document.addEventListener("DOMContentLoaded", () => {
-    loadFruits();
-    cekPesananBaru();
-    setInterval(cekPesananBaru, 5000);
-  });
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadFruits();
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 5000);
+});
 </script>
+</body>
+</html>
