@@ -319,8 +319,7 @@
   </style>
 </head>
 <body>
-  <!-- MODAL NOTIFIKASI -->
-  <div id="popupPesanan" class="modal">
+ <div id="popupPesanan" class="modal">
     <div class="modal-content">
       <h3>📥 Pesanan Baru Masuk!</h3>
       <div id="popupIsiPesanan"></div>
@@ -372,7 +371,6 @@
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
   </nav>
 
-  <!-- Firebase dan Script -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
@@ -387,11 +385,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ==================== INVENTORI
     function formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency', currency: 'IDR'
-      }).format(amount);
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
     }
 
     function loadFruits() {
@@ -409,10 +404,7 @@
                 <td>${formatCurrency(d.harga)}</td>
                 <td>${d.stok} kg</td>
                 <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-                <td class="action-buttons">
-                  <button class="edit-btn" onclick="editFruit('${doc.id}')">Edit</button>
-                  <button class="delete-btn" onclick="deleteFruit('${doc.id}')">Hapus</button>
-                </td>
+                <td><button onclick="editFruit('${doc.id}')">Edit</button> <button onclick="deleteFruit('${doc.id}')">Hapus</button></td>
               </tr>`;
           });
         }
@@ -450,79 +442,49 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", loadFruits);
+    // === NOTIFIKASI PESANAN ===
+    const sound = document.getElementById("notifSound");
+    let terakhirDitampilkan = "";
 
-    <script>
-  // NOTIFIKASI PESANAN
-  const notifEl = document.getElementById("notifLonceng");
-  const tombolPesanan = document.getElementById("btnCekPesanan");
-  const sound = document.getElementById("notifSound");
-  let terakhirDitampilkan = "";
+    function tampilkanPopupPesanan(data) {
+      const items = data.items || [];
+      let isi = "";
+      let total = 0;
+      items.forEach(item => {
+        const subtotal = item.harga * item.jumlah;
+        total += subtotal;
+        isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+      });
+      isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+      document.getElementById("popupIsiPesanan").innerHTML = isi;
+      document.getElementById("popupPesanan").style.display = "flex";
+    }
 
-  function tampilkanPopupPesanan(data) {
-    const items = data.items || [];
-    let isi = "";
-    let total = 0;
-    items.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      isi += `<div>
-        <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
-        <small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
-        <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
-      </div><hr>`;
-    });
-    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
-    document.getElementById("popupPesanan").style.display = "flex"; // Tampilkan popup
-  }
+    function tutupPopup() {
+      document.getElementById("popupPesanan").style.display = "none";
+    }
 
-  function tutupPopup() {
-    document.getElementById("popupPesanan").style.display = "none"; // Sembunyikan popup
-  }
-
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const waktuPesanan = data.waktu?.toDate?.() || new Date();
-        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-        if (waktuPesanan > waktuBuka) {
-          if (notifEl) notifEl.style.display = "inline";
-          if (tombolPesanan) tombolPesanan.classList.add("berkedip-kuat");
-          sound.play();
-          if (doc.id !== terakhirDitampilkan) {
+    function cekPesananBaru() {
+      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          const waktuPesanan = data.waktu?.toDate?.() || new Date();
+          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+            sound.play();
             tampilkanPopupPesanan(data);
             terakhirDitampilkan = doc.id;
           }
-        } else {
-          if (notifEl) notifEl.style.display = "none";
-          if (tombolPesanan) tombolPesanan.classList.remove("berkedip-kuat");
-          sound.pause();
-          sound.currentTime = 0;
         }
-      }
-    });
-  }
+      });
+    }
 
-  // ✅ BAGIAN INI JANGAN DIHAPUS!
-  document.addEventListener("DOMContentLoaded", () => {
-    cekPesananBaru();                // Cek pertama kali saat halaman dibuka
-    setInterval(cekPesananBaru, 5000); // Cek ulang setiap 5 detik
-  });
-
-  // Optional: kalau masih ada tombol
-  if (tombolPesanan) {
-    tombolPesanan.addEventListener("click", () => {
-      const now = new Date().toISOString();
-      localStorage.setItem("pesananSudahDibuka", now);
-      sound.pause();
-      sound.currentTime = 0;
-      if (notifEl) notifEl.style.display = "none";
-      tombolPesanan.classList.remove("berkedip-kuat");
+    window.addEventListener("DOMContentLoaded", () => {
+      loadFruits();
+      cekPesananBaru();
+      setInterval(cekPesananBaru, 5000);
     });
-  }
-</script>
+  </script>
 </body>
 </html>
