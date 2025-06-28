@@ -395,27 +395,32 @@
       return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
     }
 
-    function loadFruits() {
-      db.collection("buah").orderBy("nama").get().then(snapshot => {
-        const fruitList = document.getElementById("fruitList");
-        fruitList.innerHTML = '';
-        if (snapshot.empty) {
-          fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
-        } else {
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            fruitList.innerHTML += `
-              <tr>
-                <td>${d.nama}</td>
-                <td>${formatCurrency(d.harga)}</td>
-                <td>${d.stok} kg</td>
-                <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-                <td><button onclick="editFruit('${doc.id}')">Edit</button> <button onclick="deleteFruit('${doc.id}')">Hapus</button></td>
-              </tr>`;
-          });
-        }
+   function loadFruits() {
+  console.log("Memuat buah dari Firestore...");
+  db.collection("buah").orderBy("nama").get().then(snapshot => {
+    console.log("Snapshot:", snapshot);
+    const fruitList = document.getElementById("fruitList");
+    fruitList.innerHTML = '';
+    if (snapshot.empty) {
+      fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
+    } else {
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        console.log("Buah:", d);
+        fruitList.innerHTML += `
+          <tr>
+            <td>${d.nama}</td>
+            <td>${formatCurrency(d.harga)}</td>
+            <td>${d.stok} kg</td>
+            <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
+            <td><button onclick="editFruit('${doc.id}')">Edit</button> <button onclick="deleteFruit('${doc.id}')">Hapus</button></td>
+          </tr>`;
       });
     }
+  }).catch(err => {
+    console.error("Gagal memuat buah:", err);
+  });
+}
 
     document.getElementById("fruitForm").addEventListener("submit", e => {
       e.preventDefault();
