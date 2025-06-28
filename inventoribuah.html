@@ -155,22 +155,66 @@
       padding: 10px;
       border-bottom: 1px solid #e2e8f0;
       text-align: left;
-      vertical-align: top;
+      vertical-align: middle;
+      font-weight: 600;
+      background-color: #f8fafc;
     }
     .data-table td {
       padding: 10px;
       border-bottom: 1px solid #e2e8f0;
       vertical-align: middle;
+      text-align: left;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
+    .action-btn {
+      border: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .edit-btn {
+      color: white;
+      background-color: var(--primary);
+      border: 1px solid var(--primary-dark);
+    }
+    
+    .delete-btn {
+      color: white;
+      background-color: #ef4444;
+      border: 1px solid #dc2626;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .status-badge {
-      padding: 2px 6px;
+      padding: 4px 8px;
       border-radius: 20px;
-      font-size: 9px;
+      font-size: 10px;
       background: #e0fce2;
       color: var(--primary-dark);
       display: inline-block;
       white-space: nowrap;
+      text-align: center;
     }
 
     /* ✅ Navigasi bawah tetap di tempat */
@@ -255,19 +299,31 @@
         font-size: 10px;
       }
       .data-table th {
-        padding: 4px 2px;
+        padding: 8px 4px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         text-align: left;
-        vertical-align: top;
+        vertical-align: middle;
+        font-weight: 600;
+        background-color: #f8fafc;
       }
       .data-table td {
-        padding: 4px 2px;
+        padding: 8px 4px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         vertical-align: middle;
+        text-align: left;
+      }
+      
+      .action-buttons {
+        gap: 5px;
+      }
+      
+      .action-btn {
+        padding: 4px 8px;
+        font-size: 11px;
       }
       .data-table th:nth-child(1),
       .data-table td:nth-child(1) {
@@ -287,7 +343,7 @@
       }
       .data-table th:nth-child(5),
       .data-table td:nth-child(5) {
-        width: 20%;
+        width: 25%;
       }
     }
   </style>
@@ -397,7 +453,16 @@
                   <td>${formatCurrency(data.harga)}</td>
                   <td>${data.stok} kg</td>
                   <td><span class="status-badge">${status}</span></td>
-                  <td><button onclick="deleteFruit('${doc.id}')" style="color:red; border:none; background:none;"><i class="fas fa-trash-alt"></i></button></td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="action-btn edit-btn" onclick="editFruit('${doc.id}')" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="action-btn delete-btn" onclick="deleteFruit('${doc.id}')" title="Hapus">
+                        <i class="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </td>
                 </tr>`;
             });
           }
@@ -414,9 +479,14 @@
       const harga = parseInt(document.getElementById("fruitPrice").value);
       const stok = parseInt(document.getElementById("fruitStock").value);
       showLoading();
-      db.collection("buah").add({ nama, harga, stok })
-        .then(() => {
+      const fruitId = fruitForm.dataset.editId;
+      const fruitRef = fruitId ? db.collection("buah").doc(fruitId) : db.collection("buah");
+      
+      const operation = fruitId ? fruitRef.update({ nama, harga, stok }) : fruitRef.add({ nama, harga, stok });
+      
+      operation.then(() => {
           fruitForm.reset();
+          delete fruitForm.dataset.editId;
           loadFruits();
         })
         .catch((err) => {
@@ -424,6 +494,28 @@
         })
         .finally(hideLoading);
     });
+
+    function editFruit(id) {
+      showLoading();
+      db.collection("buah").doc(id).get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          document.getElementById("fruitName").value = data.nama;
+          document.getElementById("fruitPrice").value = data.harga;
+          document.getElementById("fruitStock").value = data.stok;
+          
+          // Scroll to form
+          document.getElementById("fruitForm").scrollIntoView({ behavior: "smooth" });
+          
+          // Optionally set some flag for edit mode
+          fruitForm.dataset.editId = id;
+        }
+        hideLoading();
+      }).catch((error) => {
+        alert("Error getting document:", error);
+        hideLoading();
+      });
+    }
 
     function deleteFruit(id) {
       if (confirm("Hapus data buah ini?")) {
