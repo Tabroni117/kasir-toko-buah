@@ -328,7 +328,8 @@
   <div class="modal-content berkedip-kuat">
     <h3>📥 Pesanan Baru Masuk!</h3>
     <div id="popupIsiPesanan"></div>
-    <button onclick="window.location.href='navigator-input.html'" class="btn btn-primary">Lihat Pesanan Masuk</button>
+   <button onclick="tutupPopup()" class="btn btn-secondary">Tutup</button>
+   <button onclick="lihatPesananMasuk()" class="btn btn-primary">Lihat Pesanan Masuk</button>
   </div>
 </div>
 
@@ -486,10 +487,9 @@
         sound.play();
         tampilkanPopupPesanan(data);
         document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-      } else {
-        // Tidak ada pesanan baru, matikan suara & kedipan
-        sound.pause();
-        document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+     } else {
+  // Tidak ada pesanan baru, tidak lakukan apa-apa
+   }
       }
     }
   });
@@ -499,6 +499,24 @@
       cekPesananBaru();
       setInterval(cekPesananBaru, 5000);
     });
+function lihatPesananMasuk() {
+  // Stop suara
+  sound.pause();
+  sound.currentTime = 0;
+
+  // Matikan kedipan
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+  // Simpan waktu buka
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  // Tutup popup
+  document.getElementById("popupPesanan").style.display = "none";
+
+  // Arahkan ke halaman pesanan
+  window.location.href = 'navigator-input.html';
+}
+    
   </script>
 </body>
 </html>
