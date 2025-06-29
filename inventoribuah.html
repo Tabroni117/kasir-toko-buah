@@ -538,18 +538,29 @@ function cekPesananBaru() {
     }
   });
 }
-  // 8. Jalankan saat halaman selesai dimuat
- window.addEventListener("DOMContentLoaded", () => {
-  // ...kode lain seperti:
-  loadFruits();
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 1000);
+ let audioSudahDiizinkan = false;
 
-  // ✅ Tambahkan ini
-  document.getElementById("navPesanan").addEventListener("click", function () {
-    this.classList.remove("berkedip-kuat");
-  });
-});
-</script>
+    window.addEventListener("DOMContentLoaded", () => {
+      loadFruits();
+      cekPesananBaru();
+      setInterval(cekPesananBaru, 1000);
+
+      document.getElementById("navPesanan").addEventListener("click", function () {
+        this.classList.remove("berkedip-kuat");
+      });
+
+      // ✅ Aktifkan audio hanya sekali saat ada interaksi tombol/link
+      document.querySelectorAll("button, a").forEach(el => {
+        el.addEventListener("click", () => {
+          if (!audioSudahDiizinkan) {
+            sound.play().catch(() => {});
+            sound.pause();
+            sound.currentTime = 0;
+            audioSudahDiizinkan = true;
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
