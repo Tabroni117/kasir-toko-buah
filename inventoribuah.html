@@ -304,8 +304,15 @@
         width: 20%;
         
       }
+    
       
-      
+      .nav-btn.berkedip-kuat {
+  animation: kedipHebat 1s infinite;
+  background-color: #ff5252 !important;
+  color: white !important;
+  font-weight: bold;
+  box-shadow: 0 0 10px #ff5252;
+}
       
  .berkedip-kuat {
   animation: kedipHebat 1s infinite;
@@ -372,7 +379,9 @@
   <nav class="app-nav">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
     <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
-    <a href="navigator-input.html" class="nav-btn"><i class="fas fa-receipt"></i> Pesanan</a>
+ <a href="navigator-input.html" id="navPesanan" class="nav-btn">
+  <i class="fas fa-receipt"></i> Pesanan
+</a>
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
   </nav>
 
@@ -490,34 +499,41 @@
   }, 5000);
 }
 
-  function tutupPopup() {
-    document.getElementById("popupPesanan").style.display = "none";
-    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-    sound.pause();
-    sound.currentTime = 0;
-    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-  }
+function tutupPopup() {
+  document.getElementById("popupPesanan").style.display = "none";
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+  document.getElementById("navPesanan").classList.remove("berkedip-kuat");
 
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const waktuPesanan = data.waktu?.toDate?.() || new Date();
-        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false; // Reset flag
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+}
 
-        if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-          terakhirDitampilkan = doc.id;
-          sound.play();
-          tampilkanPopupPesanan(data);
-          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        } else {
-          sound.pause();
-          document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-        }
+ function cekPesananBaru() {
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const waktuPesanan = data.waktu?.toDate?.() || new Date();
+      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+
+      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+        terakhirDitampilkan = doc.id;
+        sound.play();
+
+        tampilkanPopupPesanan(data);
+
+        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
+        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+        document.getElementById("navPesanan").classList.add("berkedip-kuat");
+
+      } else {
+    
       }
-    });
-  }
+    }
+  });
+}
 
   // 8. Jalankan saat halaman selesai dimuat
   window.addEventListener("DOMContentLoaded", () => {
