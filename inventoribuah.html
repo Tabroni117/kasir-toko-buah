@@ -376,111 +376,47 @@
     </table>
   </div>
 
-  <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
-    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
- <a href="navigator-input.html" id="navPesanan" class="nav-btn">
-  <i class="fas fa-receipt"></i> Pesanan
-</a>
-    <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
-  </nav>
+<nav class="app-nav">
+  <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
+  <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
+  <a href="navigator-input.html" id="navPesanan" class="nav-btn"><i class="fas fa-receipt"></i> Pesanan</a>
+  <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
+</nav>
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 <script>
-  // 1. Konfigurasi Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.appspot.com",
-    messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+const firebaseConfig = {
+  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+  authDomain: "tokobuahkasir.firebaseapp.com",
+  projectId: "tokobuahkasir",
+  storageBucket: "tokobuahkasir.appspot.com",
+  messagingSenderId: "731011133713",
+  appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  // 2. Utilitas format uang
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+let sudahReload = false;
+const sound = document.getElementById("notifSound");
+let terakhirDitampilkan = "";
+let audioSudahDiizinkan = false;
+
+// Izinkan audio setelah klik pertama
+window.addEventListener("click", () => {
+  if (!audioSudahDiizinkan) {
+    sound.play().catch(() => {});
+    sound.pause();
+    sound.currentTime = 0;
+    audioSudahDiizinkan = true;
   }
+});
 
-  // 3. Fungsi tampilkan data buah
-  function loadFruits() {
-    db.collection("buah").orderBy("nama").get().then(snapshot => {
-      const fruitList = document.getElementById("fruitList");
-      fruitList.innerHTML = '';
-      if (snapshot.empty) {
-        fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
-      } else {
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          fruitList.innerHTML += `
-            <tr>
-              <td>${d.nama}</td>
-              <td>${formatCurrency(d.harga)}</td>
-              <td>${d.stok} kg</td>
-              <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-              <td>
-                <button onclick="editFruit('${doc.id}')" class="btn btn-secondary">Edit</button>
-                <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary">Hapus</button>
-              </td>
-            </tr>`;
-        });
-      }
-    });
-  }
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+}
 
-  // 4. Fungsi edit data buah
-  function editFruit(id) {
-    db.collection("buah").doc(id).get().then(doc => {
-      const d = doc.data();
-      fruitName.value = d.nama;
-      fruitPrice.value = d.harga;
-      fruitStock.value = d.stok;
-      fruitForm.dataset.editId = id;
-    });
-  }
-
-  // 5. Fungsi hapus buah
-  function deleteFruit(id) {
-    if (confirm("Hapus buah ini?")) {
-      db.collection("buah").doc(id).delete().then(loadFruits);
-    }
-  }
-
-  // 6. Simpan form tambah/edit buah
-  document.getElementById("fruitForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const nama = fruitName.value;
-    const harga = parseInt(fruitPrice.value);
-    const stok = parseInt(fruitStock.value);
-    const docId = fruitForm.dataset.editId;
-    const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-    const data = { nama, harga, stok };
-    (docId ? ref.update(data) : ref.add(data)).then(() => {
-      fruitForm.reset();
-      delete fruitForm.dataset.editId;
-      loadFruits();
-    });
-  });
-
-  // 7. === NOTIFIKASI PESANAN ===
-  const sound = document.getElementById("notifSound");
-  let terakhirDitampilkan = "";
-
-  // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-  let audioSudahDiizinkan = false;
-  document.addEventListener("click", () => {
-    if (!audioSudahDiizinkan) {
-      sound.play().catch(() => {});
-      sound.pause();
-      sound.currentTime = 0;
-      audioSudahDiizinkan = true;
-    }
-  });
-
-  function tampilkanPopupPesanan(data) {
+function tampilkanPopupPesanan(data) {
   const items = data.items || [];
   let isi = "";
   let total = 0;
@@ -493,29 +429,24 @@
   document.getElementById("popupIsiPesanan").innerHTML = isi;
   document.getElementById("popupPesanan").style.display = "flex";
 
-  // 🔄 Tambahan: reload otomatis  setelah popup muncul
-  setTimeout(() => {
-    location.reload();
-  }, 60000);
+  if (!sudahReload) {
+    sudahReload = true;
+    setTimeout(() => {
+      location.reload();
+    }, 15000);
+  }
 }
 
 function tutupPopup() {
   document.getElementById("popupPesanan").style.display = "none";
-
-  // Suara dimatikan
   sound.pause();
   sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  // Simpan waktu agar notifikasi tidak muncul lagi
   localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  // Ikon lonceng berhenti berkedip, TAPI navigator tetap berkedip
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-  // navPesanan tetap dibiarkan berkedip
+  document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
+  // navPesanan tetap berkedip
 }
 
- function cekPesananBaru() {
+function cekPesananBaru() {
   db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -526,29 +457,19 @@ function tutupPopup() {
       if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
         terakhirDitampilkan = doc.id;
         sound.play();
-
         tampilkanPopupPesanan(data);
-
-        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-      } else {
-    
+        document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+        document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
       }
     }
   });
 }
 
-  // 8. Jalankan saat halaman selesai dimuat
 window.addEventListener("DOMContentLoaded", () => {
-  cekPesananBaru();               // ➤ Jalan dulu, cek ada pesanan baru atau tidak
-  setInterval(cekPesananBaru, 3000);  // ➤ Cek ulang tiap 3 detik
-  loadFruits();                   // ➤ Tetap jalan, ambil daftar buah dari Firestore
-});
-
-  // ✅ Tambahkan ini
-  document.getElementById("navPesanan").addEventListener("click", function () {
+  loadFruits();
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 3000);
+  document.getElementById("navPesanan")?.addEventListener("click", function () {
     this.classList.remove("berkedip-kuat");
   });
 });
