@@ -515,46 +515,42 @@ function tutupPopup() {
   // navPesanan tetap dibiarkan berkedip
 }
 
- function cekPesananBaru() {
-  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const data = doc.data();
-      const waktuPesanan = data.waktu?.toDate?.() || new Date();
-      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+ <script>
+  // ✅ Fungsi cek pesanan baru
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
 
-      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-        terakhirDitampilkan = doc.id;
-        sound.play();
+        if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+          terakhirDitampilkan = doc.id;
+          sound.play();
 
-        tampilkanPopupPesanan(data);
+          tampilkanPopupPesanan(data);
 
-        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-      } else {
-    
+          // Lonceng & navigator berkedip
+          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+          document.getElementById("navPesanan").classList.add("berkedip-kuat");
+        }
       }
-    }
-  });
-}
+    });
+  }
 
-<script>
-  // ... SEMUA FUNGSI LAIN kamu seperti loadFruits, cekPesananBaru, dll
-
-  // 8. Jalankan saat halaman selesai dimuat
+  // ✅ Setelah halaman selesai dimuat
   window.addEventListener("DOMContentLoaded", () => {
     loadFruits();
     cekPesananBaru();
     setInterval(cekPesananBaru, 1000);
 
-    // ✅ Inilah bagian yang kamu butuhkan:
+    // Klik navigator "Pesanan" berhentiin kedipan
     document.getElementById("navPesanan").addEventListener("click", function (e) {
-      e.preventDefault(); // Cegah langsung pindah halaman
-      this.classList.remove("berkedip-kuat"); // Hapus efek berkedip
+      e.preventDefault();
+      this.classList.remove("berkedip-kuat");
       setTimeout(() => {
-        window.location.href = this.href; // Baru pindah halaman
+        window.location.href = this.href;
       }, 100);
     });
   });
