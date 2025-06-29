@@ -1,219 +1,197 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RUJAK BUAH INDONESIA | Inventori Buah</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <style>
     :root {
       --primary: #16a34a;
       --primary-light: #22c55e;
       --primary-dark: #15803d;
+      --secondary: #64748b;
+      --accent: #84cc16;
+      --light: #f0fdf4;
       --white: #ffffff;
       --dark: #1e293b;
       --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+      font-size: 11.5px;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Poppins', sans-serif;
     }
-
     body {
       background: #f8fafc;
       color: var(--dark);
       padding: 10px;
-      padding-bottom: 70px; /* Padding bawah untuk menghindari konten tertutup navigasi */
-      overflow-x: hidden; /* Mencegah scrolling horizontal */
-      width: 100%; /* Memastikan lebar body 100% */
+      padding-bottom: 80px;
     }
-
     .container {
       max-width: 700px;
-      width: 100%; /* Memastikan kontainer tidak lebih lebar dari layar */
-      margin: 0 auto;
+      margin: auto;
       background: white;
       padding: 15px;
       border-radius: 10px;
       box-shadow: var(--card-shadow);
     }
-
     .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
     }
-
     .header-top button {
       font-size: 12px;
       padding: 5px 10px;
       border-radius: 5px;
       border: none;
       cursor: pointer;
-      transition: background 0.3s, color 0.3s;
+      transition: 0.3s;
     }
-
     .back-btn {
       background: var(--primary);
       color: white;
     }
-
     .back-btn:hover {
       background: var(--primary-light);
     }
-
     .refresh-btn {
       border: 1px solid var(--primary);
       color: var(--primary);
       background: white;
     }
-
     .refresh-btn:hover {
       background: var(--primary-light);
       color: white;
     }
-
-    .judul {
+    h1 {
+      font-size: 16px;
+      margin-bottom: 2px;
+      color: var(--primary);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .stat-box {
+      background: var(--light);
+      border-left: 5px solid var(--primary);
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .stat-box h3 {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .stat-box p {
+      font-size: 12px;
+      color: var(--secondary);
+    }
+    .stat-icon {
+      font-size: 20px;
+      color: var(--primary);
+    }
+    .order-item-upgrade {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .order-row-top, .order-row-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .order-row-bottom {
+      flex-direction: column;
+      gap: 5px;
+    }
+    .customer {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      color: var(--primary);
-      margin-bottom: 10px;
-    }
-
-    .judul i {
-      font-size: 18px;
-    }
-
-    h2.section-title {
-      font-size: 14px;
-      color: var(--primary-dark);
-      margin-bottom: 1rem;
-    }
-
-    label, input {
-      font-size: 12px;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid rgba(16, 181, 129, 0.3);
-      border-radius: 6px;
-      background: #f8fafc;
-      font-size: 12px;
-    }
-
-    .btn {
-      font-size: 12px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: var(--primary);
-      border: 1px solid var(--primary);
-    }
-
-    .btn-group {
-      display: flex;
       gap: 10px;
     }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
+    .avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
       font-size: 12px;
-      table-layout: fixed;
-      word-wrap: break-word;
     }
-
-    .data-table th {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
-      text-align: left;
-      vertical-align: top;
-    }
-    .data-table td {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: middle;
-    }
-
-    .status-badge {
-      padding: 2px 6px;
+    .name { font-weight: 600; font-size: 12px; }
+    .phone { font-size: 10px; color: var(--secondary); }
+    .total { font-weight: bold; color: var(--primary-dark); font-size: 13px; }
+    .status {
+      padding: 3px 8px;
+      font-size: 10px;
       border-radius: 20px;
-      font-size: 9px;
       background: #e0fce2;
       color: var(--primary-dark);
-      display: inline-block;
-      white-space: nowrap;
+      margin-top: 4px;
     }
-
-    /* ✅ Navigasi bawah tetap di tempat */
+    .time {
+      font-size: 10px;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .items {
+      font-size: 11px;
+      background: #f9fafb;
+      padding: 8px;
+      border-radius: 6px;
+      color: #1e293b;
+    }
     .app-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 60px;
       background: var(--white);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.3rem 0;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
       z-index: 100;
-      border-top: 1px solid #e5e7eb;
     }
-
     .nav-btn {
-      flex: 1;
-      text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      color: var(--primary);
       text-decoration: none;
-      font-size: 0.6rem;
-      color: var(--primary);
-      padding: 0.3rem 0;
-      transition: background 0.3s ease;
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      width: 100%;
     }
-
     .nav-btn i {
-      font-size: 0.9rem;
-      margin-bottom: 2px;
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
     }
-
     .nav-btn.active {
-      color: var(--primary);
-      background: none;
-      border-radius: 0;
-      transform: none;
-      padding: 0.3rem 0;
-      box-shadow: none;
-    }
-
-    /* Spinner loading */
+  color: var(--primary); /* Ganti jadi warna teks utama (tidak putih) */
+  background: transparent; /* Hapus background */
+  transform: none; /* Hilangkan efek naik */
+  box-shadow: none; /* Hilangkan bayangan */
+  font-weight: 600; /* Opsional: beri sedikit penekanan teks agar tetap terlihat aktif */
+}
     #loadingSpinner {
       display: none;
       position: fixed;
@@ -223,7 +201,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .spinner {
       width: 3rem;
       height: 3rem;
@@ -232,329 +209,133 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-    
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1001;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-  background: linear-gradient(135deg, #00C853, #64DD17);
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 400px;
-  text-align: center;
-  color: white;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  border: 2px solid white;
-}
-
-
-      .form-input, .btn {
-        font-size: 14px;
-      }
-      .data-table {
-        font-size: 10px;
-      }
-      .data-table th {
-        padding: 4px 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-        vertical-align: top;
-      }
-      .data-table td {
-        padding: 4px 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        vertical-align: middle;
-      }
-      .data-table th:nth-child(1),
-      .data-table td:nth-child(1) {
-        width: 25%;
-      }
-      .data-table th:nth-child(2),
-      .data-table td:nth-child(2) {
-        width: 20%;
-      }
-      .data-table th:nth-child(3),
-      .data-table td:nth-child(3) {
-        width: 15%;
-      }
-      .data-table th:nth-child(4),
-      .data-table td:nth-child(4) {
-        width: 20%;
-      }
-      .data-table th:nth-child(5),
-      .data-table td:nth-child(5) {
-        width: 20%;
-        
-      }
-    
-      
-      .nav-btn.berkedip-kuat {
-  animation: kedipHebat 1s infinite;
-  background-color: #ff5252 !important;
-  color: white !important;
-  font-weight: bold;
-  box-shadow: 0 0 10px #ff5252;
-}
-      
- .berkedip-kuat {
-  animation: kedipHebat 1s infinite;
-  background-color: #ff5252 !important;
-  color: white !important;
-  font-weight: bold;
-  border: 2px solid white !important;
-  box-shadow: 0 0 10px #ff5252;
-}
-
-@keyframes kedipHebat {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-<div id="popupPesanan" class="modal">
-  <div class="modal-content berkedip-kuat">
-    <h3>📥 Pesanan Baru Masuk!</h3>
-    <div id="popupIsiPesanan"></div>
-   <button onclick="tutupPopup()" class="btn btn-primary">Lihat Pesanan Masuk</button>
-   <button onclick="tutupPopup()" class="btn btn-secondary" style="margin-top: 10px;">Tutup</button>
-  </div>
-</div>
-
-  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
-
+  <div id="loadingSpinner"><div class="spinner"></div></div>
   <div class="container">
-    <div class="header-top">
-  <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
-  <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
-  <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 20px; color: #16a34a;"></i>
-</div>
-    <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
-    <form id="fruitForm">
-      <div class="form-group">
-        <label>Nama Buah</label>
-        <input type="text" id="fruitName" class="form-input" required />
+ <div class="header-top">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
+      <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
+        <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
       </div>
-      <div class="form-group">
-        <label>Harga (Rp)</label>
-        <input type="number" id="fruitPrice" class="form-input" required />
-      </div>
-      <div class="form-group">
-        <label>Stok (kg)</label>
-        <input type="number" id="fruitStock" class="form-input" required />
-      </div>
-      <div>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
-        <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
-      </div>
-    </form>
+      <p style="font-size: 11px; margin-left: 26px;">Dashboard Pesanan Masuk</p>
+    </div>
+    <div class="stats">
+      <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
+      <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
+      <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
+      <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+    </div>
 
-    <table class="data-table">
-      <thead>
-        <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>
-      </thead>
-      <tbody id="fruitList"></tbody>
-    </table>
-  </div>
-
-  <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
-    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i> Inventori</a>
- <a href="navigator-input.html" id="navPesanan" class="nav-btn">
-  <i class="fas fa-receipt"></i> Pesanan
+  </div>  <nav class="app-nav">
+    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+    <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+   <a href="home.html" class="nav-btn">
+  <i class="fas fa-home"></i><span>Beranda</span>
 </a>
-    <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
   </nav>
+    <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+  </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script>
-  // 1. Konfigurasi Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.appspot.com",
-    messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const daftar = document.getElementById("daftarPesanan");
+    const totalOrdersEl = document.getElementById("totalOrders");
+    const todayIncomeEl = document.getElementById("todayIncome");
+    const avgOrderEl = document.getElementById("avgOrder");
+    const lastOrderEl = document.getElementById("lastOrder");
 
-  // 2. Utilitas format uang
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
-  }
 
-  // 3. Fungsi tampilkan data buah
-  function loadFruits() {
-    db.collection("buah").orderBy("nama").get().then(snapshot => {
-      const fruitList = document.getElementById("fruitList");
-      fruitList.innerHTML = '';
-      if (snapshot.empty) {
-        fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
-      } else {
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          fruitList.innerHTML += `
-            <tr>
-              <td>${d.nama}</td>
-              <td>${formatCurrency(d.harga)}</td>
-              <td>${d.stok} kg</td>
-              <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-              <td>
-                <button onclick="editFruit('${doc.id}')" class="btn btn-secondary">Edit</button>
-                <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary">Hapus</button>
-              </td>
-            </tr>`;
-        });
-      }
-    });
-  }
-
-  // 4. Fungsi edit data buah
-  function editFruit(id) {
-    db.collection("buah").doc(id).get().then(doc => {
-      const d = doc.data();
-      fruitName.value = d.nama;
-      fruitPrice.value = d.harga;
-      fruitStock.value = d.stok;
-      fruitForm.dataset.editId = id;
-    });
-  }
-
-  // 5. Fungsi hapus buah
-  function deleteFruit(id) {
-    if (confirm("Hapus buah ini?")) {
-      db.collection("buah").doc(id).delete().then(loadFruits);
-    }
-  }
-
-  // 6. Simpan form tambah/edit buah
-  document.getElementById("fruitForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const nama = fruitName.value;
-    const harga = parseInt(fruitPrice.value);
-    const stok = parseInt(fruitStock.value);
-    const docId = fruitForm.dataset.editId;
-    const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-    const data = { nama, harga, stok };
-    (docId ? ref.update(data) : ref.add(data)).then(() => {
-      fruitForm.reset();
-      delete fruitForm.dataset.editId;
-      loadFruits();
-    });
-  });
-
-  // 7. === NOTIFIKASI PESANAN ===
-  const sound = document.getElementById("notifSound");
-  let terakhirDitampilkan = "";
-
-  // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-  let audioSudahDiizinkan = false;
-  document.addEventListener("click", () => {
-    if (!audioSudahDiizinkan) {
-      sound.play().catch(() => {});
-      sound.pause();
-      sound.currentTime = 0;
-      audioSudahDiizinkan = true;
-    }
-  });
-
-  function tampilkanPopupPesanan(data) {
-  const items = data.items || [];
-  let isi = "";
-  let total = 0;
-  items.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-  });
-  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-  document.getElementById("popupIsiPesanan").innerHTML = isi;
-  document.getElementById("popupPesanan").style.display = "flex";
-
-  // 🔄 Tambahan: reload otomatis 30 detik setelah popup muncul
-  setTimeout(() => {
-    location.reload();
-  }, 5000);
-}
-
-function tutupPopup() {
-  document.getElementById("popupPesanan").style.display = "none";
-
-  // Suara dimatikan
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  // Simpan waktu agar notifikasi tidak muncul lagi
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  // Ikon lonceng berhenti berkedip, TAPI navigator tetap berkedip
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-  // navPesanan tetap dibiarkan berkedip
-}
-
- function cekPesananBaru() {
-  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const data = doc.data();
-      const waktuPesanan = data.waktu?.toDate?.() || new Date();
-      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-
-      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-        terakhirDitampilkan = doc.id;
-        sound.play();
-
-        tampilkanPopupPesanan(data);
-
-        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-      } else {
     
-      }
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    
+
+    function showLoading() {
+      loadingSpinner.style.display = 'flex';
     }
-  });
-}
+    function hideLoading() {
+      loadingSpinner.style.display = 'none';
+    }
 
-  // 8. Jalankan saat halaman selesai dimuat
- window.addEventListener("DOMContentLoaded", () => {
-  // ...kode lain seperti:
-  loadFruits();
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 00);
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(value);
+    }
 
-  // ✅ Tambahkan ini
-  document.getElementById("navPesanan").addEventListener("click", function () {
-    this.classList.remove("berkedip-kuat");
-  });
-});
-</script>
+    function formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function tandaiDilihat(docId) {
+      db.collection("pesanan").doc(docId).update({
+        sudahDilihat: true
+      }).then(() => loadData());
+    }
+
+    function loadData() {
+      showLoading();
+      daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
+      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+        if (snapshot.empty) {
+          daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
+          hideLoading();
+          return;
+        }
+        daftar.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = data.waktu?.toDate?.() || new Date();
+          const nama = data.nama || "Pelanggan";
+          const nomor = data.nomor || "-";
+          const totalHarga = data.total || 0;
+          const status = data.status || "Menunggu";
+          const sudahDilihat = data.sudahDilihat === true;
+
+          const isiItem = (data.items || []).map(i => `
+            <div class='order-item'>🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br><small>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small></div>
+          `).join("");
+
+          daftar.innerHTML += `
+            <div class='order-item-upgrade' style="background: ${sudahDilihat ? '#ffffff' : '#e6ffe8'}; border-left: 5px solid ${sudahDilihat ? '#e2e8f0' : '#16a34a'}" onclick="tandaiDilihat('${doc.id}')">
+              <div class='order-row-top'>
+                <div class='customer'>
+                  <div class='avatar'>${nama[0].toUpperCase()}</div>
+                  <div class='info'>
+                    <div class='name'>${nama}</div>
+                    <div class='phone'>${nomor}</div>
+                  </div>
+                </div>
+                <div class='meta'>
+                  <div class='total'>${formatCurrency(totalHarga)}</div>
+                  <div class='status'>${status} ${!sudahDilihat ? "<span style='background:#16a34a; color:white; padding:2px 6px; border-radius:4px; font-size:9px; margin-left:6px;'>BARU</span>" : ""}</div>
+                </div>
+              </div>
+              <div class='order-row-bottom'>
+                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                <div class='items'>${isiItem}</div>
+              </div>
+            </div>
+          `;
+        });
+        hideLoading();
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadData);
+  </script>
 </body>
 </html>
