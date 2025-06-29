@@ -299,45 +299,49 @@
         const now = new Date();
         now.setHours(0, 0, 0, 0);
         daftar.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const waktu = data.waktu?.toDate?.() || new Date();
-          const isToday = waktu >= now;
-          const totalHarga = data.total || 0;
-          const nama = data.nama || "Pelanggan";
-          const nomor = data.nomor || "-";
-          const status = data.status || "Menunggu";
+     snapshot.forEach(doc => {
+  const data = doc.data();
+  const waktu = data.waktu?.toDate?.() || new Date();
+  const isToday = waktu >= now;
+  const totalHarga = data.total || 0;
+  const nama = data.nama || "Pelanggan";
+  const nomor = data.nomor || "-";
+  const status = data.status || "Menunggu";
 
-          if (isToday) today += totalHarga;
-          total += totalHarga;
-          count++;
+  if (isToday) today += totalHarga;
+  total += totalHarga;
+  count++;
 
-          const isiItem = (data.items || []).map(i => `
-            <div class='order-item'>🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br><small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small></div>`).join("");
+  const isiItem = (data.items || []).map(i => `
+    <div class='order-item'>🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
+    <small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small></div>
+  `).join("");
 
-         daftar.innerHTML += `
-  <div class='order-item-upgrade'
-const safeData = encodeURIComponent(JSON.stringify(data));
-const safeWaktu = waktu.toISOString();
+  const safeData = encodeURIComponent(JSON.stringify(data));
+  const safeWaktu = waktu.toISOString();
 
-html += `
-  <div class='order-item-upgrade'
-    onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
-    ...
-  </div>`;
-    <div class='order-row-top'>
-      <div class='customer'>
-        <div class='avatar'>${nama[0].toUpperCase()}</div>
-        <div class='info'>
-          <div class='name'>${nama}</div>
-          <div class='phone'>${nomor}</div>
+  daftar.innerHTML += `
+    <div class='order-item-upgrade' onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
+      <div class='order-row-top'>
+        <div class='customer'>
+          <div class='avatar'>${nama[0].toUpperCase()}</div>
+          <div class='info'>
+            <div class='name'>${nama}</div>
+            <div class='phone'>${nomor}</div>
+          </div>
+        </div>
+        <div class='meta'>
+          <div class='total'>${formatCurrency(totalHarga)}</div>
+          <div class='status'>${status}</div>
         </div>
       </div>
-      <div class='meta'>
-        <div class='total'>${formatCurrency(totalHarga)}</div>
-        <div class='status'>${status}</div>
+      <div class='order-row-bottom'>
+        <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)} - ${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+        <div class='items'>${isiItem}</div>
       </div>
     </div>
+  `;
+});
     <div class='order-row-bottom'>
       <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)} - ${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
       <div class='items'>${isiItem}</div>
