@@ -215,32 +215,9 @@
 <body>
   <div id="loadingSpinner"><div class="spinner"></div></div>
   <div class="container">
-    <div class="header-top">
-      <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
-      <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
-    </div>
-    <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
-        <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
-      </div>
-      <p style="font-size: 11px; margin-left: 26px;">Dashboard Pesanan Masuk</p>
-    </div>
-    <div class="stats">
-      <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
-      <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
-      <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
-      <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
-    </div>
     <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
-  </div>  <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
-    <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-    <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
-   <a href="home.html" class="nav-btn">
-  <i class="fas fa-home"></i><span>Beranda</span>
-</a>
-  </nav>  <script>
+  </div>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
@@ -254,7 +231,11 @@
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
+
+
+    
     const loadingSpinner = document.getElementById("loadingSpinner");
+    
 
     function showLoading() {
       loadingSpinner.style.display = 'flex';
@@ -262,13 +243,22 @@
     function hideLoading() {
       loadingSpinner.style.display = 'none';
     }
+
     function formatCurrency(value) {
-      return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
+      return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(value);
     }
+
     function formatDate(date) {
       if (!date) return "-";
       return new Date(date).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
+
+    function tandaiDilihat(docId) {
+      db.collection("pesanan").doc(docId).update({
+        sudahDilihat: true
+      }).then(() => loadData());
+    }
+
     function loadData() {
       showLoading();
       daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
@@ -278,28 +268,22 @@
           hideLoading();
           return;
         }
-        let total = 0, count = 0, today = 0;
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
         daftar.innerHTML = "";
         snapshot.forEach(doc => {
           const data = doc.data();
           const waktu = data.waktu?.toDate?.() || new Date();
-          const isToday = waktu >= now;
-          const totalHarga = data.total || 0;
           const nama = data.nama || "Pelanggan";
           const nomor = data.nomor || "-";
+          const totalHarga = data.total || 0;
           const status = data.status || "Menunggu";
-
-          if (isToday) today += totalHarga;
-          total += totalHarga;
-          count++;
+          const sudahDilihat = data.sudahDilihat === true;
 
           const isiItem = (data.items || []).map(i => `
-            <div class='order-item'>🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br><small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small></div>`).join("");
+            <div class='order-item'>🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br><small>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small></div>
+          `).join("");
 
           daftar.innerHTML += `
-            <div class='order-item-upgrade'>
+            <div class='order-item-upgrade' style="background: ${sudahDilihat ? '#ffffff' : '#e6ffe8'}; border-left: 5px solid ${sudahDilihat ? '#e2e8f0' : '#16a34a'}" onclick="tandaiDilihat('${doc.id}')">
               <div class='order-row-top'>
                 <div class='customer'>
                   <div class='avatar'>${nama[0].toUpperCase()}</div>
@@ -310,25 +294,21 @@
                 </div>
                 <div class='meta'>
                   <div class='total'>${formatCurrency(totalHarga)}</div>
-                  <div class='status'>${status}</div>
+                  <div class='status'>${status} ${!sudahDilihat ? "<span style='background:#16a34a; color:white; padding:2px 6px; border-radius:4px; font-size:9px; margin-left:6px;'>BARU</span>" : ""}</div>
                 </div>
               </div>
               <div class='order-row-bottom'>
-                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)} - ${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
+                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
                 <div class='items'>${isiItem}</div>
               </div>
-            </div>`;
+            </div>
+          `;
         });
-        totalOrdersEl.textContent = count;
-        todayIncomeEl.textContent = formatCurrency(today);
-        avgOrderEl.textContent = formatCurrency(total / count);
-        lastOrderEl.textContent = formatDate(snapshot.docs[0].data().waktu?.toDate());
-        hideLoading();
-      }).catch(err => {
-        daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}</p>`;
         hideLoading();
       });
     }
+
     document.addEventListener("DOMContentLoaded", loadData);
-  </script></body>
+  </script>
+</body>
 </html>
