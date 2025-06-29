@@ -236,7 +236,19 @@
       <p><strong>Waktu:</strong> <span id="popupWaktu"></span></p>
       <div id="popupItems"></div>
       <button onclick="tutupDetail()" style="margin-top:15px; background:#333; color:white; padding:8px 12px; border:none; border-radius:5px;">Tutup</button>
-    </div>
+      <button onclick="cetakNota()" style="margin-top:10px; background:#16a34a; color:white; padding:8px 12px; border:none; border-radius:5px;">Cetak Nota</button>
+      </div>
+    <!-- Area Cetak -->
+  <div id="areaCetak" style="display:none; font-family:monospace; padding:20px; max-width:300px;">
+  <h2 style="text-align:center;">RUJAK BUAH INDONESIA</h2>
+  <p id="cetakNama"></p>
+  <p id="cetakNomor"></p>
+  <p id="cetakWaktu"></p>
+  <div id="cetakItemList"></div>
+  <hr>
+  <p><strong>Total:</strong> <span id="cetakTotal"></span></p>
+  <p><strong>Status:</strong> <span id="cetakStatus"></span></p>
+
   </div>
 
   <script>
@@ -358,6 +370,75 @@
     function tutupDetail() {
       document.getElementById("popupDetail").style.display = "none";
     }
+
+
+
+    function cetakNota() {
+  const nama = document.getElementById("popupNama").textContent;
+  const nomor = document.getElementById("popupNomor").textContent;
+  const total = document.getElementById("popupTotal").textContent;
+  const waktu = document.getElementById("popupWaktu").textContent;
+  const status = document.getElementById("popupStatus").textContent;
+  const itemHTML = document.getElementById("popupItems").innerHTML;
+
+  // Isi struk
+  document.getElementById("cetakNama").textContent = "Nama: " + nama;
+  document.getElementById("cetakNomor").textContent = "No HP: " + nomor;
+  document.getElementById("cetakWaktu").textContent = "Waktu: " + waktu;
+  document.getElementById("cetakTotal").textContent = total;
+  document.getElementById("cetakStatus").textContent = status;
+  document.getElementById("cetakItemList").innerHTML = itemHTML;
+
+const printContents = document.getElementById("areaCetak").innerHTML;
+const win = window.open("", "_blank");
+
+win.document.write(`
+  <html>
+    <head>
+      <title>Struk Pesanan</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <style>
+        body {
+          font-family: monospace;
+          font-size: 12px;
+          padding: 10px;
+          color: #000;
+        }
+        h2 {
+          text-align: center;
+          font-size: 16px;
+          margin-bottom: 10px;
+        }
+        p {
+          margin: 2px 0;
+        }
+        hr {
+          margin: 8px 0;
+          border: none;
+          border-top: 1px dashed #000;
+        }
+        .item {
+          margin-bottom: 5px;
+        }
+        small {
+          color: #444;
+        }
+      </style>
+    </head>
+    <body>
+      ${printContents}
+      <script>
+        window.onload = function() {
+          window.print();
+          setTimeout(() => window.close(), 300);
+        }
+      </script>
+    </body>
+  </html>
+`);
+
+win.document.close();
+}
 
     document.addEventListener("DOMContentLoaded", loadData);
   </script>
