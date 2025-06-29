@@ -278,63 +278,78 @@
       return new Date(date).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
 
-    function loadData() {
-      showLoading();
-      daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
-      db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
-        if (snapshot.empty) {
-          daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
-          hideLoading();
-          return;
-        }
+   function loadData() {
+  showLoading();
+  daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
 
-        let total = 0, count = 0, today = 0;
-        const now = new Date(); now.setHours(0, 0, 0, 0);
-        daftar.innerHTML = "";
+  db.collection("pesanan").get().then(snapshot => {
+    const docs = snapshot.docs
+      .filter(d => d.data().waktu) // pastikan ada waktu
+      .sort((a, b) => b.data().waktu.toDate() - a.data().waktu.toDate());
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const waktu = data.waktu?.toDate?.() || new Date();
-          const isToday = waktu >= now;
-          const totalHarga = data.total || 0;
+    if (docs.length === 0) {
+      daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
+      hideLoading();
+      return;
+    }
 
-          if (isToday) today += totalHarga;
-          total += totalHarga;
-          count++;
+    let total = 0, count = 0, today = 0;
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    daftar.innerHTML = "";
 
-          const safeData = encodeURIComponent(JSON.stringify(data));
-          const safeWaktu = waktu.toISOString();
+    docs.forEach(doc => {
+      const data = doc.data();
+      const waktu = data.waktu.toDate();
+      const isToday = waktu >= now;
+      const totalHarga = data.total || 0;
 
-          const items = (data.items || []).map(i => `
-            <div class='order-item'>
-              🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
-              <small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small>
-            </div>
-          `).join("");
+      if (isToday) today += totalHarga;
+      total += totalHarga;
+      count++;
 
-          daftar.innerHTML += `
-            <div class='order-item-upgrade' onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
-              <div class='order-row-top'>
-                <div class='customer'>
-                  <div class='avatar'>${data.nama?.[0]?.toUpperCase() || "P"}</div>
-                  <div class='info'>
-                    <div class='name'>${data.nama || "Pelanggan"}</div>
-                    <div class='phone'>${data.nomor || "-"}</div>
-                  </div>
-                </div>
-                <div class='meta'>
-                  <div class='total'>${formatCurrency(totalHarga)}</div>
-                  <div class='status'>${data.status || "Menunggu"}</div>
-                </div>
-              </div>
-              <div class='order-row-bottom'>
-                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
-                <div class='items'>${items}</div>
+      const safeData = encodeURIComponent(JSON.stringify(data));
+      const safeWaktu = waktu.toISOString();
+
+      const items = (data.items || []).map(i => `
+        <div class='order-item'>
+          🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
+          <small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small>
+        </div>
+      `).join("");
+
+      daftar.innerHTML += `
+        <div class='order-item-upgrade' onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
+          <div class='order-row-top'>
+            <div class='customer'>
+              <div class='avatar'>${data.nama?.[0]?.toUpperCase() || "P"}</div>
+              <div class='info'>
+                <div class='name'>${data.nama || "Pelanggan"}</div>
+                <div class='phone'>${data.nomor || "-"}</div>
               </div>
             </div>
-          `;
-        });
+            <div class='meta'>
+              <div class='total'>${formatCurrency(totalHarga)}</div>
+              <div class='status'>${data.status || "Menunggu"}</div>
+            </div>
+          </div>
+          <div class='order-row-bottom'>
+            <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+            <div class='items'>${items}</div>
+          </div>
+        </div>
+      `;
+    });
 
+    totalOrdersEl.textContent = count;
+    todayIncomeEl.textContent = formatCurrency(today);
+    avgOrderEl.textContent = formatCurrency(total / count);
+    lastOrderEl.textContent = formatDate(docs[0].data().waktu.toDate());
+    hideLoading();
+  }).catch(err => {
+    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}</p>`;
+    hideLoading();
+  });
+}
         totalOrdersEl.textContent = count;
         todayIncomeEl.textContent = formatCurrency(today);
         avgOrderEl.textContent = formatCurrency(total / count);
