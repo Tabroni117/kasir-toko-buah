@@ -493,10 +493,10 @@
   document.getElementById("popupIsiPesanan").innerHTML = isi;
   document.getElementById("popupPesanan").style.display = "flex";
 
-  // 🔄 Tambahan: reload otomatis  setelah popup muncul
+  // 🔄 Tambahan: reload otomatis 30 detik setelah popup muncul
   setTimeout(() => {
     location.reload();
-  }, 60000);
+  }, 5000);
 }
 
 function tutupPopup() {
@@ -515,7 +515,7 @@ function tutupPopup() {
   // navPesanan tetap dibiarkan berkedip
 }
 
-function cekPesananBaru() {
+ function cekPesananBaru() {
   db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -525,42 +525,27 @@ function cekPesananBaru() {
 
       if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
         terakhirDitampilkan = doc.id;
-
-        if (audioSudahDiizinkan) {
-          sound.play().catch(err => console.log("Audio gagal diputar:", err));
-        }
+        sound.play();
 
         tampilkanPopupPesanan(data);
 
+        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
         document.getElementById("notifLonceng").classList.add("berkedip-kuat");
         document.getElementById("navPesanan").classList.add("berkedip-kuat");
+
+      } else {
+    
       }
     }
   });
 }
- let audioSudahDiizinkan = false;
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 1000);
-
-      document.getElementById("navPesanan").addEventListener("click", function () {
-        this.classList.remove("berkedip-kuat");
-      });
-
-      // ✅ Aktifkan audio hanya sekali saat ada interaksi tombol/link
-      document.querySelectorAll("button, a").forEach(el => {
-        el.addEventListener("click", () => {
-          if (!audioSudahDiizinkan) {
-            sound.play().catch(() => {});
-            sound.pause();
-            sound.currentTime = 0;
-            audioSudahDiizinkan = true;
-          }
-        });
-      });
-    });
-  </script>
+  // 8. Jalankan saat halaman selesai dimuat
+  window.addEventListener("DOMContentLoaded", () => {
+    loadFruits();          // tampilkan buah
+    cekPesananBaru();      // cek awal
+    setInterval(cekPesananBaru, 1000); // terus cek pesanan setiap 1 detik
+  });
+</script>
 </body>
 </html>
