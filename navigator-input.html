@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="id">
+<!DOCTYPE html>
+<html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -87,18 +88,6 @@
       padding: 10px;
       border-radius: 6px;
     }
-    .stat-box h3 {
-      font-size: 14px;
-      margin-bottom: 5px;
-    }
-    .stat-box p {
-      font-size: 12px;
-      color: var(--secondary);
-    }
-    .stat-icon {
-      font-size: 20px;
-      color: var(--primary);
-    }
     .order-item-upgrade {
       border: 1px solid #e2e8f0;
       border-radius: 10px;
@@ -186,12 +175,10 @@
       margin-bottom: 0.25rem;
     }
     .nav-btn.active {
-  color: var(--primary); /* Ganti jadi warna teks utama (tidak putih) */
-  background: transparent; /* Hapus background */
-  transform: none; /* Hilangkan efek naik */
-  box-shadow: none; /* Hilangkan bayangan */
-  font-weight: 600; /* Opsional: beri sedikit penekanan teks agar tetap terlihat aktif */
-}
+      font-weight: 600;
+      background: transparent;
+      box-shadow: none;
+    }
     #loadingSpinner {
       display: none;
       position: fixed;
@@ -215,17 +202,13 @@
 <body>
   <div id="loadingSpinner"><div class="spinner"></div></div>
   <div class="container">
-
- <div class="header-top">
+    <div class="header-top">
       <button class="back-btn" onclick="window.location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> Kembali</button>
       <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
-    <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 15px;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <i class="fas fa-leaf" style="font-size: 20px; color: var(--primary);"></i>
-        <h1 style="margin: 0;">RUJAK BUAH INDONESIA</h1>
-      </div>
-      <p style="font-size: 11px; margin-left: 26px;">Dashboard Pesanan Masuk</p>
+    <div style="margin-bottom: 15px;">
+      <h1>RUJAK BUAH INDONESIA</h1>
+      <p style="font-size: 11px;">Dashboard Pesanan Masuk</p>
     </div>
     <div class="stats">
       <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
@@ -233,17 +216,29 @@
       <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
       <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
     </div>
+    <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+  </div>
 
-  </div>  <nav class="app-nav">
+  <nav class="app-nav">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
     <a href="inventoribuah.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
     <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
-   <a href="home.html" class="nav-btn">
-  <i class="fas fa-home"></i><span>Beranda</span>
-</a>
+    <a href="home.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
   </nav>
-    <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+
+  <!-- Popup Detail -->
+  <div id="popupDetail" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000aa; z-index:9999; padding:20px;">
+    <div style="background:white; padding:15px; border-radius:10px; max-width:500px; margin:auto;">
+      <h3 id="popupNama">Nama Pelanggan</h3>
+      <p><strong>Nomor:</strong> <span id="popupNomor"></span></p>
+      <p><strong>Total:</strong> <span id="popupTotal"></span></p>
+      <p><strong>Status:</strong> <span id="popupStatus"></span></p>
+      <p><strong>Waktu:</strong> <span id="popupWaktu"></span></p>
+      <div id="popupItems"></div>
+      <button onclick="tutupDetail()" style="margin-top:15px; background:#333; color:white; padding:8px 12px; border:none; border-radius:5px;">Tutup</button>
+    </div>
   </div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
@@ -258,35 +253,20 @@
     const todayIncomeEl = document.getElementById("todayIncome");
     const avgOrderEl = document.getElementById("avgOrder");
     const lastOrderEl = document.getElementById("lastOrder");
-
-
-    
     const loadingSpinner = document.getElementById("loadingSpinner");
-    
 
-    function showLoading() {
-      loadingSpinner.style.display = 'flex';
-    }
-    function hideLoading() {
-      loadingSpinner.style.display = 'none';
-    }
+    function showLoading() { loadingSpinner.style.display = 'flex'; }
+    function hideLoading() { loadingSpinner.style.display = 'none'; }
 
-    function formatCurrency(value) {
-      return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(value);
+    function formatCurrency(val) {
+      return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
     }
-
     function formatDate(date) {
       if (!date) return "-";
       return new Date(date).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
 
-    function tandaiDilihat(docId) {
-      db.collection("pesanan").doc(docId).update({
-        sudahDilihat: true
-      }).then(() => loadData());
-    }
-
-   function loadData() {
+    function loadData() {
       showLoading();
       daftar.innerHTML = "<p style='text-align:center;'>Memuat data...</p>";
       db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
@@ -295,68 +275,54 @@
           hideLoading();
           return;
         }
+
         let total = 0, count = 0, today = 0;
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
+        const now = new Date(); now.setHours(0, 0, 0, 0);
         daftar.innerHTML = "";
 
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const waktu = data.waktu?.toDate?.() || new Date();
+          const isToday = waktu >= now;
+          const totalHarga = data.total || 0;
 
-snapshot.forEach(doc => {
-  const data = doc.data();
-  const waktu = data.waktu?.toDate?.() || new Date();
-  const isToday = waktu >= now;
-  const totalHarga = data.total || 0;
-  const nama = data.nama || "Pelanggan";
-  const nomor = data.nomor || "-";
-  const status = data.status || "Menunggu";
+          if (isToday) today += totalHarga;
+          total += totalHarga;
+          count++;
 
-  if (isToday) today += totalHarga;
-  total += totalHarga;
-  count++;
+          const safeData = encodeURIComponent(JSON.stringify(data));
+          const safeWaktu = waktu.toISOString();
 
-  const isiItem = (data.items || []).map(i => `
-    <div class='order-item'>
-      🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
-      <small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small>
-    </div>
-  `).join("");
+          const items = (data.items || []).map(i => `
+            <div class='order-item'>
+              🍉 ${i.nama} (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
+              <small style='color:#666;'>${i.sambal || "-"}, ${i.ukuran || "-"}, ${i.bumbu || "-"}</small>
+            </div>
+          `).join("");
 
-  const safeData = encodeURIComponent(JSON.stringify(data));
-  const safeWaktu = waktu.toISOString();
-
-  daftar.innerHTML += `
-    <div class='order-item-upgrade' onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
-      <div class='order-row-top'>
-        <div class='customer'>
-          <div class='avatar'>${nama[0].toUpperCase()}</div>
-          <div class='info'>
-            <div class='name'>${nama}</div>
-            <div class='phone'>${nomor}</div>
-          </div>
-        </div>
-        <div class='meta'>
-          <div class='total'>${formatCurrency(totalHarga)}</div>
-          <div class='status'>${status}</div>
-        </div>
-      </div>
-      <div class='order-row-bottom'>
-        <div class='time'><i class='fas fa-clock'></i>
-          <span>${formatDate(waktu)} - ${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-        <div class='items'>${isiItem}</div>
-      </div>
-    </div>
-  `;
-});
-
-
-        
-    <div class='order-row-bottom'>
-      <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)} - ${waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span></div>
-      <div class='items'>${isiItem}</div>
-    </div>
-  </div>`;
+          daftar.innerHTML += `
+            <div class='order-item-upgrade' onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
+              <div class='order-row-top'>
+                <div class='customer'>
+                  <div class='avatar'>${data.nama?.[0]?.toUpperCase() || "P"}</div>
+                  <div class='info'>
+                    <div class='name'>${data.nama || "Pelanggan"}</div>
+                    <div class='phone'>${data.nomor || "-"}</div>
+                  </div>
+                </div>
+                <div class='meta'>
+                  <div class='total'>${formatCurrency(totalHarga)}</div>
+                  <div class='status'>${data.status || "Menunggu"}</div>
+                </div>
+              </div>
+              <div class='order-row-bottom'>
+                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                <div class='items'>${items}</div>
+              </div>
+            </div>
+          `;
         });
+
         totalOrdersEl.textContent = count;
         todayIncomeEl.textContent = formatCurrency(today);
         avgOrderEl.textContent = formatCurrency(total / count);
@@ -367,49 +333,33 @@ snapshot.forEach(doc => {
         hideLoading();
       });
     }
+
+    function tampilkanDetail(docId, encodedData, waktuStr) {
+      const data = JSON.parse(decodeURIComponent(encodedData));
+      const waktu = new Date(waktuStr);
+
+      document.getElementById("popupNama").textContent = data.nama || "Pelanggan";
+      document.getElementById("popupNomor").textContent = data.nomor || "-";
+      document.getElementById("popupTotal").textContent = formatCurrency(data.total || 0);
+      document.getElementById("popupStatus").textContent = data.status || "Menunggu";
+      document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+      document.getElementById("popupItems").innerHTML = (data.items || []).map(i => `
+        <div style="margin-bottom:10px;">
+          🍉 <strong>${i.nama}</strong> (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
+          <small style="color:#555;">Sambal: ${i.sambal || "-"}, Ukuran: ${i.ukuran || "-"}, Bumbu: ${i.bumbu || "-"}</small>
+        </div>
+      `).join("");
+
+      db.collection("pesanan").doc(docId).update({ sudahDilihat: true }).catch(() => {});
+      document.getElementById("popupDetail").style.display = "block";
+    }
+
+    function tutupDetail() {
+      document.getElementById("popupDetail").style.display = "none";
+    }
+
     document.addEventListener("DOMContentLoaded", loadData);
-function tampilkanDetail(docId, encodedData, waktuStr) {
-  const data = JSON.parse(decodeURIComponent(encodedData));
-  const waktu = new Date(waktuStr);
-
-  document.getElementById("popupNama").textContent = data.nama || "Pelanggan";
-  document.getElementById("popupNomor").textContent = data.nomor || "-";
-  document.getElementById("popupTotal").textContent = formatCurrency(data.total || 0);
-  document.getElementById("popupStatus").textContent = data.status || "Menunggu";
-  document.getElementById("popupWaktu").textContent = formatDate(waktu) + " " + waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-  const detailItems = (data.items || []).map(i => `
-    <div style="margin-bottom:10px;">
-      🍉 <strong>${i.nama}</strong> (${i.jumlah} x Rp${i.harga.toLocaleString("id-ID")})<br>
-      <small style="color:#555;">Sambal: ${i.sambal || "-"}, Ukuran: ${i.ukuran || "-"}, Bumbu: ${i.bumbu || "-"}</small>
-    </div>
-  `).join("");
-  document.getElementById("popupItems").innerHTML = detailItems;
-
-  tandaiDilihat(docId);
-  document.getElementById("popupDetail").style.display = "block";
-}
-function tutupDetail() {
-  document.getElementById("popupDetail").style.display = "none";
-}
-
-
-</script>
-
-  
-<!-- Popup Detail Pesanan -->
-<div id="popupDetail" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000000aa; z-index:9999; padding:20px;">
-  <div style="background:white; padding:15px; border-radius:10px; max-width:500px; margin:auto;">
-    <h3 id="popupNama">Nama Pelanggan</h3>
-    <p><strong>Nomor:</strong> <span id="popupNomor"></span></p>
-    <p><strong>Total:</strong> <span id="popupTotal"></span></p>
-    <p><strong>Status:</strong> <span id="popupStatus"></span></p>
-    <p><strong>Waktu:</strong> <span id="popupWaktu"></span></p>
-    <div id="popupItems"></div>
-    <button onclick="tutupDetail()" style="margin-top:15px; background:#333; color:white; padding:8px 12px; border:none; border-radius:5px;">Tutup</button>
-  </div>
-</div>
-    
-  
+  </script>
 </body>
 </html>
