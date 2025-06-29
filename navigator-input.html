@@ -317,7 +317,14 @@
 
          daftar.innerHTML += `
   <div class='order-item-upgrade'
- onclick='tampilkanDetail("${doc.id}", JSON.parse(decodeURIComponent("${encodeURIComponent(JSON.stringify(data))}")), new Date("${waktu.toISOString()}"))'>
+const safeData = encodeURIComponent(JSON.stringify(data));
+const safeWaktu = waktu.toISOString();
+
+html += `
+  <div class='order-item-upgrade'
+    onclick='tampilkanDetail("${doc.id}", "${safeData}", "${safeWaktu}")'>
+    ...
+  </div>`;
     <div class='order-row-top'>
       <div class='customer'>
         <div class='avatar'>${nama[0].toUpperCase()}</div>
@@ -348,13 +355,15 @@
       });
     }
     document.addEventListener("DOMContentLoaded", loadData);
-function tampilkanDetail(data, waktu) {
-  const waktuObj = new Date(waktu); // untuk jaga-jaga kalau suatu saat yang dikirim string
+function tampilkanDetail(docId, encodedData, waktuStr) {
+  const data = JSON.parse(decodeURIComponent(encodedData));
+  const waktu = new Date(waktuStr);
+
   document.getElementById("popupNama").textContent = data.nama || "Pelanggan";
   document.getElementById("popupNomor").textContent = data.nomor || "-";
   document.getElementById("popupTotal").textContent = formatCurrency(data.total || 0);
   document.getElementById("popupStatus").textContent = data.status || "Menunggu";
-  document.getElementById("popupWaktu").textContent = formatDate(waktuObj) + " " + waktuObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById("popupWaktu").textContent = formatDate(waktu) + " " + waktu.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
   const detailItems = (data.items || []).map(i => `
     <div style="margin-bottom:10px;">
@@ -364,9 +373,9 @@ function tampilkanDetail(data, waktu) {
   `).join("");
   document.getElementById("popupItems").innerHTML = detailItems;
 
+  tandaiDilihat(docId);
   document.getElementById("popupDetail").style.display = "block";
 }
-
 function tutupDetail() {
   document.getElementById("popupDetail").style.display = "none";
 }
