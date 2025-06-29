@@ -515,7 +515,7 @@ function tutupPopup() {
   // navPesanan tetap dibiarkan berkedip
 }
 
- function cekPesananBaru() {
+function cekPesananBaru() {
   db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
@@ -525,21 +525,19 @@ function tutupPopup() {
 
       if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
         terakhirDitampilkan = doc.id;
-        sound.play();
+
+        if (audioSudahDiizinkan) {
+          sound.play().catch(err => console.log("Audio gagal diputar:", err));
+        }
 
         tampilkanPopupPesanan(data);
 
-        // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
         document.getElementById("notifLonceng").classList.add("berkedip-kuat");
         document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-      } else {
-    
       }
     }
   });
 }
-
   // 8. Jalankan saat halaman selesai dimuat
  window.addEventListener("DOMContentLoaded", () => {
   // ...kode lain seperti:
