@@ -79,6 +79,82 @@
     .custom-header {
       background: linear-gradient(135deg, #00C853, #64DD17);
     }
+
+
+.app-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--white);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      width: 100%;
+    }
+    .nav-btn i {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    .nav-btn.active {
+      font-weight: 600;
+      background: transparent;
+      box-shadow: none;
+    }
+
+
+
+.berkedip-kuat {
+  animation: kedip 0.8s infinite alternate;
+}
+@keyframes kedip {
+  from { opacity: 1; }
+  to { opacity: 0.2; }
+}
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
   </style>
 </head>
 <body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
@@ -184,10 +260,10 @@
       </h3>
       <div id="popupIsiPesanan" class="max-h-60 overflow-y-auto mb-4"></div>
       <div class="flex gap-3">
-        <button onclick="window.location.href='navigator-input.html'" 
-          class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
-          Lihat Pesanan
-        </button>
+        <button onclick="tutupDanKePesanan()" 
+  class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
+  Lihat Pesanan
+</button>
         <button onclick="tutupPopup()" 
           class="flex-1 border border-gray-300 hover:bg-gray-100 py-2 rounded-lg">
           Tutup
@@ -198,25 +274,32 @@
 
   <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
-  <!-- Navigasi Bawah -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-lg flex justify-around items-center py-2 z-40" style="position: fixed !important;">
-    <a href="apl05.html" class="flex flex-col items-center text-green-600 text-xs px-1">
-      <i class="fas fa-home text-xl mb-1"></i>
-      <span>Beranda</span>
-    </a>
-    <a href="dashboard.html" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
-      <i class="fas fa-boxes text-xl mb-1"></i>
-      <span>Inventori</span>
-    </a>
-    <a href="navigator-input.html" id="navPesanan" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
-      <i class="fas fa-receipt text-xl mb-1"></i>
-      <span>Pesanan</span>
-    </a>
-    <a href="pengaturan.html" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
-      <i class="fas fa-cog text-xl mb-1"></i>
-      <span>Pengaturan</span>
-    </a>
+
+
+ <nav class="app-nav">
+    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+    <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+    <a href="navigator-input.html" id="navPesanan" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+    <a href="home.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
   </nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
   <!-- Script Inventory -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -328,10 +411,14 @@
   document.getElementById("popupIsiPesanan").innerHTML = isi;
   document.getElementById("popupPesanan").style.display = "flex";
 
-  // 🔄 Tambahan: reload otomatis 30 detik setelah popup muncul
-  setTimeout(() => {
-    location.reload();
-  }, 5000);
+  // ✅ Cek terus, kalau popup ditutup, barulah loadFruits()
+  const cekPopupTutup = setInterval(() => {
+    const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
+    if (popupTertutup) {
+      loadFruits();
+      clearInterval(cekPopupTutup);
+    }
+  }, 1000); // cek tiap 1 detik
 }
 
 
@@ -340,7 +427,6 @@
 
 
 
-
     
 
 
@@ -371,22 +457,32 @@
 
 
     
-    function tutupPopup() {
-      document.getElementById("popupPesanan").classList.add("hidden");
+  function tutupPopup() {
+  document.getElementById("popupPesanan").classList.add("hidden");
 
-      // Suara dimatikan
-      sound.pause();
-      sound.currentTime = 0;
-      sedangBerbunyi = false;
+  // Suara dimatikan
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
 
-      // Simpan waktu agar notifikasi tidak muncul lagi
-      localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
 
-      // Ikon lonceng berhenti berkedip, TAPI navigator tetap berkedip
-      document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-      // navPesanan tetap dibiarkan berkedip
-    }
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+}
 
+function tutupDanKePesanan() {
+  document.getElementById("popupPesanan").classList.add("hidden");
+
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
+
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+  window.location.href = "navigator-input.html";
+}
     function cekPesananBaru() {
       db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
         if (!snapshot.empty) {
@@ -417,7 +513,7 @@
       // ...kode lain seperti:
       loadFruits();
       cekPesananBaru();
-      setInterval(cekPesananBaru, 100);
+      setInterval(cekPesananBaru, 2200);
 
       // ✅ Tambahkan ini
       document.getElementById("navPesanan").addEventListener("click", function () {
