@@ -43,15 +43,15 @@
       border: 1px solid var(--primary);
     }
     .form-group {
-      margin-bottom: 6px;
+      margin-bottom: 12px;
     }
     .form-input {
       width: 100%;
       padding: 8px 12px;
       border: 1px solid rgba(16, 181, 129, 0.3);
-      border-radius: 8px;
+      border-radius: 6px;
       background: #f8fafc;
-      font-size: 14px;
+      font-size: 12px;
     }
     body {
       padding-bottom: 70px;
@@ -63,13 +63,14 @@
     }
 
     .container {
+      max-width: 700px;
       width: 100%;
       margin: 0 auto;
       background: white;
-      padding: 12px;
+      padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.1);
-      margin-top: 70px;
+      box-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+      margin-top: 80px;
     }
 
     .custom-header {
@@ -80,10 +81,10 @@
 <body class="bg-green-50 min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="text-white p-3 rounded-b-xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
+  <header class="text-white p-4 rounded-b-2xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
     <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <i class="fas fa-leaf text-xl"></i>
+      <div class="flex items-center gap-3">
+        <i class="fas fa-leaf text-2xl"></i>
         <div>
           <h1 class="font-bold text-lg">RUJAK BUAH INDONESIA</h1>
           <p class="text-sm">Aplikasi Kasir Premium</p>
@@ -96,8 +97,8 @@
   </header>
 
   <!-- Main Content -->
-  <main class="flex-1 pt-3">
-    <div class="container mx-auto px-3">
+  <main class="flex-1 pt-4">
+    <div class="container mx-auto px-4">
       <div class="header-top">
         <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
         <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
@@ -105,17 +106,17 @@
       </div>
       <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
-      <form id="fruitForm" class="space-y-2">
+      <form id="fruitForm">
         <div class="form-group">
-          <label class="block text-sm font-medium text-gray-700">Nama Buah</label>
+          <label>Nama Buah</label>
           <input type="text" id="fruitName" class="form-input" required />
         </div>
         <div class="form-group">
-          <label class="block text-sm font-medium text-gray-700">Harga (Rp)</label>
+          <label>Harga (Rp)</label>
           <input type="number" id="fruitPrice" class="form-input" required />
         </div>
         <div class="form-group">
-          <label class="block text-sm font-medium text-gray-700">Stok (kg)</label>
+          <label>Stok (kg)</label>
           <input type="number" id="fruitStock" class="form-input" required />
         </div>
         <div>
@@ -164,12 +165,22 @@
     </div>
   </div>
 
-  <div id="popupPesanan" class="modal">
-    <div class="modal-content berkedip-kuat">
-      <h3>📥 Pesanan Baru Masuk!</h3>
-      <div id="popupIsiPesanan"></div>
-      <button onclick="window.location.href='navigator-input.html'" class="btn btn-primary">Lihat Pesanan Masuk</button>
-      <button onclick="tutupPopup()" class="btn btn-secondary" style="margin-top: 10px;">Tutup</button>
+  <div id="popupPesanan" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+      <h3 class="text-xl font-bold text-green-600 mb-4 flex items-center">
+        <i class="fas fa-bell mr-2"></i> Pesanan Baru Masuk!
+      </h3>
+      <div id="popupIsiPesanan" class="max-h-60 overflow-y-auto mb-4"></div>
+      <div class="flex gap-3">
+        <button onclick="window.location.href='navigator-input.html'" 
+          class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
+          Lihat Pesanan
+        </button>
+        <button onclick="tutupPopup()" 
+          class="flex-1 border border-gray-300 hover:bg-gray-100 py-2 rounded-lg">
+          Tutup
+        </button>
+      </div>
     </div>
   </div>
 
@@ -293,24 +304,30 @@
 
     function tampilkanPopupPesanan(data) {
       const items = data.items || [];
-      let isi = "<div style='max-height:300px; overflow-y:auto;'>";
+      let isi = "";
       let total = 0;
       items.forEach(item => {
         const subtotal = item.harga * item.jumlah;
         total += subtotal;
-        isi += `<div style='margin-bottom:10px;'>
-          <strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br>
-          <small style='color:#f0f0f0;'>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br>
-          <strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong>
+        isi += `
+        <div class="mb-3 pb-3 border-b border-gray-100">
+          <div class="font-medium">${item.nama} (${item.jumlah}x)</div>
+          <div class="text-sm text-gray-500">${item.sambal}, ${item.ukuran}, ${item.bumbu}</div>
+          <div class="flex justify-between mt-1">
+            <span>Rp ${item.harga.toLocaleString()}/pcs</span>
+            <span class="font-medium">Rp ${subtotal.toLocaleString()}</span>
+          </div>
         </div>`;
       });
-      isi += `</div><div style='margin-top:15px; font-size:1.1em;'><strong>Total: Rp ${total.toLocaleString()}</strong></div>`;
+      isi += `<div class="mt-4 pt-3 border-t border-gray-200 font-bold text-lg">
+        Total: Rp ${total.toLocaleString()}
+      </div>`;
       document.getElementById("popupIsiPesanan").innerHTML = isi;
-      document.getElementById("popupPesanan").style.display = "flex";
+      document.getElementById("popupPesanan").classList.remove("hidden");
     }
 
     function tutupPopup() {
-      document.getElementById("popupPesanan").style.display = "none";
+      document.getElementById("popupPesanan").classList.add("hidden");
 
       // Suara dimatikan
       sound.pause();
