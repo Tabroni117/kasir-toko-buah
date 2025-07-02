@@ -407,6 +407,37 @@
         #popupDetail button:hover {
             background: var(--primary-light);
         }
+
+        /* Filter buttons styling */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: center;
+        }
+        .filter-btn {
+            background: #e2e8f0; /* Light grey */
+            color: var(--secondary);
+            padding: 8px 14px;
+            border-radius: 20px; /* Pill shape */
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #cbd5e1;
+        }
+        .filter-btn:hover {
+            background: #cbd5e1;
+            color: var(--dark);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -419,7 +450,7 @@
         <div class="sticky-header">
             <div class="header-top">
                 <button class="back-btn" onclick="window.location.href='apl05.html'"><i class="fas fa-arrow-left"></i> Beranda Pelanggan</button>
-                <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="refresh-btn" onclick="loadData('All')"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             
             <div style="margin-bottom: 10px;">
@@ -431,6 +462,14 @@
                 <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
                 <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
                 <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="All">Semua</button>
+                <button class="filter-btn" data-status="Pending">Pending</button>
+                <button class="filter-btn" data-status="Diproses">Diproses</button>
+                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
             </div>
         </div>
 
@@ -486,14 +525,15 @@
         const avgOrderEl = document.getElementById("avgOrder");
         const lastOrderEl = document.getElementById("lastOrder");
         const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
 
         let currentOrderIdForDetail = null;
+        let activeFilterStatus = 'All'; // Default filter
 
         function showLoading() { loadingSpinner.style.display = 'flex'; }
         function hideLoading() { loadingSpinner.style.display = 'none'; }
 
         function formatCurrency(val) {
-            // Pastikan val adalah angka. Jika NaN, tampilkan Rp0
             if (isNaN(val) || val === null || typeof val === 'undefined') {
                 return "Rp0";
             }
@@ -502,7 +542,7 @@
         function formatDate(date) {
             if (!date) return "-";
             const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-            if (isNaN(d.getTime())) return "-"; // Cek jika tanggal tidak valid
+            if (isNaN(d.getTime())) return "-";
             return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         }
 
@@ -516,11 +556,27 @@
             }
         }
 
-        function loadData() {
+        function loadData(statusFilter = activeFilterStatus) {
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
             
-            db.collection("pesanan").orderBy("waktu", "desc").get()
+            // Update active filter button
+            filterButtons.forEach(btn => {
+                if (btn.dataset.status === statusFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            activeFilterStatus = statusFilter; // Set active filter
+
+            let query = db.collection("pesanan").orderBy("waktu", "desc");
+
+            if (statusFilter !== 'All') {
+                query = query.where('status', '==', statusFilter);
+            }
+
+            query.get()
                 .then(snapshot => {
                     hideLoading();
 
@@ -530,23 +586,22 @@
                     const now = new Date(); 
                     now.setHours(0, 0, 0, 0); 
 
-                    daftar.innerHTML = ""; // Kosongkan daftar sebelum mengisi ulang
+                    daftar.innerHTML = ""; 
 
                     let firstOrderTime = null; 
 
                     if (snapshot.empty) {
-                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
+                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
                     } else {
                         snapshot.forEach(doc => {
                             const data = doc.data();
                             const orderId = doc.id; 
                             
-                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0); // Default ke epoch jika waktu tidak valid
+                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
                             
-                            // Hanya ambil pesanan dengan waktu yang valid
                             if (isNaN(waktu.getTime())) {
                                 console.warn("Invalid timestamp found for order:", orderId, data.waktu);
-                                return; // Skip this order
+                                return; 
                             }
 
                             if (!firstOrderTime) firstOrderTime = waktu; 
@@ -595,17 +650,16 @@
                         });
                     }
 
-                    // Pastikan statistik selalu diperbarui, bahkan jika snapshot kosong
+                    // Update statistik berdasarkan SEMUA pesanan yang diambil oleh query aktif
                     totalOrdersEl.textContent = totalOrderCount;
                     todayIncomeEl.textContent = formatCurrency(todayIncome);
-                    // Gunakan Math.max untuk memastikan pembagian tidak nol atau NaN jika count = 0
                     avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
                     lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
 
                 })
                 .catch(err => {
                     hideLoading();
-                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules Anda mengizinkan baca data.</p>`;
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
                     console.error("Error loading orders from Firestore:", err); 
                 });
         }
@@ -617,7 +671,7 @@
                     if (doc.exists) {
                         const data = doc.data();
                         const customer = data.customer || {};
-                        const waktu = data.waktu?.toDate?.() || new Date(0); // Default ke epoch jika waktu tidak valid
+                        const waktu = data.waktu?.toDate?.() || new Date(0); 
                         const items = data.items || [];
                         
                         document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
@@ -661,6 +715,7 @@
         function tutupDetail() {
             document.getElementById("popupDetail").style.display = "none";
             currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
         }
 
         document.getElementById("statusUpdater").addEventListener("change", function() {
@@ -670,8 +725,10 @@
                     status: newStatus
                 }).then(() => {
                     alert("Status pesanan berhasil diperbarui!");
-                    loadData(); 
-                    tutupDetail(); 
+                    // Tidak perlu loadData() atau tutupDetail() di sini karena akan dipanggil di .then()
+                    // dari tutupDetail() setelah berhasil update
+                    // atau bisa juga panggil loadData() langsung di sini dan tutupDetail()
+                    tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
                 }).catch(error => {
                     console.error("Error updating order status:", error);
                     alert("Gagal memperbarui status pesanan.");
@@ -679,7 +736,15 @@
             }
         });
 
-        document.addEventListener("DOMContentLoaded", loadData);
+        // Event listeners for filter buttons
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                loadData(status); // Call loadData with the selected filter status
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => loadData('All')); // Load all orders on page load
     </script>
 </body>
 </html>
