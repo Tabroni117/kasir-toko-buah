@@ -254,15 +254,12 @@
     }
 
     .modal-content {
-  background: linear-gradient(135deg, #00C853, #64DD17);
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 400px;
-  text-align: center;
-  color: white;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  border: 2px solid white;
-}
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      text-align: center;
+    }
 
 
       .form-input, .btn {
@@ -337,7 +334,8 @@
   <div class="modal-content berkedip-kuat">
     <h3>📥 Pesanan Baru Masuk!</h3>
     <div id="popupIsiPesanan"></div>
-   <button onclick="tutupDanLihatPesanan()" class="btn btn-primary">Lihat Pesanan Masuk</button>    <button onclick="tutupPopup()" class="btn btn-secondary" style="margin-top: 10px;">Tutup</button>
+   <button onclick="tutupPopup()" class="btn btn-primary">Lihat Pesanan Masuk</button>
+   <button onclick="tutupPopup()" class="btn btn-secondary" style="margin-top: 10px;">Tutup</button>
   </div>
 </div>
 
@@ -383,9 +381,10 @@
 
   <nav class="app-nav">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
-    <a href="inventoribuah.html" class="nav-btn active"><i class="fas fa-boxes"></i> Inventori</a>     <a href="navigator-input.html" id="navPesanan" class="nav-btn">
-      <i class="fas fa-receipt"></i> Pesanan
-    </a>
+    <a href="inventoribuah.html" class="nav-btn active"><i class="fas fa-boxes"></i> Inventori</a>
+ <a href="navigator-input.html" id="navPesanan" class="nav-btn">
+  <i class="fas fa-receipt"></i> Pesanan
+</a>
     <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
   </nav>
 
@@ -470,13 +469,13 @@
   });
 
   // 7. === NOTIFIKASI PESANAN ===
-  // Pastikan elemen-elemen ini ada di HTML Anda
   const popupPesanan = document.getElementById("popupPesanan");
   const notifLonceng = document.getElementById("notifLonceng");
   const navPesanan = document.getElementById("navPesanan"); // Tombol navigasi "Pesanan"
   const sound = document.getElementById("notifSound");
   let sedangBerbunyi = false;
-  let idPesananTerbaruDitemukan = ""; 
+  // Menggunakan `sessionStorage` untuk idPesananTerbaruDitemukan agar reset saat browser ditutup
+  let idPesananTerbaruDitemukan = sessionStorage.getItem("lastNotifiedOrderId") || ""; 
 
   // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
   let audioSudahDiizinkan = false;
@@ -527,14 +526,14 @@
   }
 
   // Fungsi untuk menutup pop-up dan melihat pesanan (navigasi)
-  function tutupDanLihatPesanan() { // Nama fungsi diganti agar lebih jelas
+  function tutupDanLihatPesanan() { 
     tutupPopup(); // Tutup popup dan hentikan suara
     window.location.href = 'navigator-input.html'; // Arahkan ke halaman daftar pesanan
   }
 
   // Fungsi untuk mengecek pesanan baru dari Firebase
   function cekPesananBaru() {
-    const lastNotifTimeStr = localStorage.getItem("pesananSudahDibuka");
+    const lastNotifTimeStr = localStorage.getItem("pesananSudahDibuka"); // Menggunakan kunci ini
     const lastNotifTime = lastNotifTimeStr ? new Date(lastNotifTimeStr) : new Date(0);
 
     db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
@@ -544,13 +543,14 @@
         const orderId = doc.id;
         const orderTime = orderData.waktu?.toDate?.() || new Date(0);
 
-        // Hanya tampilkan notifikasi jika:
+        // Kriteria untuk menampilkan notifikasi:
         // 1. Waktu pesanan lebih baru dari waktu notifikasi terakhir yang diakui
-        // 2. Status pesanan masih 'Pending' (atau 'Diproses' jika Anda ingin notifikasi untuk itu juga)
-        // 3. ID pesanan ini belum pernah dinotifikasi di sesi ini (untuk mencegah duplikasi dalam satu kali buka halaman)
+        // 2. Status pesanan masih 'Pending'
+        // 3. ID pesanan ini belum pernah dinotifikasi di sesi ini (menggunakan sessionStorage)
         if (orderTime > lastNotifTime && orderData.status === 'Pending' && orderId !== idPesananTerbaruDitemukan) {
           idPesananTerbaruDitemukan = orderId; // Tandai pesanan ini sudah dinotifikasi di sesi ini
-          
+          sessionStorage.setItem("lastNotifiedOrderId", orderId); // Simpan juga di sessionStorage
+
           // Putar suara
           if (audioSudahDiizinkan && sound && !sedangBerbunyi) {
             sound.play().catch(e => console.error("Error playing sound:", e));
@@ -568,8 +568,9 @@
           // Ini untuk mencegah notifikasi muncul lagi jika user langsung refresh browser
           localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
 
-        } else if (orderTime <= lastNotifTime || orderData.status !== 'Pending') {
-          // Jika tidak ada pesanan pending yang lebih baru, pastikan notifikasi tersembunyi
+        } else if (orderData.status !== 'Pending' || orderId === idPesananTerbaruDitemukan) { // Kondisi diperluas
+          // Jika pesanan terbaru sudah diproses ATAU sudah pernah dinotifikasi di sesi ini,
+          // pastikan notifikasi tersembunyi
           if (popupPesanan && popupPesanan.style.display !== 'none') {
             tutupPopup();
           }
@@ -582,7 +583,6 @@
       }
     }).catch(error => {
       console.error("Error checking new orders:", error);
-      // Opsional: sembunyikan notifikasi jika ada error pengambilan data
       if (popupPesanan && popupPesanan.style.display !== 'none') {
         tutupPopup();
       }
@@ -593,28 +593,27 @@
  window.addEventListener("DOMContentLoaded", () => {
   loadFruits(); // Memuat data inventori
 
-  // ✅ Pastikan cekPesananBaru dipanggil saat halaman dimuat
+  // ✅ Panggil cekPesananBaru saat halaman dimuat
   cekPesananBaru();
   
-  // ✅ Ini adalah interval untuk *terus-menerus* memeriksa notifikasi di latar belakang
-  // Selama halaman inventoribuah.html terbuka, ini akan aktif
-  setInterval(cekPesananBaru, 5000); // Cek setiap 5 detik
+  // ✅ Setel interval untuk cek notifikasi. Di sini 5 detik lebih baik.
+  // Ini akan terus berjalan di latar belakang halaman ini.
+  setInterval(cekPesananBaru, 5000); 
 
-  // ✅ Hentikan berkedip pada tombol navigasi "Pesanan" ketika diklik
+  // ✅ Tambahkan ini: Hentikan berkedip pada tombol navigasi "Pesanan" ketika diklik
   document.getElementById("navPesanan").addEventListener("click", function () {
     this.classList.remove("berkedip-kuat");
-    // Juga hentikan lonceng berkedip jika navigasi pesanan diklik
     if (notifLonceng) notifLonceng.classList.remove("berkedip-kuat");
   });
 
     // Event listener untuk tombol "Lihat Pesanan Masuk" di pop-up
     document.querySelector('#popupPesanan .btn-primary').addEventListener('click', function() {
-        tutupDanLihatPesanan(); // Panggil fungsi yang benar
+        tutupDanLihatPesanan();
     });
 
     // Event listener untuk tombol "Tutup" di pop-up
     document.querySelector('#popupPesanan .btn-secondary').addEventListener('click', function() {
-        tutupPopup(); // Panggil fungsi yang benar
+        tutupPopup();
     });
 });
 </script>
