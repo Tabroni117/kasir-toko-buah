@@ -497,12 +497,10 @@
         }
         function formatDate(date) {
             if (!date) return "-";
-            // Pastikan date adalah objek Date, jika dari Firestore Timestamp perlu diubah
             const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
             return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         }
 
-        // Fungsi untuk mendapatkan kelas CSS status
         function getStatusClass(status) {
             switch (status?.toLowerCase()) {
                 case 'pending': return 'pending';
@@ -515,125 +513,146 @@
 
         function loadData() {
             showLoading();
+            // Membersihkan daftar dan menampilkan pesan loading
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
-            db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
-                if (snapshot.empty) {
-                    daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
-                    totalOrdersEl.textContent = 0;
-                    todayIncomeEl.textContent = formatCurrency(0);
-                    avgOrderEl.textContent = formatCurrency(0);
-                    lastOrderEl.textContent = "-";
+            
+            // Mengambil data pesanan dari Firebase Firestore
+            db.collection("pesanan").orderBy("waktu", "desc").get()
+                .then(snapshot => {
+                    // Sembunyikan loading setelah data diterima
                     hideLoading();
-                    return;
-                }
 
-                let totalIncomeAllTime = 0, totalOrderCount = 0, todayIncome = 0;
-                const now = new Date(); now.setHours(0, 0, 0, 0); // Reset waktu ke awal hari ini
-                daftar.innerHTML = "";
+                    if (snapshot.empty) {
+                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk.</p>";
+                        totalOrdersEl.textContent = 0;
+                        todayIncomeEl.textContent = formatCurrency(0);
+                        avgOrderEl.textContent = formatCurrency(0);
+                        lastOrderEl.textContent = "-";
+                        return;
+                    }
 
-                let firstOrderTime = null; // Untuk pesanan terakhir
+                    let totalIncomeAllTime = 0;
+                    let totalOrderCount = 0;
+                    let todayIncome = 0;
+                    const now = new Date(); 
+                    now.setHours(0, 0, 0, 0); // Reset waktu ke awal hari ini untuk perbandingan
 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const orderId = doc.id; // Ambil ID dokumen sebagai Order ID
-                    const waktu = data.waktu?.toDate?.() || new Date(); // Konversi Firestore Timestamp ke Date
-                    if (!firstOrderTime) firstOrderTime = waktu; // Ambil waktu pesanan paling baru (yang paling atas karena diurutkan desc)
+                    daftar.innerHTML = ""; // Bersihkan daftar sebelum mengisi ulang
 
-                    const isToday = waktu.toDateString() === now.toDateString(); // Cek apakah pesanan hari ini
-                    const totalHarga = data.totalAmount || 0; // Menggunakan 'totalAmount' dari checkout.html
+                    let firstOrderTime = null; // Untuk statistik 'Pesanan Terakhir'
 
-                    if (isToday) todayIncome += totalHarga;
-                    totalIncomeAllTime += totalHarga;
-                    totalOrderCount++;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const orderId = doc.id; // ID dokumen dari Firestore
+                        
+                        // Konversi Firestore Timestamp ke objek Date
+                        const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date();
+                        
+                        if (!firstOrderTime) firstOrderTime = waktu; // Set pesanan terakhir
 
-                    // Untuk detail item, sesuaikan dengan struktur 'items' dari checkout.html
-                    const itemsHtml = (data.items || []).map(item => `
-                        <div style="margin-bottom: 5px;">
-                            🍉 ${item.name} (${item.quantity} x Rp${item.price.toLocaleString("id-ID")}) = Rp ${(item.price * item.quantity).toLocaleString("id-ID")}
-                        </div>
-                    `).join("");
+                        const isToday = waktu.toDateString() === now.toDateString();
+                        const totalHarga = data.totalAmount || 0; // Menggunakan 'totalAmount' dari checkout.html
 
-                    const customerName = data.customer?.fullName || "Pelanggan";
-                    const customerPhone = data.customer?.phoneNumber || "-";
-                    const currentStatus = data.status || "Pending";
+                        if (isToday) todayIncome += totalHarga;
+                        totalIncomeAllTime += totalHarga;
+                        totalOrderCount++;
 
-                    daftar.innerHTML += `
-                        <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
-                            <div class='order-row-top'>
-                                <div class='customer'>
-                                    <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
-                                    <div class='info'>
-                                        <div class='name'>${customerName}</div>
-                                        <div class='phone'>${customerPhone}</div>
+                        // Pastikan objek customer ada dan ambil fullName serta phoneNumber
+                        const customerName = data.customer?.fullName || "Pelanggan";
+                        const customerPhone = data.customer?.phoneNumber || "-";
+                        const currentStatus = data.status || "Pending";
+
+                        // Bangun HTML untuk daftar item pesanan
+                        const itemsHtml = (data.items || []).map(item => `
+                            <div style="margin-bottom: 5px;">
+                                🍉 ${item.name} (${item.quantity} x Rp${item.price.toLocaleString("id-ID")}) = Rp ${(item.price * item.quantity).toLocaleString("id-ID")}
+                            </div>
+                        `).join("");
+
+                        // Tambahkan item pesanan ke daftar
+                        daftar.innerHTML += `
+                            <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
+                                <div class='order-row-top'>
+                                    <div class='customer'>
+                                        <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
+                                        <div class='info'>
+                                            <div class='name'>${customerName}</div>
+                                            <div class='phone'>${customerPhone}</div>
+                                        </div>
+                                    </div>
+                                    <div class='meta'>
+                                        <div class='total'>${formatCurrency(totalHarga)}</div>
+                                        <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
                                     </div>
                                 </div>
-                                <div class='meta'>
-                                    <div class='total'>${formatCurrency(totalHarga)}</div>
-                                    <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
+                                <div class='order-row-bottom'>
+                                    <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                                    <div class='items'>${itemsHtml}</div>
                                 </div>
                             </div>
-                            <div class='order-row-bottom'>
-                                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
-                                <div class='items'>${itemsHtml}</div>
-                            </div>
-                        </div>
-                    `;
-                });
+                        `;
+                    });
 
-                totalOrdersEl.textContent = totalOrderCount;
-                todayIncomeEl.textContent = formatCurrency(todayIncome);
-                avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / totalOrderCount || 0); // Hindari pembagian nol
-                lastOrderEl.textContent = formatDate(firstOrderTime);
-                hideLoading();
-            }).catch(err => {
-                daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}</p>`;
-                hideLoading();
-            });
+                    // Update statistik
+                    totalOrdersEl.textContent = totalOrderCount;
+                    todayIncomeEl.textContent = formatCurrency(todayIncome);
+                    avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / totalOrderCount || 0); 
+                    lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
+
+                })
+                .catch(err => {
+                    // Sembunyikan loading dan tampilkan pesan error jika gagal
+                    hideLoading();
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules Anda mengizinkan baca data.</p>`;
+                    console.error("Error loading orders from Firestore:", err); // Log error ke konsol browser
+                });
         }
 
         // Fungsi untuk menampilkan detail pesanan di popup
         function tampilkanDetail(orderId) {
             currentOrderIdForDetail = orderId; // Simpan ID pesanan yang sedang dibuka
-            db.collection("pesanan").doc(orderId).get().then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    const customer = data.customer || {};
-                    const waktu = data.waktu?.toDate?.() || new Date();
-                    const items = data.items || [];
-                    
-                    document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-                    document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-                    document.getElementById("popupAlamat").textContent = customer.address || "-";
-                    document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-                    document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-                    document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-                    
-                    const popupStatusEl = document.getElementById("popupStatus");
-                    const currentStatus = data.status || "Pending";
-                    popupStatusEl.textContent = currentStatus;
-                    popupStatusEl.className = `status ${getStatusClass(currentStatus)}`; // Update class status
-                    
-                    const statusUpdater = document.getElementById("statusUpdater");
-                    statusUpdater.value = currentStatus; // Set nilai dropdown sesuai status saat ini
-                    
-                    document.getElementById("popupWaktu").textContent = formatDate(waktu);
+            db.collection("pesanan").doc(orderId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const customer = data.customer || {};
+                        const waktu = data.waktu?.toDate?.() || new Date(); // Pastikan waktu diubah ke Date
+                        const items = data.items || [];
+                        
+                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                        document.getElementById("popupAlamat").textContent = customer.address || "-";
+                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+                        
+                        const popupStatusEl = document.getElementById("popupStatus");
+                        const currentStatus = data.status || "Pending";
+                        popupStatusEl.textContent = currentStatus;
+                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`; // Update class status
+                        
+                        const statusUpdater = document.getElementById("statusUpdater");
+                        statusUpdater.value = currentStatus; // Set nilai dropdown sesuai status saat ini
+                        
+                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
 
-                    const popupItemsHtml = items.map(item => `
-                        <div style="margin-bottom:5px;">
-                            - ${item.name} (${item.quantity} x Rp${item.price.toLocaleString("id-ID")}) = Rp ${(item.quantity * item.price).toLocaleString("id-ID")}
-                        </div>
-                    `).join("");
-                    document.getElementById("popupItems").innerHTML = popupItemsHtml;
+                        const popupItemsHtml = items.map(item => `
+                            <div style="margin-bottom:5px;">
+                                - ${item.name} (${item.quantity} x Rp${item.price.toLocaleString("id-ID")}) = Rp ${(item.quantity * item.price).toLocaleString("id-ID")}
+                            </div>
+                        `).join("");
+                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
-                    // Mengatur style display untuk menampilkan popup
-                    document.getElementById("popupDetail").style.display = "flex"; 
-                } else {
-                    alert("Pesanan tidak ditemukan.");
-                }
-            }).catch(error => {
-                console.error("Error getting order detail:", error);
-                alert("Gagal memuat detail pesanan.");
-            });
+                        // Mengatur style display untuk menampilkan popup
+                        document.getElementById("popupDetail").style.display = "flex"; 
+                    } else {
+                        alert("Pesanan tidak ditemukan di database.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error getting order detail from Firestore:", error);
+                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
+                });
         }
 
         function tutupDetail() {
@@ -650,7 +669,7 @@
                 }).then(() => {
                     alert("Status pesanan berhasil diperbarui!");
                     loadData(); // Muat ulang data untuk menampilkan status terbaru
-                    // Tidak perlu tutupDetail() di sini, karena loadData akan me-refresh dan bisa jadi membuka detail baru
+                    tutupDetail(); // Tutup popup setelah update
                 }).catch(error => {
                     console.error("Error updating order status:", error);
                     alert("Gagal memperbarui status pesanan.");
