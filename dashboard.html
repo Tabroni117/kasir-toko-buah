@@ -1,621 +1,750 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RUJAK BUAH INDONESIA | Inventori Buah</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --primary: #16a34a;
-      --primary-light: #22c55e;
-      --primary-dark: #15803d;
-      --white: #ffffff;
-      --dark: #1e293b;
-      --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    body {
-      background: #f8fafc;
-      color: var(--dark);
-      padding: 10px;
-      padding-bottom: 70px; /* Padding bawah untuk menghindari konten tertutup navigasi */
-      overflow-x: hidden; /* Mencegah scrolling horizontal */
-      width: 100%; /* Memastikan lebar body 100% */
-    }
-
-    .container {
-      max-width: 700px;
-      width: 100%; /* Memastikan kontainer tidak lebih lebar dari layar */
-      margin: 0 auto;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: var(--card-shadow);
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .header-top button {
-      font-size: 12px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .back-btn {
-      background: var(--primary);
-      color: white;
-    }
-
-    .back-btn:hover {
-      background: var(--primary-light);
-    }
-
-    .refresh-btn {
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      background: white;
-    }
-
-    .refresh-btn:hover {
-      background: var(--primary-light);
-      color: white;
-    }
-
-    .judul {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      color: var(--primary);
-      margin-bottom: 10px;
-    }
-
-    .judul i {
-      font-size: 18px;
-    }
-
-    h2.section-title {
-      font-size: 14px;
-      color: var(--primary-dark);
-      margin-bottom: 1rem;
-    }
-
-    label, input {
-      font-size: 12px;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid rgba(16, 181, 129, 0.3);
-      border-radius: 6px;
-      background: #f8fafc;
-      font-size: 12px;
-    }
-
-    .btn {
-      font-size: 12px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: var(--primary);
-      border: 1px solid var(--primary);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-    }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 12px;
-      table-layout: fixed;
-      word-wrap: break-word;
-    }
-
-    .data-table th {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
-      text-align: left;
-      vertical-align: top;
-    }
-    .data-table td {
-      padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: middle;
-    }
-
-    .status-badge {
-      padding: 2px 6px;
-      border-radius: 20px;
-      font-size: 9px;
-      background: #e0fce2;
-      color: var(--primary-dark);
-      display: inline-block;
-      white-space: nowrap;
-    }
-
-    /* ✅ Navigasi bawah tetap di tempat */
-    .app-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: var(--white);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.3rem 0;
-      z-index: 100;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .nav-btn {
-      flex: 1;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      font-size: 0.6rem;
-      color: var(--primary);
-      padding: 0.3rem 0;
-      transition: background 0.3s ease;
-    }
-
-    .nav-btn i {
-      font-size: 0.9rem;
-      margin-bottom: 2px;
-    }
-
-    .nav-btn.active {
-      color: var(--primary);
-      background: none;
-      border-radius: 0;
-      transform: none;
-      padding: 0.3rem 0;
-      box-shadow: none;
-    }
-
-    /* Spinner loading */
-    #loadingSpinner {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255, 255, 255, 0.8);
-      z-index: 999;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .spinner {
-      width: 3rem;
-      height: 3rem;
-      border: 4px solid rgba(16, 185, 129, 0.2);
-      border-top: 4px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1001;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-    }
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #16a34a;
+            --primary-light: #22c55e;
+            --primary-dark: #15803d;
+            --secondary: #64748b;
+            --accent: #84cc16;
+            --light: #f0fdf4;
+            --white: #ffffff;
+            --dark: #1e293b;
+            --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+            font-size: 11.5px;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: #f8fafc;
+            color: var(--dark);
+            padding: 10px;
+            padding-bottom: 80px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .header-top button {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .back-btn {
+            background: var(--primary);
+            color: white;
+        }
+        .back-btn:hover {
+            background: var(--primary-light);
+        }
+        .refresh-btn {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            background: white;
+        }
+        .refresh-btn:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+        h1 {
+            font-size: 16px;
+            margin-bottom: 2px;
+            color: var(--primary);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            background: var(--light);
+            border-left: 5px solid var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .order-item-upgrade {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .order-row-top, .order-row-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-row-bottom {
+            flex-direction: column;
+            gap: 5px;
+        }
+        .customer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .name { font-weight: 600; font-size: 12px; }
+        .phone { font-size: 10px; color: var(--secondary); }
+        .total { font-weight: bold; color: var(--primary-dark); font-size: 13px; }
+        .status {
+            padding: 3px 8px;
+            font-size: 10px;
+            border-radius: 20px;
+            background: #e0fce2;
+            color: var(--primary-dark);
+            margin-top: 4px;
+        }
+        .status.pending { background-color: #fffbeb; color: #d97706; } /* yellow for pending */
+        .status.diproses { background-color: #eff6ff; color: #2563eb; } /* blue for processing */
+        .status.selesai { background-color: #d1fae5; color: #059669; } /* green for complete */
+        .status.dibatalkan { background-color: #fee2e2; color: #dc2626; } /* red for cancelled */
 
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      text-align: center;
-    }
-
-
-      .form-input, .btn {
-        font-size: 14px;
-      }
-      .data-table {
-        font-size: 10px;
-      }
-      .data-table th {
-        padding: 4px 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-        vertical-align: top;
-      }
-      .data-table td {
-        padding: 4px 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        vertical-align: middle;
-      }
-      .data-table th:nth-child(1),
-      .data-table td:nth-child(1) {
-        width: 25%;
-      }
-      .data-table th:nth-child(2),
-      .data-table td:nth-child(2) {
-        width: 20%;
-      }
-      .data-table th:nth-child(3),
-      .data-table td:nth-child(3) {
-        width: 15%;
-      }
-      .data-table th:nth-child(4),
-      .data-table td:nth-child(4) {
-        width: 20%;
-      }
-      .data-table th:nth-child(5),
-      .data-table td:nth-child(5) {
-        width: 20%;
+        .time {
+            font-size: 10px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .items {
+            font-size: 11px;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 6px;
+            color: #1e293b;
+        }
         
-      }
-    
-      
-      .nav-btn.berkedip-kuat {
-  animation: kedipHebat 1s infinite;
-  background-color: #ff5252 !important;
-  color: white !important;
-  font-weight: bold;
-  box-shadow: 0 0 10px #ff5252;
-}
-      
- .berkedip-kuat {
-  animation: kedipHebat 1s infinite;
-  background-color: #ff5252 !important;
-  color: white !important;
-  font-weight: bold;
-  border: 2px solid white !important;
-  box-shadow: 0 0 10px #ff5252;
-}
+        .app-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff !important; /* putih solid */
+            opacity: 1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 0.5rem 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+        .nav-btn i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .nav-btn.active {
+            font-weight: 600;
+            background: transparent;
+            box-shadow: none;
+        }
+        #loadingSpinner {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid rgba(16, 185, 129, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-@keyframes kedipHebat {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
-  </style>
+        .content-wrapper {
+            padding-top: 50px; /* tinggi header tetap agar isi tidak ketiban */
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: white;
+            padding-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes slidein {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slidein {
+            animation: slidein 0.4s ease-out forwards;
+        }
+        .laporan-container {
+            text-align: right;
+            animation: slidein 0.5s ease-out;
+            margin-top: 10px;
+        }
+
+        .laporan-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: var(--card-shadow);
+            transition: background 0.3s ease;
+        }
+
+        .laporan-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .laporan-btn i {
+            margin-right: 6px;
+        }
+        .laporan-fixed-btn {
+            position: fixed;
+            top: 200px; /* ↓↓↓ geser ke bawah agar tidak nutupi statistik */
+            right: 20px;
+            background: rgba(22, 163, 74, 0.6); /* Hijau transparan */
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            font-size: 12px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+            z-index: 999;
+            animation: slidein 0.4s ease-out;
+            transition: background 0.3s ease;
+        }
+
+        .laporan-fixed-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .laporan-fixed-btn i {
+            margin-right: 6px;
+        }
+
+        /* Style for status dropdown */
+        .status-dropdown {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Perbaikan untuk popupDetail, pastikan display: flex di sini */
+        #popupDetail {
+            display: none; /* Default hidden, JS will set to flex */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6); /* Lebih gelap */
+            z-index: 9999;
+            padding: 20px;
+            display: flex; /* Mengaktifkan flexbox untuk centering */
+            align-items: center;
+            justify-content: center;
+        }
+
+        #popupDetail > div { /* Konten popup */
+            background: white;
+            padding: 20px; /* Sedikit lebih banyak padding */
+            border-radius: 12px; /* Lebih rounded */
+            max-width: 450px; /* Max width yang sedikit lebih lebar */
+            width: 90%; /* Responsif */
+            margin: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Bayangan lebih jelas */
+            position: relative;
+            animation: fadeInScale 0.3s ease-out; /* Animasi masuk */
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #popupDetail h3 {
+            font-size: 20px; /* Ukuran font lebih besar */
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: var(--primary-dark);
+        }
+
+        #popupDetail p {
+            margin-bottom: 8px; /* Spasi antar paragraf */
+            font-size: 13px; /* Ukuran font detail */
+            line-height: 1.4;
+        }
+        #popupDetail p strong {
+            color: var(--dark);
+        }
+
+        #popupDetail h4 {
+            font-size: 15px; /* Ukuran font sub-judul */
+            font-weight: bold;
+            margin-top: 15px; /* Spasi atas */
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        #popupDetail #popupItems {
+            max-height: 150px; /* Kurangi tinggi item agar tidak terlalu panjang */
+            overflow-y: auto;
+            border: 1px solid #e0e0e0; /* Border lebih halus */
+            padding: 10px;
+            border-radius: 8px;
+            background: #fbfbfb; /* Background item detail lebih terang */
+            font-size: 12px;
+            color: #444;
+        }
+        #popupDetail #popupItems div {
+            margin-bottom: 3px;
+        }
+
+        #popupDetail button.close-button {
+            top: 12px;
+            right: 18px;
+            font-size: 28px;
+            color: #666;
+            transition: color 0.2s;
+        }
+        #popupDetail button.close-button:hover {
+            color: #333;
+        }
+
+        #popupDetail button {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px; /* Spasi dari elemen atas */
+            transition: background 0.3s ease;
+        }
+        #popupDetail button:hover {
+            background: var(--primary-light);
+        }
+
+        /* Filter buttons styling */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: center;
+        }
+        .filter-btn {
+            background: #e2e8f0; /* Light grey */
+            color: var(--secondary);
+            padding: 8px 14px;
+            border-radius: 20px; /* Pill shape */
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #cbd5e1;
+        }
+        .filter-btn:hover {
+            background: #cbd5e1;
+            color: var(--dark);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-<div id="popupPesanan" class="modal">
-  <div class="modal-content berkedip-kuat">
-    <h3>📥 Pesanan Baru Masuk!</h3>
-    <div id="popupIsiPesanan"></div>
-   <button onclick="tutupPopup()" class="btn btn-primary">Lihat Pesanan Masuk</button>
-   <button onclick="tutupPopup()" class="btn btn-secondary" style="margin-top: 10px;">Tutup</button>
-  </div>
-</div>
+    <div id="loadingSpinner"><div class="spinner"></div></div>
+    <button onclick="window.location.href='apl04.html'" class="laporan-fixed-btn">
+        <i class="fas fa-file-alt"></i> Laporan Harian
+    </button>
+    
+    <div class="container">
+        <div class="sticky-header">
+            <div class="header-top">
+                <button class="back-btn" onclick="window.location.href='apl05.html'"><i class="fas fa-arrow-left"></i> Beranda Pelanggan</button>
+                <button class="refresh-btn" onclick="loadData('All')"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <h1>RUJAK BUAH INDONESIA</h1>
+                <p style="font-size: 11px;">Dashboard Pesanan Masuk</p>
+            </div>
+            <div class="stats">
+                <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
+                <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
+                <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
+                <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+            </div>
 
-  <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="All">Semua</button>
+                <button class="filter-btn" data-status="Pending">Pending</button>
+                <button class="filter-btn" data-status="Diproses">Diproses</button>
+                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</option>
+            </div>
+        </div>
 
-  <div class="container">
-    <div class="header-top">
-  <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</button>
-  <button onclick="loadFruits()" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
-  <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 20px; color: #16a34a;"></i>
-</div>
-    <div class="judul"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
+        <div class="content-wrapper">
+            <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+        </div>
+    </div> <nav class="app-nav">
+        <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+        <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+        <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
 
-    <form id="fruitForm">
-      <div class="form-group">
-        <label>Nama Buah</label>
-        <input type="text" id="fruitName" class="form-input" required />
-      </div>
-      <div class="form-group">
-        <label>Harga (Rp)</label>
-        <input type="number" id="fruitPrice" class="form-input" required />
-      </div>
-      <div class="form-group">
-        <label>Stok (kg)</label>
-        <input type="number" id="fruitStock" class="form-input" required />
-      </div>
-      <div>
-        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
-        <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
-        <p>
-          <b></b>
-        </p>
-      </div>
-    </form>
+    <div id="popupDetail">
+        <div>
+            <button onclick="tutupDetail()" class="close-button">&times;</button>
+            <h3 id="popupNama">Nama Pelanggan</h3>
+            <p><strong>Nomor HP:</strong> <span id="popupNomor"></span></p>
+            <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
+            <p><strong>Total Pembayaran:</strong> <span id="popupTotal"></span></p>
+            <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar"></span></p>
+            <p><strong>Catatan:</strong> <span id="popupCatatan"></span></p>
+            <p style="margin-bottom: 10px;"><strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+                <select id="statusUpdater" class="status-dropdown">
+                    <option value="Pending">Pending</option>
+                    <option value="Diproses">Diproses</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Dibatalkan">Dibatalkan</option>
+                </select>
+            </p>
+            <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu"></span></p>
+            <h4>Detail Item:</h4>
+            <div id="popupItems"></div>
+            <button onclick="tutupDetail()">Tutup</button>
+        </div>
+    </div>
 
-    <table class="data-table">
-      <thead>
-        <tr><th>Nama</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr>
-      </thead>
-      <tbody id="fruitList"></tbody>
-    </table>
-  </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.appspot.com",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-  <nav class="app-nav">
-    <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i> Beranda</a>
-    <a href="inventoribuah.html" class="nav-btn active"><i class="fas fa-boxes"></i> Inventori</a>
- <a href="navigator-input.html" id="navPesanan" class="nav-btn">
-  <i class="fas fa-receipt"></i> Pesanan
-</a>
-    <a href="pengaturan.html" class="nav-btn"><i class="fas fa-cog"></i> Pengaturan</a>
-  </nav>
+        const daftar = document.getElementById("daftarPesanan");
+        const totalOrdersEl = document.getElementById("totalOrders");
+        const todayIncomeEl = document.getElementById("todayIncome");
+        const avgOrderEl = document.getElementById("avgOrder");
+        const lastOrderEl = document.getElementById("lastOrder");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
 
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script>
-  // 1. Konfigurasi Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-    authDomain: "tokobuahkasir.firebaseapp.com",
-    projectId: "tokobuahkasir",
-    storageBucket: "tokobuahkasir.appspot.com",
-    messagingSenderId: "731011133713",
-    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+        let currentOrderIdForDetail = null;
+        let activeFilterStatus = 'All'; // Default filter
 
-  // 2. Utilitas format uang
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
-  }
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
 
-  // 3. Fungsi tampilkan data buah
-  function loadFruits() {
-    db.collection("buah").orderBy("nama").get().then(snapshot => {
-      const fruitList = document.getElementById("fruitList");
-      fruitList.innerHTML = '';
-      if (snapshot.empty) {
-        fruitList.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data</td></tr>';
-      } else {
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          fruitList.innerHTML += `
-            <tr>
-              <td>${d.nama}</td>
-              <td>${formatCurrency(d.harga)}</td>
-              <td>${d.stok} kg</td>
-              <td><span class="status-badge">${d.stok > 0 ? 'Ready' : 'Habis'}</span></td>
-              <td>
-                <button onclick="editFruit('${doc.id}')" class="btn btn-secondary">Edit</button>
-                <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary">Hapus</button>
-              </td>
-            </tr>`;
+        function formatCurrency(val) {
+            if (isNaN(val) || val === null || typeof val === 'undefined') {
+                return "Rp0";
+            }
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
+        }
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        }
+
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'dibatalkan';
+                default: return '';
+            }
+        }
+
+        function loadData(statusFilter = activeFilterStatus) {
+            showLoading();
+            daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
+            
+            // Update active filter button
+            filterButtons.forEach(btn => {
+                if (btn.dataset.status === statusFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            activeFilterStatus = statusFilter; // Set active filter
+
+            let query = db.collection("pesanan").orderBy("waktu", "desc");
+
+            if (statusFilter !== 'All') {
+                query = query.where('status', '==', statusFilter);
+            }
+
+            query.get()
+                .then(snapshot => {
+                    hideLoading();
+
+                    let totalIncomeAllTime = 0;
+                    let totalOrderCount = 0;
+                    let todayIncome = 0;
+                    const now = new Date(); 
+                    now.setHours(0, 0, 0, 0); 
+
+                    daftar.innerHTML = ""; 
+
+                    let firstOrderTime = null; 
+
+                    if (snapshot.empty) {
+                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
+                    } else {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const orderId = doc.id; 
+                            
+                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
+                            
+                            if (isNaN(waktu.getTime())) {
+                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
+                                return; 
+                            }
+
+                            if (!firstOrderTime) firstOrderTime = waktu; 
+
+                            const isToday = waktu.toDateString() === now.toDateString();
+                            const totalHarga = data.totalAmount || 0; 
+
+                            if (isToday) todayIncome += totalHarga;
+                            totalIncomeAllTime += totalHarga;
+                            totalOrderCount++;
+
+                            const customerName = data.customer?.fullName || "Pelanggan";
+                            const customerPhone = data.customer?.phoneNumber || "-";
+                            const currentStatus = data.status || "Pending";
+
+                            const itemsHtml = (data.items || []).map(item => {
+                                const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                                return `
+                                    <div style="margin-bottom: 5px;">
+                                        🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                    </div>
+                                `;
+                            }).join("");
+
+                            daftar.innerHTML += `
+                                <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
+                                    <div class='order-row-top'>
+                                        <div class='customer'>
+                                            <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
+                                            <div class='info'>
+                                                <div class='name'>${customerName}</div>
+                                                <div class='phone'>${customerPhone}</div>
+                                            </div>
+                                        </div>
+                                        <div class='meta'>
+                                            <div class='total'>${formatCurrency(totalHarga)}</div>
+                                            <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
+                                        </div>
+                                    </div>
+                                    <div class='order-row-bottom'>
+                                        <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                                        <div class='items'>${itemsHtml}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    // Update statistik berdasarkan SEMUA pesanan yang diambil oleh query aktif
+                    totalOrdersEl.textContent = totalOrderCount;
+                    todayIncomeEl.textContent = formatCurrency(todayIncome);
+                    avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
+                    lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
+
+                })
+                .catch(err => {
+                    hideLoading();
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
+                    console.error("Error loading orders from Firestore:", err); 
+                });
+        }
+
+        function tampilkanDetail(orderId) {
+            currentOrderIdForDetail = orderId;
+            db.collection("pesanan").doc(orderId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const customer = data.customer || {};
+                        const waktu = data.waktu?.toDate?.() || new Date(0); 
+                        const items = data.items || [];
+                        
+                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                        document.getElementById("popupAlamat").textContent = customer.address || "-";
+                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+                        
+                        const popupStatusEl = document.getElementById("popupStatus");
+                        const currentStatus = data.status || "Pending";
+                        popupStatusEl.textContent = currentStatus;
+                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+                        
+                        const statusUpdater = document.getElementById("statusUpdater");
+                        statusUpdater.value = currentStatus;
+                        
+                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                        const popupItemsHtml = items.map(item => {
+                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                            return `
+                                <div style="margin-bottom:5px;">
+                                    - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                </div>
+                            `;
+                        }).join("");
+                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+                        document.getElementById("popupDetail").style.display = "flex"; 
+                    } else {
+                        alert("Pesanan tidak ditemukan di database.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error getting order detail from Firestore:", error);
+                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
+                });
+        }
+
+        function tutupDetail() {
+            document.getElementById("popupDetail").style.display = "none";
+            currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
+        }
+
+        document.getElementById("statusUpdater").addEventListener("change", function() {
+            const newStatus = this.value;
+            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
+                db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                    status: newStatus
+                }).then(() => {
+                    alert("Status pesanan berhasil diperbarui!");
+                    // Tidak perlu loadData() atau tutupDetail() di sini karena akan dipanggil di .then()
+                    // dari tutupDetail() setelah berhasil update
+                    // atau bisa juga panggil loadData() langsung di sini dan tutupDetail()
+                    tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
+                }).catch(error => {
+                    console.error("Error updating order status:", error);
+                    alert("Gagal memperbarui status pesanan.");
+                });
+            }
         });
-      }
-    });
-  }
 
-  // 4. Fungsi edit data buah
-  function editFruit(id) {
-    db.collection("buah").doc(id).get().then(doc => {
-      const d = doc.data();
-      fruitName.value = d.nama;
-      fruitPrice.value = d.harga;
-      fruitStock.value = d.stok;
-      fruitForm.dataset.editId = id;
-    });
-  }
+        // Event listeners for filter buttons
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                loadData(status); // Call loadData with the selected filter status
+            });
+        });
 
-  // 5. Fungsi hapus buah
-  function deleteFruit(id) {
-    if (confirm("Hapus buah ini?")) {
-      db.collection("buah").doc(id).delete().then(loadFruits);
-    }
-  }
-
-  // 6. Simpan form tambah/edit buah
-  document.getElementById("fruitForm").addEventListener("submit", e => {
-    e.preventDefault();
-    const nama = fruitName.value;
-    const harga = parseInt(fruitPrice.value);
-    const stok = parseInt(fruitStock.value);
-    const docId = fruitForm.dataset.editId;
-    const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-    const data = { nama, harga, stok };
-    (docId ? ref.update(data) : ref.add(data)).then(() => {
-      fruitForm.reset();
-      delete fruitForm.dataset.editId;
-      loadFruits();
-    });
-  });
-
-  // 7. === NOTIFIKASI PESANAN ===
-  const popupPesanan = document.getElementById("popupPesanan");
-  const notifLonceng = document.getElementById("notifLonceng");
-  const navPesanan = document.getElementById("navPesanan"); // Tombol navigasi "Pesanan"
-  const sound = document.getElementById("notifSound");
-  let sedangBerbunyi = false;
-  // Menggunakan `sessionStorage` untuk idPesananTerbaruDitemukan agar reset saat browser ditutup
-  let idPesananTerbaruDitemukan = sessionStorage.getItem("lastNotifiedOrderId") || ""; 
-
-  // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-  let audioSudahDiizinkan = false;
-  document.addEventListener("click", () => {
-    if (!audioSudahDiizinkan) {
-      sound.play().catch(() => {});
-      sound.pause();
-      sound.currentTime = 0;
-      audioSudahDiizinkan = true;
-    }
-  });
-
-  // Fungsi untuk mengisi dan menampilkan pop-up notifikasi
-  function tampilkanPopupPesanan(orderData, orderId) {
-    const items = orderData.items || [];
-    let isi = `<p class="font-semibold" style="font-size:14px; margin-bottom: 5px;">Order ID: ${orderId}</p>`;
-    isi += `<p style="font-size:12px; margin-bottom: 10px;">Pelanggan: ${orderData.customer?.fullName || 'Anonim'}</p>`;
-    
-    let totalItemsCalculated = 0; // Calculate total from items
-    items.forEach(item => {
-      const subtotal = (item.price || 0) * (item.quantity || 0);
-      totalItemsCalculated += subtotal;
-      isi += `<div style="font-size:11px;">${item.name || 'Produk'} (${item.quantity || 0}x) = Rp ${subtotal.toLocaleString('id-ID')}</div>`;
-    });
-    isi += `<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.3);">`;
-    isi += `<p style="font-size:14px; font-weight:bold;">Total: Rp ${(orderData.totalAmount || totalItemsCalculated).toLocaleString('id-ID')}</p>`;
-    isi += `<p style="font-size:10px; margin-top:5px;">Metode: ${orderData.paymentMethod || '-'}</p>`;
-    
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
-    if (popupPesanan) popupPesanan.style.display = "flex"; // Tampilkan modal
-  }
-
-  // Fungsi untuk menutup pop-up notifikasi
-  function tutupPopup() {
-    if (popupPesanan) popupPesanan.style.display = "none";
-
-    // Suara dimatikan
-    if (sound && sedangBerbunyi) {
-      sound.pause();
-      sound.currentTime = 0;
-    }
-    sedangBerbunyi = false;
-
-    // Ikon lonceng berhenti berkedip
-    if (notifLonceng) notifLonceng.classList.remove("berkedip-kuat");
-    // Navigasi Pesanan tetap berkedip sampai diklik
-    // idPesananTerbaruDitemukan = ""; // Ini akan di-reset di cekPesananBaru jika ada pesanan baru yang lebih baru.
-  }
-
-  // Fungsi untuk menutup pop-up dan melihat pesanan (navigasi)
-  function tutupDanLihatPesanan() { 
-    tutupPopup(); // Tutup popup dan hentikan suara
-    window.location.href = 'navigator-input.html'; // Arahkan ke halaman daftar pesanan
-  }
-
-  // Fungsi untuk mengecek pesanan baru dari Firebase
-  function cekPesananBaru() {
-    const lastNotifTimeStr = localStorage.getItem("pesananSudahDibuka"); // Menggunakan kunci ini
-    const lastNotifTime = lastNotifTimeStr ? new Date(lastNotifTimeStr) : new Date(0);
-
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const orderData = doc.data();
-        const orderId = doc.id;
-        const orderTime = orderData.waktu?.toDate?.() || new Date(0);
-
-        // Kriteria untuk menampilkan notifikasi:
-        // 1. Waktu pesanan lebih baru dari waktu notifikasi terakhir yang diakui
-        // 2. Status pesanan masih 'Pending'
-        // 3. ID pesanan ini belum pernah dinotifikasi di sesi ini (menggunakan sessionStorage)
-        if (orderTime > lastNotifTime && orderData.status === 'Pending' && orderId !== idPesananTerbaruDitemukan) {
-          idPesananTerbaruDitemukan = orderId; // Tandai pesanan ini sudah dinotifikasi di sesi ini
-          sessionStorage.setItem("lastNotifiedOrderId", orderId); // Simpan juga di sessionStorage
-
-          // Putar suara
-          if (audioSudahDiizinkan && sound && !sedangBerbunyi) {
-            sound.play().catch(e => console.error("Error playing sound:", e));
-            sedangBerbunyi = true;
-          }
-
-          // Tampilkan pop-up notifikasi
-          tampilkanPopupPesanan(orderData, orderId);
-
-          // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-          if (notifLonceng) notifLonceng.classList.add("berkedip-kuat");
-          if (navPesanan) navPesanan.classList.add("berkedip-kuat");
-
-          // ✅ PENTING: Perbarui waktu notifikasi terakhir yang diakui SEGERA setelah notifikasi ini ditampilkan
-          // Ini untuk mencegah notifikasi muncul lagi jika user langsung refresh browser
-          localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-        } else if (orderData.status !== 'Pending' || orderId === idPesananTerbaruDitemukan) { // Kondisi diperluas
-          // Jika pesanan terbaru sudah diproses ATAU sudah pernah dinotifikasi di sesi ini,
-          // pastikan notifikasi tersembunyi
-          if (popupPesanan && popupPesanan.style.display !== 'none') {
-            tutupPopup();
-          }
-        }
-      } else {
-        // Jika tidak ada pesanan sama sekali, sembunyikan notifikasi
-        if (popupPesanan && popupPesanan.style.display !== 'none') {
-          tutupPopup();
-        }
-      }
-    }).catch(error => {
-      console.error("Error checking new orders:", error);
-      if (popupPesanan && popupPesanan.style.display !== 'none') {
-        tutupPopup();
-      }
-    });
-  }
-
-  // 8. Jalankan saat halaman selesai dimuat
- window.addEventListener("DOMContentLoaded", () => {
-  loadFruits(); // Memuat data inventori
-
-  // ✅ Panggil cekPesananBaru saat halaman dimuat
-  cekPesananBaru();
-  
-  // ✅ Setel interval untuk cek notifikasi. Di sini 5 detik lebih baik.
-  // Ini akan terus berjalan di latar belakang halaman ini.
-  setInterval(cekPesananBaru, 5000); 
-
-  // ✅ Tambahkan ini: Hentikan berkedip pada tombol navigasi "Pesanan" ketika diklik
-  document.getElementById("navPesanan").addEventListener("click", function () {
-    this.classList.remove("berkedip-kuat");
-    if (notifLonceng) notifLonceng.classList.remove("berkedip-kuat");
-  });
-
-    // Event listener untuk tombol "Lihat Pesanan Masuk" di pop-up
-    document.querySelector('#popupPesanan .btn-primary').addEventListener('click', function() {
-        tutupDanLihatPesanan();
-    });
-
-    // Event listener untuk tombol "Tutup" di pop-up
-    document.querySelector('#popupPesanan .btn-secondary').addEventListener('click', function() {
-        tutupPopup();
-    });
-});
-</script>
+        document.addEventListener("DOMContentLoaded", () => loadData('All')); // Load all orders on page load
+    </script>
 </body>
 </html>
