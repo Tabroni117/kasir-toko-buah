@@ -163,9 +163,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Ambil data produk yang dipilih dari sessionStorage
             const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
 
             if (selectedProduct) {
+                // Tampilkan detail produk
                 document.getElementById('productImage').src = selectedProduct.image;
                 document.getElementById('productName').textContent = selectedProduct.name;
                 document.getElementById('productDescription').textContent = selectedProduct.description;
@@ -176,6 +178,7 @@
                 const increaseButton = document.getElementById('increaseQuantity');
                 const addToCartButton = document.getElementById('addToCartButton');
 
+                // Logic untuk mengurangi kuantitas
                 decreaseButton.addEventListener('click', () => {
                     let currentQuantity = parseInt(productQuantityInput.value);
                     if (currentQuantity > 1) {
@@ -183,11 +186,13 @@
                     }
                 });
 
+                // Logic untuk menambah kuantitas
                 increaseButton.addEventListener('click', () => {
                     let currentQuantity = parseInt(productQuantityInput.value);
                     productQuantityInput.value = currentQuantity + 1;
                 });
 
+                // Logic untuk menambahkan produk ke keranjang (localStorage)
                 addToCartButton.addEventListener('click', () => {
                     const quantity = parseInt(productQuantityInput.value);
                     let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -204,17 +209,18 @@
                             id: selectedProduct.id,
                             name: selectedProduct.name,
                             price: selectedProduct.price,
-                            image: selectedProduct.image,
+                            image: selectedProduct.image, // Pastikan gambar juga disimpan
                             quantity: quantity
                         });
                     }
 
                     localStorage.setItem('cart', JSON.stringify(cart));
                     alert(`${quantity} ${selectedProduct.name} telah ditambahkan ke keranjang!`);
-                    window.location.href = 'cart.html'; // Arahkan ke halaman keranjang
+                    // Setelah ditambahkan ke keranjang, arahkan ke halaman keranjang
+                    window.location.href = 'cart.html'; 
                 });
             } else {
-                // Redirect jika tidak ada produk yang dipilih
+                // Jika tidak ada produk yang dipilih (misalnya, diakses langsung), arahkan kembali ke halaman utama
                 alert('Produk tidak ditemukan. Kembali ke halaman utama.');
                 window.location.href = 'apl05.html'; 
             }
