@@ -173,6 +173,9 @@
             background: linear-gradient(135deg, #00B04C, #5BB914);
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -209,7 +212,7 @@
                 <i class="fas fa-money-bill-wave"></i>
             </div>
             <div class="payment-method">
-                <input type="radio" id="bankTransfer" name="paymentMethod" value="Bank Transfer">
+                <input type="radio" id="bankTransfer" name="paymentMethod" value="Transfer Bank">
                 <label for="bankTransfer">Transfer Bank</label>
                 <i class="fas fa-bank"></i>
             </div>
@@ -241,9 +244,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 1. Konfigurasi Firebase (pastikan sama dengan yang di halaman kasir Anda)
+            const firebaseConfig = {
+                apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+                authDomain: "tokobuahkasir.firebaseapp.com",
+                projectId: "tokobuahkasir",
+                storageBucket: "tokobuahkasir.appspot.com",
+                messagingSenderId: "731011133713",
+                appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore(); // Inisialisasi Firestore
+
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Tampilkan ringkasan pesanan
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const deliveryFee = 10000; // Contoh biaya pengiriman
+            const deliveryFee = 10000; // Contoh biaya pengiriman (bisa disesuaikan)
             const totalAmount = subtotal + deliveryFee;
 
             document.getElementById('itemCount').textContent = cart.length;
@@ -268,7 +285,7 @@
                     return;
                 }
 
-                // Data pesanan yang akan dikirim ke backend (simulasi)
+                // Data pesanan untuk dikirim ke koleksi 'pesanan' di Firebase Firestore
                 const orderData = {
                     customer: {
                         fullName: fullName,
@@ -280,26 +297,32 @@
                         id: item.id,
                         name: item.name,
                         price: item.price,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        image: item.image // Sertakan juga gambar jika diperlukan di kasir
                     })),
                     subtotal: subtotal,
                     deliveryFee: deliveryFee,
                     totalAmount: totalAmount,
                     paymentMethod: selectedPaymentMethod,
-                    orderDate: new Date().toISOString()
+                    status: 'Pending', // Status awal pesanan
+                    waktu: firebase.firestore.FieldValue.serverTimestamp() // Timestamp dari server Firebase
                 };
 
-                // SIMULASI PROSES PEMBAYARAN DAN CHECKOUT
-                // Di aplikasi nyata, Anda akan mengirim orderData ini ke server menggunakan fetch API (AJAX)
-                // dan server akan berinteraksi dengan payment gateway.
+                // 2. Kirim data pesanan ke Firebase Firestore
+                db.collection('pesanan').add(orderData)
+                    .then((docRef) => {
+                        alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: Rp ${totalAmount.toLocaleString('id-ID')}\n\nTerima kasih sudah memesan! Nomor Pesanan Anda: ${docRef.id}`);
+                        
+                        // Kosongkan keranjang di localStorage setelah pesanan berhasil dibuat
+                        localStorage.removeItem('cart');
 
-                alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: Rp ${totalAmount.toLocaleString('id-ID')}\n\nTerima kasih sudah memesan!`);
-                
-                // Kosongkan keranjang setelah pesanan berhasil
-                localStorage.removeItem('cart');
-
-                // Redirect ke halaman konfirmasi atau halaman utama
-                window.location.href = 'payment-confirmation.html'; // Akan kita buat di langkah selanjutnya
+                        // Arahkan ke halaman konfirmasi
+                        window.location.href = 'payment-confirmation.html';
+                    })
+                    .catch((error) => {
+                        console.error("Error adding document to Firestore: ", error);
+                        alert("Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
+                    });
             });
         });
     </script>
