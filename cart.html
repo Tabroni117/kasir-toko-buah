@@ -222,7 +222,7 @@
     </div>
 
     <script>
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let cart = JSON.parse(localStorage.getItem('cart')) || []; // Ambil data keranjang dari localStorage
 
         function renderCart() {
             const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -232,23 +232,25 @@
             const totalAmountElement = document.getElementById('totalAmount');
             const checkoutButton = document.getElementById('checkoutButton');
 
-            cartItemsContainer.innerHTML = ''; // Clear existing items
+            cartItemsContainer.innerHTML = ''; // Kosongkan tampilan item yang ada
 
             if (cart.length === 0) {
+                // Jika keranjang kosong, tampilkan pesan dan sembunyikan ringkasan
                 emptyCartMessage.style.display = 'block';
-                document.querySelector('.cart-summary').style.display = 'none'; // Hide summary if cart is empty
+                document.querySelector('.cart-summary').style.display = 'none'; 
                 return;
             } else {
+                // Jika ada item, sembunyikan pesan kosong dan tampilkan ringkasan
                 emptyCartMessage.style.display = 'none';
                 document.querySelector('.cart-summary').style.display = 'block';
             }
 
             let subtotal = 0;
-            const deliveryFee = 10000; // Contoh biaya pengiriman
+            const deliveryFee = 10000; // Contoh biaya pengiriman (bisa disesuaikan)
 
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
+                subtotal += itemTotal; // Tambahkan ke subtotal
 
                 const cartItemDiv = document.createElement('div');
                 cartItemDiv.classList.add('cart-item');
@@ -268,11 +270,12 @@
                 cartItemsContainer.appendChild(cartItemDiv);
             });
 
+            // Update nilai di ringkasan belanja
             subtotalElement.textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
             deliveryFeeElement.textContent = `Rp ${deliveryFee.toLocaleString('id-ID')}`;
             totalAmountElement.textContent = `Rp ${(subtotal + deliveryFee).toLocaleString('id-ID')}`;
 
-            // Add event listeners for quantity buttons and remove button
+            // Tambahkan event listeners untuk tombol kuantitas dan hapus item
             cartItemsContainer.querySelectorAll('.quantity-button').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const id = event.target.dataset.id;
@@ -289,6 +292,7 @@
             });
         }
 
+        // Fungsi untuk memperbarui kuantitas item di keranjang
         function updateCartItemQuantity(id, action) {
             const itemIndex = cart.findIndex(item => item.id === id);
             if (itemIndex > -1) {
@@ -303,28 +307,34 @@
                         return; // Langsung keluar agar tidak melanjutkan render
                     }
                 }
-                localStorage.setItem('cart', JSON.stringify(cart));
-                renderCart(); // Re-render keranjang setelah update
+                localStorage.setItem('cart', JSON.stringify(cart)); // Simpan perubahan ke localStorage
+                renderCart(); // Render ulang keranjang setelah update
             }
         }
 
+        // Fungsi untuk menghapus item dari keranjang
         function removeCartItem(id) {
-            cart = cart.filter(item => item.id !== id);
-            localStorage.setItem('cart', JSON.stringify(cart));
-            renderCart(); // Re-render keranjang setelah hapus
+            cart = cart.filter(item => item.id !== id); // Filter item yang akan dihapus
+            localStorage.setItem('cart', JSON.stringify(cart)); // Simpan perubahan ke localStorage
+            renderCart(); // Render ulang keranjang setelah hapus
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderCart();
+            renderCart(); // Render keranjang saat halaman dimuat
 
             document.getElementById('checkoutButton').addEventListener('click', () => {
                 if (cart.length > 0) {
-                    // Simpan total ke sessionStorage untuk halaman checkout
+                    // Cek ulang total sebelum ke checkout (meskipun sudah ada di tampilan)
                     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     const deliveryFee = 10000;
                     const totalAmount = subtotal + deliveryFee;
-                    sessionStorage.setItem('orderTotal', totalAmount);
-                    window.location.href = 'checkout.html'; // Arahkan ke halaman checkout
+                    
+                    // Kita tidak lagi menyimpan total ke sessionStorage karena checkout.html akan menghitung ulang dari cart
+                    // Namun, kita pastikan cart di localStorage sudah yang terbaru
+                    localStorage.setItem('cart', JSON.stringify(cart)); 
+
+                    // Arahkan ke halaman checkout
+                    window.location.href = 'checkout.html'; 
                 } else {
                     alert('Keranjang Anda kosong. Tambahkan item terlebih dahulu.');
                 }
