@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Belanja - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 120px; /* Space for total and checkout button */
+        }
+
+        .header-detail {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-button {
+            color: white;
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .cart-items-container {
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            padding: 10px;
+        }
+
+        .cart-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+
+        .cart-item-details {
+            flex-grow: 1;
+        }
+
+        .cart-item-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .cart-item-price {
+            font-size: 14px;
+            color: #00C853;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .cart-item-quantity-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .quantity-button {
+            background-color: #e0e0e0;
+            border: none;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #333;
+            transition: background-color 0.2s;
+        }
+
+        .quantity-button:hover {
+            background-color: #d0d0d0;
+        }
+
+        .quantity-input {
+            width: 35px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 0 8px;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+
+        .remove-item-button {
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: color 0.2s;
+        }
+
+        .remove-item-button:hover {
+            color: #cc0000;
+        }
+
+        .cart-summary {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            padding: 15px 16px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .summary-total {
+            font-weight: bold;
+            font-size: 18px;
+            color: #00C853;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .checkout-button {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: background 0.3s ease;
+        }
+
+        .checkout-button:hover {
+            background: linear-gradient(135deg, #00B04C, #5BB914);
+        }
+
+        .empty-cart-message {
+            text-align: center;
+            padding: 50px 20px;
+            color: #777;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header-detail">
+            <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
+            <div class="header-title">Keranjang Belanja</div>
+        </header>
+
+        <div class="cart-items-container" id="cartItemsContainer">
+            </div>
+
+        <div class="empty-cart-message" id="emptyCartMessage" style="display: none;">
+            Keranjang belanja Anda kosong. Yuk, cari rujak favoritmu!
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="subtotal">Rp 0</span>
+            </div>
+            <div class="summary-row">
+                <span>Biaya Pengiriman</span>
+                <span id="deliveryFee">Rp 0</span>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <span id="totalAmount">Rp 0</span>
+            </div>
+            <button class="checkout-button" id="checkoutButton">Lanjutkan ke Pembayaran</button>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        function renderCart() {
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            const emptyCartMessage = document.getElementById('emptyCartMessage');
+            const subtotalElement = document.getElementById('subtotal');
+            const deliveryFeeElement = document.getElementById('deliveryFee');
+            const totalAmountElement = document.getElementById('totalAmount');
+            const checkoutButton = document.getElementById('checkoutButton');
+
+            cartItemsContainer.innerHTML = ''; // Clear existing items
+
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+                document.querySelector('.cart-summary').style.display = 'none'; // Hide summary if cart is empty
+                return;
+            } else {
+                emptyCartMessage.style.display = 'none';
+                document.querySelector('.cart-summary').style.display = 'block';
+            }
+
+            let subtotal = 0;
+            const deliveryFee = 10000; // Contoh biaya pengiriman
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+
+                const cartItemDiv = document.createElement('div');
+                cartItemDiv.classList.add('cart-item');
+                cartItemDiv.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                    <div class="cart-item-details">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">Rp ${itemTotal.toLocaleString('id-ID')}</div>
+                        <div class="cart-item-quantity-controls">
+                            <button class="quantity-button" data-id="${item.id}" data-action="decrease">-</button>
+                            <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
+                            <button class="quantity-button" data-id="${item.id}" data-action="increase">+</button>
+                            <button class="remove-item-button" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+                cartItemsContainer.appendChild(cartItemDiv);
+            });
+
+            subtotalElement.textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
+            deliveryFeeElement.textContent = `Rp ${deliveryFee.toLocaleString('id-ID')}`;
+            totalAmountElement.textContent = `Rp ${(subtotal + deliveryFee).toLocaleString('id-ID')}`;
+
+            // Add event listeners for quantity buttons and remove button
+            cartItemsContainer.querySelectorAll('.quantity-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.dataset.id;
+                    const action = event.target.dataset.action;
+                    updateCartItemQuantity(id, action);
+                });
+            });
+
+            cartItemsContainer.querySelectorAll('.remove-item-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.dataset.id;
+                    removeCartItem(id);
+                });
+            });
+        }
+
+        function updateCartItemQuantity(id, action) {
+            const itemIndex = cart.findIndex(item => item.id === id);
+            if (itemIndex > -1) {
+                if (action === 'increase') {
+                    cart[itemIndex].quantity++;
+                } else if (action === 'decrease') {
+                    if (cart[itemIndex].quantity > 1) {
+                        cart[itemIndex].quantity--;
+                    } else {
+                        // Jika kuantitas menjadi 0, hapus item dari keranjang
+                        removeCartItem(id);
+                        return; // Langsung keluar agar tidak melanjutkan render
+                    }
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart(); // Re-render keranjang setelah update
+            }
+        }
+
+        function removeCartItem(id) {
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderCart(); // Re-render keranjang setelah hapus
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCart();
+
+            document.getElementById('checkoutButton').addEventListener('click', () => {
+                if (cart.length > 0) {
+                    // Simpan total ke sessionStorage untuk halaman checkout
+                    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const deliveryFee = 10000;
+                    const totalAmount = subtotal + deliveryFee;
+                    sessionStorage.setItem('orderTotal', totalAmount);
+                    window.location.href = 'checkout.html'; // Arahkan ke halaman checkout
+                } else {
+                    alert('Keranjang Anda kosong. Tambahkan item terlebih dahulu.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
