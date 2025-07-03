@@ -633,87 +633,117 @@
     }
 
  
-function tampilkanDetail(orderId) {
-  if (!orderId) return; // ✅ Cegah kalau kosong
+<!-- Audio Notifikasi -->
+<audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  currentOrderIdForDetail = orderId;
-  db.collection("pesanan").doc(orderId).get()
-    .then(doc => {
-      if (doc.exists) {
-        const data = doc.data();
+<script>
+  let currentOrderIdForDetail = null;
+  let terakhirDitampilkan = null;
+  const sound = document.getElementById("notifSound");
 
-        // ✅ Cegah popup jika pesanan kosong
-        if (!data.items || data.items.length === 0) {
-          console.warn("Pesanan kosong. Tidak tampilkan popup.");
-          return;
+  function tampilkanDetail(orderId) {
+    if (!orderId) return;
+
+    currentOrderIdForDetail = orderId;
+    db.collection("pesanan").doc(orderId).get()
+      .then(doc => {
+        if (doc.exists) {
+          const data = doc.data();
+
+          // Cegah jika tidak ada item
+          if (!data.items || data.items.length === 0) return;
+
+          const customer = data.customer || {};
+          const waktu = data.waktu?.toDate?.() || new Date(0);
+          const items = data.items || [];
+
+          document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+          document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+          document.getElementById("popupAlamat").textContent = customer.address || "-";
+          document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+          document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+          document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+
+          const popupStatusEl = document.getElementById("popupStatus");
+          const currentStatus = data.status || "Pending";
+          popupStatusEl.textContent = currentStatus;
+          popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+          const statusUpdater = document.getElementById("statusUpdater");
+          statusUpdater.value = currentStatus;
+
+          document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+          const popupItemsHtml = items.map(item => {
+            const itemTotal = (item.price || 0) * (item.quantity || 0);
+            return `
+              <div style="margin-bottom:5px;">
+                - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotal.toLocaleString("id-ID")}
+              </div>
+            `;
+          }).join("");
+          document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+          document.getElementById("popupDetail").style.display = "flex";
+        } else {
+          console.warn("Pesanan tidak ditemukan.");
         }
+      })
+      .catch(error => {
+        console.error("Gagal ambil detail pesanan:", error);
+      });
+  }
 
-        const customer = data.customer || {};
-        const waktu = data.waktu?.toDate?.() || new Date(0);
-        const items = data.items || [];
+  function tutupDetail() {
+    document.getElementById("popupDetail").style.display = "none";
+    currentOrderIdForDetail = null;
+    loadData(activeFilterStatus);
+  }
 
-        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-        document.getElementById("popupAlamat").textContent = customer.address || "-";
-        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-
-        const popupStatusEl = document.getElementById("popupStatus");
-        const currentStatus = data.status || "Pending";
-        popupStatusEl.textContent = currentStatus;
-        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-
-        const statusUpdater = document.getElementById("statusUpdater");
-        statusUpdater.value = currentStatus;
-
-        document.getElementById("popupWaktu").textContent = formatDate(waktu);
-
-        const popupItemsHtml = items.map(item => {
-          const itemTotal = (item.price || 0) * (item.quantity || 0);
-          return `
-            <div style="margin-bottom:5px;">
-              - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotal.toLocaleString("id-ID")}
-            </div>
-          `;
-        }).join("");
-        document.getElementById("popupItems").innerHTML = popupItemsHtml;
-
-        document.getElementById("popupDetail").style.display = "flex";
-      } else {
-        console.warn("Pesanan tidak ditemukan.");
-      }
-    })
-    .catch(error => {
-      console.error("Gagal ambil detail pesanan:", error);
-    });
-}
-
-        function tutupDetail() {
-        popupDetail.style.display = "none";
-        currentOrderIdForDetail = null;
-        loadData();
-    }
-
-    document.getElementById("statusUpdater").addEventListener("change", function () {
-        const newStatus = this.value;
-        if (currentOrderIdForDetail) {
-            db.collection("pesanan").doc(currentOrderIdForDetail).update({ status: newStatus })
-                .then(() => {
-                    alert("Status pesanan berhasil diperbarui!");
-                    tutupDetail();
-                });
-        }
-    });
-
-    filterButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const status = button.dataset.status;
-            loadData(status);
+  document.getElementById("statusUpdater").addEventListener("change", function () {
+    const newStatus = this.value;
+    if (currentOrderIdForDetail) {
+      db.collection("pesanan").doc(currentOrderIdForDetail).update({ status: newStatus })
+        .then(() => {
+          alert("Status pesanan berhasil diperbarui!");
+          tutupDetail();
         });
-    });
+    }
+  });
 
-    document.addEventListener("DOMContentLoaded", () => loadData('All'));
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const status = button.dataset.status;
+      loadData(status);
+    });
+  });
+
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const idBaru = doc.id;
+        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+
+        if (terakhirSimpan && idBaru !== terakhirSimpan && data.items?.length > 0) {
+          sound.play();
+          tampilkanDetail(idBaru);
+          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+        }
+
+        terakhirDitampilkan = idBaru;
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadData('All');
+    cekPesananBaru();
+    setInterval(cekPesananBaru, 3000);
+  });
 </script>
 </body>
 </html>
