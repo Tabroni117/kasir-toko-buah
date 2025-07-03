@@ -688,11 +688,10 @@
     });
   }
 
-  function tutupDetail() {
-    popupDetail.style.display = "none";
-    currentOrderIdForDetail = null;
-    loadData(activeFilterStatus);
-  }
+function tutupDetail() {
+  document.getElementById("popupDetail").style.display = "none";
+  currentOrderIdForDetail = null;
+}
 
   document.getElementById("statusUpdater").addEventListener("change", function () {
     const newStatus = this.value;
@@ -715,27 +714,36 @@
   let sudahCekAwal = false;
 
   function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const idBaru = doc.id;
-        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const idBaru = doc.id;
+      const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
 
-        // Cegah popup saat pertama load
-        if (sudahCekAwal && terakhirSimpan !== idBaru && data.items?.length > 0) {
-          sound.play();
-          tampilkanDetail(idBaru);
-          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
-        }
+      // ✅ Cek jika ada item dan ID baru
+      if (
+        terakhirSimpan &&
+        idBaru !== terakhirSimpan &&
+        data.items &&
+        Array.isArray(data.items) &&
+        data.items.length > 0
+      ) {
+        sound.play();
+        tampilkanDetail(idBaru); // hanya kalau valid
+        document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+        document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
 
+        // Simpan ID hanya kalau popup tampil
         terakhirDitampilkan = idBaru;
         localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-        sudahCekAwal = true;
+      } else {
+        // Tidak tampilkan popup, tapi tetap simpan ID agar tidak ulang-ulang
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
       }
-    });
-  }
+    }
+  });
+}
 
   document.addEventListener("DOMContentLoaded", () => {
     loadData('All');
