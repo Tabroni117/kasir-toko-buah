@@ -632,40 +632,62 @@
         });
     }
 
-     function tampilkanDetail(orderId) {
-        if (!orderId) return;
-        db.collection("pesanan").doc(orderId).get().then(doc => {
-            if (!doc.exists) return;
-            const data = doc.data();
-            const customer = data.customer || {};
-            const waktu = data.waktu?.toDate?.() || new Date(0);
-            const items = data.items || [];
+   function tampilkanDetail(orderId) {
+    if (!orderId) return; // ⛔ FIX 1: cegah popup jika id tidak valid
 
-            if (!items.length) return;
+    currentOrderIdForDetail = orderId;
+    db.collection("pesanan").doc(orderId).get()
+        .then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
 
-            document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-            document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-            document.getElementById("popupAlamat").textContent = customer.address || "-";
-            document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-            document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-            document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+                // ⛔ FIX 2: Cek apakah items kosong
+                if (!data.items || data.items.length === 0) {
+                    console.warn("Pesanan kosong. Tidak akan menampilkan popup.");
+                    return;
+                }
 
-            const popupStatusEl = document.getElementById("popupStatus");
-            const currentStatus = data.status || "Pending";
-            popupStatusEl.textContent = currentStatus;
-            popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-            document.getElementById("statusUpdater").value = currentStatus;
-            document.getElementById("popupWaktu").textContent = formatDate(waktu);
+                const customer = data.customer || {};
+                const waktu = data.waktu?.toDate?.() || new Date(0); 
+                const items = data.items || [];
 
-            const popupItemsHtml = items.map(item => `
-                <div style="margin-bottom:5px;">
-                    - ${item.name} (${item.quantity} x Rp${item.price.toLocaleString("id-ID")}) = Rp ${(item.price * item.quantity).toLocaleString("id-ID")}
-                </div>
-            `).join("");
-            document.getElementById("popupItems").innerHTML = popupItemsHtml;
-            popupDetail.style.display = "flex";
+                document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                document.getElementById("popupAlamat").textContent = customer.address || "-";
+                document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+
+                const popupStatusEl = document.getElementById("popupStatus");
+                const currentStatus = data.status || "Pending";
+                popupStatusEl.textContent = currentStatus;
+                popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+                const statusUpdater = document.getElementById("statusUpdater");
+                statusUpdater.value = currentStatus;
+
+                document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                const popupItemsHtml = items.map(item => {
+                    const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                    return `
+                        <div style="margin-bottom:5px;">
+                            - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                        </div>
+                    `;
+                }).join("");
+                document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+                document.getElementById("popupDetail").style.display = "flex"; 
+            } else {
+                alert("Pesanan tidak ditemukan di database.");
+            }
+        })
+        .catch(error => {
+            console.error("Error getting order detail from Firestore:", error);
+            alert("Gagal memuat detail pesanan.");
         });
-    }
+}
 
         function tutupDetail() {
         popupDetail.style.display = "none";
