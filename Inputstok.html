@@ -490,20 +490,9 @@ function tutupDanKePesanan() {
 <!-- Audio notifikasi -->
 <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-<!-- Script pengecekan pesanan -->
 <script>
   const sound = document.getElementById("notifSound");
   let terakhirDitampilkan = null;
-
-  function tutupDanKePesanan() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    sound.pause();
-    sound.currentTime = 0;
-    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
-    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
-    window.location.href = "pesanan.html";
-  }
 
   function cekPesananBaru() {
     db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
@@ -511,16 +500,17 @@ function tutupDanKePesanan() {
         const doc = snapshot.docs[0];
         const data = doc.data();
         const idBaru = doc.id;
+
         const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
 
-        if (terakhirSimpan && idBaru !== terakhirSimpan) {
+        if (terakhirSimpan !== null && idBaru !== terakhirSimpan) {
           sound.play();
           tampilkanPopupPesanan?.(data);
           document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
           document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
         }
 
-        terakhirDitampilkan = idBaru; // simpan ke variabel
+        terakhirDitampilkan = idBaru;
         localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
       }
     });
@@ -531,3 +521,6 @@ function tutupDanKePesanan() {
     setInterval(cekPesananBaru, 3000);
   });
 </script>
+
+</body>
+</html>
