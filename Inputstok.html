@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inventori - Rujak Buah Indonesia</title> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <title>Inventori - Rujak Buah Indonesia</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -397,7 +399,7 @@
 
         // 7. === NOTIFIKASI PESANAN ===
         const sound = document.getElementById("notifSound");
-        let terakhirDitampilkan = ""; 
+        let pesananBaruTerakhir = null; // Menyimpan data pesanan baru yang terakhir dideteksi di sesi ini
 
         // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
         let audioSudahDiizinkan = false;
@@ -424,29 +426,39 @@
             document.getElementById("popupIsiPesanan").innerHTML = isi;
             document.getElementById("popupPesanan").style.display = "flex"; 
 
-            // Memutar suara notifikasi jika belum berbunyi
+            // Memutar suara notifikasi jika belum berbunyi dan audio diizinkan
             if (sound.paused && audioSudahDiizinkan) { 
                 sound.play().catch(error => console.log("Gagal memutar suara:", error));
             }
         }
 
-        // Function untuk menutup popup
+        // Function untuk menutup popup dan menandai sebagai 'dilihat' di localStorage
         function tutupPopup() {
             document.getElementById("popupPesanan").style.display = "none"; 
             sound.pause(); 
             sound.currentTime = 0; 
             document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
             document.getElementById("navPesanan").classList.remove("berkedip-kuat");
+
+            // NEW: Tandai pesanan terakhir sebagai sudah dilihat di localStorage
+            if (pesananBaruTerakhir && pesananBaruTerakhir.id) {
+                let dilihatIds = JSON.parse(localStorage.getItem('pesananDilihatIds') || '[]');
+                if (!dilihatIds.includes(pesananBaruTerakhir.id)) {
+                    dilihatIds.push(pesananBaruTerakhir.id);
+                    localStorage.setItem('pesananDilihatIds', JSON.stringify(dilihatIds));
+                    console.log(`Pesanan ${pesananBaruTerakhir.id} ditandai sudah dilihat di localStorage.`);
+                }
+            }
+            pesananBaruTerakhir = null; // Reset setelah ditandai
         }
 
         // Function untuk menutup popup dan navigasi ke halaman pesanan
         function tutupDanKePesanan() {
-            tutupPopup(); 
+            tutupPopup(); // Panggil fungsi tutupPopup untuk menyembunyikan dan menghentikan suara
             window.location.href = "pesanan.html"; // Navigasi ke pesanan.html
         }
         
-        // NEW: Menggunakan onSnapshot untuk real-time listener pada pesanan yang belum dilihat
-        let unsubscribePesananBaruListener = null; // Untuk menyimpan fungsi unsubscribe
+        let unsubscribePesananBaruListener = null;
 
         function mulaiCekPesananBaruRealtime() {
             // Batalkan listener sebelumnya jika ada
@@ -455,49 +467,52 @@
                 console.log("Unsubscribed dari listener pesanan baru sebelumnya.");
             }
 
-            // Dapatkan hanya pesanan yang "isViewed" adalah false
-            // Order by waktu agar dapat yang terbaru duluan jika ada beberapa yang belum dilihat
-            unsubscribePesananBaruListener = db.collection("pesanan")
-                .where('isViewed', '==', false) 
-                .orderBy("waktu", "desc")
-                .onSnapshot(snapshot => { // Menggunakan onSnapshot untuk real-time updates
-                    if (!snapshot.empty) {
-                        const doc = snapshot.docs[0]; // Ambil pesanan terbaru yang belum dilihat
-                        const data = doc.data();
-                        
-                        // Pastikan ini adalah pesanan yang benar-benar belum dilihat dan belum ditampilkan di popup
-                        // (terakhirDitampilkan mencegah popup muncul berulang untuk pesanan yang sama dalam satu sesi)
-                        if (!data.isViewed && doc.id !== terakhirDitampilkan) {
-                            terakhirDitampilkan = doc.id; // Tandai ID pesanan ini sebagai yang terakhir ditampilkan
+            // Dapatkan semua ID pesanan yang sudah dilihat dari localStorage
+            const dilihatIds = JSON.parse(localStorage.getItem('pesananDilihatIds') || '[]');
 
-                            // Tampilkan popup dan putar suara
+            // Query Firestore untuk pesanan terbaru (tanpa filter isViewed di database)
+            // Ini akan mendengarkan setiap perubahan pada koleksi pesanan
+            unsubscribePesananBaruListener = db.collection("pesanan")
+                .orderBy("waktu", "desc") // Ambil yang terbaru
+                .limit(1) // Hanya perlu 1 yang paling baru
+                .onSnapshot(snapshot => { 
+                    if (!snapshot.empty) {
+                        const doc = snapshot.docs[0];
+                        const data = doc.data();
+                        const orderId = doc.id;
+                        
+                        // NEW: Cek apakah pesanan ini sudah ada di daftar 'dilihat' di localStorage
+                        // ATAU apakah ini adalah pesanan yang sama dengan yang terakhir kali kita proses dan tandai
+                        if (!dilihatIds.includes(orderId) && (pesananBaruTerakhir === null || pesananBaruTerakhir.id !== orderId)) {
+                            // Jika ini benar-benar pesanan baru yang belum pernah dilihat/ditampilkan di sesi ini
+                            pesananBaruTerakhir = { id: orderId, data: data }; // Simpan info pesanan
+                            
                             tampilkanPopupPesanan(data);
                             document.getElementById("notifLonceng").classList.add("berkedip-kuat");
                             document.getElementById("navPesanan").classList.add("berkedip-kuat");
-                        } else if (data.isViewed && doc.id === terakhirDitampilkan) {
-                            // Jika pesanan yang dideteksi onSnapshot ternyata sudah ditandai dilihat (oleh halaman pesanan.html)
-                            // dan itu adalah pesanan yang sama yang terakhir ditampilkan
+                        } else if (dilihatIds.includes(orderId) || pesananBaruTerakhir?.id === orderId) {
+                            // Jika pesanan ini sudah dilihat (di localStorage) atau sudah pernah ditampilkan di sesi ini,
+                            // pastikan notifikasi mati
                             tutupPopup(); 
-                            terakhirDitampilkan = ""; // Reset agar bisa mendeteksi pesanan baru lagi
                         }
                     } else {
-                        // Tidak ada pesanan baru yang belum dilihat
-                        terakhirDitampilkan = ""; // Reset
+                        // Tidak ada pesanan di database
+                        pesananBaruTerakhir = null; // Reset
                         tutupPopup(); // Pastikan popup dan suara mati
                     }
-                }, error => { // Error handler untuk onSnapshot
+                }, error => {
                     console.error("Error listening for new orders:", error);
-                    tutupPopup(); // Matikan notifikasi jika ada error
+                    tutupPopup(); 
                 });
         }
 
         // 8. Jalankan saat halaman selesai dimuat
         window.addEventListener("DOMContentLoaded", () => {
             loadFruits();
-            mulaiCekPesananBaruRealtime(); // Panggil fungsi baru ini
+            mulaiCekPesananBaruRealtime(); 
 
-            // Event listener untuk tombol navigasi pesanan agar mematikan kedipan
             document.getElementById("navPesanan").addEventListener("click", function () {
+                // Saat tombol navigasi pesanan diklik, matikan kedipan
                 this.classList.remove("berkedip-kuat");
             });
         });
