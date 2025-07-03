@@ -28,11 +28,37 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             max-width: 500px;
             width: 90%;
+            position: relative; /* Untuk posisi tombol back-to-home */
+        }
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .main-header h1 {
+            margin: 0; /* Hapus margin default h1 di sini */
+            flex-grow: 1; /* Biarkan h1 mengisi ruang */
+        }
+        .back-to-home-btn {
+            background-color: #64748b; /* Warna abu-abu untuk tombol beranda */
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .back-to-home-btn:hover {
+            background-color: #475569;
         }
         h1 {
             color: #16a34a;
             font-size: 24px;
-            margin-bottom: 15px;
         }
         p {
             font-size: 16px;
@@ -188,7 +214,12 @@
 </head>
 <body>
     <div class="main-content">
-        <h1>Notifikasi Pesanan Rujak Buah</h1>
+        <div class="main-header">
+            <button class="back-to-home-btn" onclick="window.location.href='apl05.html'">
+                <i class="fas fa-home"></i> Beranda
+            </button>
+            <h1>Notifikasi Pesanan Rujak Buah</h1>
+        </div>
         <p>Halaman ini akan memberitahu Anda ketika ada pesanan baru.</p>
         <button class="refresh-button" onclick="location.reload();">
             <i class="fas fa-sync-alt"></i> Refresh Halaman
@@ -221,9 +252,9 @@
     <script>
         // Konfigurasi Firebase Anda
         const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", 
-            authDomain: "tokobuahkasir.firebaseapp.com",     
-            projectId: "tokobuahkasir",                     
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", // <-- PASTIKAN INI BENAR
+            authDomain: "tokobuahkasir.firebaseapp.com",     // <-- PASTIKAN INI BENAR
+            projectId: "tokobuahkasir",                     // <-- PASTIKAN INI BENAR
             storageBucket: "tokobuahkasir.appspot.com",
             messagingSenderId: "731011133713",
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
@@ -239,7 +270,6 @@
         let unsubscribeOrders = null; // Untuk mengelola listener Firebase
         let knownOrderIds = new Set(); // Melacak ID pesanan yang sudah dinotifikasi/dilihat
 
-        // Fungsi format helper
         function formatCurrency(val) {
             if (isNaN(val) || val === null || typeof val === 'undefined') return "Rp0";
             return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
@@ -261,13 +291,11 @@
             }
         }
 
-        // Fungsi suara notifikasi
         function playNotificationSound() {
             const audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3'); // Ganti dengan URL suara Anda
             audio.play().catch(e => console.error("Error playing sound:", e));
         }
 
-        // Fungsi untuk menyimpan/memuat ID pesanan yang sudah dinotifikasi ke/dari localStorage
         function saveNotifiedOrdersToLocalStorage() {
             try {
                 localStorage.setItem('notifiedOrderIds', JSON.stringify(Array.from(knownOrderIds)));
@@ -285,8 +313,6 @@
             }
         }
 
-        // Fungsi utama untuk mendengarkan pesanan baru
-        // isInitialRender: true saat halaman pertama kali dimuat atau direload, agar tidak memicu pop-up untuk pesanan lama
         function listenForNewOrders(isInitialRender = false) {
             if (unsubscribeOrders) { // Hentikan listener sebelumnya jika ada
                 unsubscribeOrders();
@@ -312,59 +338,54 @@
                         return;
                     }
 
-                    // Logika deteksi pesanan baru untuk notifikasi
-                    // Jika ini bukan render awal dan ID pesanan belum pernah dikenal, anggap sebagai baru
                     if (!isInitialRender && !knownOrderIds.has(orderId)) {
                         newOrdersDetected = true;
-                        // Ambil data pesanan yang paling baru terdeteksi
                         if (!latestNewOrderData || (waktu > latestNewOrderData.waktu)) {
                             latestNewOrderData = { orderId, waktu, ...data };
                         }
                     }
                 });
 
-                // Tampilkan notifikasi pop-up jika ada pesanan baru
                 if (newOrdersDetected && !isInitialRender && latestNewOrderData) {
                     showNewOrderPopupNotification(latestNewOrderData);
                     playNotificationSound();
-                    knownOrderIds.add(latestNewOrderData.orderId); // Tandai sebagai sudah dinotifikasi
+                    knownOrderIds.add(latestNewOrderData.orderId);
                     saveNotifiedOrdersToLocalStorage();
                 }
                 
-                // Setelah snapshot diproses, perbarui knownOrderIds
-                // untuk semua pesanan yang ada di snapshot ini, agar tidak dinotifikasi lagi
                 currentSnapshotOrderIds.forEach(id => knownOrderIds.add(id));
                 saveNotifiedOrdersToLocalStorage();
                 
             }, err => {
                 console.error("Error listening to orders from Firestore:", err);
-                // Tampilkan pesan error di body jika perlu
-                const mainContent = document.querySelector('.main-content p');
-                if (mainContent) mainContent.textContent = `Gagal memuat data pesanan: ${err.message}. Periksa koneksi internet atau konsol browser.`;
+                const mainContentP = document.querySelector('.main-content p');
+                if (mainContentP) mainContentP.textContent = `Gagal memuat data pesanan: ${err.message}. Periksa koneksi internet atau konsol browser.`;
             });
         }
 
-        // Fungsi menampilkan pop-up notifikasi kecil di pojok
         function showNewOrderPopupNotification(orderData) {
             if(!newOrderNotificationPopup) return;
             newOrderNotificationPopup.textContent = `Pesanan Baru dari ${orderData.customer?.fullName || 'Pelanggan'}! Total: ${formatCurrency(orderData.totalAmount || 0)}`;
             newOrderNotificationPopup.classList.remove('hidden');
             newOrderNotificationPopup.onclick = () => {
-                tampilkanDetail(orderData.orderId); // Buka detail saat diklik
-                hideNewOrderPopupNotification();
+                tampilkanDetail(orderData.orderId);
+                hideNewOrderNotificationPopup();
             };
 
-            setTimeout(() => { // Sembunyikan otomatis setelah 8 detik
-                hideNewOrderPopupNotification();
+            setTimeout(() => {
+                hideNewOrderNotificationPopup();
             }, 8000);
         }
 
-        // Fungsi menyembunyikan pop-up notifikasi kecil
         function hideNewOrderPopupNotification() {
             if(newOrderNotificationPopup) newOrderNotificationPopup.classList.add('hidden');
         }
 
-        // Fungsi menampilkan pop-up detail pesanan
+        function tutupDetail() {
+            if(popupDetailEl) popupDetailEl.style.display = "none";
+            currentOrderIdForDetail = null;
+        }
+
         function tampilkanDetail(orderId) {
             currentOrderIdForDetail = orderId;
             db.collection("pesanan").doc(orderId).get()
@@ -375,7 +396,6 @@
                         const waktu = data.waktu?.toDate?.() || new Date(0);
                         const items = data.items || [];
 
-                        // Mengisi data ke elemen-elemen di pop-up detail
                         document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
                         document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
                         document.getElementById("popupAlamat").textContent = customer.address || "-";
@@ -400,11 +420,9 @@
                         }).join("");
                         document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
-                        // Tampilkan pop-up detail
                         if(popupDetailEl) popupDetailEl.style.display = "flex"; 
                         
-                        // Penting: Tandai pesanan ini sebagai sudah dilihat/dinotifikasi di localStorage
-                        knownOrderIds.add(orderId);
+                        knownOrderIds.add(orderId); // Tandai sebagai sudah dilihat/dinotifikasi
                         saveNotifiedOrdersToLocalStorage();
 
                     } else {
@@ -415,12 +433,6 @@
                     console.error("Error getting order detail from Firestore:", error);
                     alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
                 });
-        }
-
-        // Fungsi menyembunyikan pop-up detail
-        function tutupDetail() {
-            if(popupDetailEl) popupDetailEl.style.display = "none";
-            currentOrderIdForDetail = null; // Reset ID pesanan yang sedang aktif
         }
 
         // --- DOMContentLoaded: Semua inisialisasi elemen DOM dan listener utama di sini ---
@@ -444,7 +456,7 @@
             if (popupDetailEl) { 
                 popupDetailEl.style.display = "none";
             }
-            currentOrderIdForDetail = null; // Pastikan tidak ada ID pesanan aktif saat mulai
+            currentOrderIdForDetail = null;
 
             // Muat knownOrderIds dari localStorage (daftar pesanan yang sudah dilihat sebelumnya)
             knownOrderIds = loadNotifiedOrdersFromLocalStorage();
@@ -457,12 +469,19 @@
             // agar bisa mengetes notifikasi berulang kali tanpa harus hapus localStorage manual
             /*
             const resetButton = document.createElement('button');
-            resetButton.textContent = 'Reset Notifikasi';
+            resetButton.textContent = 'Reset Notifikasi Sudah Dilihat';
             resetButton.style.marginTop = '20px';
+            resetButton.style.backgroundColor = '#fca5a5';
+            resetButton.style.color = '#dc2626';
+            resetButton.style.border = '1px solid #ef4444';
+            resetButton.style.padding = '8px 15px';
+            resetButton.style.borderRadius = '5px';
+            resetButton.style.cursor = 'pointer';
+            resetButton.style.fontSize = '14px';
             resetButton.onclick = () => {
                 knownOrderIds.clear();
                 saveNotifiedOrdersToLocalStorage();
-                alert('Daftar pesanan yang dinotifikasi sudah direset. Refresh halaman untuk melihat notifikasi pesanan lama lagi.');
+                alert('Daftar pesanan yang sudah dinotifikasi sudah direset. Refresh halaman (F5) untuk melihat notifikasi pesanan lama lagi.');
             };
             document.querySelector('.main-content').appendChild(resetButton);
             */
