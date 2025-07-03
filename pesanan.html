@@ -139,7 +139,6 @@
         .status.diproses { background-color: #eff6ff; color: #2563eb; } /* blue for processing */
         .status.selesai { background-color: #d1fae5; color: #059669; } /* green for complete */
         .status.dibatalkan { background-color: #fee2e2; color: #dc2626; } /* red for cancelled */
-        /* Tambahkan status 'Dilihat' */
         .status.dilihat { background-color: #e0f2fe; color: #0284c7; } /* light blue for seen */
 
 
@@ -323,8 +322,10 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.6);
-            align-items: center;
-            justify-content: center;
+            /* Ini yang penting: membuat overlay berfungsi sebagai flex container untuk menengahkan */
+            display: flex; /* <-- Pastikan ini ada dan aktif */
+            align-items: center; /* <-- Menengahkan vertikal */
+            justify-content: center; /* <-- Menengahkan horizontal */
             padding: 20px;
         }
         #popupDetail > div { /* Konten popup */
@@ -333,10 +334,13 @@
             border-radius: 12px; /* Lebih rounded */
             max-width: 450px; /* Max width yang sedikit lebih lebar */
             width: 90%; /* Responsif */
-            margin: auto;
+            margin: auto; /* Ini juga membantu penengahan */
             box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Bayangan lebih jelas */
             position: relative;
             animation: fadeInScale 0.3s ease-out; /* Animasi masuk */
+            /* flexDirection column dipindahkan ke sini jika ingin konten pop-up vertikal */
+            display: flex; /* <-- Tambahkan ini untuk konten di dalam pop-up */
+            flex-direction: column; /* <-- Ini yang Anda inginkan untuk konten internal */
         }
 
         @keyframes fadeInScale {
@@ -383,40 +387,49 @@
         }
 
         #popupDetail button.close-button {
+            position: absolute; /* Tombol close di pojok kanan atas */
             top: 12px;
             right: 18px;
+            background: none; /* Hilangkan background */
+            border: none; /* Hilangkan border */
+            padding: 0;
             font-size: 28px;
             color: #666;
+            cursor: pointer;
             transition: color 0.2s;
         }
         #popupDetail button.close-button:hover {
             color: #333;
         }
 
-        #popupDetail button {
-            background: var(--primary);
-            color: white;
+        /* Gaya umum untuk tombol di pop-up */
+        #popupDetail .popup-actions button { /* Gunakan kelas untuk menarget tombol di bagian actions */
             padding: 10px 20px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            margin-top: 20px; /* Spasi dari elemen atas */
             transition: background 0.3s ease;
         }
-        #popupDetail button:hover {
+        /* Style untuk tombol "Tutup" */
+        #popupDetail .popup-actions button.close-popup-btn { /* Kelas baru untuk tombol tutup di bagian bawah */
+            background: var(--primary);
+            color: white;
+            margin-left: 10px; /* Spasi dari tombol hapus */
+        }
+        #popupDetail .popup-actions button.close-popup-btn:hover {
             background: var(--primary-light);
         }
+
         /* Style untuk tombol hapus */
-        #popupDetail button.delete-button {
+        #popupDetail .popup-actions button.delete-button {
             background: #dc2626; /* Merah */
-            margin-right: 10px; /* Spasi dari tombol "Tutup" */
+            color: white;
         }
-        #popupDetail button.delete-button:hover {
+        #popupDetail .popup-actions button.delete-button:hover {
             background: #ef4444; /* Merah sedikit lebih terang */
         }
-
 
         /* Filter buttons styling */
         .filter-buttons {
@@ -533,6 +546,7 @@
     <div id="popupDetail">
         <div>
             <button onclick="tutupDetail()" class="close-button">&times;</button>
+            
             <h3 id="popupNama">Nama Pelanggan</h3>
             <p><strong>Nomor HP:</strong> <span id="popupNomor"></span></p>
             <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
@@ -550,9 +564,9 @@
             <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu"></span></p>
             <h4>Detail Item:</h4>
             <div id="popupItems"></div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <div class="popup-actions" style="display: flex; justify-content: flex-end; margin-top: 20px;">
                 <button onclick="hapusPesanan()" class="delete-button"><i class="fas fa-trash-alt"></i> Hapus Pesanan</button>
-                <button onclick="tutupDetail()">Tutup</button>
+                <button onclick="tutupDetail()" class="close-popup-btn">Tutup</button>
             </div>
         </div>
     </div>
@@ -585,8 +599,7 @@
 
         // Fungsi untuk memutar suara notifikasi
         function playNotificationSound() {
-            // Anda bisa mengganti ini dengan path file suara yang sesuai
-            const audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3'); // Contoh suara
+            const audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
             audio.play().catch(e => console.error("Error playing sound:", e));
         }
 
@@ -620,7 +633,6 @@
         // Fungsi untuk menyimpan ID pesanan yang sudah dinotifikasi ke localStorage
         function saveNotifiedOrdersToLocalStorage() {
             try {
-                // Konversi Set menjadi Array untuk disimpan di localStorage
                 localStorage.setItem('notifiedOrderIds', JSON.stringify(Array.from(knownOrderIds)));
             } catch (e) {
                 console.error("Error saving notified orders to local storage:", e);
@@ -633,191 +645,4 @@
                 const storedIds = localStorage.getItem('notifiedOrderIds');
                 return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
             } catch (e) {
-                console.error("Error loading notified orders from local storage:", e);
-                return new Set();
-            }
-        }
-
-        // Fungsi utama untuk memuat dan mendengarkan data
-        // isInitialRender: true saat halaman pertama kali dimuat atau direload, agar tidak memicu pop-up untuk pesanan lama
-        function loadData(statusFilter = activeFilterStatus, isInitialRender = false) {
-            showLoading();
-            daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
-            
-            filterButtons.forEach(btn => {
-                if (btn.dataset.status === statusFilter) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            activeFilterStatus = statusFilter;
-
-            // Hentikan listener sebelumnya jika ada
-            if (unsubscribeOrders) {
-                unsubscribeOrders();
-                unsubscribeOrders = null; // Penting untuk mereset
-            }
-
-            let query = db.collection("pesanan").orderBy("waktu", "desc");
-
-            if (statusFilter !== 'All') {
-                query = query.where('status', '==', statusFilter);
-            }
-
-            unsubscribeOrders = query.onSnapshot(snapshot => {
-                hideLoading();
-
-                let totalIncomeAllTime = 0;
-                let totalOrderCount = 0;
-                let todayIncome = 0;
-                const now = new Date();
-                now.setHours(0, 0, 0, 0);
-
-                let firstOrderTime = null;
-                let newOrdersDetected = false;
-                let latestNewOrderData = null; 
-                
-                const currentSnapshotOrderIds = new Set(); // ID pesanan yang ada di snapshot ini
-
-                // Mengisi daftar pesanan
-                let ordersHtml = "";
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const orderId = doc.id;
-                    currentSnapshotOrderIds.add(orderId);
-
-                    const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
-                    
-                    if (isNaN(waktu.getTime())) {
-                        console.warn("Invalid timestamp found for order:", orderId, data.waktu);
-                        return;
-                    }
-
-                    if (!firstOrderTime) firstOrderTime = waktu;
-
-                    const totalHarga = data.totalAmount || 0;
-
-                    const isToday = waktu.toDateString() === now.toDateString();
-                    if (isToday) todayIncome += totalHarga;
-                    totalIncomeAllTime += totalHarga;
-                    totalOrderCount++;
-
-                    const customerName = data.customer?.fullName || "Pelanggan";
-                    const customerPhone = data.customer?.phoneNumber || "-";
-                    const currentStatus = data.status || "Pending";
-
-                    const itemsHtml = (data.items || []).map(item => {
-                        const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                        return `
-                            <div style="margin-bottom: 5px;">
-                                🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
-                            </div>
-                        `;
-                    }).join("");
-
-                    ordersHtml += `
-                        <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
-                            <div class='order-row-top'>
-                                <div class='customer'>
-                                    <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
-                                    <div class='info'>
-                                        <div class='name'>${customerName}</div>
-                                        <div class='phone'>${customerPhone}</div>
-                                    </div>
-                                </div>
-                                <div class='meta'>
-                                    <div class='total'>${formatCurrency(totalHarga)}</div>
-                                    <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
-                                </div>
-                            </div>
-                            <div class='order-row-bottom'>
-                                <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
-                                <div class='items'>${itemsHtml}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    // Logic deteksi pesanan baru
-                    // Jika ini bukan render awal dan ID pesanan belum pernah dikenal, anggap sebagai baru
-                    if (!isInitialLoad && !knownOrderIds.has(orderId)) {
-                        newOrdersDetected = true;
-                        // Simpan data pesanan yang paling baru terdeteksi
-                        if (!latestNewOrderData || (waktu > latestNewOrderData.waktu)) {
-                             latestNewOrderData = { orderId, waktu, ...data };
-                        }
-                    }
-                });
-
-                // Perbarui DOM setelah semua data diproses
-                daftar.innerHTML = ordersHtml;
-                if (snapshot.empty) {
-                    daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
-                }
-
-                // Perbarui statistik
-                totalOrdersEl.textContent = totalOrderCount;
-                todayIncomeEl.textContent = formatCurrency(todayIncome);
-                avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount));
-                lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
-
-                // Jika ada pesanan baru yang terdeteksi dan ini bukan hasil render awal
-                if (newOrdersDetected && !isInitialLoad && latestNewOrderData) {
-                    showNewOrderPopupNotification(latestNewOrderData);
-                    playNotificationSound(); // Mainkan suara
-                    knownOrderIds.add(latestNewOrderData.orderId); // Tandai pesanan ini sebagai sudah dinotifikasi
-                    saveNotifiedOrdersToLocalStorage(); // Simpan ke localStorage
-                }
-                
-                // Pastikan knownOrderIds selalu mencakup semua ID yang ada di snapshot ini
-                // Ini penting agar pesanan yang sudah terlihat saat reload tidak dinotifikasi lagi
-                currentSnapshotOrderIds.forEach(id => knownOrderIds.add(id));
-                saveNotifiedOrdersToLocalStorage(); // Simpan ke localStorage
-                
-
-            }, err => {
-                hideLoading();
-                daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
-                console.error("Error listening to orders from Firestore:", err);
-            });
-        }
-
-        // Fungsi untuk menampilkan pop-up notifikasi kecil
-        function showNewOrderPopupNotification(orderData) {
-            newOrderNotificationPopup.textContent = `Pesanan Baru dari ${orderData.customer?.fullName || 'Pelanggan'}! Total: ${formatCurrency(orderData.totalAmount || 0)}`;
-            newOrderNotificationPopup.classList.remove('hidden'); // Tampilkan pop-up
-            newOrderNotificationPopup.onclick = () => {
-                tampilkanDetail(orderData.orderId); // Buka detail saat diklik
-                hideNewOrderPopupNotification(); // Sembunyikan notifikasi setelah diklik
-            };
-
-            // Sembunyikan setelah beberapa detik
-            setTimeout(() => {
-                hideNewOrderPopupNotification();
-            }, 8000); 
-        }
-
-        function hideNewOrderPopupNotification() {
-            newOrderNotificationPopup.classList.add('hidden');
-        }
-
-        // Fungsi untuk menghapus pesanan
-        function hapusPesanan() {
-            if (!currentOrderIdForDetail) {
-                alert("Tidak ada pesanan yang dipilih untuk dihapus.");
-                return;
-            }
-
-            // Konfirmasi penghapusan
-            if (confirm("Anda yakin ingin menghapus pesanan ini secara permanen? Tindakan ini tidak dapat dibatalkan.")) {
-                db.collection("pesanan").doc(currentOrderIdForDetail).delete()
-                    .then(() => {
-                        alert("Pesanan berhasil dihapus!");
-                        // Hapus ID dari knownOrderIds dan localStorage juga
-                        knownOrderIds.delete(currentOrderIdForDetail);
-                        saveNotifiedOrdersToLocalStorage();
-                        tutupDetail(); // Tutup detail pop-up
-                        // loadData() tidak perlu dipanggil manual karena onSnapshot akan otomatis refresh
-                    })
-                    .catch(error => {
-                        console.error("Error deleting order:", error);
+                console.error("Error loading notified orders from local storage
