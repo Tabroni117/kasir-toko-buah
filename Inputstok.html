@@ -3,177 +3,91 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <title>Inventori - Rujak Buah Indonesia</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
     <style>
+        /* BASE CSS AND VARIABLES */
         :root {
             --primary: #16a34a;
             --primary-light: #22c55e;
             --primary-dark: #15803d;
-            --secondary: #64748b;
-            --accent: #84cc16;
-            --light: #f0fdf4;
             --white: #ffffff;
-            --dark: #1e293b;
-            --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
-            font-size: 11.5px;
         }
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
-        body {
-            background: #f8fafc;
-            color: var(--dark);
-            padding: 10px;
-            padding-bottom: 80px;
-        }
-        .container {
-            max-width: 700px;
-            margin: auto;
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: var(--card-shadow);
-        }
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .header-top button {
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 5px;
+        .btn {
+            font-size: 14px;
+            padding: 10px 16px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
-            transition: 0.3s;
         }
-        .back-btn {
+        .btn-primary {
             background: var(--primary);
             color: white;
         }
-        .back-btn:hover {
-            background: var(--primary-light);
-        }
-        .refresh-btn {
-            border: 1px solid var(--primary);
-            color: var(--primary);
+        .btn-secondary {
             background: white;
-        }
-        .refresh-btn:hover {
-            background: var(--primary-light);
-            color: white;
-        }
-        h1 {
-            font-size: 16px;
-            margin-bottom: 2px;
             color: var(--primary);
+            border: 1px solid var(--primary);
         }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .stat-box {
-            background: var(--light);
-            border-left: 5px solid var(--primary);
-            padding: 10px;
-            border-radius: 6px;
-        }
-        .order-item-upgrade {
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 16px;
+        .form-group {
             margin-bottom: 12px;
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: all 0.2s ease-in-out;
         }
-        .order-item-upgrade.unread {
-            border: 2px solid var(--primary);
-            background-color: #e6ffe6;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(16, 181, 129, 0.3);
+            border-radius: 10px;
+            background: #f8fafc;
+            font-size: 16px;
+            margin-top: 8px;
+            -webkit-appearance: none;
+            min-height: 48px;
         }
-
-        .order-row-top, .order-row-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .order-row-bottom {
-            flex-direction: column;
-            gap: 5px;
-        }
-        .customer {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar {
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .name { font-weight: 600; font-size: 12px; }
-        .phone { font-size: 10px; color: var(--secondary); }
-        .total { font-weight: bold; color: var(--primary-dark); font-size: 13px; }
-        .status {
-            padding: 3px 8px;
-            font-size: 10px;
-            border-radius: 20px;
-            background: #e0fce2;
-            color: var(--primary-dark);
-            margin-top: 4px;
-        }
-        .status.pending { background-color: #fffbeb; color: #d97706; }
-        .status.diproses { background-color: #eff6ff; color: #2563eb; }
-        .status.selesai { background-color: #d1fae5; color: #059669; }
-        .status.dibatalkan { background-color: #fee2e2; color: #dc2626; }
-
-        .time {
-            font-size: 10px;
-            color: var(--secondary);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .items {
-            font-size: 11px;
-            background: #f9fafb;
-            padding: 8px;
-            border-radius: 6px;
+        body {
+            padding-bottom: 60px;
+            background: #f8fafc;
             color: #1e293b;
+            padding: 0;
+            overflow-x: hidden;
+            width: 100%;
         }
-        
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 120px;
+            padding: 20px;
+        }
+
+        .custom-header {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+        }
+
+        /* NAVIGATION BAR */
         .app-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background-color: #ffffff !important;
-            opacity: 1 !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+            background: var(--white);
             display: flex;
-            gap: 1rem;
-            justify-content: center;
+            justify-content: space-around;
             padding: 0.5rem 0;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
             z-index: 100;
@@ -182,289 +96,106 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             color: var(--primary);
             text-decoration: none;
-            font-size: 1rem;
-            padding: 0.85rem;
+            font-size: 0.75rem !important;
+            padding: 0.5rem !important;
             border-radius: 0.5rem;
             width: 100%;
+            font-weight: 500;
+            background-color: transparent !important;
         }
+
         .nav-btn i {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
+            font-size: 1.25rem !important;
+            margin-bottom: 0.15rem !important;
+            line-height: 1 !important;
+        }
+
+        .nav-btn span {
+            font-size: 0.7rem !important;
+            line-height: 1 !important;
         }
         .nav-btn.active {
             font-weight: 600;
             background: transparent;
             box-shadow: none;
         }
-        #loadingSpinner {
-            display: none;
+
+        /* BLINKING EFFECT FOR NOTIFICATIONS */
+        .berkedip-kuat {
+            animation: kedip 0.8s infinite alternate;
+        }
+        @keyframes kedip {
+            from { opacity: 1; }
+            to { opacity: 0.2; }
+        }
+
+        /* POPUP PESANAN STYLES */
+        #popupPesanan {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.8);
-            z-index: 999;
-            justify-content: center;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
             align-items: center;
-        }
-        .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 4px solid rgba(16, 185, 129, 0.2);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            justify-content: center;
             z-index: 50;
-            background: white;
-            padding: 15px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem;
         }
-
-        .content-wrapper {
-            padding-top: 50px;
-        }
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: white;
-            padding-bottom: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        @keyframes slidein {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-slidein {
-            animation: slidein 0.4s ease-out forwards;
-        }
-        .laporan-container {
-            text-align: right;
-            animation: slidein 0.5s ease-out;
-            margin-top: 10px;
-        }
-
-        .laporan-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            box-shadow: var(--card-shadow);
-            transition: background 0.3s ease;
-        }
-
-        .laporan-btn:hover {
-            background: var(--primary-light);
-        }
-
-        .laporan-btn i {
-            margin-right: 6px;
-        }
-        .laporan-fixed-btn {
-            position: fixed;
-            top: 200px;
-            right: 20px;
-            background: rgba(22, 163, 74, 0.6);
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            font-size: 12px;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            cursor: pointer;
-            z-index: 999;
-            animation: slidein 0.4s ease-out;
-            transition: background 0.3s ease;
-        }
-
-        .laporan-fixed-btn:hover {
-            background: var(--primary-light);
-        }
-
-        .laporan-fixed-btn i {
-            margin-right: 6px;
-        }
-
-        /* Style for status dropdown */
-        .status-dropdown {
-            padding: 5px 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 12px;
-            background-color: #f9f9f9;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-
-        /* Perbaikan untuk popupDetail, pastikan display: flex di sini */
-        #popupDetail {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
+        #popupPesanan > div {
+            background-color: #fff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 28rem; /* 448px */
             width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 9999;
-            padding: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #popupPesanan h3 {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 700;
+            color: #10B981; /* green-600 */
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            justify-content: center;
         }
-
-        #popupDetail > div {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 450px;
-            width: 90%;
-            margin: auto;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            position: relative;
-            animation: fadeInScale 0.3s ease-out;
+        #popupPesanan h3 i {
+            margin-right: 0.5rem;
         }
-
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        #popupDetail h3 {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: var(--primary-dark);
-        }
-
-        #popupDetail p {
-            margin-bottom: 8px;
-            font-size: 13px;
-            line-height: 1.4;
-        }
-        #popupDetail p strong {
-            color: var(--dark);
-        }
-
-        #popupDetail h4 {
-            font-size: 15px;
-            font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        #popupDetail #popupItems {
-            max-height: 150px;
+        #popupPesanan #popupIsiPesanan {
+            max-height: 15rem; /* 240px */
             overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            padding: 10px;
-            border-radius: 8px;
-            background: #fbfbfb;
-            font-size: 12px;
-            color: #444;
+            margin-bottom: 1rem;
         }
-        #popupDetail #popupItems div {
-            margin-bottom: 3px;
+        #popupPesanan #popupIsiPesanan div {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
         }
-
-        #popupDetail button.close-button {
-            position: absolute;
-            top: 12px;
-            right: 18px;
-            background: none;
-            border: none;
-            font-size: 28px;
-            color: #666;
-            cursor: pointer;
-            transition: color 0.2s;
+        #popupPesanan #popupIsiPesanan div:last-child {
+            border-bottom: none;
         }
-        #popupDetail button.close-button:hover {
-            color: #333;
-        }
-
-        #popupDetail button {
-            background: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            margin-top: 20px;
-            transition: background 0.3s ease;
-        }
-        #popupDetail button:hover {
-            background: var(--primary-light);
-        }
-
-        /* Filter buttons styling */
-        .filter-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .filter-btn {
-            background: #e2e8f0;
-            color: var(--secondary);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 11px;
+        #popupPesanan .flex.gap-3 button {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
             font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid #cbd5e1;
+            transition: all 0.2s ease-in-out;
         }
-        .filter-btn:hover {
-            background: #cbd5e1;
-            color: var(--dark);
+        #popupPesanan .flex.gap-3 button:first-child {
+            background-color: #10B981; /* green-600 */
+            color: #fff;
         }
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        #popupPesanan .flex.gap-3 button:first-child:hover {
+            background-color: #059669; /* green-700 */
         }
-        /* Style for delete all button */
-        .delete-all-btn {
-            background-color: #dc2626;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            border: none;
-            transition: background 0.3s ease;
-            margin-top: 10px;
-            width: 100%;
-            box-shadow: var(--card-shadow);
+        #popupPesanan .flex.gap-3 button:last-child {
+            border: 1px solid #d1d5db; /* gray-300 */
+            background-color: #fff;
+            color: #4b5563; /* gray-700 */
         }
-        .delete-all-btn:hover {
-            background-color: #b91c1c;
+        #popupPesanan .flex.gap-3 button:last-child:hover {
+            background-color: #f3f4f6; /* gray-100 */
         }
     </style>
 </head>
@@ -692,6 +423,7 @@
             items.forEach(item => {
                 const subtotal = (item.harga || 0) * (item.jumlah || 0);
                 total += subtotal;
+                // Menggunakan item.name, item.quantity, item.price sesuai struktur data pesanan
                 isi += `<div><strong>${item.name || 'Produk Tidak Dikenal'}</strong> (${item.quantity || 0} x Rp ${item.price ? item.price.toLocaleString("id-ID") : '0'})<br><small>${item.sambal || ''}, ${item.ukuran || ''}, ${item.bumbu || ''}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString("id-ID")}</strong></div><hr>`;
             });
             isi += `<strong>Total: Rp ${total.toLocaleString("id-ID")}</strong>`;
@@ -740,6 +472,8 @@
 
             const dilihatIds = JSON.parse(localStorage.getItem('pesananDilihatIds') || '[]');
 
+            // Dapatkan hanya pesanan terbaru yang masuk (orderBy waktu, limit 1)
+            // onSnapshot akan mendengarkan setiap perubahan pada dokumen yang cocok dengan query
             unsubscribePesananBaruListener = db.collection("pesanan")
                 .orderBy("waktu", "desc")
                 .limit(1) 
@@ -749,6 +483,9 @@
                         const data = doc.data();
                         const orderId = doc.id;
                         
+                        // KONDISI UTAMA UNTUK MENAMPILKAN NOTIFIKASI:
+                        // 1. ID pesanan belum ada di localStorage (belum pernah dilihat)
+                        // 2. Ini BUKAN pesanan yang sama yang baru saja kita proses/tampilkan di sesi ini
                         if (!dilihatIds.includes(orderId) && (pesananBaruTerakhir === null || pesananBaruTerakhir.id !== orderId)) {
                             // Jika ini benar-benar pesanan baru yang belum pernah dilihat/ditampilkan di sesi ini
                             pesananBaruTerakhir = { id: orderId, data: data }; 
@@ -759,11 +496,12 @@
                             tutupPopup(); 
                         }
                     } else {
-                        // Tidak ada pesanan di database
+                        // Tidak ada pesanan di database (atau query tidak mengembalikan hasil)
                         pesananBaruTerakhir = null; 
-                        tutupPopup(); 
+                        tutupPopup(); // Pastikan popup dan suara mati
                     }
                 }, error => {
+                    // Penanganan error saat mendengarkan Firestore
                     console.error("Error listening for new orders:", error);
                     tutupPopup(); 
                 });
@@ -771,9 +509,10 @@
 
         // 8. Jalankan saat halaman selesai dimuat
         window.addEventListener("DOMContentLoaded", () => {
-            loadFruits();
-            mulaiCekPesananBaruRealtime(); 
+            loadFruits(); // Muat data buah/stok saat halaman dimuat
+            mulaiCekPesananBaruRealtime(); // Mulai memonitor pesanan baru
 
+            // Event listener untuk tombol navigasi pesanan agar mematikan kedipan
             document.getElementById("navPesanan").addEventListener("click", function () {
                 this.classList.remove("berkedip-kuat");
             });
