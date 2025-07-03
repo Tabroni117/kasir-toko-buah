@@ -97,7 +97,15 @@
             margin-bottom: 12px;
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.2s ease-in-out; /* Tambahkan transisi untuk efek visual */
         }
+        /* NEW: Style untuk pesanan yang belum dilihat */
+        .order-item-upgrade.unread {
+            border: 2px solid var(--primary); /* Border hijau lebih tebal */
+            background-color: #e6ffe6; /* Latar belakang lebih terang */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Bayangan lebih kuat */
+        }
+
         .order-row-top, .order-row-bottom {
             display: flex;
             justify-content: space-between;
@@ -382,10 +390,14 @@
         }
 
         #popupDetail button.close-button {
+            position: absolute;
             top: 12px;
             right: 18px;
+            background: none;
+            border: none;
             font-size: 28px;
             color: #666;
+            cursor: pointer;
             transition: color 0.2s;
         }
         #popupDetail button.close-button:hover {
@@ -476,7 +488,8 @@
         <div class="content-wrapper">
             <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
         </div>
-    </div> <nav class="app-nav">
+    </div> 
+    <nav class="app-nav">
         <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
         <a href="Inputstok.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
         <a href="pesanan.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
@@ -560,7 +573,6 @@
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
             
-            // Update active filter button
             filterButtons.forEach(btn => {
                 if (btn.dataset.status === statusFilter) {
                     btn.classList.add('active');
@@ -568,7 +580,7 @@
                     btn.classList.remove('active');
                 }
             });
-            activeFilterStatus = statusFilter; // Set active filter
+            activeFilterStatus = statusFilter;
 
             let query = db.collection("pesanan").orderBy("waktu", "desc");
 
@@ -616,6 +628,9 @@
                             const customerName = data.customer?.fullName || "Pelanggan";
                             const customerPhone = data.customer?.phoneNumber || "-";
                             const currentStatus = data.status || "Pending";
+                            
+                            // NEW: Tambahkan properti isViewed
+                            const isViewed = data.isViewed || false; // Default: false jika belum ada
 
                             const itemsHtml = (data.items || []).map(item => {
                                 const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
@@ -626,8 +641,11 @@
                                 `;
                             }).join("");
 
+                            // NEW: Tambahkan kelas 'unread' jika isViewed = false
+                            const unreadClass = isViewed ? '' : 'unread'; 
+
                             daftar.innerHTML += `
-                                <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
+                                <div class='order-item-upgrade animate-slidein ${unreadClass}' onclick='tampilkanDetail("${orderId}")'>
                                     <div class='order-row-top'>
                                         <div class='customer'>
                                             <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
@@ -650,7 +668,6 @@
                         });
                     }
 
-                    // Update statistik berdasarkan SEMUA pesanan yang diambil oleh query aktif
                     totalOrdersEl.textContent = totalOrderCount;
                     todayIncomeEl.textContent = formatCurrency(todayIncome);
                     avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
@@ -702,6 +719,21 @@
                         document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
                         document.getElementById("popupDetail").style.display = "flex"; 
+                        
+                        // NEW: Tandai pesanan sebagai 'sudah dilihat' (isViewed: true) saat detail dibuka
+                        if (!data.isViewed) { // Hanya update jika belum dilihat
+                            db.collection("pesanan").doc(orderId).update({
+                                isViewed: true
+                            }).then(() => {
+                                console.log("Pesanan ditandai sebagai sudah dilihat:", orderId);
+                                // Tidak perlu loadData() atau tutupDetail() di sini, karena akan dipanggil
+                                // setelah popup ditutup oleh fungsi tutupDetail()
+                            }).catch(error => {
+                                console.error("Error marking order as viewed:", error);
+                                // Anda bisa tambahkan alert di sini jika ingin user tahu ada error update
+                            });
+                        }
+
                     } else {
                         alert("Pesanan tidak ditemukan di database.");
                     }
@@ -715,7 +747,8 @@
         function tutupDetail() {
             document.getElementById("popupDetail").style.display = "none";
             currentOrderIdForDetail = null; 
-            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
+            // NEW: Panggil loadData() untuk memuat ulang daftar pesanan agar perubahan 'isViewed' terlihat
+            loadData(); 
         }
 
         document.getElementById("statusUpdater").addEventListener("change", function() {
@@ -725,9 +758,6 @@
                     status: newStatus
                 }).then(() => {
                     alert("Status pesanan berhasil diperbarui!");
-                    // Tidak perlu loadData() atau tutupDetail() di sini karena akan dipanggil di .then()
-                    // dari tutupDetail() setelah berhasil update
-                    // atau bisa juga panggil loadData() langsung di sini dan tutupDetail()
                     tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
                 }).catch(error => {
                     console.error("Error updating order status:", error);
