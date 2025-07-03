@@ -712,39 +712,50 @@
                 });
         }
 
-        function tutupDetail() {
-            document.getElementById("popupDetail").style.display = "none";
-            currentOrderIdForDetail = null; 
-            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
-        }
+       function tutupDetail() {
+    popup.style.display = "none";
+    currentOrderId = null;
+  }
 
-        document.getElementById("statusUpdater").addEventListener("change", function() {
-            const newStatus = this.value;
-            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
-                db.collection("pesanan").doc(currentOrderIdForDetail).update({
-                    status: newStatus
-                }).then(() => {
-                    alert("Status pesanan berhasil diperbarui!");
-                    // Tidak perlu loadData() atau tutupDetail() di sini karena akan dipanggil di .then()
-                    // dari tutupDetail() setelah berhasil update
-                    // atau bisa juga panggil loadData() langsung di sini dan tutupDetail()
-                    tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
-                }).catch(error => {
-                    console.error("Error updating order status:", error);
-                    alert("Gagal memperbarui status pesanan.");
-                });
-            }
-        });
+  document.getElementById("statusUpdater").addEventListener("change", function() {
+    if (!currentOrderId) return;
+    const statusBaru = this.value;
+    db.collection("pesanan").doc(currentOrderId).update({ status: statusBaru }).then(() => {
+      alert("Status diperbarui!");
+      tutupDetail();
+    });
+  });
 
-        // Event listeners for filter buttons
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const status = button.dataset.status;
-                loadData(status); // Call loadData with the selected filter status
-            });
-        });
+  document.addEventListener("DOMContentLoaded", () => {
+    db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+      daftar.innerHTML = "";
+      if (snapshot.empty) return daftar.innerHTML = "<p>Tidak ada pesanan.</p>";
 
-        document.addEventListener("DOMContentLoaded", () => loadData('All')); // Load all orders on page load
-    </script>
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const nama = d.customer?.fullName || "Pelanggan";
+        const total = formatCurrency(d.totalAmount || 0);
+        const status = d.status || "Pending";
+        const waktu = d.waktu?.toDate()?.toLocaleString("id-ID") || "-";
+        daftar.innerHTML += `
+          <div class="order-item" onclick="tampilkanDetail('${doc.id}')">
+            <strong>${nama}</strong><br>
+            ${total} - <em>${status}</em><br>
+            <small>${waktu}</small>
+          </div>
+        `;
+      });
+
+      const newestDoc = snapshot.docs[0];
+      if (newestDoc && newestDoc.id !== latestDocId && !sudahPernahTampil(newestDoc.id)) {
+        latestDocId = newestDoc.id;
+        document.getElementById("notifSound").play();
+        tampilkanDetail(newestDoc.id);
+        tandaiSudahTampil(newestDoc.id);
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
