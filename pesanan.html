@@ -408,6 +408,15 @@
         #popupDetail button:hover {
             background: var(--primary-light);
         }
+        /* Style untuk tombol hapus */
+        #popupDetail button.delete-button {
+            background: #dc2626; /* Merah */
+            margin-right: 10px; /* Spasi dari tombol "Tutup" */
+        }
+        #popupDetail button.delete-button:hover {
+            background: #ef4444; /* Merah sedikit lebih terang */
+        }
+
 
         /* Filter buttons styling */
         .filter-buttons {
@@ -482,7 +491,7 @@
         <div class="sticky-header">
             <div class="header-top">
                 <button class="back-btn" onclick="window.location.href='apl05.html'"><i class="fas fa-arrow-left"></i> Beranda Pelanggan</button>
-                <button class="refresh-btn" onclick="resetAndLoadData('All')"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="refresh-btn" onclick="loadData(activeFilterStatus, true)"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             
             <div style="margin-bottom: 10px;">
@@ -493,7 +502,7 @@
                 <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
                 <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
                 <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
-                <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+                <div class="stat-box"><h3 id="lastOrder">-</p>Pesanan Terakhir</p></div>
             </div>
 
             <div class="filter-buttons">
@@ -541,7 +550,10 @@
             <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu"></span></p>
             <h4>Detail Item:</h4>
             <div id="popupItems"></div>
-            <button onclick="tutupDetail()">Tutup</button>
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                <button onclick="hapusPesanan()" class="delete-button"><i class="fas fa-trash-alt"></i> Hapus Pesanan</button>
+                <button onclick="tutupDetail()">Tutup</button>
+            </div>
         </div>
     </div>
 
@@ -600,13 +612,35 @@
                 case 'diproses': return 'diproses';
                 case 'selesai': return 'selesai';
                 case 'dibatalkan': return 'dibatalkan';
-                case 'dilihat': return 'dilihat'; // Tambahkan status 'dilihat'
+                case 'dilihat': return 'dilihat';
                 default: return '';
             }
         }
 
+        // Fungsi untuk menyimpan ID pesanan yang sudah dinotifikasi ke localStorage
+        function saveNotifiedOrdersToLocalStorage() {
+            try {
+                // Konversi Set menjadi Array untuk disimpan di localStorage
+                localStorage.setItem('notifiedOrderIds', JSON.stringify(Array.from(knownOrderIds)));
+            } catch (e) {
+                console.error("Error saving notified orders to local storage:", e);
+            }
+        }
+
+        // Fungsi untuk memuat ID pesanan yang sudah dinotifikasi dari localStorage
+        function loadNotifiedOrdersFromLocalStorage() {
+            try {
+                const storedIds = localStorage.getItem('notifiedOrderIds');
+                return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+            } catch (e) {
+                console.error("Error loading notified orders from local storage:", e);
+                return new Set();
+            }
+        }
+
         // Fungsi utama untuk memuat dan mendengarkan data
-        function loadData(statusFilter = activeFilterStatus, isInitialLoad = false) {
+        // isInitialRender: true saat halaman pertama kali dimuat atau direload, agar tidak memicu pop-up untuk pesanan lama
+        function loadData(statusFilter = activeFilterStatus, isInitialRender = false) {
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
             
@@ -622,6 +656,7 @@
             // Hentikan listener sebelumnya jika ada
             if (unsubscribeOrders) {
                 unsubscribeOrders();
+                unsubscribeOrders = null; // Penting untuk mereset
             }
 
             let query = db.collection("pesanan").orderBy("waktu", "desc");
@@ -641,15 +676,16 @@
 
                 let firstOrderTime = null;
                 let newOrdersDetected = false;
-                const currentOrderIds = new Set(); // Untuk melacak orderId yang ada di snapshot ini
+                let latestNewOrderData = null; 
+                
+                const currentSnapshotOrderIds = new Set(); // ID pesanan yang ada di snapshot ini
 
-                const newOrderElements = []; // Simpan elemen pesanan baru untuk ditampilkan
-                let latestNewOrderData = null; // Untuk menyimpan data pesanan terbaru yang masuk
-
+                // Mengisi daftar pesanan
+                let ordersHtml = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const orderId = doc.id;
-                    currentOrderIds.add(orderId); // Tambahkan ke set orderId saat ini
+                    currentSnapshotOrderIds.add(orderId);
 
                     const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
                     
@@ -680,7 +716,7 @@
                         `;
                     }).join("");
 
-                    const orderHtml = `
+                    ordersHtml += `
                         <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
                             <div class='order-row-top'>
                                 <div class='customer'>
@@ -702,60 +738,22 @@
                         </div>
                     `;
 
-                    // Deteksi pesanan baru hanya jika ini bukan initial load
+                    // Logic deteksi pesanan baru
+                    // Jika ini bukan render awal dan ID pesanan belum pernah dikenal, anggap sebagai baru
                     if (!isInitialLoad && !knownOrderIds.has(orderId)) {
                         newOrdersDetected = true;
-                        latestNewOrderData = { orderId, ...data }; // Simpan data pesanan baru
-                        // Tidak langsung tambahkan ke daftar, karena daftar akan di-render ulang
+                        // Simpan data pesanan yang paling baru terdeteksi
+                        if (!latestNewOrderData || (waktu > latestNewOrderData.waktu)) {
+                             latestNewOrderData = { orderId, waktu, ...data };
+                        }
                     }
                 });
 
-                // Render ulang seluruh daftar setelah memproses semua data
-                daftar.innerHTML = "";
+                // Perbarui DOM setelah semua data diproses
+                daftar.innerHTML = ordersHtml;
                 if (snapshot.empty) {
                     daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
-                } else {
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const orderId = doc.id;
-                        const customerName = data.customer?.fullName || "Pelanggan";
-                        const customerPhone = data.customer?.phoneNumber || "-";
-                        const currentStatus = data.status || "Pending";
-                        const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
-                        const totalHarga = data.totalAmount || 0;
-                        const itemsHtml = (data.items || []).map(item => {
-                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                            return `
-                                <div style="margin-bottom: 5px;">
-                                    🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
-                                </div>
-                            `;
-                        }).join("");
-
-                        daftar.innerHTML += `
-                            <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
-                                <div class='order-row-top'>
-                                    <div class='customer'>
-                                        <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
-                                        <div class='info'>
-                                            <div class='name'>${customerName}</div>
-                                            <div class='phone'>${customerPhone}</div>
-                                        </div>
-                                    </div>
-                                    <div class='meta'>
-                                        <div class='total'>${formatCurrency(totalHarga)}</div>
-                                        <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
-                                    </div>
-                                </div>
-                                <div class='order-row-bottom'>
-                                    <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
-                                    <div class='items'>${itemsHtml}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
                 }
-
 
                 // Perbarui statistik
                 totalOrdersEl.textContent = totalOrderCount;
@@ -763,14 +761,19 @@
                 avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount));
                 lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
 
-                // Jika ada pesanan baru dan ini bukan initial load
-                if (newOrdersDetected && !isInitialLoad) {
+                // Jika ada pesanan baru yang terdeteksi dan ini bukan hasil render awal
+                if (newOrdersDetected && !isInitialLoad && latestNewOrderData) {
                     showNewOrderPopupNotification(latestNewOrderData);
                     playNotificationSound(); // Mainkan suara
+                    knownOrderIds.add(latestNewOrderData.orderId); // Tandai pesanan ini sebagai sudah dinotifikasi
+                    saveNotifiedOrdersToLocalStorage(); // Simpan ke localStorage
                 }
-
-                // Perbarui knownOrderIds dengan semua ID yang ada di snapshot saat ini
-                knownOrderIds = currentOrderIds;
+                
+                // Pastikan knownOrderIds selalu mencakup semua ID yang ada di snapshot ini
+                // Ini penting agar pesanan yang sudah terlihat saat reload tidak dinotifikasi lagi
+                currentSnapshotOrderIds.forEach(id => knownOrderIds.add(id));
+                saveNotifiedOrdersToLocalStorage(); // Simpan ke localStorage
+                
 
             }, err => {
                 hideLoading();
@@ -788,138 +791,33 @@
                 hideNewOrderPopupNotification(); // Sembunyikan notifikasi setelah diklik
             };
 
+            // Sembunyikan setelah beberapa detik
             setTimeout(() => {
                 hideNewOrderPopupNotification();
-            }, 8000); // Sembunyikan setelah 8 detik
+            }, 8000); 
         }
 
         function hideNewOrderPopupNotification() {
             newOrderNotificationPopup.classList.add('hidden');
         }
 
-        // Fungsi untuk meng-handle refresh manual
-        function resetAndLoadData(statusFilter = 'All') {
-            // Hentikan listener yang sedang berjalan
-            if (unsubscribeOrders) {
-                unsubscribeOrders();
-                unsubscribeOrders = null;
+        // Fungsi untuk menghapus pesanan
+        function hapusPesanan() {
+            if (!currentOrderIdForDetail) {
+                alert("Tidak ada pesanan yang dipilih untuk dihapus.");
+                return;
             }
-            // Kosongkan knownOrderIds agar semua dianggap baru pada load berikutnya (jika ingin notifikasi pada refresh)
-            // Namun, untuk menghindari notifikasi pada refresh, kita akan membiarkan knownOrderIds tetap ada
-            // atau mengatur isInitialLoad menjadi true lagi pada loadData.
-            knownOrderIds.clear(); // Hapus semua known IDs
-            loadData(statusFilter, true); // Anggap ini sebagai initial load untuk tidak memicu pop-up
-        }
 
-        function tampilkanDetail(orderId) {
-            currentOrderIdForDetail = orderId;
-            db.collection("pesanan").doc(orderId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        const customer = data.customer || {};
-                        const waktu = data.waktu?.toDate?.() || new Date(0);
-                        const items = data.items || [];
-
-                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-                        document.getElementById("popupAlamat").textContent = customer.address || "-";
-                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-
-                        const popupStatusEl = document.getElementById("popupStatus");
-                        const currentStatus = data.status || "Pending";
-                        popupStatusEl.textContent = currentStatus;
-                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-
-                        const statusUpdater = document.getElementById("statusUpdater");
-                        statusUpdater.value = currentStatus;
-
-                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
-
-                        const popupItemsHtml = items.map(item => {
-                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                            return `
-                                <div style="margin-bottom:5px;">
-                                    - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
-                                </div>
-                            `;
-                        }).join("");
-                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
-
-                        const popup = document.getElementById("popupDetail");
-                        popup.style.display = "flex";
-                        popup.style.flexDirection = "column";
-
-                        // ✅ Update status menjadi "Dilihat" jika sebelumnya "Pending"
-                        if (currentStatus.toLowerCase() === 'pending') {
-                            db.collection("pesanan").doc(orderId).update({
-                                status: "Dilihat",
-                                waktuDilihat: firebase.firestore.FieldValue.serverTimestamp() // Gunakan serverTimestamp
-                            }).then(() => {
-                                console.log("Status otomatis diubah menjadi 'Dilihat'");
-                                // Perbarui UI pop-up secara langsung setelah update berhasil
-                                popupStatusEl.textContent = "Dilihat";
-                                popupStatusEl.className = "status dilihat";
-                                statusUpdater.value = "Dilihat";
-                                // Tidak perlu loadData() di sini, karena listener akan otomatis update daftar
-                            }).catch(err => {
-                                console.error("Gagal update status otomatis:", err);
-                            });
-                        }
-
-                    } else {
-                        alert("Pesanan tidak ditemukan di database.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error getting order detail from Firestore:", error);
-                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
-                });
-        }
-
-        function tutupDetail() {
-            document.getElementById("popupDetail").style.display = "none";
-            currentOrderIdForDetail = null;
-            // loadData(); // Listener sudah otomatis me-refresh daftar
-        }
-
-        document.getElementById("statusUpdater").addEventListener("change", function() {
-            const newStatus = this.value;
-            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
-                db.collection("pesanan").doc(currentOrderIdForDetail).update({
-                    status: newStatus,
-                    // Opsional: tambahkan timestamp untuk status_update
-                    waktuUpdateStatus: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    alert("Status pesanan berhasil diperbarui!");
-                    tutupDetail(); // Tutup detail, listener akan otomatis update daftar
-                }).catch(error => {
-                    console.error("Error updating order status:", error);
-                    alert("Gagal memperbarui status pesanan.");
-                });
-            }
-        });
-
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const status = button.dataset.status;
-                loadData(status); // Panggil loadData dengan filter status
-            });
-        });
-
-        document.addEventListener("DOMContentLoaded", () => {
-            // Panggil loadData dengan isInitialLoad = true agar tidak langsung memicu pop-up pada saat pertama kali halaman dimuat.
-            loadData('All', true); 
-
-            // Pastikan popup detail tertutup saat reload
-            const popupEl = document.getElementById("popupDetail");
-            if (popupEl) {
-                popupEl.style.display = "none";
-            }
-            currentOrderIdForDetail = null; // Reset ID pesanan aktif
-        });
-    </script>
-</body>
-</html>
+            // Konfirmasi penghapusan
+            if (confirm("Anda yakin ingin menghapus pesanan ini secara permanen? Tindakan ini tidak dapat dibatalkan.")) {
+                db.collection("pesanan").doc(currentOrderIdForDetail).delete()
+                    .then(() => {
+                        alert("Pesanan berhasil dihapus!");
+                        // Hapus ID dari knownOrderIds dan localStorage juga
+                        knownOrderIds.delete(currentOrderIdForDetail);
+                        saveNotifiedOrdersToLocalStorage();
+                        tutupDetail(); // Tutup detail pop-up
+                        // loadData() tidak perlu dipanggil manual karena onSnapshot akan otomatis refresh
+                    })
+                    .catch(error => {
+                        console.error("Error deleting order:", error);
