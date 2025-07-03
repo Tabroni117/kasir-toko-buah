@@ -123,80 +123,19 @@
             box-shadow: none;
         }
 
-        /* BLINKING EFFECT FOR NOTIFICATIONS */
+        /* BLINKING EFFECT FOR NOTIFICATIONS (REMOVED: but keeping empty class) */
         .berkedip-kuat {
-            animation: kedip 0.8s infinite alternate;
+            /* This class is no longer used, but keeping it empty here for safety */
         }
         @keyframes kedip {
-            from { opacity: 1; }
-            to { opacity: 0.2; }
+            /* This keyframe is no longer used */
         }
 
-        /* POPUP PESANAN STYLES */
+        /* POPUP PESANAN STYLES (REMOVED: but keeping empty class) */
         #popupPesanan {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            padding: 1rem;
+            display: none; /* Ensure it's hidden */
         }
-        #popupPesanan > div {
-            background-color: #fff;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            max-width: 28rem; /* 448px */
-            width: 100%;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        #popupPesanan h3 {
-            font-size: 1.25rem; /* 20px */
-            font-weight: 700;
-            color: #10B981; /* green-600 */
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-        }
-        #popupPesanan h3 i {
-            margin-right: 0.5rem;
-        }
-        #popupPesanan #popupIsiPesanan {
-            max-height: 15rem; /* 240px */
-            overflow-y: auto;
-            margin-bottom: 1rem;
-        }
-        #popupPesanan #popupIsiPesanan div {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e5e7eb; /* gray-200 */
-        }
-        #popupPesanan #popupIsiPesanan div:last-child {
-            border-bottom: none;
-        }
-        #popupPesanan .flex.gap-3 button {
-            flex: 1;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.2s ease-in-out;
-        }
-        #popupPesanan .flex.gap-3 button:first-child {
-            background-color: #10B981; /* green-600 */
-            color: #fff;
-        }
-        #popupPesanan .flex.gap-3 button:first-child:hover {
-            background-color: #059669; /* green-700 */
-        }
-        #popupPesanan .flex.gap-3 button:last-child {
-            border: 1px solid #d1d5db; /* gray-300 */
-            background-color: #fff;
-            color: #4b5563; /* gray-700 */
-        }
-        #popupPesanan .flex.gap-3 button:last-child:hover {
-            background-color: #f3f4f6; /* gray-100 */
-        }
+        /* No other popupPesanan styles needed as the element is completely hidden */
     </style>
 </head>
 <body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
@@ -221,8 +160,7 @@
             <div class="header-top mt-8 mb-6 gap-6 flex items-center">
                 <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
                 <button onclick="loadFruits()" class="btn btn-primary mr-4"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-2" style="font-size: 22px; color: #16a34a;"></i>
-            </div>
+                </div>
             <div class="judul mt-6"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
             <div class="sticky top-[90px] z-40 bg-white shadow-md rounded-xl p-4 mb-4">
@@ -291,27 +229,6 @@
             </div>
         </div>
     </div>
-
-    <div id="popupPesanan" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 class="text-xl font-bold text-green-600 mb-4 flex items-center">
-                <i class="fas fa-bell mr-2"></i> Pesanan Baru Masuk!
-            </h3>
-            <div id="popupIsiPesanan" class="max-h-60 overflow-y-auto mb-4"></div>
-            <div class="flex gap-3">
-                <button onclick="tutupDanKePesanan()" 
-                    class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg">
-                    Lihat Pesanan
-                </button>
-                <button onclick="tutupPopup()" 
-                    class="flex-1 border border-gray-300 hover:bg-gray-100 py-2 rounded-lg">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
     <nav class="app-nav !p-2 !bg-white !shadow-md">
         <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
@@ -400,122 +317,21 @@
             });
         });
 
-        // 7. === NOTIFIKASI PESANAN ===
-        const sound = document.getElementById("notifSound");
-        let pesananBaruTerakhir = null; // Menyimpan data pesanan baru yang terakhir dideteksi di sesi ini
-
-        // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-        let audioSudahDiizinkan = false;
-        document.addEventListener("click", () => {
-            if (!audioSudahDiizinkan) {
-                sound.play().catch(() => {});
-                sound.pause();
-                sound.currentTime = 0;
-                audioSudahDiizinkan = true;
-            }
-        }, { once: true }); // Hanya perlu sekali klik untuk mengizinkan audio
-
-        // Function untuk menampilkan popup pesanan
-        function tampilkanPopupPesanan(data) {
-            const items = data.items || [];
-            let isi = "";
-            let total = 0;
-            items.forEach(item => {
-                const subtotal = (item.harga || 0) * (item.jumlah || 0);
-                total += subtotal;
-                // Menggunakan item.name, item.quantity, item.price sesuai struktur data pesanan
-                isi += `<div><strong>${item.name || 'Produk Tidak Dikenal'}</strong> (${item.quantity || 0} x Rp ${item.price ? item.price.toLocaleString("id-ID") : '0'})<br><small>${item.sambal || ''}, ${item.ukuran || ''}, ${item.bumbu || ''}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString("id-ID")}</strong></div><hr>`;
-            });
-            isi += `<strong>Total: Rp ${total.toLocaleString("id-ID")}</strong>`;
-            document.getElementById("popupIsiPesanan").innerHTML = isi;
-            document.getElementById("popupPesanan").style.display = "flex"; 
-
-            // Memutar suara notifikasi jika belum berbunyi dan audio diizinkan
-            if (sound.paused && audioSudahDiizinkan) { 
-                sound.play().catch(error => console.log("Gagal memutar suara:", error));
-            }
-            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-            document.getElementById("navPesanan").classList.add("berkedip-kuat");
-        }
-
-        // Function untuk menutup popup dan menandai sebagai 'dilihat' di localStorage
-        function tutupPopup() {
-            document.getElementById("popupPesanan").style.display = "none"; 
-            sound.pause(); 
-            sound.currentTime = 0; 
-            document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-            document.getElementById("navPesanan").classList.remove("berkedip-kuat");
-
-            if (pesananBaruTerakhir && pesananBaruTerakhir.id) {
-                let dilihatIds = JSON.parse(localStorage.getItem('pesananDilihatIds') || '[]');
-                if (!dilihatIds.includes(pesananBaruTerakhir.id)) {
-                    dilihatIds.push(pesananBaruTerakhir.id);
-                    localStorage.setItem('pesananDilihatIds', JSON.stringify(dilihatIds));
-                }
-            }
-            pesananBaruTerakhir = null; // Reset setelah ditandai
-        }
-
-        // Function untuk menutup popup dan navigasi ke halaman pesanan
-        function tutupDanKePesanan() {
-            tutupPopup(); // Panggil fungsi tutupPopup untuk menyembunyikan dan menghentikan suara
-            window.location.href = "pesanan.html"; // Navigasi ke pesanan.html
-        }
-        
-        let unsubscribePesananBaruListener = null;
-
-        function mulaiCekPesananBaruRealtime() {
-            // Batalkan listener sebelumnya jika ada
-            if (unsubscribePesananBaruListener) {
-                unsubscribePesananBaruListener();
-            }
-
-            const dilihatIds = JSON.parse(localStorage.getItem('pesananDilihatIds') || '[]');
-
-            // Dapatkan hanya pesanan terbaru yang masuk (orderBy waktu, limit 1)
-            // onSnapshot akan mendengarkan setiap perubahan pada dokumen yang cocok dengan query
-            unsubscribePesananBaruListener = db.collection("pesanan")
-                .orderBy("waktu", "desc")
-                .limit(1) 
-                .onSnapshot(snapshot => { 
-                    if (!snapshot.empty) {
-                        const doc = snapshot.docs[0];
-                        const data = doc.data();
-                        const orderId = doc.id;
-                        
-                        // KONDISI UTAMA UNTUK MENAMPILKAN NOTIFIKASI:
-                        // 1. ID pesanan belum ada di localStorage (belum pernah dilihat)
-                        // 2. Ini BUKAN pesanan yang sama yang baru saja kita proses/tampilkan di sesi ini
-                        if (!dilihatIds.includes(orderId) && (pesananBaruTerakhir === null || pesananBaruTerakhir.id !== orderId)) {
-                            // Jika ini benar-benar pesanan baru yang belum pernah dilihat/ditampilkan di sesi ini
-                            pesananBaruTerakhir = { id: orderId, data: data }; 
-                            tampilkanPopupPesanan(data);
-                        } else if (dilihatIds.includes(orderId) || pesananBaruTerakhir?.id === orderId) {
-                            // Jika pesanan ini sudah dilihat (di localStorage) atau sudah pernah ditampilkan di sesi ini,
-                            // pastikan notifikasi mati
-                            tutupPopup(); 
-                        }
-                    } else {
-                        // Tidak ada pesanan di database (atau query tidak mengembalikan hasil)
-                        pesananBaruTerakhir = null; 
-                        tutupPopup(); // Pastikan popup dan suara mati
-                    }
-                }, error => {
-                    // Penanganan error saat mendengarkan Firestore
-                    console.error("Error listening for new orders:", error);
-                    tutupPopup(); 
-                });
-        }
+        // Bagian yang dihapus:
+        // - const sound = document.getElementById("notifSound");
+        // - let pesananBaruTerakhir = null;
+        // - let audioSudahDiizinkan = false;
+        // - document.addEventListener("click", ...);
+        // - function tampilkanPopupPesanan(...) { ... }
+        // - function tutupPopup() { ... }
+        // - function tutupDanKePesanan() { ... }
+        // - let unsubscribePesananBaruListener = null;
+        // - function mulaiCekPesananBaruRealtime() { ... }
 
         // 8. Jalankan saat halaman selesai dimuat
         window.addEventListener("DOMContentLoaded", () => {
             loadFruits(); // Muat data buah/stok saat halaman dimuat
-            mulaiCekPesananBaruRealtime(); // Mulai memonitor pesanan baru
-
-            // Event listener untuk tombol navigasi pesanan agar mematikan kedipan
-            document.getElementById("navPesanan").addEventListener("click", function () {
-                this.classList.remove("berkedip-kuat");
-            });
+            // Hapus pemanggilan fungsi notifikasi di sini: mulaiCekPesananBaruRealtime();
         });
     </script>
 </body>
