@@ -310,7 +310,7 @@
             margin-left: 10px;
         }
 
-        /* Perbaikan untuk popupDetail, pastikan display: flex di sini */
+        /* Popup Detail */
         #popupDetail {
             display: none; /* Default hidden, JS will set to flex */
             position: fixed;
@@ -437,7 +437,8 @@
         <div class="content-wrapper">
             <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
         </div>
-    </div> <nav class="app-nav">
+    </div> 
+    <nav class="app-nav">
         <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
         <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
         <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
@@ -468,80 +469,8 @@
         </div>
     </div>
 
-   <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-        authDomain: "tokobuahkasir.firebaseapp.com",
-        projectId: "tokobuahkasir",
-        storageBucket: "tokobuahkasir.appspot.com",
-        messagingSenderId: "731011133713",
-        appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    const daftar = document.getElementById("daftarPesanan");
-    const totalOrdersEl = document.getElementById("totalOrders");
-    const todayIncomeEl = document.getElementById("todayIncome");
-    const avgOrderEl = document.getElementById("avgOrder");
-    const lastOrderEl = document.getElementById("lastOrder");
-    const loadingSpinner = document.getElementById("loadingSpinner");
-    const popupDetail = document.getElementById("popupDetail");
-
-    let currentOrderIdForDetail = null;
-
-    function showLoading() { loadingSpinner.style.display = 'flex'; }
-    function hideLoading() { loadingSpinner.style.display = 'none'; }
-
-    function formatCurrency(val) {
-        if (isNaN(val) || val === null || typeof val === 'undefined') {
-            return "Rp0";
-        }
-        return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
-    }
-
-    function formatDate(date) {
-        if (!date) return "-";
-        const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-        if (isNaN(d.getTime())) return "-";
-        return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    }
-
-    function getStatusClass(status) {
-        switch (status?.toLowerCase()) {
-            case 'pending': return 'pending';
-            case 'diproses': return 'diproses';
-            case 'selesai': return 'selesai';
-            case 'dibatalkan': return 'dibatalkan';
-            default: return '';
-        }
-    }
-
-    function loadData() {
-        showLoading();
-        daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
-        
-        db.collection("pesanan").orderBy("waktu", "desc").get()
-            .then(snapshot => {
-                hideLoading();
-                // ... (kode untuk memproses data pesanan)
-            });
-    }
-
-    function tutupDetail() {
-        popupDetail.style.display = 'none'; // Menyembunyikan popup
-    }
-
-    // Event listener untuk menutup popup saat tombol close ditekan
-    document.querySelector("#popupDetail .close-button").addEventListener("click", tutupDetail);
-
-    // Jika Anda ingin menutup popup dengan mengklik di luar popup
-    popupDetail.addEventListener("click", function(event) {
-        if (event.target === popupDetail) {
-            tutupDetail();
-        }
-    });
-
-    // Panggil loadData saat halaman dimuat
-    window.onload = loadData;
-</script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuah
