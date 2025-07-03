@@ -632,14 +632,18 @@
         });
     }
 
- 
-<!-- Audio Notifikasi -->
+
+
+
+
+     
 <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
 <script>
+  const sound = document.getElementById("notifSound");
+  const popupDetail = document.getElementById("popupDetail");
   let currentOrderIdForDetail = null;
   let terakhirDitampilkan = null;
-  const sound = document.getElementById("notifSound");
 
   function tampilkanDetail(orderId) {
     if (!orderId) return;
@@ -649,8 +653,6 @@
       .then(doc => {
         if (doc.exists) {
           const data = doc.data();
-
-          // Cegah jika tidak ada item
           if (!data.items || data.items.length === 0) return;
 
           const customer = data.customer || {};
@@ -684,18 +686,13 @@
           }).join("");
           document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
-          document.getElementById("popupDetail").style.display = "flex";
-        } else {
-          console.warn("Pesanan tidak ditemukan.");
+          popupDetail.style.display = "flex";
         }
-      })
-      .catch(error => {
-        console.error("Gagal ambil detail pesanan:", error);
       });
   }
 
   function tutupDetail() {
-    document.getElementById("popupDetail").style.display = "none";
+    popupDetail.style.display = "none";
     currentOrderIdForDetail = null;
     loadData(activeFilterStatus);
   }
@@ -726,7 +723,8 @@
         const idBaru = doc.id;
         const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
 
-        if (terakhirSimpan && idBaru !== terakhirSimpan && data.items?.length > 0) {
+        if (terakhirSimpan !== null && idBaru !== terakhirSimpan) {
+          if (!data.items || data.items.length === 0) return;
           sound.play();
           tampilkanDetail(idBaru);
           document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
