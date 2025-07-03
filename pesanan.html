@@ -83,6 +83,14 @@
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
   }
 
+  function sudahPernahTampil(id) {
+    return sessionStorage.getItem("lastPopupId") === id;
+  }
+
+  function tandaiSudahTampil(id) {
+    sessionStorage.setItem("lastPopupId", id);
+  }
+
   function tampilkanDetail(orderId) {
     currentOrderId = orderId;
     db.collection("pesanan").doc(orderId).get().then(doc => {
@@ -148,10 +156,11 @@
       });
 
       const newestDoc = snapshot.docs[0];
-      if (newestDoc && newestDoc.id !== latestDocId) {
+      if (newestDoc && newestDoc.id !== latestDocId && !sudahPernahTampil(newestDoc.id)) {
         latestDocId = newestDoc.id;
         document.getElementById("notifSound").play();
         tampilkanDetail(newestDoc.id);
+        tandaiSudahTampil(newestDoc.id);
       }
     });
   });
