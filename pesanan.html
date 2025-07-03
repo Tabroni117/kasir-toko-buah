@@ -636,14 +636,16 @@
 
 
 
+
      
+
 <!-- Audio Notifikasi -->
 <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
 <script>
-  const popupDetail = document.getElementById("popupDetail");
   let currentOrderIdForDetail = null;
   let terakhirDitampilkan = null;
+  let sudahPertamaCek = false;
   const sound = document.getElementById("notifSound");
 
   function tampilkanDetail(orderId) {
@@ -651,56 +653,78 @@
 
     currentOrderIdForDetail = orderId;
     db.collection("pesanan").doc(orderId).get().then(doc => {
-      if (!doc.exists) return;
+      if (doc.exists) {
+        const data = doc.data();
+        if (!data.items || data.items.length === 0) return;
 
-      const data = doc.data();
-      if (!data.items || data.items.length === 0) return;
+        const customer = data.customer || {};
+        const waktu = data.waktu?.toDate?.() || new Date(0);
+        const items = data.items || [];
 
-      const customer = data.customer || {};
-      const waktu = data.waktu?.toDate?.() || new Date(0);
-      const items = data.items || [];
+        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+        document.getElementById("popupAlamat").textContent = customer.address || "-";
+        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+        document.getElementById("popupWaktu").textContent = formatDate(waktu);
 
-      document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-      document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-      document.getElementById("popupAlamat").textContent = customer.address || "-";
-      document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-      document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-      document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+        const popupStatusEl = document.getElementById("popupStatus");
+        const currentStatus = data.status || "Pending";
+        popupStatusEl.textContent = currentStatus;
+        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
 
-      const popupStatusEl = document.getElementById("popupStatus");
-      const currentStatus = data.status || "Pending";
-      popupStatusEl.textContent = currentStatus;
-      popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+        const statusUpdater = document.getElementById("statusUpdater");
+        statusUpdater.value = currentStatus;
 
-      const statusUpdater = document.getElementById("statusUpdater");
-      statusUpdater.value = currentStatus;
-
-      document.getElementById("popupWaktu").textContent = formatDate(waktu);
-      document.getElementById("popupItems").innerHTML = items.map(item => {
-        const itemTotal = (item.price || 0) * (item.quantity || 0);
-        return `
-          <div style="margin-bottom:5px;">
+        const popupItemsHtml = items.map(item => {
+          const itemTotal = (item.price || 0) * (item.quantity || 0);
+          return `<div style="margin-bottom:5px;">
             - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotal.toLocaleString("id-ID")}
           </div>`;
-      }).join("");
+        }).join("");
+        document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
-      popupDetail.style.display = "flex";
+        document.getElementById("popupDetail").style.display = "flex";
+      }
     });
   }
 
-function tutupDetail() {
-  document.getElementById("popupDetail").style.display = "none";
-  currentOrderIdForDetail = null;
-}
+  function tutupDetail() {
+    document.getElementById("popupDetail").style.display = "none";
+    currentOrderIdForDetail = null;
+    loadData(activeFilterStatus);
+  }
+
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const idBaru = doc.id;
+        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+
+        if (sudahPertamaCek && terakhirSimpan && idBaru !== terakhirSimpan && data.items?.length > 0) {
+          sound.play();
+          tampilkanDetail(idBaru);
+          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+        }
+
+        terakhirDitampilkan = idBaru;
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
+        sudahPertamaCek = true; // agar popup tidak muncul saat reload
+      }
+    });
+  }
 
   document.getElementById("statusUpdater").addEventListener("change", function () {
     const newStatus = this.value;
     if (currentOrderIdForDetail) {
-      db.collection("pesanan").doc(currentOrderIdForDetail).update({ status: newStatus })
-        .then(() => {
-          alert("Status pesanan berhasil diperbarui!");
-          tutupDetail();
-        });
+      db.collection("pesanan").doc(currentOrderIdForDetail).update({ status: newStatus }).then(() => {
+        alert("Status pesanan berhasil diperbarui!");
+        tutupDetail();
+      });
     }
   });
 
@@ -711,45 +735,13 @@ function tutupDetail() {
     });
   });
 
-  let sudahCekAwal = false;
-
-  function cekPesananBaru() {
-  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const data = doc.data();
-      const idBaru = doc.id;
-      const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
-
-      // ✅ Cek jika ada item dan ID baru
-      if (
-        terakhirSimpan &&
-        idBaru !== terakhirSimpan &&
-        data.items &&
-        Array.isArray(data.items) &&
-        data.items.length > 0
-      ) {
-        sound.play();
-        tampilkanDetail(idBaru); // hanya kalau valid
-        document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-        document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
-
-        // Simpan ID hanya kalau popup tampil
-        terakhirDitampilkan = idBaru;
-        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-      } else {
-        // Tidak tampilkan popup, tapi tetap simpan ID agar tidak ulang-ulang
-        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-      }
-    }
-  });
-}
-
   document.addEventListener("DOMContentLoaded", () => {
     loadData('All');
-    cekPesananBaru();
-    setInterval(cekPesananBaru, 3000);
+    cekPesananBaru(); // tidak munculkan popup pertama kali
+    setInterval(cekPesananBaru, 3000); // baru cek berkala
   });
 </script>
+
+
 </body>
 </html>
