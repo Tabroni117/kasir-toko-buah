@@ -104,6 +104,13 @@
 
   function tampilkanDetail(orderId) {
     currentOrderId = orderId;
+
+    const justReloaded = sessionStorage.getItem("justReloaded");
+    if (justReloaded === "true") {
+      sessionStorage.setItem("justReloaded", "false");
+      return;
+    }
+
     db.collection("pesanan").doc(orderId).get().then(doc => {
       if (!doc.exists) return alert("Data tidak ditemukan.");
       const data = doc.data();
@@ -148,6 +155,9 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     popup.style.display = "none";
+    currentOrderId = null;
+    sessionStorage.setItem("justReloaded", "true");
+
     db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
       daftar.innerHTML = "";
 
