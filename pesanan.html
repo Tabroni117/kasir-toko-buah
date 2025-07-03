@@ -450,6 +450,23 @@
             border-color: var(--primary);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        /* Style for delete all button */
+        .delete-all-btn {
+            background-color: #dc2626; /* Red color for delete */
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s ease;
+            margin-top: 10px; /* Spasi dari elemen di atasnya */
+            width: 100%; /* Ambil lebar penuh */
+            box-shadow: var(--card-shadow);
+        }
+        .delete-all-btn:hover {
+            background-color: #b91c1c; /* Darker red on hover */
+        }
     </style>
 </head>
 <body>
@@ -483,6 +500,9 @@
                 <button class="filter-btn" data-status="Selesai">Selesai</button>
                 <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
             </div>
+            <button class="delete-all-btn" onclick="deleteAllOrders()">
+                <i class="fas fa-trash-alt"></i> Hapus Semua Pesanan (Untuk Pengembangan)
+            </button>
         </div>
 
         <div class="content-wrapper">
@@ -585,8 +605,24 @@
             let query = db.collection("pesanan").orderBy("waktu", "desc");
 
             if (statusFilter !== 'All') {
-                query = query.where('status', '==', statusFilter);
+                // Perbaikan: Konversi statusFilter ke lowercase untuk mencocokkan kemungkinan inkonsistensi
+                // di database, atau pastikan data di Firestore konsisten dengan casing tombol.
+                // Untuk amannya, kita bisa mencari Pending ATAU pending.
+                if (statusFilter === 'Pending') {
+                    query = query.where('status', 'in', ['Pending', 'pending']);
+                } else if (statusFilter === 'Diproses') {
+                    query = query.where('status', 'in', ['Diproses', 'diproses']);
+                } else if (statusFilter === 'Selesai') {
+                    query = query.where('status', 'in', ['Selesai', 'selesai']);
+                } else if (statusFilter === 'Dibatalkan') {
+                    query = query.where('status', 'in', ['Dibatalkan', 'dibatalkan']);
+                } else {
+                    query = query.where('status', '==', statusFilter);
+                }
             }
+            // Catatan: Jika ini menyebabkan Quota Exceeded lagi, pertimbangkan untuk membersihkan
+            // data di Firestore agar casingnya konsisten, lalu gunakan query sederhana saja.
+
 
             query.get()
                 .then(snapshot => {
@@ -773,6 +809,40 @@
                 loadData(status); // Call loadData with the selected filter status
             });
         });
+
+        // NEW: Fungsi untuk menghapus semua dokumen di koleksi "pesanan"
+        async function deleteAllOrders() {
+            if (!confirm("PERINGATAN: Anda yakin ingin MENGHAPUS SEMUA DATA PESANAN? Tindakan ini tidak bisa dibatalkan!")) {
+                return;
+            }
+            if (!confirm("KONFIRMASI TERAKHIR: Semua data pesanan akan dihapus permanen. Lanjutkan?")) {
+                return;
+            }
+
+            showLoading();
+            try {
+                const snapshot = await db.collection("pesanan").get();
+                if (snapshot.empty) {
+                    alert("Tidak ada pesanan untuk dihapus.");
+                    hideLoading();
+                    return;
+                }
+
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+                alert("Semua pesanan berhasil dihapus!");
+                loadData('All'); // Muat ulang data setelah penghapusan
+            } catch (error) {
+                console.error("Error deleting all orders:", error);
+                alert(`Gagal menghapus pesanan: ${error.message}. Periksa Firebase Rules Anda (perlu izin delete).`);
+            } finally {
+                hideLoading();
+            }
+        }
 
         document.addEventListener("DOMContentLoaded", () => loadData('All')); // Load all orders on page load
     </script>
