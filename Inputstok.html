@@ -123,14 +123,17 @@
             box-shadow: none;
         }
 
-        /* BLINKING EFFECT FOR NOTIFICATIONS (REMOVED) */
-        /* These styles are no longer needed as the blinking functionality is removed */
-        .berkedip-kuat { }
-        @keyframes kedip { from { opacity: 1; } to { opacity: 0.2; } }
+        /* BLINKING EFFECT FOR NOTIFICATIONS (DIKEMBALIKAN UNTUK LONCENG) */
+        .berkedip-kuat {
+            animation: kedip 0.8s infinite alternate;
+        }
+        @keyframes kedip {
+            from { opacity: 1; }
+            to { opacity: 0.2; }
+        }
 
-        /* POPUP PESANAN STYLES (REMOVED) */
-        /* These styles are no longer needed as the popup is removed */
-        #popupPesanan { display: none; } /* Ensures it's hidden if somehow left */
+        /* POPUP PESANAN STYLES (DIHAPUS SEPENUHNYA DARI SINI) */
+        /* #popupPesanan { display: none; } */
     </style>
 </head>
 <body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
@@ -155,7 +158,10 @@
             <div class="header-top mt-8 mb-6 gap-6 flex items-center">
                 <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
                 <button onclick="loadFruits()" class="btn btn-primary mr-4"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
+                <a href="notifikasi_pesanan_baru.html" id="notifLoncengLink" style="text-decoration: none; color: inherit;">
+                    <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-2" style="font-size: 22px; color: #16a34a;"></i>
+                </a>
+            </div>
             <div class="judul mt-6"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
 
             <div class="sticky top-[90px] z-40 bg-white shadow-md rounded-xl p-4 mb-4">
@@ -312,11 +318,41 @@
             });
         });
 
-        // Bagian yang sebelumnya berisi fungsi notifikasi pesanan masuk telah dihapus sepenuhnya dari sini.
+        // 7. === NOTIFIKASI LONCENG SAJA (TANPA POPUP/SUARA DI SINI) ===
+        let unsubscribeBellListener = null;
+
+        function updateNotifBell() {
+            if (unsubscribeBellListener) {
+                unsubscribeBellListener();
+            }
+
+            // Dapatkan elemen lonceng
+            const notifLonceng = document.getElementById('notifLonceng');
+            if (!notifLonceng) return; // Keluar jika elemen tidak ditemukan
+
+            // Dengar perubahan pada pesanan yang isViewed: false
+            unsubscribeBellListener = db.collection("pesanan")
+                .where('isViewed', '==', false)
+                .limit(1) // Cukup ambil 1 untuk tahu ada/tidaknya
+                .onSnapshot(snapshot => {
+                    if (!snapshot.empty) {
+                        notifLonceng.classList.add('berkedip-kuat');
+                        notifLonceng.title = "Ada pesanan baru!"; // Tambah tooltip
+                    } else {
+                        notifLonceng.classList.remove('berkedip-kuat');
+                        notifLonceng.title = "Tidak ada pesanan baru.";
+                    }
+                }, error => {
+                    console.error("Error listening for bell notification:", error);
+                    notifLonceng.classList.remove('berkedip-kuat'); // Pastikan berhenti berkedip jika error
+                    notifLonceng.title = "Error memuat notifikasi.";
+                });
+        }
 
         // 8. Jalankan saat halaman selesai dimuat
-        window.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", () => {
             loadFruits(); // Muat data buah/stok saat halaman dimuat
+            updateNotifBell(); // Mulai memantau notifikasi lonceng
         });
     </script>
 </body>
