@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
@@ -96,12 +97,6 @@
             margin-bottom: 12px;
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: all 0.2s ease-in-out;
-        }
-        .order-item-upgrade.unread {
-            border: 2px solid var(--primary);
-            background-color: #e6ffe6;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         .order-row-top, .order-row-bottom {
             display: flex;
@@ -140,10 +135,11 @@
             color: var(--primary-dark);
             margin-top: 4px;
         }
-        .status.pending { background-color: #fffbeb; color: #d97706; }
-        .status.diproses { background-color: #eff6ff; color: #2563eb; }
-        .status.selesai { background-color: #d1fae5; color: #059669; }
-        .status.dibatalkan { background-color: #fee2e2; color: #dc2626; }
+        .status.pending { background-color: #fffbeb; color: #d97706; } /* yellow for pending */
+        .status.diproses { background-color: #eff6ff; color: #2563eb; } /* blue for processing */
+        .status.selesai { background-color: #d1fae5; color: #059669; } /* green for complete */
+        .status.dibatalkan { background-color: #fee2e2; color: #dc2626; } /* red for cancelled */
+
         .time {
             font-size: 10px;
             color: var(--secondary);
@@ -158,12 +154,13 @@
             border-radius: 6px;
             color: #1e293b;
         }
+        
         .app-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background-color: #ffffff !important;
+            background-color: #ffffff !important; /* putih solid */
             opacity: 1 !important;
             backdrop-filter: none !important;
             -webkit-backdrop-filter: none !important;
@@ -211,6 +208,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        
         .fixed-header {
             position: fixed;
             top: 0;
@@ -222,8 +220,9 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             border-bottom: 1px solid #e2e8f0;
         }
+
         .content-wrapper {
-            padding-top: 50px;
+            padding-top: 50px; /* tinggi header tetap agar isi tidak ketiban */
         }
         .sticky-header {
             position: sticky;
@@ -233,7 +232,9 @@
             padding-bottom: 10px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
         }
+
         @keyframes spin { to { transform: rotate(360deg); } }
+
         @keyframes slidein {
             from {
                 opacity: 0;
@@ -244,6 +245,7 @@
                 transform: translateY(0);
             }
         }
+
         .animate-slidein {
             animation: slidein 0.4s ease-out forwards;
         }
@@ -252,6 +254,7 @@
             animation: slidein 0.5s ease-out;
             margin-top: 10px;
         }
+
         .laporan-btn {
             background: var(--primary);
             color: white;
@@ -263,17 +266,19 @@
             box-shadow: var(--card-shadow);
             transition: background 0.3s ease;
         }
+
         .laporan-btn:hover {
             background: var(--primary-light);
         }
+
         .laporan-btn i {
             margin-right: 6px;
         }
         .laporan-fixed-btn {
             position: fixed;
-            top: 200px;
+            top: 200px; /* ↓↓↓ geser ke bawah agar tidak nutupi statistik */
             right: 20px;
-            background: rgba(22, 163, 74, 0.6);
+            background: rgba(22, 163, 74, 0.6); /* Hijau transparan */
             color: white;
             border: none;
             padding: 10px 14px;
@@ -285,12 +290,16 @@
             animation: slidein 0.4s ease-out;
             transition: background 0.3s ease;
         }
+
         .laporan-fixed-btn:hover {
             background: var(--primary-light);
         }
+
         .laporan-fixed-btn i {
             margin-right: 6px;
         }
+
+        /* Style for status dropdown */
         .status-dropdown {
             padding: 5px 10px;
             border-radius: 5px;
@@ -300,83 +309,89 @@
             cursor: pointer;
             margin-left: 10px;
         }
+
+        /* Perbaikan untuk popupDetail, pastikan display: flex di sini */
         #popupDetail {
-            display: none;
+            display: none; /* Default hidden, JS will set to flex */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.6); /* Lebih gelap */
             z-index: 9999;
             padding: 20px;
-            display: flex;
+            display: flex; /* Mengaktifkan flexbox untuk centering */
             align-items: center;
             justify-content: center;
         }
-        #popupDetail > div {
+
+        #popupDetail > div { /* Konten popup */
             background: white;
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 450px;
-            width: 90%;
+            padding: 20px; /* Sedikit lebih banyak padding */
+            border-radius: 12px; /* Lebih rounded */
+            max-width: 450px; /* Max width yang sedikit lebih lebar */
+            width: 90%; /* Responsif */
             margin: auto;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Bayangan lebih jelas */
             position: relative;
-            animation: fadeInScale 0.3s ease-out;
+            animation: fadeInScale 0.3s ease-out; /* Animasi masuk */
         }
+
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
+
         #popupDetail h3 {
-            font-size: 20px;
+            font-size: 20px; /* Ukuran font lebih besar */
             font-weight: bold;
             margin-bottom: 12px;
             color: var(--primary-dark);
         }
+
         #popupDetail p {
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 8px; /* Spasi antar paragraf */
+            font-size: 13px; /* Ukuran font detail */
             line-height: 1.4;
         }
         #popupDetail p strong {
             color: var(--dark);
         }
+
         #popupDetail h4 {
-            font-size: 15px;
+            font-size: 15px; /* Ukuran font sub-judul */
             font-weight: bold;
-            margin-top: 15px;
+            margin-top: 15px; /* Spasi atas */
             margin-bottom: 8px;
             color: var(--primary);
         }
+
         #popupDetail #popupItems {
-            max-height: 150px;
+            max-height: 150px; /* Kurangi tinggi item agar tidak terlalu panjang */
             overflow-y: auto;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e0e0; /* Border lebih halus */
             padding: 10px;
             border-radius: 8px;
-            background: #fbfbfb;
+            background: #fbfbfb; /* Background item detail lebih terang */
             font-size: 12px;
             color: #444;
         }
         #popupDetail #popupItems div {
             margin-bottom: 3px;
         }
+
         #popupDetail button.close-button {
-            position: absolute;
             top: 12px;
             right: 18px;
-            background: none;
-            border: none;
             font-size: 28px;
             color: #666;
-            cursor: pointer;
             transition: color 0.2s;
         }
         #popupDetail button.close-button:hover {
             color: #333;
         }
+
         #popupDetail button {
             background: var(--primary);
             color: white;
@@ -386,42 +401,42 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            margin-top: 20px;
+            margin-top: 20px; /* Spasi dari elemen atas */
             transition: background 0.3s ease;
         }
         #popupDetail button:hover {
             background: var(--primary-light);
         }
-        .delete-all-btn {
-            background-color: #dc2626;
-            color: white;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            border: none;
-            transition: background 0.3s ease;
-            margin-top: 10px;
-            width: 100%;
-            box-shadow: var(--card-shadow);
-        }
-        .delete-all-btn:hover {
-            background-color: #b91c1c;
-        }
-        /* Badge notification style */
-        .badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 10px;
+
+        /* Filter buttons styling */
+        .filter-buttons {
             display: flex;
-            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
             justify-content: center;
+        }
+        .filter-btn {
+            background: #e2e8f0; /* Light grey */
+            color: var(--secondary);
+            padding: 8px 14px;
+            border-radius: 20px; /* Pill shape */
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #cbd5e1;
+        }
+        .filter-btn:hover {
+            background: #cbd5e1;
+            color: var(--dark);
+        }
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -456,23 +471,15 @@
                 <button class="filter-btn" data-status="Selesai">Selesai</button>
                 <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
             </div>
-            <button class="delete-all-btn" onclick="deleteAllOrders()">
-                <i class="fas fa-trash-alt"></i> Hapus Semua Pesanan (Untuk Pengembangan)
-            </button>
         </div>
 
         <div class="content-wrapper">
             <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
         </div>
-    </div> 
-    <nav class="app-nav">
+    </div> <nav class="app-nav">
         <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
-        <a href="Inputstok.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-        <a href="pesanan.html" id="navPesanan" class="nav-btn active">
-            <i class="fas fa-receipt"></i>
-            <span>Pesanan</span>
-            <div id="notificationBadge" class="badge" style="display: none;"></div>
-        </a>
+        <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+        <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
         <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
     </nav>
 
@@ -519,11 +526,9 @@
         const lastOrderEl = document.getElementById("lastOrder");
         const loadingSpinner = document.getElementById("loadingSpinner");
         const filterButtons = document.querySelectorAll('.filter-btn');
-        const notificationBadge = document.getElementById('notificationBadge');
 
         let currentOrderIdForDetail = null;
-        let activeFilterStatus = 'All';
-        let unreadOrders = 0;
+        let activeFilterStatus = 'All'; // Default filter
 
         function showLoading() { loadingSpinner.style.display = 'flex'; }
         function hideLoading() { loadingSpinner.style.display = 'none'; }
@@ -534,7 +539,6 @@
             }
             return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
         }
-
         function formatDate(date) {
             if (!date) return "-";
             const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
@@ -552,22 +556,11 @@
             }
         }
 
-        function updateNotificationBadge(count) {
-            unreadOrders = count;
-            if (count > 0) {
-                notificationBadge.style.display = 'flex';
-                notificationBadge.textContent = count;
-                document.title = `(${count}) Pesanan - Rujak Buah Indonesia`;
-            } else {
-                notificationBadge.style.display = 'none';
-                document.title = 'Pesanan - Rujak Buah Indonesia';
-            }
-        }
-
         function loadData(statusFilter = activeFilterStatus) {
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
             
+            // Update active filter button
             filterButtons.forEach(btn => {
                 if (btn.dataset.status === statusFilter) {
                     btn.classList.add('active');
@@ -575,26 +568,18 @@
                     btn.classList.remove('active');
                 }
             });
-            activeFilterStatus = statusFilter;
+            activeFilterStatus = statusFilter; // Set active filter
 
-            // Always load all orders but filter client-side for display
             let query = db.collection("pesanan").orderBy("waktu", "desc");
 
-            // Keep server-side filtering for performance
-            if (statusFilter === 'Pending') {
-                query = query.where('status', 'in', ['Pending', 'pending']);
-            } else if (statusFilter === 'Diproses') {
-                query = query.where('status', 'in', ['Diproses', 'diproses']);
-            } else if (statusFilter === 'Selesai') {
-                query = query.where('status', 'in', ['Selesai', 'selesai']);
-            } else if (statusFilter === 'Dibatalkan') {
-                query = query.where('status', 'in', ['Dibatalkan', 'dibatalkan']);
+            if (statusFilter !== 'All') {
+                query = query.where('status', '==', statusFilter);
             }
 
             query.get()
                 .then(snapshot => {
                     hideLoading();
-                    
+
                     let totalIncomeAllTime = 0;
                     let totalOrderCount = 0;
                     let todayIncome = 0;
@@ -602,12 +587,11 @@
                     now.setHours(0, 0, 0, 0); 
 
                     daftar.innerHTML = ""; 
+
                     let firstOrderTime = null; 
-                    let unreadCount = 0;
 
                     if (snapshot.empty) {
                         daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
-                        updateNotificationBadge(0);
                     } else {
                         snapshot.forEach(doc => {
                             const data = doc.data();
@@ -616,7 +600,7 @@
                             const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
                             
                             if (isNaN(waktu.getTime())) {
-                                console.warn(`Invalid timestamp for order ${orderId}:`, data.waktu);
+                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
                                 return; 
                             }
 
@@ -624,10 +608,6 @@
 
                             const isToday = waktu.toDateString() === now.toDateString();
                             const totalHarga = data.totalAmount || 0; 
-                            const isViewed = !!data.isViewed;
-
-                            // Count unread orders regardless of current filter
-                            if (!data.isViewed && !data.viewedAt) unreadCount++;
 
                             if (isToday) todayIncome += totalHarga;
                             totalIncomeAllTime += totalHarga;
@@ -636,7 +616,7 @@
                             const customerName = data.customer?.fullName || "Pelanggan";
                             const customerPhone = data.customer?.phoneNumber || "-";
                             const currentStatus = data.status || "Pending";
-                            
+
                             const itemsHtml = (data.items || []).map(item => {
                                 const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
                                 return `
@@ -646,11 +626,8 @@
                                 `;
                             }).join("");
 
-                            // Only show unread highlight if viewing all orders
-                            const unreadClass = (activeFilterStatus === 'All' && !isViewed) ? 'unread' : '';
-
                             daftar.innerHTML += `
-                                <div class='order-item-upgrade animate-slidein ${unreadClass}' onclick='tampilkanDetail("${orderId}")'>
+                                <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
                                     <div class='order-row-top'>
                                         <div class='customer'>
                                             <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
@@ -671,11 +648,9 @@
                                 </div>
                             `;
                         });
-
-                        // Always update badge with unread count
-                        updateNotificationBadge(unreadCount);
                     }
 
+                    // Update statistik berdasarkan SEMUA pesanan yang diambil oleh query aktif
                     totalOrdersEl.textContent = totalOrderCount;
                     todayIncomeEl.textContent = formatCurrency(todayIncome);
                     avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
@@ -685,7 +660,7 @@
                 .catch(err => {
                     hideLoading();
                     daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
-                    console.error("Gagal memuat data dari Firestore:", err); 
+                    console.error("Error loading orders from Firestore:", err); 
                 });
         }
 
@@ -727,37 +702,20 @@
                         document.getElementById("popupItems").innerHTML = popupItemsHtml;
 
                         document.getElementById("popupDetail").style.display = "flex"; 
-                        
-                        // Update isViewed status when opened
-                        if (!data.isViewed) {
-                            db.collection("pesanan").doc(orderId).update({
-                                isViewed: true,
-                                viewedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            }).then(() => {
-                                console.log(`Pesanan ${orderId} ditandai sebagai sudah dilihat.`);
-                                // Only reload if we need to update the UI
-                                if (activeFilterStatus === 'All') {
-                                    loadData(activeFilterStatus);
-                                }
-                            }).catch(error => {
-                                console.error(`Gagal menandai pesanan ${orderId} sudah dilihat:`, error);
-                            });
-                        }
-                    }
-
                     } else {
                         alert("Pesanan tidak ditemukan di database.");
                     }
                 })
                 .catch(error => {
-                    console.error(`Gagal memuat detail pesanan ${orderId} dari Firestore:`, error);
+                    console.error("Error getting order detail from Firestore:", error);
                     alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
                 });
         }
 
         function tutupDetail() {
             document.getElementById("popupDetail").style.display = "none";
-            currentOrderIdForDetail = null;
+            currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
         }
 
         document.getElementById("statusUpdater").addEventListener("change", function() {
@@ -766,55 +724,27 @@
                 db.collection("pesanan").doc(currentOrderIdForDetail).update({
                     status: newStatus
                 }).then(() => {
-                    console.log(`Status pesanan ${currentOrderIdForDetail} diperbarui menjadi ${newStatus}.`);
                     alert("Status pesanan berhasil diperbarui!");
-                    tutupDetail();
+                    // Tidak perlu loadData() atau tutupDetail() di sini karena akan dipanggil di .then()
+                    // dari tutupDetail() setelah berhasil update
+                    // atau bisa juga panggil loadData() langsung di sini dan tutupDetail()
+                    tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
                 }).catch(error => {
-                    console.error(`Gagal memperbarui status pesanan ${currentOrderIdForDetail}:`, error);
+                    console.error("Error updating order status:", error);
                     alert("Gagal memperbarui status pesanan.");
                 });
             }
         });
 
+        // Event listeners for filter buttons
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const status = button.dataset.status;
-                loadData(status); 
+                loadData(status); // Call loadData with the selected filter status
             });
         });
 
-        async function deleteAllOrders() {
-            if (!confirm("PERINGATAN: Anda yakin ingin MENGHAPUS SEMUA DATA PESANAN? Tindakan ini tidak bisa dibatalkan!")) return;
-            if (!confirm("KONFIRMASI TERAKHIR: Semua data pesanan akan dihapus permanen. Lanjutkan?")) return;
-
-            showLoading();
-            try {
-                const snapshot = await db.collection("pesanan").get();
-                if (snapshot.empty) {
-                    alert("Tidak ada pesanan untuk dihapus.");
-                    hideLoading();
-                    return;
-                }
-
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                await batch.commit();
-                alert("Semua pesanan berhasil dihapus!");
-                loadData('All');
-            } catch (error) {
-                console.error("Gagal menghapus semua pesanan:", error);
-                alert(`Gagal menghapus pesanan: ${error.message}. Periksa Firebase Rules Anda (perlu izin delete).`);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            loadData('All');
-        });
+        document.addEventListener("DOMContentLoaded", () => loadData('All')); // Load all orders on page load
     </script>
 </body>
 </html>
