@@ -559,6 +559,7 @@
         }
 
         function loadData(statusFilter = activeFilterStatus) {
+            console.log(`[loadData] Memuat data dengan filter: ${statusFilter}`); // Log 1
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
             
@@ -574,9 +575,6 @@
             let query = db.collection("pesanan").orderBy("waktu", "desc");
 
             if (statusFilter !== 'All') {
-                // Menggunakan 'in' untuk mencocokkan berbagai casing jika data tidak konsisten
-                // Jika data status Anda di Firestore sudah 100% konsisten (misal selalu "Pending" dengan P besar),
-                // Anda bisa ganti ini dengan query = query.where('status', '==', statusFilter);
                 if (statusFilter === 'Pending') {
                     query = query.where('status', 'in', ['Pending', 'pending']);
                 } else if (statusFilter === 'Diproses') {
@@ -593,6 +591,7 @@
             query.get()
                 .then(snapshot => {
                     hideLoading();
+                    console.log(`[loadData] Berhasil mendapatkan snapshot: ${snapshot.docs.length} dokumen.`); // Log 2
 
                     let totalIncomeAllTime = 0;
                     let totalOrderCount = 0;
@@ -605,6 +604,7 @@
                     let firstOrderTime = null; 
 
                     if (snapshot.empty) {
+                        console.log("[loadData] Snapshot kosong."); // Log 3
                         daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
                     } else {
                         snapshot.forEach(doc => {
@@ -614,7 +614,7 @@
                             const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
                             
                             if (isNaN(waktu.getTime())) {
-                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
+                                console.warn(`[loadData] Invalid timestamp for order ${orderId}:`, data.waktu);
                                 return; 
                             }
 
@@ -633,6 +633,7 @@
                             
                             // NEW: Dapatkan properti isViewed
                             const isViewed = data.isViewed || false; 
+                            console.log(`[loadData] Order ${orderId}: isViewed = ${isViewed}, Status = ${currentStatus}`); // Log 4
 
                             const itemsHtml = (data.items || []).map(item => {
                                 const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
@@ -645,6 +646,7 @@
 
                             // NEW: Tambahkan kelas 'unread' jika isViewed = false
                             const unreadClass = isViewed ? '' : 'unread'; 
+                            console.log(`[loadData] Order ${orderId}: assigned class "${unreadClass}"`); // Log 5
 
                             daftar.innerHTML += `
                                 <div class='order-item-upgrade animate-slidein ${unreadClass}' onclick='tampilkanDetail("${orderId}")'>
@@ -679,16 +681,19 @@
                 .catch(err => {
                     hideLoading();
                     daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
-                    console.error("Error loading orders from Firestore:", err); 
+                    console.error("[loadData Error] Gagal memuat data dari Firestore:", err); 
                 });
         }
 
         function tampilkanDetail(orderId) {
+            console.log(`[tampilkanDetail] Membuka detail untuk Order ID: ${orderId}`); // Log 6
             currentOrderIdForDetail = orderId;
             db.collection("pesanan").doc(orderId).get()
                 .then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
+                        console.log(`[tampilkanDetail] Data dokumen ditemukan. isViewed saat ini: ${data.isViewed}`); // Log 7
+
                         const customer = data.customer || {};
                         const waktu = data.waktu?.toDate?.() || new Date(0); 
                         const items = data.items || [];
@@ -725,29 +730,35 @@
                         // NEW: Tandai pesanan sebagai 'sudah dilihat' (isViewed: true) saat detail dibuka
                         // Ini adalah kunci agar tidak muncul lagi di halaman pesanan.html setelah reload
                         if (!data.isViewed) { // Hanya update jika belum dilihat
+                            console.log(`[tampilkanDetail] isViewed FALSE. Mengirim update ke Firestore untuk order ID: ${orderId}`); // Log 8
                             db.collection("pesanan").doc(orderId).update({
                                 isViewed: true
                             }).then(() => {
-                                console.log("Pesanan ditandai sebagai sudah dilihat di Firestore:", orderId);
+                                console.log(`[Firestore Success] Pesanan ${orderId} ditandai sebagai sudah dilihat.`); // Log 9
                                 // Setelah update, muat ulang data untuk merefleksikan perubahan isViewed
+                                // Ini akan menghilangkan kelas 'unread' secara visual
                                 loadData(activeFilterStatus); 
                             }).catch(error => {
-                                console.error("Error marking order as viewed in Firestore:", error);
-                                alert(`Gagal menandai pesanan sudah dilihat: ${error.message}. Periksa Firebase Rules Anda (perlu izin update).`);
+                                console.error(`[Firestore Error] Gagal menandai pesanan ${orderId} sudah dilihat:`, error); // Log 10
+                                alert(`Gagal menandai pesanan sudah dilihat: ${error.message}. Pastikan Firebase Rules Anda (perlu izin update) dan koneksi internet stabil.`);
                             });
+                        } else {
+                            console.log(`[tampilkanDetail] Pesanan ${orderId} sudah ditandai dilihat (isViewed: true). Tidak perlu update.`); // Log 11
                         }
 
                     } else {
+                        console.warn(`[tampilkanDetail] Pesanan ${orderId} tidak ditemukan di database.`); // Log 12
                         alert("Pesanan tidak ditemukan di database.");
                     }
                 })
                 .catch(error => {
-                    console.error("Error getting order detail from Firestore:", error);
+                    console.error(`[tampilkanDetail Error] Gagal memuat detail pesanan ${orderId} dari Firestore:`, error); // Log 13
                     alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
                 });
         }
 
         function tutupDetail() {
+            console.log("[tutupDetail] Menutup popup detail."); // Log 14
             document.getElementById("popupDetail").style.display = "none";
             currentOrderIdForDetail = null; 
             // loadData() sudah dipanggil di tampilkanDetail().then() setelah update isViewed berhasil
@@ -756,14 +767,18 @@
 
         document.getElementById("statusUpdater").addEventListener("change", function() {
             const newStatus = this.value;
+            console.log(`[statusUpdater] Mengubah status pesanan ${currentOrderIdForDetail} menjadi ${newStatus}`); // Log 15
             if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
                 db.collection("pesanan").doc(currentOrderIdForDetail).update({
                     status: newStatus
                 }).then(() => {
+                    console.log(`[Firestore Success] Status pesanan ${currentOrderIdForDetail} diperbarui menjadi ${newStatus}.`); // Log 16
                     alert("Status pesanan berhasil diperbarui!");
-                    tutupDetail(); // Tutup detail dan loadData akan dipanggil karena update status
+                    // Pembaruan status di Firestore akan memicu listener di loadData()
+                    // Karena perubahan status, loadData akan dipanggil oleh tutupDetail
+                    tutupDetail(); 
                 }).catch(error => {
-                    console.error("Error updating order status:", error);
+                    console.error(`[Firestore Error] Gagal memperbarui status pesanan ${currentOrderIdForDetail}:`, error); // Log 17
                     alert("Gagal memperbarui status pesanan.");
                 });
             }
@@ -773,16 +788,20 @@
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const status = button.dataset.status;
-                loadData(status); // Call loadData with the selected filter status
+                console.log(`[Filter] Filter diubah menjadi: ${status}`); // Log 18
+                loadData(status); 
             });
         });
 
         // Fungsi untuk menghapus semua dokumen di koleksi "pesanan"
         async function deleteAllOrders() {
+            console.log("[deleteAllOrders] Memulai proses penghapusan semua pesanan."); // Log 19
             if (!confirm("PERINGATAN: Anda yakin ingin MENGHAPUS SEMUA DATA PESANAN? Tindakan ini tidak bisa dibatalkan!")) {
+                console.log("[deleteAllOrders] Penghapusan dibatalkan oleh user."); // Log 20
                 return;
             }
             if (!confirm("KONFIRMASI TERAKHIR: Semua data pesanan akan dihapus permanen. Lanjutkan?")) {
+                console.log("[deleteAllOrders] Penghapusan dibatalkan oleh user (konfirmasi kedua)."); // Log 21
                 return;
             }
 
@@ -792,6 +811,7 @@
                 if (snapshot.empty) {
                     alert("Tidak ada pesanan untuk dihapus.");
                     hideLoading();
+                    console.log("[deleteAllOrders] Tidak ada pesanan untuk dihapus."); // Log 22
                     return;
                 }
 
@@ -801,17 +821,21 @@
                 });
 
                 await batch.commit();
+                console.log("[Firestore Success] Semua pesanan berhasil dihapus."); // Log 23
                 alert("Semua pesanan berhasil dihapus!");
                 loadData('All'); // Muat ulang data setelah penghapusan
             } catch (error) {
-                console.error("Error deleting all orders:", error);
+                console.error("[Firestore Error] Gagal menghapus semua pesanan:", error); // Log 24
                 alert(`Gagal menghapus pesanan: ${error.message}. Periksa Firebase Rules Anda (perlu izin delete).`);
             } finally {
                 hideLoading();
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => loadData('All'));
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("[App Init] Halaman dimuat, memanggil loadData('All')."); // Log 25
+            loadData('All');
+        });
     </script>
 </body>
 </html>
