@@ -410,28 +410,26 @@
 
 
 
+// Menampilkan popup
   function tampilkanPopupPesanan(data) {
-  const items = data.items || [];
-  let isi = "";
-  let total = 0;
-  items.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-  });
-  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-  document.getElementById("popupIsiPesanan").innerHTML = isi;
-  document.getElementById("popupPesanan").style.display = "flex";
+    const items = data.items || [];
+    let isi = "", total = 0;
+    items.forEach(item => {
+      const subtotal = item.harga * item.jumlah;
+      total += subtotal;
+      isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+    });
+    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+    document.getElementById("popupIsiPesanan").innerHTML = isi;
+    document.getElementById("popupPesanan").style.display = "flex";
 
-  // ✅ Cek terus, kalau popup ditutup, barulah loadFruits()
-  const cekPopupTutup = setInterval(() => {
-    const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
-    if (popupTertutup) {
-      loadFruits();
-      clearInterval(cekPopupTutup);
-    }
-  }, 1000); // cek tiap 1 detik
-}
+    // Cek apakah popup ditutup, lalu refresh buah
+    const cekPopupTutup = setInterval(() => {
+      if (document.getElementById("popupPesanan").classList.contains("hidden")) {
+        clearInterval(cekPopupTutup);
+      }
+    }, 1000);
+  }
 
 
 
@@ -469,69 +467,53 @@
 
 
     
-  function tutupPopup() {
-  document.getElementById("popupPesanan").classList.add("hidden");
+ function tutupPopup() {
+    document.getElementById("popupPesanan").classList.add("hidden");
+    sound.pause(); sound.currentTime = 0;
+    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
+    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
+    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
+  }
 
-  // Suara dimatikan
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-}
 
 function tutupDanKePesanan() {
-  document.getElementById("popupPesanan").classList.add("hidden");
+    document.getElementById("popupPesanan").classList.add("hidden");
+    sound.pause(); sound.currentTime = 0;
+    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
+    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
+    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
+    window.location.href = " pesanan.html";
+  }
 
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
+    
+function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
 
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-  window.location.href = "navigator-input.html";
-}
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          const data = doc.data();
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-
-          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-            terakhirDitampilkan = doc.id;
-            sound.play();
-
-            tampilkanPopupPesanan(data);
-
-            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-            document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-          } else {
-        
-          }
+        if (doc.id !== terakhirSimpan) {
+          terakhirDitampilkan = doc.id;
+          sound.play();
+          tampilkanPopupPesanan(data);
+          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
         }
-      });
-    }
-
-    // 8. Jalankan saat halaman selesai dimuat
-    window.addEventListener("DOMContentLoaded", () => {
-      // ...kode lain seperti:
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 2200);
-
-      // ✅ Tambahkan ini
-      document.getElementById("navPesanan").addEventListener("click", function () {
-        this.classList.remove("berkedip-kuat");
-      });
+      }
     });
-  </script>
+  }
+
+
+  window.addEventListener("DOMContentLoaded", () => {
+    cekPesananBaru();
+    setInterval(cekPesananBaru, 3000);
+  });
+</script>
+
+<!-- Contoh lonceng -->
+<i id="notifLonceng" class="fas fa-bell text-green-600 text-2xl fixed bottom-20 right-4 z-50"></i>
+
 </body>
 </html>
+
