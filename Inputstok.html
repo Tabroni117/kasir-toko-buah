@@ -1,248 +1,69 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inventori - Rujak Buah Indonesia</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEBUG: Tampilan Buah Sederhana</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-
-    <style>
-        /* BASE CSS AND VARIABLES */
-        :root {
-            --primary: #16a34a;
-            --primary-light: #22c55e;
-            --primary-dark: #15803d;
-            --white: #ffffff;
-        }
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        .btn {
-            font-size: 14px;
-            padding: 10px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-secondary {
-            background: white;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-        .form-group {
-            margin-bottom: 12px;
-        }
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid rgba(16, 181, 129, 0.3);
-            border-radius: 10px;
-            background: #f8fafc;
-            font-size: 16px;
-            margin-top: 8px;
-            -webkit-appearance: none;
-            min-height: 48px;
-        }
-        body {
-            padding-bottom: 60px;
-            background: #f8fafc;
-            color: #1e293b;
-            padding: 0;
-            overflow-x: hidden;
-            width: 100%;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            background: white;
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-top: 120px;
-            padding: 20px;
-        }
-
-        .custom-header {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-        }
-
-        /* NAVIGATION BAR */
-        .app-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--white);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.5rem 0;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-        .nav-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 0.75rem !important;
-            padding: 0.5rem !important;
-            border-radius: 0.5rem;
-            width: 100%;
-            font-weight: 500;
-            background-color: transparent !important;
-        }
-
-        .nav-btn i {
-            font-size: 1.25rem !important;
-            margin-bottom: 0.15rem !important;
-            line-height: 1 !important;
-        }
-
-        .nav-btn span {
-            font-size: 0.7rem !important;
-            line-height: 1 !important;
-        }
-        .nav-btn.active {
-            font-weight: 600;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        /* BLINKING EFFECT FOR NOTIFICATIONS (LONCENG) */
-        .berkedip-kuat {
-            animation: kedip 0.8s infinite alternate;
-        }
-        @keyframes kedip {
-            from { opacity: 1; }
-            to { opacity: 0.2; }
-        }
-
-        /* Styles for popupPesanan (No longer present in HTML but good to keep styles clean) */
-        #popupPesanan { display: none; } 
-    </style>
-</head>
-<body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
-
-    <header class="text-white p-4 rounded-b-xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
-        <div class="px-4 mx-auto flex items-center justify-between w-full">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-leaf text-2xl"></i>
-                <div>
-                    <h1 class="font-bold text-lg">RUJAK BUAH INDONESIA</h1>
-                    <p class="text-sm">Aplikasi Kasir Premium</p>
-                </div>
-            </div>
-            <button onclick="window.location.href='dashboard.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
-                <i class="fas fa-arrow-left mr-1"></i> Kembali
-            </button>
-        </div>
-    </header>
-
-    <main class="flex-1 px-3">
-        <div class="container mx-auto">
-            <div class="header-top mt-8 mb-6 gap-6 flex items-center">
-                <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
-                <button onclick="loadFruits()" class="btn btn-primary mr-4"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <a href="notifikasi_pesanan_baru.html" id="notifLoncengLink" style="text-decoration: none; color: inherit;">
-                    <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-2" style="font-size: 22px; color: #16a34a;"></i>
-                </a>
-            </div>
-            <div class="judul mt-6"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
-
-            <div class="sticky top-[90px] z-40 bg-white shadow-md rounded-xl p-4 mb-4">
-                <form id="fruitForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nama Buah</label>
-                        <input type="text" id="fruitName" class="form-input mt-1" required />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Harga (Rp)</label>
-                        <input type="number" id="fruitPrice" class="form-input mt-1" required />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Stok (kg)</label>
-                        <input type="number" id="fruitStock" class="form-input mt-1" required />
-                    </div>
-                    <div class="col-span-1 md:col-span-3 flex gap-2 pt-2">
-                        <button type="submit" class="btn btn-primary flex-1"><i class="fas fa-save mr-1"></i> Simpan</button>
-                        <button type="reset" class="btn btn-secondary flex-1"><i class="fas fa-redo mr-1"></i> Reset</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="overflow-x-auto mt-6 pt-4">
-                <table class="w-full min-w-max">
-                    <thead>
-                        <tr class="text-left bg-green-100">
-                            <th class="px-1 py-1 text-[10px] font-medium text-green-800">Nama</th>
-                            <th class="px-1 py-1 text-[10px] font-medium text-green-800">Harga</th>
-                            <th class="px-1 py-1 text-[10px] font-medium text-green-800">Stok</th>
-                            <th class="px-1 py-1 text-[10px] font-medium text-green-800">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fruitList"></tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div class="bg-green-500 p-6 text-white flex justify-between items-center">
-                <h2 class="text-xl font-semibold">
-                    <i class="fas fa-lock mr-2"></i><span id="authRoleTitle">Pembeli</span> Authentication
-                </h2>
-                <button onclick="closeAuthModal()" class="text-white hover:text-green-200">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="p-6">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-user mr-2 text-green-500"></i>Login User
-                    </label>
-                    <input type="text" id="authUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Masukkan Username">
-                </div>
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2 text-green-500"></i>Password
-                    </label>
-                    <input type="password" id="authPassword" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Masukkan Password">
-                </div>
-                <button id="authSubmitBtn" class="w-full py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white font-medium flex items-center justify-center">
-                    <i class="fas fa-sign-in-alt mr-2"></i>Login
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <nav class="app-nav !p-2 !bg-white !shadow-md">
-        <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
-        <a href="Inputstok.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-        <a href="pesanan.html" id="navPesanan" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
-        <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
-    </nav>
-
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #e6ffe6;
+        }
+        #loadingMessage {
+            text-align: center;
+            color: #64748b;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Daftar Buah Inventori</h1>
+        <div id="loadingMessage">Memuat data buah...</div>
+        <table id="fruitTable">
+            <thead>
+                <tr>
+                    <th>Nama Buah</th>
+                    <th>Harga</th>
+                    <th>Stok (kg)</th>
+                </tr>
+            </thead>
+            <tbody id="fruitList">
+                </tbody>
+        </table>
+        <p style="margin-top: 20px; text-align: center; font-size: 0.8em; color: #94a3b8;">
+            Ini adalah versi minimal untuk debugging tampilan data buah.
+        </p>
+    </div>
+
     <script>
-        // 1. Konfigurasi Firebase
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -254,105 +75,46 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. Utilitas format uang
+        // Utilitas format uang
         function formatCurrency(amount) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
         }
 
-        // 3. Fungsi tampilkan data buah
+        // Fungsi tampilkan data buah
         function loadFruits() {
-            db.collection("buah").orderBy("nama").get().then(snapshot => {
-                const fruitList = document.getElementById("fruitList");
-                fruitList.innerHTML = '';
-                if (snapshot.empty) {
-                    fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
-                } else {
-                    snapshot.forEach(doc => {
-                        const d = doc.data();
-                        fruitList.innerHTML += `
-                            <tr class="border-b border-gray-100">
-                                <td class="px-2 py-1 text-xs">${d.nama}</td>
-                                <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
-                                <td class="px-2 py-1 text-xs">${d.stok} kg</td>
-                                <td class="px-2 py-1 text-xs">
-                                    <button onclick="editFruit('${doc.id}')" class="btn btn-secondary mb-1 text-[10px] py-0.5 px-1">Edit</button>
-                                    <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
-                                </td>
-                            </tr>`;
-                    });
-                }
-            });
-        }
+            const fruitList = document.getElementById("fruitList");
+            const loadingMessage = document.getElementById("loadingMessage");
+            loadingMessage.style.display = 'block'; // Tampilkan pesan loading
+            fruitList.innerHTML = ''; // Kosongkan daftar sebelumnya
 
-        // 4. Fungsi edit data buah
-        function editFruit(id) {
-            db.collection("buah").doc(id).get().then(doc => {
-                const d = doc.data();
-                fruitName.value = d.nama;
-                fruitPrice.value = d.harga;
-                fruitStock.value = d.stok;
-                fruitForm.dataset.editId = id;
-            });
-        }
-
-        // 5. Fungsi hapus buah
-        function deleteFruit(id) {
-            if (confirm("Hapus buah ini?")) {
-                db.collection("buah").doc(id).delete().then(loadFruits);
-            }
-        }
-
-        // 6. Simpan form tambah/edit buah
-        document.getElementById("fruitForm").addEventListener("submit", e => {
-            e.preventDefault();
-            const nama = fruitName.value;
-            const harga = parseInt(fruitPrice.value);
-            const stok = parseInt(fruitStock.value);
-            const docId = fruitForm.dataset.editId;
-            const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-            const data = { nama, harga, stok };
-            (docId ? ref.update(data) : ref.add(data)).then(() => {
-                fruitForm.reset();
-                delete fruitForm.dataset.editId;
-                loadFruits();
-            });
-        });
-
-        // 7. === NOTIFIKASI LONCENG SAJA (TANPA POPUP/SUARA DI SINI) ===
-        let unsubscribeBellListener = null;
-
-        function updateNotifBell() {
-            if (unsubscribeBellListener) {
-                unsubscribeBellListener();
-            }
-
-            // Dapatkan elemen lonceng
-            const notifLonceng = document.getElementById('notifLonceng');
-            if (!notifLonceng) return; // Keluar jika elemen tidak ditemukan
-
-            // Dengar perubahan pada pesanan yang isViewed: false
-            unsubscribeBellListener = db.collection("pesanan")
-                .where('isViewed', '==', false)
-                .limit(1) // Cukup ambil 1 untuk tahu ada/tidaknya
-                .onSnapshot(snapshot => {
-                    if (!snapshot.empty) {
-                        notifLonceng.classList.add('berkedip-kuat');
-                        notifLonceng.title = "Ada pesanan baru!"; // Tambah tooltip
+            db.collection("buah").orderBy("nama").get()
+                .then(snapshot => {
+                    loadingMessage.style.display = 'none'; // Sembunyikan pesan loading
+                    if (snapshot.empty) {
+                        fruitList.innerHTML = '<tr><td colspan="3" style="text-align:center;">Belum ada data buah di database.</td></tr>';
                     } else {
-                        notifLonceng.classList.remove('berkedip-kuat');
-                        notifLonceng.title = "Tidak ada pesanan baru.";
+                        snapshot.forEach(doc => {
+                            const d = doc.data();
+                            fruitList.innerHTML += `
+                                <tr>
+                                    <td>${d.nama || '-'}</td>
+                                    <td>${formatCurrency(d.harga || 0)}</td>
+                                    <td>${(d.stok || 0)} kg</td>
+                                </tr>
+                            `;
+                        });
                     }
-                }, error => {
-                    console.error("Error listening for bell notification:", error);
-                    notifLonceng.classList.remove('berkedip-kuat'); // Pastikan berhenti berkedip jika error
-                    notifLonceng.title = "Error memuat notifikasi.";
+                })
+                .catch(error => {
+                    loadingMessage.style.display = 'none'; // Sembunyikan pesan loading
+                    fruitList.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red;">Gagal memuat data buah. Periksa koneksi internet atau Firebase Rules.</td></tr>';
+                    console.error("Error loading fruits from Firestore:", error); // Log error ke konsol
                 });
         }
 
-        // 8. Jalankan saat halaman selesai dimuat
+        // Jalankan saat halaman selesai dimuat
         document.addEventListener("DOMContentLoaded", () => {
-            loadFruits(); // Muat data buah/stok saat halaman dimuat
-            updateNotifBell(); // Mulai memantau notifikasi lonceng
+            loadFruits();
         });
     </script>
 </body>
