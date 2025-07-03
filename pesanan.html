@@ -711,28 +711,32 @@
     });
   });
 
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const idBaru = doc.id;
-        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+function cekPesananBaru() {
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const idBaru = doc.id;
 
-        // ✅ TIDAK munculkan popup saat pertama load
-        if (sudahPertamaCek && idBaru !== terakhirSimpan && data.items?.length > 0) {
+      const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+
+      // Simpan ID dulu, sebelum kondisi
+      if (idBaru !== terakhirSimpan) {
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
+
+        if (sudahPertamaCek && data.items?.length > 0) {
           sound.play();
           tampilkanDetail(idBaru);
           document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
           document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
         }
-
-        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-        terakhirDitampilkan = idBaru;
-        sudahPertamaCek = true;
       }
-    });
-  }
+
+      // Flag bahwa pengecekan pertama sudah selesai
+      sudahPertamaCek = true;
+    }
+  });
+}
 
   document.addEventListener("DOMContentLoaded", () => {
     loadData('All');
