@@ -1,491 +1,479 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifikasi Pesanan Baru - Rujak Buah Indonesia</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Pesanan - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        :root {
+            --primary: #16a34a;
+            --primary-light: #22c55e;
+            --primary-dark: #15803d;
+            --secondary: #64748b;
+            --accent: #84cc16;
+            --light: #f0fdf4;
+            --white: #ffffff;
+            --dark: #1e293b;
+            --card-shadow: 0 5px 8px -3px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+            font-size: 11.5px;
+        }
+        * {
             margin: 0;
-            color: #1e293b;
-            text-align: center;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
-        .main-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 90%;
-            position: relative; /* Untuk posisi tombol back-to-home */
+        body {
+            background: #f8fafc;
+            color: var(--dark);
+            padding: 10px;
+            padding-bottom: 80px;
         }
-        .main-header {
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
         }
-        .main-header h1 {
-            margin: 0; /* Hapus margin default h1 di sini */
-            flex-grow: 1; /* Biarkan h1 mengisi ruang */
-        }
-        .back-to-home-btn {
-            background-color: #64748b; /* Warna abu-abu untuk tombol beranda */
-            color: white;
-            padding: 8px 12px;
-            border: none;
+        .header-top button {
+            font-size: 12px;
+            padding: 5px 10px;
             border-radius: 5px;
-            font-size: 14px;
+            border: none;
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            transition: 0.3s;
         }
-        .back-to-home-btn:hover {
-            background-color: #475569;
+        .back-btn {
+            background: var(--primary);
+            color: white;
+        }
+        .back-btn:hover {
+            background: var(--primary-light);
+        }
+        .refresh-btn {
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            background: white;
+        }
+        .refresh-btn:hover {
+            background: var(--primary-light);
+            color: white;
         }
         h1 {
-            color: #16a34a;
-            font-size: 24px;
-        }
-        p {
             font-size: 16px;
-            color: #64748b;
+            margin-bottom: 2px;
+            color: var(--primary);
         }
-        .refresh-button {
-            background-color: #16a34a;
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            background: var(--light);
+            border-left: 5px solid var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .order-item-upgrade {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .order-row-top, .order-row-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-row-bottom {
+            flex-direction: column;
+            gap: 5px;
+        }
+        .customer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s ease;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
         }
-        .refresh-button:hover {
-            background-color: #22c55e;
+        .name { font-weight: 600; font-size: 12px; }
+        .phone { font-size: 10px; color: var(--secondary); }
+        .total { font-weight: bold; color: var(--primary-dark); font-size: 13px; }
+        .status {
+            padding: 3px 8px;
+            font-size: 10px;
+            border-radius: 20px;
+            background: #e0fce2;
+            color: var(--primary-dark);
+            margin-top: 4px;
         }
+        .status.pending { background-color: #fffbeb; color: #d97706; } /* yellow for pending */
+        .status.diproses { background-color: #eff6ff; color: #2563eb; } /* blue for processing */
+        .status.selesai { background-color: #d1fae5; color: #059669; } /* green for complete */
+        .status.dibatalkan { background-color: #fee2e2; color: #dc2626; } /* red for cancelled */
 
-        /* Gaya untuk pop-up notifikasi pesanan baru (kecil di pojok) */
-        #newOrderNotificationPopup {
-            display: none; /* Default hidden */
+        .time {
+            font-size: 10px;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .items {
+            font-size: 11px;
+            background: #f9fafb;
+            padding: 8px;
+            border-radius: 6px;
+            color: #1e293b;
+        }
+        
+        .app-nav {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #28a745; /* Hijau */
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff !important; /* putih solid */
+            opacity: 1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 0.5rem 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            width: 100%;
+        }
+        .nav-btn i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .nav-btn.active {
             font-weight: 600;
-            z-index: 10000;
-            animation: slideInFromRight 0.5s ease-out forwards;
+            background: transparent;
+            box-shadow: none;
+        }
+        #loadingSpinner {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 4px solid rgba(16, 185, 129, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .content-wrapper {
+            padding-top: 50px; /* tinggi header tetap agar isi tidak ketiban */
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: white;
+            padding-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes slidein {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slidein {
+            animation: slidein 0.4s ease-out forwards;
+        }
+        .laporan-container {
+            text-align: right;
+            animation: slidein 0.5s ease-out;
+            margin-top: 10px;
+        }
+
+        .laporan-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
             cursor: pointer;
-        }
-        #newOrderNotificationPopup.hidden {
-            animation: slideOutToRight 0.5s ease-in forwards;
-        }
-
-        /* Animasi untuk pop-up notifikasi */
-        @keyframes slideInFromRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutToRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+            box-shadow: var(--card-shadow);
+            transition: background 0.3s ease;
         }
 
-        /* Gaya untuk pop-up detail pesanan (overlay di tengah) */
+        .laporan-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .laporan-btn i {
+            margin-right: 6px;
+        }
+        .laporan-fixed-btn {
+            position: fixed;
+            top: 200px; /* ↓↓↓ geser ke bawah agar tidak nutupi statistik */
+            right: 20px;
+            background: rgba(22, 163, 74, 0.6); /* Hijau transparan */
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            font-size: 12px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            cursor: pointer;
+            z-index: 999;
+            animation: slidein 0.4s ease-out;
+            transition: background 0.3s ease;
+        }
+
+        .laporan-fixed-btn:hover {
+            background: var(--primary-light);
+        }
+
+        .laporan-fixed-btn i {
+            margin-right: 6px;
+        }
+
+        /* Style for status dropdown */
+        .status-dropdown {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Popup Detail */
         #popupDetail {
-            display: none; /* Default hidden */
+            display: none; /* Default hidden, JS will set to flex */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6); /* Overlay gelap */
+            background: rgba(0,0,0,0.6); /* Lebih gelap */
             z-index: 9999;
-            display: flex; /* Untuk menengahkan konten */
+            padding: 20px;
+            display: flex; /* Mengaktifkan flexbox untuk centering */
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
-        #popupDetail > div { /* Konten di dalam pop-up detail */
+
+        #popupDetail > div { /* Konten popup */
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 450px;
-            width: 90%;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            padding: 20px; /* Sedikit lebih banyak padding */
+            border-radius: 12px; /* Lebih rounded */
+            max-width: 450px; /* Max width yang sedikit lebih lebar */
+            width: 90%; /* Responsif */
+            margin: auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); /* Bayangan lebih jelas */
             position: relative;
-            animation: fadeInScale 0.3s ease-out;
-            text-align: left; /* Sesuaikan teks di dalam pop-up */
+            animation: fadeInScale 0.3s ease-out; /* Animasi masuk */
         }
-        /* Animasi untuk pop-up detail */
+
         @keyframes fadeInScale {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
 
         #popupDetail h3 {
-            font-size: 20px;
+            font-size: 20px; /* Ukuran font lebih besar */
             font-weight: bold;
-            margin-bottom: 15px;
-            color: #15803d;
-            text-align: center;
+            margin-bottom: 12px;
+            color: var(--primary-dark);
         }
+
         #popupDetail p {
-            margin-bottom: 8px;
-            font-size: 14px;
+            margin-bottom: 8px; /* Spasi antar paragraf */
+            font-size: 13px; /* Ukuran font detail */
+            line-height: 1.4;
         }
         #popupDetail p strong {
-            color: #1e293b;
+            color: var(--dark);
         }
+
         #popupDetail h4 {
-            font-size: 16px;
+            font-size: 15px; /* Ukuran font sub-judul */
             font-weight: bold;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #16a34a;
+            margin-top: 15px; /* Spasi atas */
+            margin-bottom: 8px;
+            color: var(--primary);
         }
+
         #popupDetail #popupItems {
-            max-height: 120px; /* Batasi tinggi untuk item agar bisa scroll */
+            max-height: 150px; /* Kurangi tinggi item agar tidak terlalu panjang */
             overflow-y: auto;
-            border: 1px solid #e0e0e0;
+            border: 1px solid #e0e0e0; /* Border lebih halus */
             padding: 10px;
             border-radius: 8px;
-            background: #f9fafb;
-            font-size: 13px;
+            background: #fbfbfb; /* Background item detail lebih terang */
+            font-size: 12px;
             color: #444;
         }
         #popupDetail #popupItems div {
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
-        #popupDetail .close-button-top { /* Tombol X di pojok kanan atas pop-up detail */
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            background: none;
-            border: none;
-            padding: 0;
+        #popupDetail button.close-button {
+            top: 12px;
+            right: 18px;
             font-size: 28px;
             color: #666;
-            cursor: pointer;
             transition: color 0.2s;
         }
-        #popupDetail .close-button-top:hover {
+        #popupDetail button.close-button:hover {
             color: #333;
         }
-        .popup-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 25px;
-        }
-        .popup-actions button {
-            background-color: #16a34a;
+
+        #popupDetail button {
+            background: var(--primary);
             color: white;
             padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 20px; /* Spasi dari elemen atas */
+            transition: background 0.3s ease;
         }
-        .popup-actions button:hover {
-            background-color: #22c55e;
+        #popupDetail button:hover {
+            background: var(--primary-light);
         }
     </style>
 </head>
 <body>
-    <div class="main-content">
-        <div class="main-header">
-            <button class="back-to-home-btn" onclick="window.location.href='apl05.html'">
-                <i class="fas fa-home"></i> Beranda
-            </button>
-            <h1>Notifikasi Pesanan Rujak Buah</h1>
+    <div id="loadingSpinner"><div class="spinner"></div></div>
+    <button onclick="window.location.href='apl04.html'" class="laporan-fixed-btn">
+        <i class="fas fa-file-alt"></i> Laporan Harian
+    </button>
+    
+    <div class="container">
+        <div class="sticky-header">
+            <div class="header-top">
+                <button class="back-btn" onclick="window.location.href='apl05.html'"><i class="fas fa-arrow-left"></i> Beranda Pelanggan</button>
+                <button class="refresh-btn" onclick="loadData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <h1>RUJAK BUAH INDONESIA</h1>
+                <p style="font-size: 11px;">Dashboard Pesanan Masuk</p>
+            </div>
+            <div class="stats">
+                <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
+                <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
+                <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
+                <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+            </div>
         </div>
-        <p>Halaman ini akan memberitahu Anda ketika ada pesanan baru.</p>
-        <button class="refresh-button" onclick="location.reload();">
-            <i class="fas fa-sync-alt"></i> Refresh Halaman
-        </button>
-    </div>
 
-    <div id="newOrderNotificationPopup">
-        Pesanan Baru Masuk! Klik untuk melihat.
-    </div>
+        <div class="content-wrapper">
+            <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+        </div>
+    </div> 
+    <nav class="app-nav">
+        <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+        <a href="navigator-input.html" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+        <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
 
     <div id="popupDetail">
         <div>
-            <button class="close-button-top" onclick="tutupDetail()">&times;</button>
-            <h3 id="popupNama">Detail Pesanan</h3>
+            <button onclick="tutupDetail()" class="close-button">&times;</button>
+            <h3 id="popupNama">Nama Pelanggan</h3>
             <p><strong>Nomor HP:</strong> <span id="popupNomor"></span></p>
             <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
             <p><strong>Total Pembayaran:</strong> <span id="popupTotal"></span></p>
             <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar"></span></p>
             <p><strong>Catatan:</strong> <span id="popupCatatan"></span></p>
-            <p><strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span></p>
+            <p style="margin-bottom: 10px;"><strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+                <select id="statusUpdater" class="status-dropdown">
+                    <option value="Pending">Pending</option>
+                    <option value="Diproses">Diproses</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Dibatalkan">Dibatalkan</option>
+                </select>
+            </p>
             <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu"></span></p>
-            <h4>Item Pesanan:</h4>
+            <h4>Detail Item:</h4>
             <div id="popupItems"></div>
-            <div class="popup-actions">
-                <button onclick="tutupDetail()">Tutup</button>
-            </div>
+            <button onclick="tutupDetail()">Tutup</button>
         </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase Anda
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", // <-- PASTIKAN INI BENAR
-            authDomain: "tokobuahkasir.firebaseapp.com",     // <-- PASTIKAN INI BENAR
-            projectId: "tokobuahkasir",                     // <-- PASTIKAN INI BENAR
-            storageBucket: "tokobuahkasir.appspot.com",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-        };
-        
-        let db; // Variabel Firestore instance
-
-        // Elemen DOM (akan diinisialisasi di DOMContentLoaded)
-        let newOrderNotificationPopup;
-        let popupDetailEl;
-        
-        let currentOrderIdForDetail = null; // ID pesanan yang sedang ditampilkan di pop-up detail
-        let unsubscribeOrders = null; // Untuk mengelola listener Firebase
-        let knownOrderIds = new Set(); // Melacak ID pesanan yang sudah dinotifikasi/dilihat
-
-        function formatCurrency(val) {
-            if (isNaN(val) || val === null || typeof val === 'undefined') return "Rp0";
-            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
-        }
-        function formatDate(date) {
-            if (!date) return "-";
-            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-            if (isNaN(d.getTime())) return "-";
-            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-        }
-        function getStatusClass(status) {
-            switch (status?.toLowerCase()) {
-                case 'pending': return 'pending';
-                case 'diproses': return 'diproses';
-                case 'selesai': return 'selesai';
-                case 'dibatalkan': return 'dibatalkan';
-                case 'dilihat': return 'dilihat'; 
-                default: return '';
-            }
-        }
-
-        function playNotificationSound() {
-            const audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3'); // Ganti dengan URL suara Anda
-            audio.play().catch(e => console.error("Error playing sound:", e));
-        }
-
-        function saveNotifiedOrdersToLocalStorage() {
-            try {
-                localStorage.setItem('notifiedOrderIds', JSON.stringify(Array.from(knownOrderIds)));
-            } catch (e) {
-                console.error("Error saving notified orders to local storage:", e);
-            }
-        }
-        function loadNotifiedOrdersFromLocalStorage() {
-            try {
-                const storedIds = localStorage.getItem('notifiedOrderIds');
-                return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
-            } catch (e) {
-                console.error("Error loading notified orders from local storage:", e);
-                return new Set();
-            }
-        }
-
-        function listenForNewOrders(isInitialRender = false) {
-            if (unsubscribeOrders) { // Hentikan listener sebelumnya jika ada
-                unsubscribeOrders();
-                unsubscribeOrders = null;
-            }
-
-            const query = db.collection("pesanan").orderBy("waktu", "desc");
-
-            unsubscribeOrders = query.onSnapshot(snapshot => {
-                let newOrdersDetected = false;
-                let latestNewOrderData = null; 
-                
-                const currentSnapshotOrderIds = new Set(); 
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const orderId = doc.id;
-                    currentSnapshotOrderIds.add(orderId);
-
-                    const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
-                    if (isNaN(waktu.getTime())) {
-                        console.warn("Invalid timestamp found for order:", orderId, data.waktu);
-                        return;
-                    }
-
-                    if (!isInitialRender && !knownOrderIds.has(orderId)) {
-                        newOrdersDetected = true;
-                        if (!latestNewOrderData || (waktu > latestNewOrderData.waktu)) {
-                            latestNewOrderData = { orderId, waktu, ...data };
-                        }
-                    }
-                });
-
-                if (newOrdersDetected && !isInitialRender && latestNewOrderData) {
-                    showNewOrderPopupNotification(latestNewOrderData);
-                    playNotificationSound();
-                    knownOrderIds.add(latestNewOrderData.orderId);
-                    saveNotifiedOrdersToLocalStorage();
-                }
-                
-                currentSnapshotOrderIds.forEach(id => knownOrderIds.add(id));
-                saveNotifiedOrdersToLocalStorage();
-                
-            }, err => {
-                console.error("Error listening to orders from Firestore:", err);
-                const mainContentP = document.querySelector('.main-content p');
-                if (mainContentP) mainContentP.textContent = `Gagal memuat data pesanan: ${err.message}. Periksa koneksi internet atau konsol browser.`;
-            });
-        }
-
-        function showNewOrderPopupNotification(orderData) {
-            if(!newOrderNotificationPopup) return;
-            newOrderNotificationPopup.textContent = `Pesanan Baru dari ${orderData.customer?.fullName || 'Pelanggan'}! Total: ${formatCurrency(orderData.totalAmount || 0)}`;
-            newOrderNotificationPopup.classList.remove('hidden');
-            newOrderNotificationPopup.onclick = () => {
-                tampilkanDetail(orderData.orderId);
-                hideNewOrderNotificationPopup();
-            };
-
-            setTimeout(() => {
-                hideNewOrderNotificationPopup();
-            }, 8000);
-        }
-
-        function hideNewOrderPopupNotification() {
-            if(newOrderNotificationPopup) newOrderNotificationPopup.classList.add('hidden');
-        }
-
+        // Fungsi untuk menutup popup
         function tutupDetail() {
-            if(popupDetailEl) popupDetailEl.style.display = "none";
-            currentOrderIdForDetail = null;
+            document.getElementById('popupDetail').style.display = 'none';
         }
 
-        function tampilkanDetail(orderId) {
-            currentOrderIdForDetail = orderId;
-            db.collection("pesanan").doc(orderId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        const customer = data.customer || {};
-                        const waktu = data.waktu?.toDate?.() || new Date(0);
-                        const items = data.items || [];
-
-                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-                        document.getElementById("popupAlamat").textContent = customer.address || "-";
-                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-
-                        const popupStatusEl = document.getElementById("popupStatus");
-                        const currentStatus = data.status || "Pending";
-                        popupStatusEl.textContent = currentStatus;
-                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-
-                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
-
-                        const popupItemsHtml = items.map(item => {
-                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                            return `
-                                <div>
-                                    - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
-                                </div>
-                            `;
-                        }).join("");
-                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
-
-                        if(popupDetailEl) popupDetailEl.style.display = "flex"; 
-                        
-                        knownOrderIds.add(orderId); // Tandai sebagai sudah dilihat/dinotifikasi
-                        saveNotifiedOrdersToLocalStorage();
-
-                    } else {
-                        alert("Pesanan tidak ditemukan di database.");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error getting order detail from Firestore:", error);
-                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
-                });
-        }
-
-        // --- DOMContentLoaded: Semua inisialisasi elemen DOM dan listener utama di sini ---
-        document.addEventListener("DOMContentLoaded", () => {
-            // Inisialisasi Firebase (dengan error handling)
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                console.log("Firebase initialized successfully."); 
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                alert("Gagal menginisialisasi Firebase. Cek konsol browser untuk detailnya. Pastikan konfigurasi API dan koneksi Anda benar.");
-                return; // Hentikan eksekusi jika inisialisasi Firebase gagal
-            }
-
-            // Dapatkan referensi elemen DOM setelah DOM siap
-            newOrderNotificationPopup = document.getElementById('newOrderNotificationPopup');
-            popupDetailEl = document.getElementById("popupDetail");
-            
-            // Pastikan pop-up detail tertutup saat halaman pertama kali dimuat
-            if (popupDetailEl) { 
-                popupDetailEl.style.display = "none";
-            }
-            currentOrderIdForDetail = null;
-
-            // Muat knownOrderIds dari localStorage (daftar pesanan yang sudah dilihat sebelumnya)
-            knownOrderIds = loadNotifiedOrdersFromLocalStorage();
-            
-            // Mulai mendengarkan pesanan baru dari Firebase
-            // isInitialRender disetel true agar tidak memicu pop-up untuk pesanan yang sudah ada di database saat halaman pertama kali dibuka
-            listenForNewOrders(true); 
-
-            // Opsional: Untuk debug, Anda bisa menambahkan tombol untuk reset knownOrderIds
-            // agar bisa mengetes notifikasi berulang kali tanpa harus hapus localStorage manual
-            /*
-            const resetButton = document.createElement('button');
-            resetButton.textContent = 'Reset Notifikasi Sudah Dilihat';
-            resetButton.style.marginTop = '20px';
-            resetButton.style.backgroundColor = '#fca5a5';
-            resetButton.style.color = '#dc2626';
-            resetButton.style.border = '1px solid #ef4444';
-            resetButton.style.padding = '8px 15px';
-            resetButton.style.borderRadius = '5px';
-            resetButton.style.cursor = 'pointer';
-            resetButton.style.fontSize = '14px';
-            resetButton.onclick = () => {
-                knownOrderIds.clear();
-                saveNotifiedOrdersToLocalStorage();
-                alert('Daftar pesanan yang sudah dinotifikasi sudah direset. Refresh halaman (F5) untuk melihat notifikasi pesanan lama lagi.');
-            };
-            document.querySelector('.main-content').appendChild(resetButton);
-            */
-        });
-    </script>
-</body>
-</html>
+        // Contoh fungsi untuk menampilkan popup
+        function
