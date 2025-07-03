@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daftar Pesanan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesanan Real-Time</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    body { font-family: sans-serif; padding: 10px; margin: 0; background: #f5f5f5; }
+    body { font-family: sans-serif; margin: 0; padding: 10px; background: #f5f5f5; }
     h2 { text-align: center; }
-
     .order-item {
       background: #fff;
       padding: 15px;
@@ -19,74 +17,59 @@
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    .order-item:hover { background: #f0f0f0; }#popupDetail {
+  display: none;
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+#popupDetail > div {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  animation: fadeIn 0.3s ease;
+  position: relative;
+}
+.close-button {
+  position: absolute;
+  top: 10px; right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.status-dropdown {
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 14px;
+}
+#popupItems {
+  background: #f9f9f9;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  max-height: 150px;
+  overflow-y: auto;
+}
 
-    .order-item:hover {
-      background: #f0f0f0;
-    }
-
-    #popupDetail {
-      display: none; /* default tertutup */
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    #popupDetail > div {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 400px;
-      width: 90%;
-      animation: fadeIn 0.3s ease;
-      position: relative;
-    }
-
-    #popupDetail h3 { margin-top: 0; }
-    .close-button {
-      position: absolute;
-      top: 10px; right: 15px;
-      background: transparent;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .status-dropdown {
-      margin-top: 5px;
-      padding: 6px;
-      font-size: 14px;
-    }
-
-    #popupItems {
-      background: #f9f9f9;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      max-height: 150px;
-      overflow-y: auto;
-    }
   </style>
 </head>
-<body>
-
-<h2>Daftar Pesanan</h2>
+<body><h2>Daftar Pesanan (Realtime)</h2>
 <div id="daftarPesanan">Memuat...</div>
-
-<!-- POPUP -->
-<div id="popupDetail">
+<audio id="notifSound" src="https://www.myinstants.com/media/sounds/bell-notification.mp3" preload="auto"></audio><div id="popupDetail">
   <div>
-    <button class="close-button" onclick="tutupDetail()">×</button>
+    <button class="close-button" onclick="tutupDetail()">&times;</button>
     <h3 id="popupNama">Nama Pelanggan</h3>
     <p><strong>HP:</strong> <span id="popupNomor"></span></p>
     <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
@@ -101,9 +84,7 @@
     </select>
     <div id="popupItems"></div>
   </div>
-</div>
-
-<script>
+</div><script>
   const firebaseConfig = {
     apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
     authDomain: "tokobuahkasir.firebaseapp.com",
@@ -115,6 +96,7 @@
   const daftar = document.getElementById("daftarPesanan");
   const popup = document.getElementById("popupDetail");
   let currentOrderId = null;
+  let lastDocCount = 0;
 
   function formatCurrency(val) {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
@@ -134,14 +116,11 @@
       document.getElementById("popupStatus").textContent = data.status || "Pending";
       document.getElementById("statusUpdater").value = data.status || "Pending";
 
-      const itemHTML = (data.items || []).map(i => 
-        `• ${i.name} (${i.quantity} x Rp${(i.price).toLocaleString("id-ID")})`
-      ).join("<br>");
+      const itemHTML = (data.items || []).map(i => `• ${i.name} (${i.quantity} x Rp${(i.price).toLocaleString("id-ID")})`).join("<br>");
       document.getElementById("popupItems").innerHTML = itemHTML;
 
       popup.style.display = "flex";
 
-      // Auto update ke "Dilihat"
       if ((data.status || "").toLowerCase() === "pending") {
         db.collection("pesanan").doc(orderId).update({
           status: "Dilihat",
@@ -156,7 +135,6 @@
   function tutupDetail() {
     popup.style.display = "none";
     currentOrderId = null;
-    muatPesanan(); // Refresh
   }
 
   document.getElementById("statusUpdater").addEventListener("change", function() {
@@ -168,14 +146,24 @@
     });
   });
 
-  function muatPesanan() {
-    daftar.innerHTML = "Memuat...";
-    db.collection("pesanan").orderBy("waktu", "desc").get().then(snapshot => {
+  document.addEventListener("DOMContentLoaded", () => {
+    popup.style.display = "none";
+    db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+      daftar.innerHTML = "";
+
       if (snapshot.empty) {
         daftar.innerHTML = "<p>Tidak ada pesanan.</p>";
         return;
       }
-      daftar.innerHTML = "";
+
+      if (snapshot.docs.length > lastDocCount) {
+        const baru = snapshot.docs[0].data();
+        const nama = baru.customer?.fullName || "Pelanggan Baru";
+        document.getElementById("notifSound").play();
+        alert("🔔 Pesanan baru dari " + nama);
+      }
+      lastDocCount = snapshot.docs.length;
+
       snapshot.forEach(doc => {
         const d = doc.data();
         const nama = d.customer?.fullName || "Pelanggan";
@@ -191,13 +179,6 @@
         `;
       });
     });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    popup.style.display = "none"; // pastikan tertutup
-    muatPesanan();
   });
-</script>
-
-</body>
+</script></body>
 </html>
