@@ -635,16 +635,55 @@
 
 
 
-
-
-<!-- Audio notifikasi -->
 <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
 <script>
   const sound = document.getElementById("notifSound");
   let currentOrderIdForDetail = null;
   let terakhirDitampilkan = null;
-  let sudahPertamaCek = false; // ✅ TAMBAHKAN INI
+  let sudahPertamaCek = false;
+
+  function tampilkanDetail(orderId) {
+    if (!orderId) return;
+
+    currentOrderIdForDetail = orderId;
+    db.collection("pesanan").doc(orderId).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        if (!data.items || data.items.length === 0) return; // ✅ Cegah popup kosong
+
+        const customer = data.customer || {};
+        const waktu = data.waktu?.toDate?.() || new Date(0);
+        const items = data.items || [];
+
+        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+        document.getElementById("popupAlamat").textContent = customer.address || "-";
+        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+        document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+        const popupStatusEl = document.getElementById("popupStatus");
+        const currentStatus = data.status || "Pending";
+        popupStatusEl.textContent = currentStatus;
+        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+        const statusUpdater = document.getElementById("statusUpdater");
+        statusUpdater.value = currentStatus;
+
+        const popupItemsHtml = items.map(item => {
+          const itemTotal = (item.price || 0) * (item.quantity || 0);
+          return `<div style="margin-bottom:5px;">
+              - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotal.toLocaleString("id-ID")}
+          </div>`;
+        }).join("");
+        document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+        document.getElementById("popupDetail").style.display = "flex";
+      }
+    }).catch(err => console.error("Gagal tampilkan detail:", err));
+  }
 
   function tutupDetail() {
     document.getElementById("popupDetail").style.display = "none";
@@ -652,30 +691,8 @@
     loadData(activeFilterStatus);
   }
 
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const idBaru = doc.id;
-        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
-
-        // ✅ Cegah popup saat reload pertama
-        if (sudahPertamaCek && terakhirSimpan && idBaru !== terakhirSimpan && data.items?.length > 0) {
-          sound.play();
-          tampilkanDetail(idBaru);
-          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
-        }
-
-        terakhirDitampilkan = idBaru;
-        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-        sudahPertamaCek = true;
-      }
-    });
-  }
-
-  // ... lanjut event listener & loadData seperti punya Kakak ...
+  // ✅ Event Tutup Tetap Aktif
+  document.getElementById("popupTutupBtn").addEventListener("click", tutupDetail);
 
   document.getElementById("statusUpdater").addEventListener("change", function () {
     const newStatus = this.value;
@@ -694,13 +711,36 @@
     });
   });
 
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const idBaru = doc.id;
+        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+
+        // ✅ TIDAK munculkan popup saat pertama load
+        if (sudahPertamaCek && idBaru !== terakhirSimpan && data.items?.length > 0) {
+          sound.play();
+          tampilkanDetail(idBaru);
+          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+        }
+
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
+        terakhirDitampilkan = idBaru;
+        sudahPertamaCek = true;
+      }
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     loadData('All');
-    cekPesananBaru(); // tidak munculkan popup pertama kali
-    setInterval(cekPesananBaru, 3000); // baru cek berkala
+    setTimeout(() => {
+      cekPesananBaru();
+      setInterval(cekPesananBaru, 3000);
+    }, 1000); // ⏱️ Kasih delay supaya DOM siap dan tidak error
   });
 </script>
-
-
 </body>
 </html>
