@@ -485,7 +485,7 @@
 
     <div id="popupDetail">
         <div>
-            <button onclick="tutupDetail()" class="close-button">&times;</button>
+            <button id="popupTutupBtn" onclick="tutupDetail()" class="close-button">&times;</button>
             <h3 id="popupNama">Nama Pelanggan</h3>
             <p><strong>Nomor HP:</strong> <span id="popupNomor"></span></p>
             <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
@@ -691,8 +691,6 @@
     loadData(activeFilterStatus);
   }
 
-  // ✅ Event Tutup Tetap Aktif
-  document.getElementById("popupTutupBtn").addEventListener("click", tutupDetail);
 
   document.getElementById("statusUpdater").addEventListener("change", function () {
     const newStatus = this.value;
@@ -712,30 +710,31 @@
   });
 
 function cekPesananBaru() {
+  const terakhirDisimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+
   db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
     if (!snapshot.empty) {
       const doc = snapshot.docs[0];
       const data = doc.data();
       const idBaru = doc.id;
 
-      const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
-
-      // Simpan ID dulu, sebelum kondisi
-      if (idBaru !== terakhirSimpan) {
+      // ✅ Cegah notifikasi muncul saat pertama kali halaman dibuka
+      if (!sudahPertamaCek) {
         localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-
-        if (sudahPertamaCek && data.items?.length > 0) {
-          sound.play();
-          tampilkanDetail(idBaru);
-          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
-        }
+        sudahPertamaCek = true;
+        return;
       }
 
-      // Flag bahwa pengecekan pertama sudah selesai
-      sudahPertamaCek = true;
+      // ✅ Jika pesanan baru masuk dan ada itemnya
+      if (idBaru !== terakhirDisimpan && data.items?.length > 0) {
+        sound.play();
+        tampilkanDetail(idBaru);
+        document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
+        document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
+      }
     }
-  });
+  }).catch(err => console.error("Gagal cek pesanan baru:", err));
 }
 
   document.addEventListener("DOMContentLoaded", () => {
