@@ -482,38 +482,52 @@ function tutupDanKePesanan() {
     localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
     document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
     document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
-    window.location.href = " pesanan.html";
+    window.location.href = "pesanan.html";
   }
 
-    
-function cekPesananBaru() {
+<!-- ... HTML content di atas ... -->
+
+<!-- Audio notifikasi -->
+<audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+
+<!-- Script pengecekan pesanan -->
+<script>
+  const sound = document.getElementById("notifSound");
+  let terakhirDitampilkan = null;
+
+  function tutupDanKePesanan() {
+    document.getElementById("popupPesanan").classList.add("hidden");
+    sound.pause();
+    sound.currentTime = 0;
+    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
+    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
+    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
+    window.location.href = "pesanan.html";
+  }
+
+  function cekPesananBaru() {
     db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
         const data = doc.data();
+        const idBaru = doc.id;
         const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
 
-        if (doc.id !== terakhirSimpan) {
-          terakhirDitampilkan = doc.id;
+        if (terakhirSimpan && idBaru !== terakhirSimpan) {
           sound.play();
-          tampilkanPopupPesanan(data);
+          tampilkanPopupPesanan?.(data);
           document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
           document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
         }
+
+        terakhirDitampilkan = idBaru; // simpan ke variabel
+        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
       }
     });
   }
-
 
   window.addEventListener("DOMContentLoaded", () => {
     cekPesananBaru();
     setInterval(cekPesananBaru, 3000);
   });
 </script>
-
-<!-- Contoh lonceng -->
-<i id="notifLonceng" class="fas fa-bell text-green-600 text-2xl fixed bottom-20 right-4 z-50"></i>
-
-</body>
-</html>
-
