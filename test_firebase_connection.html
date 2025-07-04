@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Testing Firebase Connection...</h1>
+    <p id="status">Connecting to Firebase...</p>
+    <div id="data-display"></div>
+
+    <script>
+        // === KONFIGURASI FIREBASE ANDA DI SINI ===
+        // SILAKAN SALIN PERSIS KONFIGURASI YANG ANDA DAPATKAN DARI FIREBASE CONSOLE
+        // TERMASUK measurementId JIKA ADA
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app", // Gunakan ini yang Anda dapatkan dari Firebase
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV" // Tambahkan ini jika ada di konfigurasi Anda
+        };
+
+        // Inisialisasi Firebase App
+        let app;
+        try {
+            if (!firebase.apps.length) {
+                app = firebase.initializeApp(firebaseConfig);
+                document.getElementById('status').textContent = 'Firebase App initialized successfully.';
+                console.log('Firebase App initialized successfully.');
+            } else {
+                app = firebase.app(); // Jika sudah diinisialisasi
+                document.getElementById('status').textContent = 'Firebase App already initialized.';
+                console.log('Firebase App already initialized.');
+            }
+        } catch (error) {
+            document.getElementById('status').textContent = `ERROR: Firebase App initialization failed! Check firebaseConfig. ${error.message}`;
+            console.error('Firebase App initialization failed:', error);
+            return; // Hentikan eksekusi jika inisialisasi gagal
+        }
+
+        // Dapatkan referensi Firestore
+        const db = firebase.firestore();
+        document.getElementById('status').textContent += ' Firestore instance obtained.';
+        console.log('Firestore instance obtained.');
+
+        // Atur Firestore settings (opsional, tapi bagus jika ada di kode Anda)
+        // db.settings({ timestampsInSnapshots: true }); // Jika Anda punya ini, aktifkan
+        // console.log('Firestore settings applied (timestampsInSnapshots: true).');
+
+        // Coba ambil data dari koleksi 'buah'
+        async function fetchData() {
+            const dataDisplay = document.getElementById('data-display');
+            try {
+                const snapshot = await db.collection('buah').limit(1).get(); // Ambil 1 dokumen saja
+                if (snapshot.empty) {
+                    dataDisplay.innerHTML = '<p style="color: orange;">Koleksi "buah" kosong atau tidak ada dokumen.</p>';
+                    document.getElementById('status').textContent += ' Koleksi "buah" kosong.';
+                    console.log('Koleksi "buah" kosong atau tidak ada dokumen.');
+                } else {
+                    snapshot.forEach(doc => {
+                        dataDisplay.innerHTML = `
+                            <p style="color: green;">Data berhasil dimuat!</p>
+                            <p><strong>ID Dokumen:</strong> ${doc.id}</p>
+                            <p><strong>Data:</strong> ${JSON.stringify(doc.data(), null, 2)}</p>
+                        `;
+                    });
+                    document.getElementById('status').textContent += ' Data dari "buah" berhasil dimuat.';
+                    console.log('Data dari "buah" berhasil dimuat:', snapshot.docs[0].id, snapshot.docs[0].data());
+                }
+            } catch (error) {
+                dataDisplay.innerHTML = `<p style="color: red;">ERROR: Gagal memuat data dari Firestore! Periksa Rules atau nama koleksi.</p>`;
+                document.getElementById('status').textContent += ` ERROR fetching data: ${error.message}`;
+                console.error('Error fetching data from Firestore:', error);
+            }
+        }
+
+        // Jalankan fungsi ambil data
+        fetchData();
+    </script>
+</body>
+</html>
