@@ -344,20 +344,21 @@
       });
     });
 
-    // 7. === NOTIFIKASI PESANAN ===
-    const sound = document.getElementById("notifSound");
-    let terakhirDitampilkan = "";
+  // 7. === NOTIFIKASI PESANAN ===
+const sound = document.getElementById("notifSound");
+let sedangBerbunyi = false; // ✅ tambahan penting
+let terakhirDitampilkan = "";
 
-    // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-    let audioSudahDiizinkan = false;
-    document.addEventListener("click", () => {
-      if (!audioSudahDiizinkan) {
-        sound.play().catch(() => {});
-        sound.pause();
-        sound.currentTime = 0;
-        audioSudahDiizinkan = true;
-      }
-    });
+// ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
+let audioSudahDiizinkan = false;
+document.addEventListener("click", () => {
+  if (!audioSudahDiizinkan) {
+    sound.play().catch(() => {});
+    sound.pause();
+    sound.currentTime = 0;
+    audioSudahDiizinkan = true;
+  }
+});
 
 
 
@@ -383,10 +384,9 @@
     }
   }, 1000); // cek tiap 1 detik
 }
- function tutupPopup() {
+function tutupPopup() {
   document.getElementById("popupPesanan").classList.add("hidden");
 
-  // Suara dimatikan
   sound.pause();
   sound.currentTime = 0;
   sedangBerbunyi = false;
@@ -394,58 +394,61 @@
   localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
 
   document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+  document.getElementById("navPesanan").classList.remove("berkedip-kuat"); // ✅ tambahan
 }
 
 function tutupDanKePesanan() {
-  document.getElementById("popupPesanan").classList.add("hidden");
+  tutupPopup(); // ✅ panggil fungsi di atas biar DRY (tidak ulang ulang)
 
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-  window.location.href = "navigator-input.html";
+  window.location.href = "pesanan.html"; // ✅ arahkan ke file yang sudah kamu pakai
 }
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          const data = doc.data();
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+    <script>
+  let sedangBerbunyi = false; // ✅ Tambahan penting
+  const sound = document.getElementById("notifSound"); // Pastikan ini dideklarasikan di atas ya
 
-          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-            terakhirDitampilkan = doc.id;
-            sound.play();
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+        const idTerakhirBunyi = localStorage.getItem("idPesananTerakhirDibunyikan") || "";
 
-            tampilkanPopupPesanan(data);
+        if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+          terakhirDitampilkan = doc.id;
 
-            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-            document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-          } else {
-        
+          // ✅ Bunyi hanya jika ID belum dibunyikan dan suara belum aktif
+          if (doc.id !== idTerakhirBunyi && !sedangBerbunyi) {
+            sound.play().catch(() => {});
+            sedangBerbunyi = true;
+            localStorage.setItem("idPesananTerakhirDibunyikan", doc.id);
           }
+
+          tampilkanPopupPesanan(data);
+
+          // Efek berkedip
+          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+          document.getElementById("navPesanan").classList.add("berkedip-kuat");
         }
-      });
-    }
-
-    // 8. Jalankan saat halaman selesai dimuat
-    window.addEventListener("DOMContentLoaded", () => {
-      // ...kode lain seperti:
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 2200);
-
-      // ✅ Tambahkan ini
-      document.getElementById("navPesanan").addEventListener("click", function () {
-        this.classList.remove("berkedip-kuat");
-      });
+      }
     });
+  }
+
+  // Saat halaman dimuat
+  window.addEventListener("DOMContentLoaded", () => {
+    loadFruits();
+    cekPesananBaru();
+    setInterval(cekPesananBaru, 2200);
+
+    // Matikan berkedip saat nav diklik
+    document.getElementById("navPesanan").addEventListener("click", function () {
+      this.classList.remove("berkedip-kuat");
+    });
+  });
+
+
+   
   </script>
 </body>
 </html>
