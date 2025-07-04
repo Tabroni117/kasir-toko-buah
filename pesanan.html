@@ -52,6 +52,18 @@
             align-items: center;
             margin-bottom: 15px;
         }
+        /* Penyesuaian untuk header-top agar elemennya berada di ujung */
+        .header-top .left-controls {
+            display: flex;
+            gap: 10px; /* Jarak antara tombol */
+            align-items: center;
+        }
+        .header-top .right-controls {
+            display: flex;
+            gap: 10px; /* Jarak antara lonceng dan tombol kembali dashboard */
+            align-items: center;
+        }
+
         .header-top button {
             font-size: 12px;
             padding: 5px 10px;
@@ -212,7 +224,8 @@
             animation: spin 1s linear infinite;
         }
         
-        .fixed-header {
+        /* Fixed Header utama aplikasi - Dihapus karena akan digabung ke sticky-header */
+        /* .fixed-header {
             position: fixed;
             top: 0;
             left: 0;
@@ -222,19 +235,25 @@
             padding: 15px;
             box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             border-bottom: 1px solid #e2e8f0;
-        }
+        } */
 
         .content-wrapper {
-            padding-top: 50px;
+            /* padding-top akan disesuaikan dengan tinggi sticky-header */
+            padding-top: 0; /* Akan diatur dinamis oleh JS atau biarkan elemen mengikuti aliran normal */
         }
+        /* Sticky header yang sudah ada, akan ditingkatkan */
         .sticky-header {
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 20; /* Lebih rendah dari modal notifikasi */
             background: white;
-            padding-bottom: 10px;
+            padding: 15px; /* Tambahkan padding ke sticky-header */
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            border-bottom: 1px solid #e2e8f0;
         }
+
+        /* Padding pada body agar konten tidak tertutup fixed header di halaman lain */
+        body { padding-top: 0; } /* Reset padding-top body jika sebelumnya diatur untuk fixed-header */
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -377,14 +396,14 @@
         }
 
         #popupDetail button.close-button {
-            position: absolute;
+            position: absolute; /* Pastikan posisi absolut */
             top: 12px;
             right: 18px;
             font-size: 28px;
             color: #666;
             transition: color 0.2s;
-            background: none;
-            border: none;
+            background: none; /* Tambahkan ini agar tidak ada background default button */
+            border: none; /* Hapus border default button */
             cursor: pointer;
         }
         #popupDetail button.close-button:hover {
@@ -447,7 +466,7 @@
             to { opacity: 0.2; }
         }
 
-        /* Styling untuk NOTIFIKASI POPUP BARU yang menarik */
+        /* Styling untuk NOTIFIKASI POPUP BARU */
         #notificationModal {
             display: none; /* Sembunyikan default */
             position: fixed;
@@ -559,57 +578,44 @@
         <i class="fas fa-file-alt"></i> Laporan Harian
     </button>
     
-    <header class="text-white p-4 rounded-b-xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
-        <div class="px-4 mx-auto flex items-center justify-between w-full">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-leaf text-2xl"></i>
-                <div>
-                    <h1 class="font-bold text-lg">RUJAK BUAH INDONESIA</h1>
-                    <p class="text-sm">Aplikasi Kasir Premium</p>
+    <div class="container">
+        <div class="sticky-header">
+            <div class="header-top">
+                <div class="app-info flex items-center gap-3">
+                    <i class="fas fa-leaf text-xl text-green-600"></i> <div>
+                        <h1 class="font-bold text-base" style="color: var(--primary);">RUJAK BUAH INDONESIA</h1>
+                        <p class="text-xs" style="color: var(--secondary);">Dashboard Pesanan Masuk</p>
+                    </div>
+                </div>
+
+                <div class="right-controls flex items-center gap-3">
+                    <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 22px; color: var(--primary); cursor: pointer;"></i>
+                    <button onclick="window.location.href='dashboard.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
+                        <i class="fas fa-arrow-left mr-1"></i> Kembali
+                    </button>
                 </div>
             </div>
-            <div class="flex items-center">
-                <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-4" style="font-size: 22px; color: white;"></i>
-                <button onclick="window.location.href='dashboard.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
-                    <i class="fas fa-arrow-left mr-1"></i> Kembali
-                </button>
+            
+            <div class="stats">
+                <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
+                <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
+                <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
+                <div class="stat-box"><h3 id="lastOrder">-</h3s><p>Pesanan Terakhir</p></div>
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="All">Semua</button>
+                <button class="filter-btn" data-status="Pending">Pending</button>
+                <button class="filter-btn" data-status="Diproses">Diproses</button>
+                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
             </div>
         </div>
-    </header>
 
-    <main class="flex-1 px-3">
-        <div class="container" style="margin-top: 100px;">
-            <div class="sticky-header">
-                <div class="header-top">
-                    <button class="back-btn" onclick="window.location.href='apl05.html'"><i class="fas fa-arrow-left"></i> Beranda Pelanggan</button>
-                    <button class="refresh-btn" onclick="loadData('All')"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
-                
-                <div style="margin-bottom: 10px;">
-                    <h1>RUJAK BUAH INDONESIA</h1>
-                    <p style="font-size: 11px;">Dashboard Pesanan Masuk</p>
-                </div>
-                <div class="stats">
-                    <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
-                    <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
-                    <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
-                    <div class="stat-box"><h3 id="lastOrder">-</h3s><p>Pesanan Terakhir</p></div>
-                </div>
-
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-status="All">Semua</button>
-                    <button class="filter-btn" data-status="Pending">Pending</button>
-                    <button class="filter-btn" data-status="Diproses">Diproses</button>
-                    <button class="filter-btn" data-status="Selesai">Selesai</button>
-                    <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
-                </div>
-            </div>
-
-            <div class="content-wrapper">
-                <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
-            </div>
-        </div> 
-    </main>
+        <div class="content-wrapper">
+            <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
+        </div>
+    </div> 
 
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
@@ -997,8 +1003,6 @@
             if (currentNewOrderId) {
                 tampilkanDetail(currentNewOrderId); 
             }
-            // Opsional: scroll ke daftar pesanan jika perlu
-            // document.getElementById('daftarPesanan').scrollIntoView({ behavior: 'smooth' });
         });
 
         // Fungsi utama cek pesanan baru dari Firebase
@@ -1077,15 +1081,11 @@
 
             // Event listener untuk tombol navigasi "Pesanan"
             navPesanan.addEventListener("click", function () {
-                // Ketika navigasi ke Pesanan diklik, anggap notifikasi sudah dilihat
                 hideNotificationModal(); // Pastikan popup notifikasi baru tertutup
-                // Tidak perlu mengubah class berkedip lagi karena sudah dipanggil hideNotificationModal
-                // localStorage sudah diupdate oleh hideNotificationModal
             });
 
             // Event listener untuk tombol lonceng notifikasi di header
             notifLonceng.addEventListener("click", function() {
-                // Ketika lonceng diklik, cek pesanan baru dan tampilkan popup jika ada
                 cekPesananBaru(); 
             });
 
@@ -1100,8 +1100,7 @@
                 }
             });
 
-            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA ---
-            // Ini agar kode tidak error jika elemen atau fungsi dari Inputstok.html/Login.html tidak ada di halaman pesanan.html ini
+            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
             window.closeAuthModal = function() {
                 const authModal = document.getElementById('authModal');
                 if (authModal) authModal.classList.add('hidden');
