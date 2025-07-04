@@ -269,183 +269,417 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
     // 1. Konfigurasi Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+   const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.appspot.com",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    // 2. Utilitas format uang
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
-    }
+        // Elemen-elemen yang dibutuhkan
+        const daftar = document.getElementById("daftarPesanan");
+        const totalOrdersEl = document.getElementById("totalOrders");
+        const todayIncomeEl = document.getElementById("todayIncome");
+        const avgOrderEl = document.getElementById("avgOrder");
+        const lastOrderEl = document.getElementById("lastOrder");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
 
-    // 3. Fungsi tampilkan data buah
-    function loadFruits() {
-      db.collection("buah").orderBy("nama").get().then(snapshot => {
-        const fruitList = document.getElementById("fruitList");
-        fruitList.innerHTML = '';
-        if (snapshot.empty) {
-          fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
-        } else {
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            fruitList.innerHTML += `
-              <tr class="border-b border-gray-100">
-                <td class="px-2 py-1 text-xs">${d.nama}</td>
-                <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
-                <td class="px-2 py-1 text-xs">${d.stok} kg</td>
-                <td class="px-2 py-1 text-xs">
-                  <button onclick="editFruit('${doc.id}')" class="btn btn-secondary mb-1 text-[10px] py-0.5 px-1">Edit</button>
-                  <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
-                </td>
-              </tr>`;
-          });
+        let currentOrderIdForDetail = null; // Digunakan untuk popup detail
+        let activeFilterStatus = 'All'; // Default filter
+
+        // --- Fungsi Loading Spinner ---
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        // --- Utilitas Format ---
+        function formatCurrency(val) {
+            if (isNaN(val) || val === null || typeof val === 'undefined') {
+                return "Rp0";
+            }
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
         }
-      });
-    }
-
-    // 4. Fungsi edit data buah
-    function editFruit(id) {
-      db.collection("buah").doc(id).get().then(doc => {
-        const d = doc.data();
-        fruitName.value = d.nama;
-        fruitPrice.value = d.harga;
-        fruitStock.value = d.stok;
-        fruitForm.dataset.editId = id;
-      });
-    }
-
-    // 5. Fungsi hapus buah
-    function deleteFruit(id) {
-      if (confirm("Hapus buah ini?")) {
-        db.collection("buah").doc(id).delete().then(loadFruits);
-      }
-    }
-
-    // 6. Simpan form tambah/edit buah
-    document.getElementById("fruitForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const nama = fruitName.value;
-      const harga = parseInt(fruitPrice.value);
-      const stok = parseInt(fruitStock.value);
-      const docId = fruitForm.dataset.editId;
-      const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
-      const data = { nama, harga, stok };
-      (docId ? ref.update(data) : ref.add(data)).then(() => {
-        fruitForm.reset();
-        delete fruitForm.dataset.editId;
-        loadFruits();
-      });
-    });
-
-    // 7. === NOTIFIKASI PESANAN ===
-    const sound = document.getElementById("notifSound");
-    let terakhirDitampilkan = "";
-
-    // ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
-    let audioSudahDiizinkan = false;
-    document.addEventListener("click", () => {
-      if (!audioSudahDiizinkan) {
-        sound.play().catch(() => {});
-        sound.pause();
-        sound.currentTime = 0;
-        audioSudahDiizinkan = true;
-      }
-    });
-
-
-
-  function tampilkanPopupPesanan(data) {
-  const items = data.items || [];
-  let isi = "";
-  let total = 0;
-  items.forEach(item => {
-    const subtotal = item.harga * item.jumlah;
-    total += subtotal;
-    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-  });
-  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-  document.getElementById("popupIsiPesanan").innerHTML = isi;
-  document.getElementById("popupPesanan").style.display = "flex";
-
-  // ✅ Cek terus, kalau popup ditutup, barulah loadFruits()
-  const cekPopupTutup = setInterval(() => {
-    const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
-    if (popupTertutup) {
-      loadFruits();
-      clearInterval(cekPopupTutup);
-    }
-  }, 1000); // cek tiap 1 detik
-}
- function tutupPopup() {
-  document.getElementById("popupPesanan").classList.add("hidden");
-
-  // Suara dimatikan
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-}
-
-function tutupDanKePesanan() {
-  document.getElementById("popupPesanan").classList.add("hidden");
-
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-  window.location.href = "navigator-input.html";
-}
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          const data = doc.data();
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-
-          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-            terakhirDitampilkan = doc.id;
-            sound.play();
-
-            tampilkanPopupPesanan(data);
-
-            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-            document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-          } else {
-        
-          }
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         }
-      });
-    }
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'dibatalkan';
+                default: return '';
+            }
+        }
 
-    // 8. Jalankan saat halaman selesai dimuat
-    window.addEventListener("DOMContentLoaded", () => {
-      // ...kode lain seperti:
-      loadFruits();
-      cekPesananBaru();
-      setInterval(cekPesananBaru, 2200);
+        // --- Fungsi Utama: Muat Data Pesanan ---
+        function loadData(statusFilter = activeFilterStatus) {
+            showLoading();
+            daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
+            
+            // Update active filter button
+            filterButtons.forEach(btn => {
+                if (btn.dataset.status === statusFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            activeFilterStatus = statusFilter; // Set active filter
 
-      // ✅ Tambahkan ini
-      document.getElementById("navPesanan").addEventListener("click", function () {
-        this.classList.remove("berkedip-kuat");
-      });
-    });
-  </script>
+            let query = db.collection("pesanan").orderBy("waktu", "desc");
+
+            if (statusFilter !== 'All') {
+                query = query.where('status', '==', statusFilter);
+            }
+
+            query.get()
+                .then(snapshot => {
+                    hideLoading();
+
+                    let totalIncomeAllTime = 0;
+                    let totalOrderCount = 0;
+                    let todayIncome = 0;
+                    const now = new Date(); 
+                    now.setHours(0, 0, 0, 0); 
+
+                    daftar.innerHTML = ""; 
+
+                    let firstOrderTime = null; 
+
+                    if (snapshot.empty) {
+                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
+                    } else {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const orderId = doc.id; 
+                            
+                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
+                            
+                            if (isNaN(waktu.getTime())) {
+                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
+                                return; 
+                            }
+
+                            if (!firstOrderTime) firstOrderTime = waktu; 
+
+                            const isToday = waktu.toDateString() === now.toDateString();
+                            const totalHarga = data.totalAmount || 0; 
+
+                            if (isToday) todayIncome += totalHarga;
+                            totalIncomeAllTime += totalHarga;
+                            totalOrderCount++;
+
+                            const customerName = data.customer?.fullName || "Pelanggan";
+                            const customerPhone = data.customer?.phoneNumber || "-";
+                            const currentStatus = data.status || "Pending";
+
+                            const itemsHtml = (data.items || []).map(item => {
+                                const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                                return `
+                                    <div style="margin-bottom: 5px;">
+                                        🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                    </div>
+                                `;
+                            }).join("");
+
+                            daftar.innerHTML += `
+                                <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
+                                    <div class='order-row-top'>
+                                        <div class='customer'>
+                                            <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
+                                            <div class='info'>
+                                                <div class='name'>${customerName}</div>
+                                                <div class='phone'>${customerPhone}</div>
+                                            </div>
+                                        </div>
+                                        <div class='meta'>
+                                            <div class='total'>${formatCurrency(totalHarga)}</div>
+                                            <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
+                                        </div>
+                                    </div>
+                                    <div class='order-row-bottom'>
+                                        <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                                        <div class='items'>${itemsHtml}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    // Update statistik berdasarkan SEMUA pesanan yang diambil oleh query aktif
+                    totalOrdersEl.textContent = totalOrderCount;
+                    todayIncomeEl.textContent = formatCurrency(todayIncome);
+                    avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
+                    lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
+
+                })
+                .catch(err => {
+                    hideLoading();
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
+                    console.error("Error loading orders from Firestore:", err); 
+                });
+        }
+
+        // --- Fungsi Popup Detail Pesanan ---
+        function tampilkanDetail(orderId) {
+            currentOrderIdForDetail = orderId;
+            db.collection("pesanan").doc(orderId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const customer = data.customer || {};
+                        const waktu = data.waktu?.toDate?.() || new Date(0); 
+                        const items = data.items || [];
+                        
+                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                        document.getElementById("popupAlamat").textContent = customer.address || "-";
+                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+                        
+                        const popupStatusEl = document.getElementById("popupStatus");
+                        const currentStatus = data.status || "Pending";
+                        popupStatusEl.textContent = currentStatus;
+                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+                        
+                        const statusUpdater = document.getElementById("statusUpdater");
+                        statusUpdater.value = currentStatus;
+                        
+                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                        const popupItemsHtml = items.map(item => {
+                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                            return `
+                                <div style="margin-bottom:5px;">
+                                    - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                </div>
+                            `;
+                        }).join("");
+                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+                        document.getElementById("popupDetail").style.display = "flex"; 
+                    } else {
+                        alert("Pesanan tidak ditemukan di database.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error getting order detail from Firestore:", error);
+                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
+                });
+        }
+
+        function tutupDetail() {
+            document.getElementById("popupDetail").style.display = "none";
+            currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
+        }
+
+        // --- Fungsi Update Status Pesanan ---
+        document.getElementById("statusUpdater").addEventListener("change", function() {
+            const newStatus = this.value;
+            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
+                db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                    status: newStatus
+                }).then(() => {
+                    alert("Status pesanan berhasil diperbarui!");
+                    tutupDetail(); // Tutup detail dan loadData akan dipanggil oleh tutupDetail
+                }).catch(error => {
+                    console.error("Error updating order status:", error);
+                    alert("Gagal memperbarui status pesanan.");
+                });
+            }
+        });
+
+        // --- Event Listeners untuk Tombol Filter ---
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                loadData(status); // Call loadData with the selected filter status
+            });
+        });
+
+        // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Perbaikan) ---
+        const sound = document.getElementById("notifSound");
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; // Persist ID notif terakhir
+        let sedangBerbunyi = false; // Flag untuk mengontrol suara
+
+        // Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
+        let audioSudahDiizinkan = false;
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                sound.play().catch(() => {}); // Play and catch error if not allowed
+                sound.pause();
+                sound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true }); // Hanya perlu sekali
+
+        function tampilkanPopupPesanan(data) {
+            const items = data.items || [];
+            let isi = "";
+            let total = 0;
+            items.forEach(item => {
+                const subtotal = (item.harga || 0) * (item.jumlah || 0);
+                total += subtotal;
+                isi += `<div><strong>${item.name || 'Produk Tidak Dikenal'}</strong> (${item.quantity || 0} x Rp ${item.price?.toLocaleString() || '0'})<br><small>${item.sambal || ''}, ${item.ukuran || ''}, ${item.bumbu || ''}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+            });
+            isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+            document.getElementById("popupIsiPesanan").innerHTML = isi;
+            document.getElementById("popupPesanan").style.display = "flex";
+            document.getElementById("popupPesanan").classList.remove("hidden"); // Pastikan kelas hidden dihapus
+        }
+
+        function tutupPopup() {
+            document.getElementById("popupPesanan").classList.add("hidden");
+            
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; // Reset flag sedang berbunyi
+
+            // Simpan waktu terakhir popup ditutup/dibaca DAN ID pesanan terakhir yang dilihat
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+
+            document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+            document.getElementById("navPesanan").classList.remove("berkedip-kuat"); 
+        }
+
+        function tutupDanKePesanan() {
+            tutupPopup(); // Reuse the logic to close popup and stop sound/animation
+            window.location.href = "pesanan.html"; // Pastikan ini mengarah ke halaman daftar pesanan
+        }
+
+        function cekPesananBaru() {
+            db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    const data = doc.data();
+                    const waktuPesanan = data.waktu?.toDate?.() || new Date();
+                    const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+
+                    // Cek apakah ada pesanan baru yang benar-benar berbeda dari yang terakhir kita tampilkan
+                    // DAN apakah waktu pesanan lebih baru dari terakhir kali kita "membuka" notifikasi
+                    if (doc.id !== terakhirDitampilkan && waktuPesanan > waktuBukaTerakhir) {
+                        terakhirDitampilkan = doc.id; // Update ID terakhir yang ditampilkan notifnya
+                        localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); // Simpan ke localStorage
+                        
+                        // Hanya putar suara jika belum berbunyi
+                        if (!sedangBerbunyi) {
+                            sound.play().catch(error => console.warn("Gagal memutar suara:", error));
+                            sedangBerbunyi = true; // Set flag sedang berbunyi
+                        }
+                        
+                        tampilkanPopupPesanan(data);
+
+                        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+                        document.getElementById("navPesanan").classList.add("berkedip-kuat");
+                    } else {
+                        // Jika pesanan yang dicek SAMA dengan yang terakhir ditampilkan DAN/ATAU sudah tidak lebih baru
+                        // Pastikan semua indikator notifikasi mati jika popup tidak terlihat
+                        if (document.getElementById("popupPesanan").classList.contains("hidden")) {
+                            sound.pause();
+                            sound.currentTime = 0;
+                            sedangBerbunyi = false;
+                            document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+                            document.getElementById("navPesanan").classList.remove("berkedip-kuat");
+                        }
+                    }
+                } else {
+                    // Jika tidak ada pesanan sama sekali, pastikan notifikasi mati
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sedangBerbunyi = false;
+                    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+                    document.getElementById("navPesanan").classList.remove("berkedip-kuat");
+                }
+            }).catch(error => {
+                console.error("Error fetching latest order:", error);
+                // Optional: Anda bisa juga mematikan suara dan kedip jika ada error Firebase
+                sound.pause();
+                sound.currentTime = 0;
+                sedangBerbunyi = false;
+                document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+                document.getElementById("navPesanan").classList.remove("berkedip-kuat");
+            });
+        }
+
+        // --- Jalankan saat halaman selesai dimuat ---
+        window.addEventListener("DOMContentLoaded", () => {
+            loadData('All'); // Memuat semua pesanan saat halaman dimuat
+            cekPesananBaru(); // Cek pesanan baru pertama kali
+            setInterval(cekPesananBaru, 2200); // Lakukan pengecekan setiap 2.2 detik
+
+            // Event listener untuk tombol navigasi "Pesanan"
+            document.getElementById("navPesanan").addEventListener("click", function () {
+                // Ketika navigasi ke Pesanan diklik, anggap notifikasi sudah dilihat
+                this.classList.remove("berkedip-kuat");
+                document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+                sound.pause();
+                sound.currentTime = 0;
+                sedangBerbunyi = false;
+                // Penting: Update localStorage agar tidak berbunyi lagi untuk pesanan ini
+                localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+                localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+            });
+
+            // Event listener untuk tombol lonceng notifikasi (di header)
+            document.getElementById("notifLonceng").addEventListener("click", function() {
+                // Ketika lonceng diklik, cek dan tampilkan popup jika ada pesanan baru
+                // Ini akan memicu cekPesananBaru lagi, yang akan menampilkan popup jika kondisi terpenuhi
+                cekPesananBaru(); 
+            });
+
+            // Tambahkan listener untuk menutup popup dengan ESC
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Escape" && document.getElementById("popupPesanan").style.display === "flex") {
+                    tutupPopup();
+                }
+            });
+
+            // Fungsi dummy untuk closeAuthModal dan input fruit (dari halaman lain)
+            // Ini agar tidak error jika tidak ada di halaman ini
+            window.closeAuthModal = function() {
+                document.getElementById('authModal').classList.add('hidden');
+            };
+            // Pastikan elemen-elemen ini ada jika fungsi ini dipanggil
+            const fruitName = document.getElementById('fruitName'); 
+            const fruitPrice = document.getElementById('fruitPrice');
+            const fruitStock = document.getElementById('fruitStock');
+            const fruitForm = document.getElementById('fruitForm');
+
+            // Fungsi dummy untuk loadFruits, editFruit, deleteFruit jika tidak ada di halaman ini
+            window.loadFruits = function() { console.log('loadFruits dummy called'); };
+            window.editFruit = function(id) { console.log('editFruit dummy called for:', id); };
+            window.deleteFruit = function(id) { console.log('deleteFruit dummy called for:', id); };
+            
+            // Event listener untuk form buah (jika ada di halaman ini)
+            if (fruitForm) {
+                fruitForm.addEventListener("submit", e => {
+                    e.preventDefault();
+                    const nama = fruitName.value;
+                    const harga = parseInt(fruitPrice.value);
+                    const stok = parseInt(fruitStock.value);
+                    const docId = fruitForm.dataset.editId;
+                    const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
+                    const data = { nama, harga, stok };
+                    (docId ? ref.update(data) : ref.add(data)).then(() => {
+                        fruitForm.reset();
+                        delete fruitForm.dataset.editId;
+                        loadFruits();
+                    }).catch(error => console.error("Error saving fruit:", error));
+                });
+            }
+        });
+    </script>
 </body>
 </html>
