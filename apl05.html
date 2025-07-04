@@ -424,15 +424,15 @@
 
     <script>
         // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
-     const firebaseConfig = {
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-  authDomain: "tokobuahkasir.firebaseapp.com",
-  projectId: "tokobuahkasir",
-  storageBucket: "tokobuahkasir.firebasestorage.app",
-  messagingSenderId: "731011133713",
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-  measurementId: "G-7CPE2DB2BV"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
 
         // Inisialisasi Firebase
         if (!firebase.apps.length) {
@@ -451,14 +451,16 @@
             try {
                 // Ambil semua dokumen dari koleksi 'buah', urutkan berdasarkan nama, dan filter yang isAvailable: true
                 const snapshot = await menuCollection
-                                            .where('isAvailable', '==', true) // Hanya tampilkan yang tersedia
-                                            .orderBy('nama')
-                                            .get();
+                                        .where('isAvailable', '==', true) // Hanya tampilkan yang tersedia
+                                        .orderBy('nama')
+                                        .get();
 
                 menuList.innerHTML = ''; // Kosongkan daftar menu
 
                 if (snapshot.empty) {
                     menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
+                    // TAMBAHAN DEBUGGING
+                    alert("DEBUG: Koleksi 'buah' kosong atau tidak ada yang isAvailable: true.");
                 } else {
                     snapshot.forEach(doc => {
                         const product = { id: doc.id, ...doc.data() }; // Sertakan doc.id juga
@@ -486,10 +488,14 @@
                         });
                         menuList.appendChild(card);
                     });
+                    // TAMBAHAN DEBUGGING
+                    alert(`DEBUG: Berhasil memuat ${snapshot.docs.length} menu.`);
                 }
             } catch (error) {
                 console.error("Error memuat menu dari Firebase: ", error);
                 menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
+                // TAMBAHAN DEBUGGING
+                alert("ERROR: Gagal memuat menu. Pesan: " + error.message);
             }
         }
 
@@ -545,7 +551,6 @@
 
         // Function to start auto-scrolling
         function startAutoScroll() {
-            // Cek apakah ada lebih dari 1 slide promo, jika tidak, tidak perlu auto-scroll
             if (promoSlides.length <= 1) return;
 
             const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
