@@ -150,7 +150,7 @@
           <p class="text-sm">Aplikasi Kasir Premium</p>
         </div>
       </div>
-      <button onclick="window.location.href='dashboard.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
+      <button onclick="window.location.href='apl05.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
         <i class="fas fa-arrow-left mr-1"></i> Kembali
       </button>
     </div>
@@ -160,10 +160,8 @@
   <main class="flex-1 px-3">
     <div class="container mx-auto">
       <div class="header-top mt-8 mb-6 gap-6 flex items-center">
-        <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
-       <button onclick="loadFruits()" class="btn btn-primary mr-4">
-  <i class="fas fa-sync-alt"></i> Refresh
-</button>
+        <button onclick="window.location.href='apl05.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
+        <button onclick="loadFruits()" class="btn btn-primary mr-4"><i class="fas fa-sync-alt"></i> Refresh</button>
         <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-2" style="font-size: 22px; color: #16a34a;"></i>
       </div>
       <div class="judul mt-6"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
@@ -189,7 +187,7 @@
     </div>
   </form>
 </div>
-<div id="loadingText" class="text-sm text-gray-500 mb-2 hidden">Merefresh data buah...</div>
+
      <div class="overflow-x-auto mt-6 pt-4">
         <table class="w-full min-w-max">
           <thead>
@@ -271,62 +269,143 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script>
     // 1. Konfigurasi Firebase
- <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-<script>
-  const db = firebase.firestore();
-  const sound = document.getElementById("notifSound");
-  let sedangBerbunyi = false;
-  let terakhirDitampilkan = "";
-  let audioSudahDiizinkan = false;
+    // 2. Utilitas format uang
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+    }
 
-  // Aktifkan audio hanya setelah interaksi user
-  document.addEventListener("click", () => {
-    if (!audioSudahDiizinkan && sound) {
-      try {
-        sound.play().then(() => {
-          sound.pause();
-          sound.currentTime = 0;
-          audioSudahDiizinkan = true;
-        });
-      } catch (e) {
-        console.warn("Audio tidak bisa diputar otomatis:", e);
+    // 3. Fungsi tampilkan data buah
+    function loadFruits() {
+      db.collection("buah").orderBy("nama").get().then(snapshot => {
+        const fruitList = document.getElementById("fruitList");
+        fruitList.innerHTML = '';
+        if (snapshot.empty) {
+          fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
+        } else {
+          snapshot.forEach(doc => {
+            const d = doc.data();
+            fruitList.innerHTML += `
+              <tr class="border-b border-gray-100">
+                <td class="px-2 py-1 text-xs">${d.nama}</td>
+                <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
+                <td class="px-2 py-1 text-xs">${d.stok} kg</td>
+                <td class="px-2 py-1 text-xs">
+                  <button onclick="editFruit('${doc.id}')" class="btn btn-secondary mb-1 text-[10px] py-0.5 px-1">Edit</button>
+                  <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
+                </td>
+              </tr>`;
+          });
+        }
+      });
+    }
+
+    // 4. Fungsi edit data buah
+    function editFruit(id) {
+      db.collection("buah").doc(id).get().then(doc => {
+        const d = doc.data();
+        fruitName.value = d.nama;
+        fruitPrice.value = d.harga;
+        fruitStock.value = d.stok;
+        fruitForm.dataset.editId = id;
+      });
+    }
+
+    // 5. Fungsi hapus buah
+    function deleteFruit(id) {
+      if (confirm("Hapus buah ini?")) {
+        db.collection("buah").doc(id).delete().then(loadFruits);
       }
     }
-  });
 
-  // Fungsi tampilkan data buah
-  function loadFruits() {
-    console.log("Memuat ulang data buah...");
-    const fruitList = document.getElementById("fruitList");
-    fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat...</td></tr>';
-
-    db.collection("buah").orderBy("nama").get().then(snapshot => {
-      fruitList.innerHTML = '';
-      if (snapshot.empty) {
-        fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
-      } else {
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          fruitList.innerHTML += `
-            <tr class="border-b border-gray-100">
-              <td class="px-2 py-1 text-xs">${d.nama}</td>
-              <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
-              <td class="px-2 py-1 text-xs">${d.stok} kg</td>
-              <td class="px-2 py-1 text-xs">
-                <button onclick="editFruit('${doc.id}')" class="btn btn-secondary text-[10px] py-0.5 px-1">Edit</button>
-                <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
-              </td>
-            </tr>`;
-        });
-      }
-    }).catch(err => {
-      fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Gagal memuat data</td></tr>';
-      console.error("Gagal memuat buah:", err);
+    // 6. Simpan form tambah/edit buah
+    document.getElementById("fruitForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const nama = fruitName.value;
+      const harga = parseInt(fruitPrice.value);
+      const stok = parseInt(fruitStock.value);
+      const docId = fruitForm.dataset.editId;
+      const ref = docId ? db.collection("buah").doc(docId) : db.collection("buah");
+      const data = { nama, harga, stok };
+      (docId ? ref.update(data) : ref.add(data)).then(() => {
+        fruitForm.reset();
+        delete fruitForm.dataset.editId;
+        loadFruits();
+      });
     });
-  }
 
-  // Fungsi cek pesanan baru
+  // 7. === NOTIFIKASI PESANAN ===
+const sound = document.getElementById("notifSound");
+let sedangBerbunyi = false; // ✅ tambahan penting
+let terakhirDitampilkan = "";
+
+// ✅ Aktifkan suara setelah klik pertama (agar tidak diblokir browser)
+let audioSudahDiizinkan = false;
+document.addEventListener("click", () => {
+  if (!audioSudahDiizinkan) {
+    sound.play().catch(() => {});
+    sound.pause();
+    sound.currentTime = 0;
+    audioSudahDiizinkan = true;
+  }
+});
+
+
+
+  function tampilkanPopupPesanan(data) {
+  const items = data.items || [];
+  let isi = "";
+  let total = 0;
+  items.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+  });
+  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+  document.getElementById("popupIsiPesanan").innerHTML = isi;
+  document.getElementById("popupPesanan").style.display = "flex";
+
+  // ✅ Cek terus, kalau popup ditutup, barulah loadFruits()
+  const cekPopupTutup = setInterval(() => {
+    const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
+    if (popupTertutup) {
+      loadFruits();
+      clearInterval(cekPopupTutup);
+    }
+  }, 1000); // cek tiap 1 detik
+}
+function tutupPopup() {
+  document.getElementById("popupPesanan").classList.add("hidden");
+
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
+
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+  document.getElementById("navPesanan").classList.remove("berkedip-kuat"); // ✅ tambahan
+}
+
+function tutupDanKePesanan() {
+  tutupPopup(); // ✅ panggil fungsi di atas biar DRY (tidak ulang ulang)
+
+  window.location.href = "pesanan.html"; // ✅ arahkan ke file yang sudah kamu pakai
+}
+    <script>
+  let sedangBerbunyi = false; // ✅ Tambahan penting
+  const sound = document.getElementById("notifSound"); // Pastikan ini dideklarasikan di atas ya
+
   function cekPesananBaru() {
     db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
       if (!snapshot.empty) {
@@ -339,7 +418,8 @@
         if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
           terakhirDitampilkan = doc.id;
 
-          if (doc.id !== idTerakhirBunyi && !sedangBerbunyi && sound) {
+          // ✅ Bunyi hanya jika ID belum dibunyikan dan suara belum aktif
+          if (doc.id !== idTerakhirBunyi && !sedangBerbunyi) {
             sound.play().catch(() => {});
             sedangBerbunyi = true;
             localStorage.setItem("idPesananTerakhirDibunyikan", doc.id);
@@ -347,54 +427,12 @@
 
           tampilkanPopupPesanan(data);
 
-          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+          // Efek berkedip
+          document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+          document.getElementById("navPesanan").classList.add("berkedip-kuat");
         }
       }
-    }).catch(err => {
-      console.error("Gagal cek pesanan baru:", err);
     });
-  }
-
-  function tampilkanPopupPesanan(data) {
-    const items = data.items || [];
-    let isi = "";
-    let total = 0;
-
-    items.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-    });
-
-    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
-    document.getElementById("popupPesanan").style.display = "flex";
-
-    const cekPopupTutup = setInterval(() => {
-      const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
-      if (popupTertutup) {
-        loadFruits();
-        clearInterval(cekPopupTutup);
-      }
-    }, 1000);
-  }
-
-  function tutupPopup() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    if (sound) {
-      sound.pause();
-      sound.currentTime = 0;
-    }
-    sedangBerbunyi = false;
-    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
-  }
-
-  function tutupDanKePesanan() {
-    tutupPopup();
-    window.location.href = "pesanan.html";
   }
 
   // Saat halaman dimuat
@@ -403,16 +441,14 @@
     cekPesananBaru();
     setInterval(cekPesananBaru, 2200);
 
-    document.getElementById("navPesanan")?.addEventListener("click", function () {
+    // Matikan berkedip saat nav diklik
+    document.getElementById("navPesanan").addEventListener("click", function () {
       this.classList.remove("berkedip-kuat");
     });
   });
 
-  // Format uang
-  function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
-  }
 
-</script>
+   
+  </script>
 </body>
 </html>
