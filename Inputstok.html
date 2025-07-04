@@ -409,30 +409,33 @@ function tutupDanKePesanan() {
 
   window.location.href = "navigator-input.html";
 }
-    function cekPesananBaru() {
-      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        if (!snapshot.empty) {
-          const doc = snapshot.docs[0];
-          const data = doc.data();
-          const waktuPesanan = data.waktu?.toDate?.() || new Date();
-          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+   function cekPesananBaru() {
+  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      const waktuPesanan = data.waktu?.toDate?.() || new Date();
+      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+      const terakhirBunyi = localStorage.getItem("pesananTerakhirBunyi") || "";
 
-          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-            terakhirDitampilkan = doc.id;
-            sound.play();
+      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+        terakhirDitampilkan = doc.id;
 
-            tampilkanPopupPesanan(data);
-
-            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
-            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-            document.getElementById("navPesanan").classList.add("berkedip-kuat");
-
-          } else {
-        
-          }
+        // ✅ Bunyi hanya jika ID belum pernah dibunyikan
+        if (doc.id !== terakhirBunyi) {
+          sound.play();
+          localStorage.setItem("pesananTerakhirBunyi", doc.id);
         }
-      });
+
+        tampilkanPopupPesanan(data);
+
+        // Efek lonceng berkedip
+        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+        document.getElementById("navPesanan").classList.add("berkedip-kuat");
+      }
     }
+  });
+}
 
     // 8. Jalankan saat halaman selesai dimuat
     window.addEventListener("DOMContentLoaded", () => {
