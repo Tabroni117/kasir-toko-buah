@@ -383,58 +383,89 @@
     }
   }, 1000); // cek tiap 1 detik
 }
- function tutupPopup() {
-  document.getElementById("popupPesanan").classList.add("hidden");
+function tutupPopup() {
+    document.getElementById("popupPesanan").classList.add("hidden");
+    
+    sound.pause();
+    sound.currentTime = 0;
+    sedangBerbunyi = false; // ✅ Reset flag sedang berbunyi
 
-  // Suara dimatikan
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
+    // Simpan waktu terakhir popup ditutup/dibaca DAN ID pesanan terakhir yang dilihat
+    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+    localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); // Ini penting!
 
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+    document.getElementById("navPesanan").classList.remove("berkedip-kuat"); 
 }
 
 function tutupDanKePesanan() {
-  document.getElementById("popupPesanan").classList.add("hidden");
-
-  sound.pause();
-  sound.currentTime = 0;
-  sedangBerbunyi = false;
-
-  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-
-  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-
-  window.location.href = "navigator-input.html";
+    tutupPopup(); // ✅ Reuse the logic to close popup and stop sound/animation
+    window.location.href = "pesanan.html"; 
 }
-   function cekPesananBaru() {
-  db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const data = doc.data();
-      const waktuPesanan = data.waktu?.toDate?.() || new Date();
-      const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-      const terakhirBunyi = localStorage.getItem("pesananTerakhirBunyi") || "";
+  function cekPesananBaru() {
+    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+        const notifLonceng = document.getElementById("notifLonceng");
+        const navPesanan = document.getElementById("navPesanan");
+        const popupPesanan = document.getElementById("popupPesanan"); // Ambil referensi popup notifikasi
 
-      if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
-        terakhirDitampilkan = doc.id;
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            const data = doc.data();
+            const waktuPesanan = data.waktu?.toDate?.() || new Date();
+            const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); // Waktu terakhir popup ditutup/dibaca
+            const terakhirBunyi = localStorage.getItem("pesananTerakhirBunyi") || ""; // ID pesanan terakhir yang memicu suara
 
-        // ✅ Bunyi hanya jika ID belum pernah dibunyikan
-        if (doc.id !== terakhirBunyi) {
-          sound.play();
-          localStorage.setItem("pesananTerakhirBunyi", doc.id);
+            // KONDISI UNTUK MUNCULKAN NOTIFIKASI
+            // Notifikasi muncul jika:
+            // 1. Ada pesanan baru yang ID-nya belum pernah ditampilkan (untuk kedip/popup)
+            // 2. Waktu pesanan lebih baru dari waktu terakhir kali pengguna menandai sebagai "sudah dibuka"
+            if (doc.id !== terakhirDitampilkan && waktuPesanan > waktuBukaTerakhir) {
+                terakhirDitampilkan = doc.id; // Simpan ID ini agar tidak double trigger dalam interval yang sama
+
+                // ✅ Bunyi hanya jika ID pesanan belum pernah dibunyikan (atau jika ada pesanan baru yang ID-nya berbeda dari terakhir bunyi)
+                if (doc.id !== terakhirBunyi) {
+                    sound.play().catch(error => console.warn("Gagal memutar suara:", error));
+                    // Tandai bahwa suara sedang berbunyi
+                    sedangBerbunyi = true; // Pastikan Anda memiliki variabel global ini
+                    localStorage.setItem("pesananTerakhirBunyi", doc.id); // Simpan ID pesanan yang baru dibunyikan
+                }
+
+                // Tampilkan popup pesanan baru
+                tampilkanPopupPesanan(data);
+
+                // Tambahkan efek berkedip
+                notifLonceng.classList.add("berkedip-kuat");
+                navPesanan.classList.add("berkedip-kuat");
+
+            } else {
+                // KONDISI UNTUK MEMATIKAN NOTIFIKASI
+                // Jika tidak ada pesanan baru yang memenuhi kriteria di atas:
+                // Pastikan suara berhenti dan efek kedip mati, HANYA JIKA popup sedang tidak terlihat
+                if (popupPesanan.classList.contains("hidden")) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sedangBerbunyi = false; // Set flag sedang berbunyi menjadi false
+                    notifLonceng.classList.remove("berkedip-kuat");
+                    navPesanan.classList.remove("berkedip-kuat");
+                }
+            }
+        } else {
+            // KONDISI JIKA TIDAK ADA PESANAN SAMA SEKALI di Firebase
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; // Set flag sedang berbunyi menjadi false
+            notifLonceng.classList.remove("berkedip-kuat");
+            navPesanan.classList.remove("berkedip-kuat");
         }
-
-        tampilkanPopupPesanan(data);
-
-        // Efek lonceng berkedip
-        document.getElementById("notifLonceng").classList.add("berkedip-kuat");
-        document.getElementById("navPesanan").classList.add("berkedip-kuat");
-      }
-    }
-  });
+    }).catch(error => {
+        console.error("Error fetching latest order:", error);
+        // Jika ada error dalam mengambil data, matikan juga notifikasi
+        sound.pause();
+        sound.currentTime = 0;
+        sedangBerbunyi = false; // Set flag sedang berbunyi menjadi false
+        notifLonceng.classList.remove("berkedip-kuat");
+        navPesanan.classList.remove("berkedip-kuat");
+    });
 }
 
     // 8. Jalankan saat halaman selesai dimuat
