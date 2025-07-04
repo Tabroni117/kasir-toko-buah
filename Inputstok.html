@@ -161,7 +161,9 @@
     <div class="container mx-auto">
       <div class="header-top mt-8 mb-6 gap-6 flex items-center">
         <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary mr-4"><i class="fas fa-arrow-left"></i> Dashboard</button>
-        <button onclick="loadFruits()" class="btn btn-primary mr-4"><i class="fas fa-sync-alt"></i> Refresh</button>
+       <button onclick="loadFruits()" class="btn btn-primary mr-4">
+  <i class="fas fa-sync-alt"></i> Refresh
+</button>
         <i id="notifLonceng" class="fa-solid fa-bell ml-auto mr-2" style="font-size: 22px; color: #16a34a;"></i>
       </div>
       <div class="judul mt-6"><i class="fas fa-leaf"></i> RUJAK BUAH INDONESIA</div>
@@ -187,7 +189,7 @@
     </div>
   </form>
 </div>
-
+<div id="loadingText" class="text-sm text-gray-500 mb-2 hidden">Merefresh data buah...</div>
      <div class="overflow-x-auto mt-6 pt-4">
         <table class="w-full min-w-max">
           <thead>
@@ -286,30 +288,35 @@
     }
 
     // 3. Fungsi tampilkan data buah
-    function loadFruits() {
-      db.collection("buah").orderBy("nama").get().then(snapshot => {
-        const fruitList = document.getElementById("fruitList");
-        fruitList.innerHTML = '';
-        if (snapshot.empty) {
-          fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
-        } else {
-          snapshot.forEach(doc => {
-            const d = doc.data();
-            fruitList.innerHTML += `
-              <tr class="border-b border-gray-100">
-                <td class="px-2 py-1 text-xs">${d.nama}</td>
-                <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
-                <td class="px-2 py-1 text-xs">${d.stok} kg</td>
-                <td class="px-2 py-1 text-xs">
-                  <button onclick="editFruit('${doc.id}')" class="btn btn-secondary mb-1 text-[10px] py-0.5 px-1">Edit</button>
-                  <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
-                </td>
-              </tr>`;
-          });
-        }
+   function loadFruits() {
+  const loadingText = document.getElementById("loadingText");
+  loadingText.classList.remove("hidden");
+
+  db.collection("buah").orderBy("nama").get().then(snapshot => {
+    const fruitList = document.getElementById("fruitList");
+    fruitList.innerHTML = '';
+    if (snapshot.empty) {
+      fruitList.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data</td></tr>';
+    } else {
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        fruitList.innerHTML += `
+          <tr class="border-b border-gray-100">
+            <td class="px-2 py-1 text-xs">${d.nama}</td>
+            <td class="px-2 py-1 text-xs">${formatCurrency(d.harga)}</td>
+            <td class="px-2 py-1 text-xs">${d.stok} kg</td>
+            <td class="px-2 py-1 text-xs">
+              <button onclick="editFruit('${doc.id}')" class="btn btn-secondary mb-1 text-[10px] py-0.5 px-1">Edit</button>
+              <button onclick="deleteFruit('${doc.id}')" class="btn btn-primary text-[10px] py-0.5 px-1">Hapus</button>
+            </td>
+          </tr>`;
       });
     }
-
+    loadingText.classList.add("hidden");
+  }).catch(() => {
+    loadingText.classList.add("hidden");
+  });
+}
     // 4. Fungsi edit data buah
     function editFruit(id) {
       db.collection("buah").doc(id).get().then(doc => {
@@ -402,7 +409,7 @@ function tutupDanKePesanan() {
 
   window.location.href = "pesanan.html"; // ✅ arahkan ke file yang sudah kamu pakai
 }
-    <script>
+    
   let sedangBerbunyi = false; // ✅ Tambahan penting
   const sound = document.getElementById("notifSound"); // Pastikan ini dideklarasikan di atas ya
 
