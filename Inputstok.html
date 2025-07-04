@@ -291,8 +291,8 @@
  <nav class="app-nav !p-2 !bg-white !shadow-md">
     <a href="apl05.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
     <a href="dashboard.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
-    <a href="pesanan.html" id="navPesanan" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
-    <a href="home.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
+    <a href="navigator-input.html" id="navPesanan" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+    <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
   </nav>
 
 
@@ -410,55 +410,28 @@
 
 
 
-// Menampilkan popup
   function tampilkanPopupPesanan(data) {
-    const items = data.items || [];
-    let isi = "", total = 0;
-    items.forEach(item => {
-      const subtotal = item.harga * item.jumlah;
-      total += subtotal;
-      isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
-    });
-    isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
-    document.getElementById("popupIsiPesanan").innerHTML = isi;
-    document.getElementById("popupPesanan").style.display = "flex";
+  const items = data.items || [];
+  let isi = "";
+  let total = 0;
+  items.forEach(item => {
+    const subtotal = item.harga * item.jumlah;
+    total += subtotal;
+    isi += `<div><strong>${item.nama}</strong> (${item.jumlah} x Rp ${item.harga.toLocaleString()})<br><small>${item.sambal}, ${item.ukuran}, ${item.bumbu}</small><br><strong>Subtotal: Rp ${subtotal.toLocaleString()}</strong></div><hr>`;
+  });
+  isi += `<strong>Total: Rp ${total.toLocaleString()}</strong>`;
+  document.getElementById("popupIsiPesanan").innerHTML = isi;
+  document.getElementById("popupPesanan").style.display = "flex";
 
-    // Cek apakah popup ditutup, lalu refresh buah
-    const cekPopupTutup = setInterval(() => {
-      if (document.getElementById("popupPesanan").classList.contains("hidden")) {
-        clearInterval(cekPopupTutup);
-      }
-    }, 1000);
-  }
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // ✅ Cek terus, kalau popup ditutup, barulah loadFruits()
+  const cekPopupTutup = setInterval(() => {
+    const popupTertutup = document.getElementById("popupPesanan").classList.contains("hidden");
+    if (popupTertutup) {
+      loadFruits();
+      clearInterval(cekPopupTutup);
+    }
+  }, 1000); // cek tiap 1 detik
+}
 
 
 
@@ -467,60 +440,98 @@
 
 
     
- function tutupPopup() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    sound.pause(); sound.currentTime = 0;
-    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
-    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
-  }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+  function tutupPopup() {
+  document.getElementById("popupPesanan").classList.add("hidden");
+
+  // Suara dimatikan
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
+
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+}
 
 function tutupDanKePesanan() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    sound.pause(); sound.currentTime = 0;
-    localStorage.setItem("pesananTerakhirDitampilkan", terakhirDitampilkan);
-    document.getElementById("notifLonceng")?.classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan")?.classList.remove("berkedip-kuat");
-    window.location.href = "pesanan.html";
-  }
+  document.getElementById("popupPesanan").classList.add("hidden");
 
-<!-- ... HTML content di atas ... -->
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
 
-<!-- Audio notifikasi -->
-<audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
 
-<script>
-  const sound = document.getElementById("notifSound");
-  let terakhirDitampilkan = null;
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
 
-  function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const idBaru = doc.id;
+  window.location.href = "navigator-input.html";
+}
+    function cekPesananBaru() {
+      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          const waktuPesanan = data.waktu?.toDate?.() || new Date();
+          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
 
-        const terakhirSimpan = localStorage.getItem("pesananTerakhirDitampilkan");
+          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+            terakhirDitampilkan = doc.id;
+            sound.play();
 
-        if (terakhirSimpan !== null && idBaru !== terakhirSimpan) {
-          sound.play();
-          tampilkanPopupPesanan?.(data);
-          document.getElementById("notifLonceng")?.classList.add("berkedip-kuat");
-          document.getElementById("navPesanan")?.classList.add("berkedip-kuat");
+            tampilkanPopupPesanan(data);
+
+            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
+            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+            document.getElementById("navPesanan").classList.add("berkedip-kuat");
+
+          } else {
+        
+          }
         }
+      });
+    }
 
-        terakhirDitampilkan = idBaru;
-        localStorage.setItem("pesananTerakhirDitampilkan", idBaru);
-      }
+    // 8. Jalankan saat halaman selesai dimuat
+    window.addEventListener("DOMContentLoaded", () => {
+      // ...kode lain seperti:
+      loadFruits();
+      cekPesananBaru();
+      setInterval(cekPesananBaru, 2200);
+
+      // ✅ Tambahkan ini
+      document.getElementById("navPesanan").addEventListener("click", function () {
+        this.classList.remove("berkedip-kuat");
+      });
     });
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    cekPesananBaru();
-    setInterval(cekPesananBaru, 3000);
-  });
-</script>
-
+  </script>
 </body>
 </html>
