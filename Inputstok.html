@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Menu - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
@@ -106,6 +107,7 @@
             padding: 12px;
             text-align: left;
             vertical-align: top;
+            font-size: 0.9em; /* Sedikit perkecil font untuk kerapihan */
         }
         table th {
             background-color: #e8f5e9;
@@ -161,12 +163,63 @@
             border-color: #f5c6cb;
         }
 
-        /* Responsive adjustments */
+        /* --- Responsive Adjustments for Mobile --- */
         @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 20px;
+            body {
+                padding: 10px; /* Kurangi padding overall */
             }
+            .container {
+                margin: 10px auto;
+                padding: 15px; /* Kurangi padding container */
+            }
+            h1 {
+                font-size: 1.8em; /* Kecilkan ukuran judul */
+                margin-bottom: 20px;
+            }
+            .form-section, .list-section {
+                padding: 15px; /* Kurangi padding section */
+            }
+            .form-group input[type="text"],
+            .form-group input[type="number"],
+            .form-group textarea {
+                width: 100%; /* Pastikan full width */
+                box-sizing: border-box; /* Pastikan padding masuk dalam width */
+            }
+            .button-group {
+                flex-direction: column; /* Tombol jadi vertikal */
+            }
+            .button-group button {
+                width: 100%;
+                margin-bottom: 10px; /* Jarak antar tombol vertikal */
+            }
+
+            /* --- Optimalisasi Tabel untuk Mobile --- */
+            .list-section {
+                overflow-x: auto; /* Aktifkan scroll horizontal untuk tabel jika terlalu lebar */
+                -webkit-overflow-scrolling: touch; /* Untuk smooth scrolling di iOS */
+            }
+            table {
+                display: block; /* Agar tabel tidak menjadi layout block */
+                white-space: nowrap; /* Mencegah konten tabel pecah baris */
+                width: max-content; /* Biarkan tabel lebarnya sesuai konten */
+                min-width: 100%; /* Tapi tetap minimal 100% dari container-nya */
+            }
+            table th, table td {
+                white-space: normal; /* Kembali ke normal untuk teks di dalam sel */
+                font-size: 0.85em; /* Lebih kecil lagi untuk sel tabel */
+                box-sizing: border-box; /* Pastikan padding masuk dalam width sel */
+            }
+            table td img {
+                width: 60px; /* Perkecil gambar di mobile */
+                height: 60px;
+            }
+            .actions button {
+                font-size: 1em; /* Perkecil icon aksi */
+                margin-right: 5px;
+            }
+
+            /* Alternatif layout tabel (commented out, tapi bisa dicoba jika scroll kurang optimal)
+            
             table, thead, tbody, th, td, tr {
                 display: block;
             }
@@ -179,6 +232,7 @@
                 border: 1px solid #e0e0e0;
                 margin-bottom: 15px;
                 border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             }
             table td {
                 border: none;
@@ -186,6 +240,7 @@
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
+                font-size: 0.9em;
             }
             table td:before {
                 position: absolute;
@@ -197,7 +252,9 @@
                 text-align: left;
                 font-weight: bold;
                 color: #555;
+                line-height: 2.5; // Menyesuaikan tinggi
             }
+            // Definisikan content untuk setiap td:before
             table td:nth-of-type(1):before { content: "Nama:"; }
             table td:nth-of-type(2):before { content: "Harga:"; }
             table td:nth-of-type(3):before { content: "Stok (kg):"; }
@@ -209,10 +266,29 @@
             table td:nth-of-type(9):before { content: "Aksi:"; }
             table td:last-child {
                 border-bottom: 0;
+                padding-bottom: 10px; // Tambahkan padding bawah
             }
-            .button-group {
-                flex-direction: column;
+            table td img {
+                max-width: 100px; // Ukuran gambar di mobile
+                height: auto;
+                display: block; // Agar tidak inline
+                margin-top: 5px; // Sedikit jarak dari label
+                float: right; // Agar rata kanan dengan teks
             }
+            */
+        }
+
+        /* Specific for isAvailable checkbox */
+        .form-group #isAvailable {
+            width: auto; /* Checkbox tidak perlu full width */
+            margin-left: 10px;
+            transform: scale(1.2); /* Sedikit perbesar checkbox */
+            vertical-align: middle;
+        }
+        .form-group #isAvailable + label { /* Label setelah checkbox */
+            display: inline-block;
+            margin-bottom: 0;
+            font-weight: normal;
         }
     </style>
 </head>
@@ -253,8 +329,9 @@
                     <input type="text" id="deliveryTime" placeholder="Contoh: 15-25 menit">
                 </div>
                 <div class="form-group">
-                    <label for="isAvailable">Tersedia untuk Pelanggan:</label>
-                    <input type="checkbox" id="isAvailable" checked>
+                    <label>
+                        <input type="checkbox" id="isAvailable" checked> Tersedia untuk Pelanggan
+                    </label>
                 </div>
                 <div class="button-group">
                     <button type="submit" class="primary" id="submitButton">Tambah Menu</button>
@@ -287,9 +364,8 @@
 
     <script>
         // Konfigurasi Firebase Anda (PASTIKAN INI SUDAH ADA DAN BENAR DARI PROYEK ANDA)
-        // Contoh:
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
+            apiKey: "YOUR_API_KEY", // Ganti dengan API Key Anda
             authDomain: "YOUR_AUTH_DOMAIN",
             projectId: "YOUR_PROJECT_ID",
             storageBucket: "YOUR_STORAGE_BUCKET",
@@ -370,9 +446,8 @@
                 rating: rating,
                 deliveryTime: deliveryTime,
                 isAvailable: isAvailable,
-                // Anda bisa menambahkan timestamp jika diperlukan
-                // createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                // updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: currentEditId ? undefined : firebase.firestore.FieldValue.serverTimestamp(), // Hanya saat tambah baru
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp() // Selalu update saat edit/tambah
             };
 
             try {
@@ -404,7 +479,7 @@
                     stokInput.value = data.stok;
                     deskripsiInput.value = data.deskripsi || '';
                     imageUrlInput.value = data.imageUrl || '';
-                    ratingInput.value = data.rating || '';
+                    ratingInput.value = data.rating !== null ? data.rating : ''; // Ubah null ke string kosong untuk input
                     deliveryTimeInput.value = data.deliveryTime || '';
                     isAvailableInput.checked = data.isAvailable !== undefined ? data.isAvailable : true; // Default true
                     submitButton.textContent = 'Update Menu';
@@ -438,43 +513,60 @@
         // --- Realtime Listener untuk Menampilkan Buah ---
         menuCollection.orderBy('nama').onSnapshot((snapshot) => {
             menuTableBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi ulang
-            snapshot.forEach((doc) => {
-                const data = doc.data();
+            if (snapshot.empty) {
                 const row = menuTableBody.insertRow();
-                row.insertCell(0).textContent = data.nama;
-                row.insertCell(1).textContent = `Rp ${data.harga.toLocaleString('id-ID')}`;
-                row.insertCell(2).textContent = `${data.stok} kg`;
-                row.insertCell(3).textContent = data.deskripsi || '-';
-                const imgCell = row.insertCell(4);
-                if (data.imageUrl) {
-                    const img = document.createElement('img');
-                    img.src = data.imageUrl;
-                    img.alt = data.nama;
-                    imgCell.appendChild(img);
-                } else {
-                    imgCell.textContent = '-';
-                }
-                row.insertCell(5).textContent = data.rating !== null ? data.rating : '-';
-                row.insertCell(6).textContent = data.deliveryTime || '-';
-                row.insertCell(7).textContent = data.isAvailable ? 'Ya' : 'Tidak';
+                const cell = row.insertCell(0);
+                cell.colSpan = 9; // Sesuaikan dengan jumlah kolom
+                cell.textContent = 'Belum ada data menu.';
+                cell.style.textAlign = 'center';
+                cell.style.padding = '20px';
+            } else {
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const row = menuTableBody.insertRow();
+                    row.insertCell(0).textContent = data.nama;
+                    row.insertCell(1).textContent = `Rp ${data.harga.toLocaleString('id-ID')}`;
+                    row.insertCell(2).textContent = `${data.stok} kg`;
+                    row.insertCell(3).textContent = data.deskripsi || '-';
+                    const imgCell = row.insertCell(4);
+                    if (data.imageUrl) {
+                        const img = document.createElement('img');
+                        img.src = data.imageUrl;
+                        img.alt = data.nama;
+                        imgCell.appendChild(img);
+                    } else {
+                        imgCell.textContent = '-';
+                    }
+                    row.insertCell(5).textContent = data.rating !== null ? data.rating : '-';
+                    row.insertCell(6).textContent = data.deliveryTime || '-';
+                    row.insertCell(7).textContent = data.isAvailable ? 'Ya' : 'Tidak';
 
-                const actionsCell = row.insertCell(8);
-                const editButton = document.createElement('button');
-                editButton.innerHTML = '<i class="fas fa-edit"></i>';
-                editButton.title = 'Edit';
-                editButton.addEventListener('click', () => loadMenuForEdit(doc.id));
-                actionsCell.appendChild(editButton);
+                    const actionsCell = row.insertCell(8);
+                    actionsCell.classList.add('actions');
+                    const editButton = document.createElement('button');
+                    editButton.innerHTML = '<i class="fas fa-edit"></i> Edit'; // Tambahkan teks "Edit"
+                    editButton.title = 'Edit';
+                    editButton.addEventListener('click', () => loadMenuForEdit(doc.id));
+                    actionsCell.appendChild(editButton);
 
-                const deleteButton = document.createElement('button');
-                deleteButton.classList.add('delete');
-                deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                deleteButton.title = 'Hapus';
-                deleteButton.addEventListener('click', () => deleteMenu(doc.id));
-                actionsCell.appendChild(deleteButton);
-            });
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete');
+                    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus'; // Tambahkan teks "Hapus"
+                    deleteButton.title = 'Hapus';
+                    deleteButton.addEventListener('click', () => deleteMenu(doc.id));
+                    actionsCell.appendChild(deleteButton);
+                });
+            }
         }, (error) => {
             console.error("Error saat mengambil data menu: ", error);
             showMessage('Gagal memuat daftar menu.', 'error');
+            const row = menuTableBody.insertRow();
+            const cell = row.insertCell(0);
+            cell.colSpan = 9;
+            cell.textContent = 'Terjadi kesalahan saat memuat data.';
+            cell.style.textAlign = 'center';
+            cell.style.color = 'red';
+            cell.style.padding = '20px';
         });
     </script>
 </body>
