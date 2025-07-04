@@ -383,128 +383,56 @@
     }
   }, 1000); // cek tiap 1 detik
 }
-function tutupPopup() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    
-    sound.pause();
-    sound.currentTime = 0;
-    sedangBerbunyi = false; // ✅ Reset flag sedang berbunyi
+ function tutupPopup() {
+  document.getElementById("popupPesanan").classList.add("hidden");
 
-    // Simpan waktu terakhir popup ditutup/dibaca DAN ID pesanan terakhir yang dilihat
-    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-    localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); // Ini penting!
+  // Suara dimatikan
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
 
-    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan").classList.remove("berkedip-kuat"); 
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
 }
 
 function tutupDanKePesanan() {
-    tutupPopup(); // ✅ Reuse the logic to close popup and stop sound/animation
-    window.location.href = "pesanan.html"; 
-}
----
-function cekPesananBaru() {
-    db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
-        const notifLonceng = document.getElementById("notifLonceng");
-        const navPesanan = document.getElementById("navPesanan");
-        const popupPesanan = document.getElementById("popupPesanan");
+  document.getElementById("popupPesanan").classList.add("hidden");
 
+  sound.pause();
+  sound.currentTime = 0;
+  sedangBerbunyi = false;
+
+  localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+
+  document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
+
+  window.location.href = "navigator-input.html";
+}
+    function cekPesananBaru() {
+      db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
         if (!snapshot.empty) {
-            const doc = snapshot.docs[0];
-            const data = doc.data();
-            const waktuPesanan = data.waktu?.toDate?.() || new Date();
-            // waktuBukaTerakhir: kapan terakhir user "mengakui" notifikasi (menutup popup/navigasi)
-            const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
-            // idPesananTerakhirDibunyikan: ID pesanan yang terakhir kali sukses memicu suara
-            const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          const waktuPesanan = data.waktu?.toDate?.() || new Date();
+          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
 
-            // Kondisi utama untuk memicu notifikasi (popup, kedip, dan suara)
-            // Notifikasi (visual dan popup) akan muncul jika:
-            // 1. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir diproses (untuk mencegah notifikasi berulang di satu sesi)
-            // 2. Waktu pesanan terbaru lebih baru dari waktu terakhir user "membuka" notifikasi
-            if (doc.id !== terakhirDitampilkan && waktuPesanan > waktuBukaTerakhir) {
-                // Update terakhirDitampilkan agar tidak memicu notifikasi visual berulang-ulang dalam satu sesi
-                terakhirDitampilkan = doc.id; 
-                localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); // Simpan ke localStorage juga
+          if (waktuPesanan > waktuBuka && doc.id !== terakhirDitampilkan) {
+            terakhirDitampilkan = doc.id;
+            sound.play();
 
-                // Logic untuk SUARA: Hanya berbunyi jika ID pesanan belum pernah dibunyikan sebelumnya
-                // dan suara belum sedang aktif berbunyi
-                if (doc.id !== idPesananTerakhirDibunyikan && !sedangBerbunyi) {
-                    sound.play().catch(error => {
-                        console.warn("Gagal memutar suara notifikasi:", error);
-                        // Tambahkan fallback atau pesan jika audio diblokir
-                    });
-                    sedangBerbunyi = true; // Tandai bahwa suara sedang berbunyi
-                    // Simpan ID pesanan yang baru saja memicu bunyi
-                    localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
-                }
+            tampilkanPopupPesanan(data);
 
-                // Tampilkan popup pesanan baru
-                tampilkanPopupPesanan(data);
+            // Tambahkan efek berkedip ke icon lonceng dan tombol pesanan
+            document.getElementById("notifLonceng").classList.add("berkedip-kuat");
+            document.getElementById("navPesanan").classList.add("berkedip-kuat");
 
-                // Aktifkan efek berkedip
-                notifLonceng.classList.add("berkedip-kuat");
-                navPesanan.classList.add("berkedip-kuat");
-
-            } else {
-                // Jika tidak ada pesanan baru yang memicu notifikasi,
-                // atau pesanan yang ada sudah ditangani sebelumnya:
-                // Pastikan suara berhenti dan efek kedip mati, HANYA JIKA popup sedang tidak terlihat
-                if (popupPesanan.classList.contains("hidden")) {
-                    sound.pause();
-                    sound.currentTime = 0;
-                    sedangBerbunyi = false; // Reset flag sedang berbunyi
-                    notifLonceng.classList.remove("berkedip-kuat");
-                    navPesanan.classList.remove("berkedip-kuat");
-                }
-            }
-        } else {
-            // Jika tidak ada pesanan sama sekali di Firebase
-            sound.pause();
-            sound.currentTime = 0;
-            sedangBerbunyi = false; // Reset flag sedang berbunyi
-            notifLonceng.classList.remove("berkedip-kuat");
-            navPesanan.classList.remove("berkedip-kuat");
+          } else {
+        
+          }
         }
-    }).catch(error => {
-        console.error("Error fetching latest order:", error);
-        // Jika ada error dalam mengambil data, matikan juga notifikasi
-        sound.pause();
-        sound.currentTime = 0;
-        sedangBerbunyi = false; // Reset flag sedang berbunyi
-        notifLonceng.classList.remove("berkedip-kuat");
-        navPesanan.classList.remove("berkedip-kuat");
-    });
-}
-
----
-
-```javascript
----
-function tutupPopup() {
-    document.getElementById("popupPesanan").classList.add("hidden");
-    
-    sound.pause();
-    sound.currentTime = 0;
-    sedangBerbunyi = false; // <<< Sangat penting: Hentikan suara dan reset flag ketika popup ditutup
-
-    // Simpan waktu saat ini sebagai waktu terakhir notifikasi "dibuka" oleh user
-    localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-    // idPesananTerakhirDibunyikan sudah di-set di cekPesananBaru, tidak perlu di-set ulang di sini
-    // kecuali jika Anda ingin memaksa bunyi lagi setelah popup ditutup dan ada pesanan baru yang sama
-    // Tapi untuk kasus "jangan berulang kalau sudah dibuka", ini sudah cukup.
-
-    // Matikan efek visual (lonceng berkedip)
-    document.getElementById("notifLonceng").classList.remove("berkedip-kuat");
-    document.getElementById("navPesanan").classList.remove("berkedip-kuat"); 
-}
-
-// Fungsi ini juga memanggil tutupPopup, jadi logikanya sudah tercakup
-function tutupDanKePesanan() {
-    tutupPopup(); 
-    window.location.href = "pesanan.html"; 
-}
-
+      });
+    }
 
     // 8. Jalankan saat halaman selesai dimuat
     window.addEventListener("DOMContentLoaded", () => {
