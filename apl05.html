@@ -459,43 +459,52 @@
 
                 if (snapshot.empty) {
                     menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
-                    // TAMBAHAN DEBUGGING
-                    alert("DEBUG: Koleksi 'buah' kosong atau tidak ada yang isAvailable: true.");
+                    // alert("DEBUG: Koleksi 'buah' kosong atau tidak ada yang isAvailable: true."); // DIKOMENTARI
                 } else {
                     snapshot.forEach(doc => {
-                        const product = { id: doc.id, ...doc.data() }; // Sertakan doc.id juga
+                        const productFromFirebase = { id: doc.id, ...doc.data() }; 
+
+                        // --- PEMETAAN FIELD UNTUK product-detail.html ---
+                        const productForDetail = {
+                            id: productFromFirebase.id,
+                            name: productFromFirebase.nama, // 'nama' dari Firebase -> 'name'
+                            description: productFromFirebase.deskripsi, // 'deskripsi' dari Firebase
+                            price: productFromFirebase.harga, // 'harga' dari Firebase
+                            image: productFromFirebase.imageUrl, // 'imageUrl' dari Firebase -> 'image'
+                            rating: productFromFirebase.rating,
+                            deliveryTime: productFromFirebase.deliveryTime,
+                            // Tambahkan properti lain yang mungkin dibutuhkan product-detail.html
+                            // contoh: stok: productFromFirebase.stok,
+                        };
+                        // --- AKHIR PEMETAAN FIELD ---
                         
                         const card = document.createElement('div');
-                        card.classList.add('restaurant-card', 'fade-in'); // Tambahkan animasi fade-in
+                        card.classList.add('restaurant-card', 'fade-in'); 
 
-                        // Gunakan data dari Firestore
+                        // Gunakan data yang sudah dipetakan
                         card.innerHTML = `
-                            <img src="${product.imageUrl || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.nama}" class="restaurant-image">
+                            <img src="${productForDetail.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
                             <div class="restaurant-info">
-                                <div class="restaurant-name">${product.nama}</div>
+                                <div class="restaurant-name">${productForDetail.name}</div>
                                 <div class="restaurant-meta">
-                                    <span class="rating"><i class="fas fa-star"></i> ${product.rating ? product.rating.toFixed(1) : 'N/A'}</span>
-                                    <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+                                    <span class="rating"><i class="fas fa-star"></i> ${productForDetail.rating ? productForDetail.rating.toFixed(1) : 'N/A'}</span>
+                                    <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
                                 </div>
                             </div>
                         `;
                         
-                        // Menambahkan event listener untuk setiap kartu menu
                         card.addEventListener('click', () => {
-                            // Simpan data produk ke sessionStorage agar bisa diakses di product-detail.html
-                            sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-                            window.location.href = 'product-detail.html'; // Arahkan ke halaman detail produk
+                            sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
+                            window.location.href = 'product-detail.html'; 
                         });
                         menuList.appendChild(card);
                     });
-                    // TAMBAHAN DEBUGGING
-                    alert(`DEBUG: Berhasil memuat ${snapshot.docs.length} menu.`);
+                    // alert(`DEBUG: Berhasil memuat ${snapshot.docs.length} menu.`); // DIKOMENTARI
                 }
             } catch (error) {
                 console.error("Error memuat menu dari Firebase: ", error);
                 menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
-                // TAMBAHAN DEBUGGING
-                alert("ERROR: Gagal memuat menu. Pesan: " + error.message);
+                // alert("ERROR: Gagal memuat menu. Pesan: " + error.message); // DIKOMENTARI
             }
         }
 
