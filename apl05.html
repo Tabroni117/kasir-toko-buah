@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -211,12 +216,12 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            cursor: pointer; /* Menambahkan cursor pointer */
-            transition: transform 0.2s; /* Efek hover */
+            cursor: pointer;
+            transition: transform 0.2s;
         }
 
         .restaurant-card:hover {
-            transform: translateY(-3px); /* Efek hover */
+            transform: translateY(-3px);
         }
 
         .restaurant-image {
@@ -275,7 +280,7 @@
             font-size: 10px;
             padding: 4px;
             transition: all 0.3s ease;
-            text-decoration: none; /* Menghilangkan underline pada link */
+            text-decoration: none;
         }
 
         .nav-item.active {
@@ -297,8 +302,15 @@
         .fade-in {
             animation: fadeIn 0.3s ease-out forwards;
         }
+
+        /* Loading message for menu list */
+        .menu-loading-message {
+            text-align: center;
+            padding: 20px;
+            color: #757575;
+            font-size: 1.1em;
+        }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -389,7 +401,8 @@
             <span class="see-all">Lihat Semua</span>
         </div>
         <div class="restaurants" id="menuList">
-            </div>
+            <p class="menu-loading-message">Memuat menu...</p>
+        </div>
 
         <div class="bottom-nav">
             <a href="apl05.html" class="nav-item active">
@@ -410,169 +423,150 @@
         </div>
 
     <script>
-        // Data Dummy Produk (nantinya bisa dari Database/API Firebase)
-        const products = [
-            {
-                id: 'rujak-mangga-muda-1',
-                name: 'Rujak Mangga Muda',
-                description: 'Rujak Mangga Muda segar dengan bumbu kacang yang kaya rasa, sedikit asam dan manis.',
-                price: 15000,
-                rating: 4.7,
-                deliveryTime: '15-25 menit',
-                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2e8de4da-f6d6-4632-aa94-9ea996ac0794.png'
-            },
-            {
-                id: 'rujak-mangga-mengkal-2',
-                name: 'Rujak Mangga Mengkal',
-                description: 'Rujak Mangga Mengkal dengan sambal gula merah pedas manis, tekstur renyah dan segar.',
-                price: 18000,
-                rating: 4.5,
-                deliveryTime: '20-30 menit',
-                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/113010a0-c964-4a62-b46e-1df28342edb3.png'
-            },
-            {
-                id: 'rujak-buah-campur-3',
-                name: 'Rujak Buah Campur',
-                description: 'Rujak buah campur segar dengan berbagai jenis buah pilihan seperti nanas, bengkuang, kedondong, dan mangga.',
-                price: 20000,
-                rating: 4.3,
-                deliveryTime: '10-20 menit',
-                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/1bb75819-549e-47ca-a336-5a427a32998e.png'
-            },
-            {
-                id: 'rujak-serut-4',
-                name: 'Rujak Serut',
-                description: 'Rujak serut dengan buah-buahan segar dipotong halus dan disiram bumbu rujak spesial.',
-                price: 16000,
-                rating: 4.8,
-                deliveryTime: '25-35 menit',
-                image: 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/eb311a39-3a9a-4d4b-88d7-c1968ed9e515.png'
-            },
-            {
-                id: 'rujak-jambu-kristal-5',
-                name: 'Rujak Jambu Kristal',
-                description: 'Jambu kristal renyah dipadukan dengan bumbu rujak pedas manis, sempurna untuk camilan sehat.',
-                price: 17000,
-                rating: 4.6,
-                deliveryTime: '18-28 menit',
-                image: 'https://cdn.discordapp.com/attachments/1119777555198908507/1258079088523315260/jambu.png?ex=66860d5b&is=6684bbdb&hm=1d22792d47f9f743ac5a525287e07d2ff626e257a3d3c11ff8541a77490ac9a2&' // Placeholder image
-            },
-            {
-                id: 'rujak-timun-wortel-6',
-                name: 'Rujak Timun Wortel',
-                description: 'Paduan segar timun dan wortel dengan bumbu rujak asam pedas, sangat menyegarkan.',
-                price: 13000,
-                rating: 4.2,
-                deliveryTime: '12-22 menit',
-                image: 'https://cdn.discordapp.com/attachments/1119777555198908507/1258079088217316372/timun.png?ex=66860d5b&is=6684bbdb&hm=e225139fb74291079d348a474d4ddf69c5e2d1dd2cf984a962a933fb9aa37575&' // Placeholder image
-            },
-            {
-                id: 'rujak-nanas-pedas-7',
-                name: 'Rujak Nanas Pedas',
-                description: 'Potongan nanas segar dengan bumbu rujak ekstra pedas, cocok untuk pecinta sensasi pedas.',
-                price: 14000,
-                rating: 4.4,
-                deliveryTime: '17-27 menit',
-                image: 'https://cdn.discordapp.com/attachments/1119777555198908507/1258079087806004244/nanas.png?ex=66860d5b&is=6684bbdb&hm=fb8a614d3345465e31718f4078864708779b50b556b26d83a48e78fc66b1a7d6&' // Placeholder image
-            },
-            {
-                id: 'rujak-kedondong-asam-8',
-                name: 'Rujak Kedondong Asam',
-                description: 'Kedondong renyah dengan bumbu rujak asam manis yang menggugah selera.',
-                price: 15500,
-                rating: 4.7,
-                deliveryTime: '20-30 menit',
-                image: 'https://cdn.discordapp.com/attachments/1119777555198908507/1258079087520698428/kedondong.png?ex=66860d5b&is=6684bbdb&hm=a15a81e9f450f3b46903f5697d096a583e743a39e38e6840d04085f1c97a216f&' // Placeholder image
+        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY", // Ganti dengan API Key Anda
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        const menuCollection = db.collection('buah'); // Mengambil data dari koleksi 'buah'
+
+        // --- Elemen Utama ---
+        const menuList = document.getElementById('menuList');
+
+        // --- Fungsi untuk Memuat dan Menampilkan Menu dari Firebase ---
+        async function renderMenuItems() {
+            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>'; // Tampilkan pesan loading
+
+            try {
+                // Ambil semua dokumen dari koleksi 'buah', urutkan berdasarkan nama, dan filter yang isAvailable: true
+                const snapshot = await menuCollection
+                                            .where('isAvailable', '==', true) // Hanya tampilkan yang tersedia
+                                            .orderBy('nama')
+                                            .get();
+
+                menuList.innerHTML = ''; // Kosongkan daftar menu
+
+                if (snapshot.empty) {
+                    menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
+                } else {
+                    snapshot.forEach(doc => {
+                        const product = { id: doc.id, ...doc.data() }; // Sertakan doc.id juga
+                        
+                        const card = document.createElement('div');
+                        card.classList.add('restaurant-card', 'fade-in'); // Tambahkan animasi fade-in
+
+                        // Gunakan data dari Firestore
+                        card.innerHTML = `
+                            <img src="${product.imageUrl || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.nama}" class="restaurant-image">
+                            <div class="restaurant-info">
+                                <div class="restaurant-name">${product.nama}</div>
+                                <div class="restaurant-meta">
+                                    <span class="rating"><i class="fas fa-star"></i> ${product.rating ? product.rating.toFixed(1) : 'N/A'}</span>
+                                    <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Menambahkan event listener untuk setiap kartu menu
+                        card.addEventListener('click', () => {
+                            // Simpan data produk ke sessionStorage agar bisa diakses di product-detail.html
+                            sessionStorage.setItem('selectedProduct', JSON.stringify(product));
+                            window.location.href = 'product-detail.html'; // Arahkan ke halaman detail produk
+                        });
+                        menuList.appendChild(card);
+                    });
+                }
+            } catch (error) {
+                console.error("Error memuat menu dari Firebase: ", error);
+                menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
             }
-        ];
+        }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Render menu items dynamically
-            const menuList = document.getElementById('menuList');
-            products.forEach((product, index) => {
-                const card = document.createElement('div');
-                card.classList.add('restaurant-card', 'fade-in');
-                card.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}" class="restaurant-image">
-                    <div class="restaurant-info">
-                        <div class="restaurant-name">${product.name}</div>
-                        <div class="restaurant-meta">
-                            <span class="rating"><i class="fas fa-star"></i> ${product.rating}</span>
-                            <span class="delivery-time">${product.deliveryTime}</span>
-                        </div>
-                    </div>
-                `;
-                // Menambahkan event listener untuk setiap kartu menu
-                card.addEventListener('click', () => {
-                    // Simpan data produk ke sessionStorage agar bisa diakses di product-detail.html
-                    sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-                    window.location.href = 'product-detail.html';
-                });
-                menuList.appendChild(card);
-            });
-
-
-            // Auto-scroll promo banner
-            const promoContainer = document.getElementById('promoSlides');
-            const promoSlides = document.querySelectorAll('.promo-slide');
-            let currentIndex = 0;
-            const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
+        // --- GPS functionality ---
+        const gpsIcon = document.querySelector('.gps-icon');
+        const deliveryInput = document.querySelector('.delivery-input');
+        
+        gpsIcon.addEventListener('click', function() {
+            this.classList.add('loading');
+            deliveryInput.placeholder = "Mendeteksi lokasi...";
             
-            function autoScroll() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const {latitude, longitude} = position.coords;
+                        try {
+                            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                            const data = await response.json();
+                            if (data.address) {
+                                const address = [
+                                    data.address.road,
+                                    data.address.village || data.address.town,
+                                    data.address.city,
+                                    data.address.state
+                                ].filter(Boolean).join(', ');
+                                deliveryInput.value = address;
+                            } else {
+                                deliveryInput.placeholder = "Alamat tidak ditemukan.";
+                            }
+                        } catch (error) {
+                            console.error("Error geocoding:", error);
+                            deliveryInput.placeholder = "Gagal mendapatkan alamat";
+                        }
+                        gpsIcon.classList.remove('loading');
+                    },
+                    (error) => {
+                        console.error("Error getting geolocation:", error);
+                        deliveryInput.placeholder = "Lokasi tidak dapat diakses";
+                        gpsIcon.classList.remove('loading');
+                    }
+                );
+            } else {
+                deliveryInput.placeholder = "GPS tidak didukung di browser ini";
+                gpsIcon.classList.remove('loading');
+            }
+        });
+
+        // --- Promo Banner Auto-Scroll ---
+        const promoContainer = document.getElementById('promoSlides');
+        const promoSlides = document.querySelectorAll('.promo-slide');
+        let currentIndex = 0;
+        let slideInterval;
+
+        // Function to start auto-scrolling
+        function startAutoScroll() {
+            // Cek apakah ada lebih dari 1 slide promo, jika tidak, tidak perlu auto-scroll
+            if (promoSlides.length <= 1) return;
+
+            const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
+            slideInterval = setInterval(() => {
                 currentIndex = (currentIndex + 1) % promoSlides.length;
                 promoContainer.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-            }
-            
-            setInterval(autoScroll, 3000); // Change slide every 3 seconds
+            }, 3000); // Ganti slide setiap 3 detik
+        }
 
-            // GPS functionality
-            const gpsIcon = document.querySelector('.gps-icon');
-            const deliveryInput = document.querySelector('.delivery-input');
-            
-            gpsIcon.addEventListener('click', function() {
-                this.classList.add('loading');
-                deliveryInput.placeholder = "Mendeteksi lokasi...";
-                
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            const {latitude, longitude} = position.coords;
-                            try {
-                                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                                const data = await response.json();
-                                if (data.address) {
-                                    const address = [
-                                        data.address.road,
-                                        data.address.village || data.address.town,
-                                        data.address.city,
-                                        data.address.state
-                                    ].filter(Boolean).join(', ');
-                                    deliveryInput.value = address;
-                                }
-                            } catch (error) {
-                                deliveryInput.placeholder = "Gagal mendapatkan alamat";
-                            }
-                            gpsIcon.classList.remove('loading');
-                        },
-                        (error) => {
-                            deliveryInput.placeholder = "Lokasi tidak dapat diakses";
-                            gpsIcon.classList.remove('loading');
-                        }
-                    );
-                } else {
-                    deliveryInput.placeholder = "GPS tidak didukung";
-                    gpsIcon.classList.remove('loading');
-                }
+        // --- Navigasi Aktif ---
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
             });
+        });
 
-            // Navigasi aktif
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
+        // --- Inisialisasi Halaman ---
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMenuItems(); // Muat menu dari Firebase saat DOM siap
+            startAutoScroll(); // Mulai auto-scroll promo banner
         });
     </script>
 </body>
