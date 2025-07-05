@@ -709,6 +709,29 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth(); 
+        
+        // --- Proteksi Halaman: Cek Status Login untuk PENJUAL ---
+    showLoading();   
+    auth.onAuthStateChanged(user => {
+    const isLoggingOut = localStorage.getItem('isLoggingOut');
+    if (isLoggingOut) {
+        localStorage.removeItem('isLoggingOut');
+    }
+
+    const storedRole = localStorage.getItem('userRole');
+
+    if (!user || storedRole !== 'penjual') {
+        if (!isLoggingOut) {
+            alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+        }
+        window.location.href = 'login.html';
+    } else {
+        // ✅ Lanjutkan jika user sah & role cocok
+        loadData('All');
+        cekPesananBaru();
+    }
+});
 
         // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
         const daftar = document.getElementById("daftarPesanan");
