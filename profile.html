@@ -140,7 +140,7 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn-edit-profile">Edit Profil</button>
+                <button id="editProfileButton" class="btn-edit-profile">Edit Profil</button>
                 <button id="logoutButton" class="btn-logout">Logout</button>
             </div>
         </div>
@@ -163,75 +163,72 @@
             firebase.initializeApp(firebaseConfig);
         }
         const auth = firebase.auth();
-        const db = firebase.firestore(); // Inisialisasi Firestore untuk data user profile
+        const db = firebase.firestore(); 
 
         const userEmailSpan = document.getElementById('userEmail');
-        const userNameSpan = document.getElementById('userName'); // NEW
-        const userAddressSpan = document.getElementById('userAddress'); // NEW
-        const userPhoneSpan = document.getElementById('userPhone'); // NEW
+        const userNameSpan = document.getElementById('userName'); 
+        const userAddressSpan = document.getElementById('userAddress'); 
+        const userPhoneSpan = document.getElementById('userPhone'); 
 
         const logoutButton = document.getElementById('logoutButton');
+        const editProfileButton = document.getElementById('editProfileButton'); // Dapatkan elemen tombol edit
         const loadingMessage = document.getElementById('loadingMessage');
         const profileContent = document.getElementById('profileContent');
 
         // Proteksi Halaman dan Tampilkan Info Profil
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Pengguna sudah login, ambil UID
                 const userUid = user.uid;
 
-                // Ambil data profil tambahan dari Firestore
                 db.collection('users').doc(userUid).get().then(doc => {
                     if (doc.exists) {
                         const userData = doc.data();
                         
-                        userNameSpan.textContent = userData.fullName || 'Belum diatur'; // Mengambil fullName
-                        userEmailSpan.textContent = userData.email || user.email; // Ambil dari Firestore atau Auth
-                        userAddressSpan.textContent = userData.address || 'Belum diatur'; // Asumsi ada field 'address'
-                        userPhoneSpan.textContent = userData.phoneNumber || 'Belum diatur'; // Asumsi ada field 'phoneNumber'
+                        userNameSpan.textContent = userData.fullName || 'Belum diatur'; 
+                        userEmailSpan.textContent = userData.email || user.email; 
+                        userAddressSpan.textContent = userData.address || 'Belum diatur'; 
+                        userPhoneSpan.textContent = userData.phoneNumber || 'Belum diatur'; 
 
                         loadingMessage.style.display = 'none';
                         profileContent.style.display = 'block';
                     } else {
-                        // User terautentikasi di Firebase Auth, tapi tidak ada profil di Firestore
-                        // Ini bisa terjadi jika pendaftaran belum lengkap atau ada bug.
                         alert('Profil Anda belum lengkap. Silakan hubungi admin atau perbarui profil.');
                         console.warn("User authenticated but no profile found in Firestore for UID:", userUid);
                         
-                        // Tampilkan setidaknya email dari Firebase Auth
                         userEmailSpan.textContent = user.email;
                         loadingMessage.style.display = 'none';
                         profileContent.style.display = 'block';
-                        // Opsional: Redirect ke halaman pengisian profil
-                        // window.location.href = 'complete-profile.html'; 
                     }
                 }).catch(error => {
                     console.error("Error fetching user data from Firestore:", error);
                     alert('Gagal memuat data profil. Silakan coba lagi atau hubungi admin.');
-                    auth.signOut(); // Log out on error
-                    window.location.href = 'index.html'; // Redirect to login
+                    auth.signOut(); 
+                    window.location.href = 'index.html'; 
                 });
 
             } else {
-                // Pengguna belum login, arahkan ke halaman login
                 alert('Anda harus login untuk melihat halaman profil.');
-                window.location.href = 'index.html'; // Ganti dengan halaman login Anda
+                window.location.href = 'index.html'; 
             }
+        });
+
+        // Fungsionalitas Tombol Edit Profil
+        editProfileButton.addEventListener('click', () => {
+            // Arahkan ke halaman edit profil
+            window.location.href = 'edit-profile.html'; // Kita akan buat file ini selanjutnya
         });
 
         // Fungsi Logout
         logoutButton.addEventListener('click', () => {
             auth.signOut().then(() => {
                 alert('Anda telah berhasil logout.');
-                // Hapus data keranjang lokal saat logout (opsional, tapi disarankan)
                 localStorage.removeItem('cart'); 
-                // Hapus semua data sesi yang tersimpan di localStorage terkait login
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('userUid');
 
-                window.location.href = 'index.html'; // Arahkan ke halaman login setelah logout
+                window.location.href = 'index.html'; 
             }).catch(error => {
                 console.error("Error during logout:", error);
                 alert('Gagal logout. Silakan coba lagi.');
