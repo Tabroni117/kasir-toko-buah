@@ -9,10 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-    <style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <style>
         :root {
             --primary: #16a34a;
             --primary-light: #22c55e;
@@ -53,14 +52,24 @@
             margin-bottom: 15px;
         }
         /* Penyesuaian untuk header-top agar elemennya berada di ujung */
-        .header-top .left-controls {
+        .header-top .app-info { 
             display: flex;
-            gap: 10px; /* Jarak antara tombol */
             align-items: center;
+            gap: 8px; 
         }
-        .header-top .right-controls {
+        .header-top .app-info .app-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .header-top .app-info .app-tagline {
+            font-size: 11px;
+            color: var(--secondary);
+        }
+
+        .header-top .right-controls { 
             display: flex;
-            gap: 10px; /* Jarak antara lonceng dan tombol kembali dashboard */
+            gap: 10px;
             align-items: center;
         }
 
@@ -88,7 +97,7 @@
             background: var(--primary-light);
             color: white;
         }
-        h1 {
+        h1 { 
             font-size: 16px;
             margin-bottom: 2px;
             color: var(--primary);
@@ -1002,12 +1011,12 @@
                     document.getElementById("popupWaktu").textContent = formatDate(data.waktu);
                     
                     // Tampilkan Nomor Pesanan di popup
-                    document.getElementById("popupOrderIdDisplay").textContent = displayIdForPopup; // BARIS INI DITAMBAHKAN/DIPASTIKAN ADA
+                    document.getElementById("popupOrderIdDisplay").textContent = displayIdForPopup; // ID elemen di HTML untuk popup
 
 
                     const statusEl = document.getElementById("popupStatus");
                     statusEl.textContent = data.status;
-                    statusEl.className = `status ${getStatusClass(currentStatus)}`; // Update class status
+                    statusEl.className = `status ${data.status.toLowerCase()}`; // Update class status
 
                     const statusUpdater = document.getElementById("statusUpdater");
                     statusUpdater.value = data.status; // Set dropdown value
@@ -1019,7 +1028,7 @@
 
                     const itemsContainer = document.getElementById("popupItems");
                     itemsContainer.innerHTML = ''; // Bersihkan konten sebelumnya
-                    if (data.items && data.data.items.length > 0) { // BUG: data.data.items harusnya data.items
+                    if (data.items && data.items.length > 0) { // BUG: data.data.items harusnya data.items
                         data.items.forEach(item => {
                             const itemDiv = document.createElement('div');
                             itemDiv.textContent = `${item.name} (${item.quantity}x) - ${formatCurrency(item.price)}`;
