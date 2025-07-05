@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Akun Pembeli</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #00C853, #64DD17); /* Gunakan gradien yang konsisten */
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+        }
+        .header .title {
+            font-size: 20px;
+            font-weight: bold;
+            flex-grow: 1;
+            text-align: center;
+            margin-left: -30px; /* Adjust to center title */
+        }
+        .container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .profile-section {
+            margin-bottom: 25px;
+        }
+        .profile-section h2 {
+            color: #15803d; /* Warna primary-dark */
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .profile-info p {
+            margin: 10px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .profile-info p strong {
+            width: 100px; /* Lebar tetap untuk label */
+            display: inline-block;
+            color: #555;
+        }
+        .profile-info p i {
+            margin-right: 10px;
+            color: #777;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .action-buttons button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .action-buttons .btn-logout {
+            background-color: #f44336; /* Merah untuk logout */
+            color: white;
+        }
+        .action-buttons .btn-logout:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+        }
+        .action-buttons .btn-edit-profile {
+            background-color: #2196F3; /* Biru untuk edit */
+            color: white;
+        }
+        .action-buttons .btn-edit-profile:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+        }
+        .loading-message {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 18px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-button" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">Profil Akun</div>
+        <div></div> 
+    </div>
+
+    <div class="container">
+        <div id="loadingMessage" class="loading-message">Memuat informasi profil...</div>
+        
+        <div id="profileContent" style="display: none;">
+            <div class="profile-section">
+                <h2>Informasi Akun</h2>
+                <div class="profile-info">
+                    <p><i class="fas fa-user"></i><strong>Nama:</strong> <span id="userName"></span></p>
+                    <p><i class="fas fa-envelope"></i><strong>Email:</strong> <span id="userEmail"></span></p>
+                    <p><i class="fas fa-map-marker-alt"></i><strong>Alamat:</strong> <span id="userAddress"></span></p>
+                    <p><i class="fas fa-phone"></i><strong>Telepon:</strong> <span id="userPhone"></span></p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-edit-profile">Edit Profil</button>
+                <button id="logoutButton" class="btn-logout">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Firebase Anda (PASTIKAN SAMA DENGAN FILE LAIN)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore(); // Inisialisasi Firestore untuk data user profile
+
+        const userEmailSpan = document.getElementById('userEmail');
+        const userNameSpan = document.getElementById('userName'); // NEW
+        const userAddressSpan = document.getElementById('userAddress'); // NEW
+        const userPhoneSpan = document.getElementById('userPhone'); // NEW
+
+        const logoutButton = document.getElementById('logoutButton');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const profileContent = document.getElementById('profileContent');
+
+        // Proteksi Halaman dan Tampilkan Info Profil
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Pengguna sudah login, ambil UID
+                const userUid = user.uid;
+
+                // Ambil data profil tambahan dari Firestore
+                db.collection('users').doc(userUid).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        userNameSpan.textContent = userData.fullName || 'Belum diatur'; // Mengambil fullName
+                        userEmailSpan.textContent = userData.email || user.email; // Ambil dari Firestore atau Auth
+                        userAddressSpan.textContent = userData.address || 'Belum diatur'; // Asumsi ada field 'address'
+                        userPhoneSpan.textContent = userData.phoneNumber || 'Belum diatur'; // Asumsi ada field 'phoneNumber'
+
+                        loadingMessage.style.display = 'none';
+                        profileContent.style.display = 'block';
+                    } else {
+                        // User terautentikasi di Firebase Auth, tapi tidak ada profil di Firestore
+                        // Ini bisa terjadi jika pendaftaran belum lengkap atau ada bug.
+                        alert('Profil Anda belum lengkap. Silakan hubungi admin atau perbarui profil.');
+                        console.warn("User authenticated but no profile found in Firestore for UID:", userUid);
+                        
+                        // Tampilkan setidaknya email dari Firebase Auth
+                        userEmailSpan.textContent = user.email;
+                        loadingMessage.style.display = 'none';
+                        profileContent.style.display = 'block';
+                        // Opsional: Redirect ke halaman pengisian profil
+                        // window.location.href = 'complete-profile.html'; 
+                    }
+                }).catch(error => {
+                    console.error("Error fetching user data from Firestore:", error);
+                    alert('Gagal memuat data profil. Silakan coba lagi atau hubungi admin.');
+                    auth.signOut(); // Log out on error
+                    window.location.href = 'index.html'; // Redirect to login
+                });
+
+            } else {
+                // Pengguna belum login, arahkan ke halaman login
+                alert('Anda harus login untuk melihat halaman profil.');
+                window.location.href = 'index.html'; // Ganti dengan halaman login Anda
+            }
+        });
+
+        // Fungsi Logout
+        logoutButton.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                alert('Anda telah berhasil logout.');
+                // Hapus data keranjang lokal saat logout (opsional, tapi disarankan)
+                localStorage.removeItem('cart'); 
+                // Hapus semua data sesi yang tersimpan di localStorage terkait login
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+
+                window.location.href = 'index.html'; // Arahkan ke halaman login setelah logout
+            }).catch(error => {
+                console.error("Error during logout:", error);
+                alert('Gagal logout. Silakan coba lagi.');
+            });
+        });
+    </script>
+</body>
+</html>
