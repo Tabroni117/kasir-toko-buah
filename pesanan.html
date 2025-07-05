@@ -720,4 +720,470 @@
             storageBucket: "tokobuahkasir.firebasestorage.app",
             messagingSenderId: "731011133713",
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV
+            measurementId: "G-7CPE2DB2BV"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
+        const daftar = document.getElementById("daftarPesanan");
+        const totalOrdersEl = document.getElementById("totalOrders");
+        const todayIncomeEl = document.getElementById("todayIncome");
+        const avgOrderEl = document.getElementById("avgOrder");
+        const lastOrderEl = document.getElementById("lastOrder");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        let currentOrderIdForDetail = null; // Digunakan untuk popup detail
+        let activeFilterStatus = 'All'; // Default filter
+
+        // NEW: Elemen untuk notifikasi
+        const sound = document.getElementById("notifSound");
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalContent = document.getElementById('notificationModalContent');
+        const closeBtnNotif = document.querySelector('.close-btn-notif');
+        const btnActionNotif = document.querySelector('.btn-action-notif');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
+        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah
+
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
+        let sedangBerbunyi = false; 
+        let audioSudahDiizinkan = false;
+        let currentNewOrderId = null; // ID pesanan terbaru yang sedang ditampilkan notifikasinya
+
+        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                sound.play().catch(() => {});
+                sound.pause();
+                sound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true });
+
+        // Fungsi tampilkan popup notifikasi baru
+        function showNotificationModal(orderData) {
+            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
+            
+            notificationModal.style.display = 'flex'; 
+            setTimeout(() => {
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
+
+            currentNewOrderId = orderData.id; 
+        }
+
+        // Fungsi tutup popup notifikasi baru
+        function hideNotificationModal() {
+            notificationModal.classList.remove('show-notification'); 
+            setTimeout(() => {
+                notificationModal.style.display = 'none'; 
+            }, 300); 
+
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; 
+
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+            localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); 
+
+            notifLonceng.classList.remove("berkedip-kuat");
+            navPesanan.classList.remove("berkedip-kuat"); 
+        }
+
+        closeBtnNotif.addEventListener('click', hideNotificationModal);
+
+        notificationModal.addEventListener('click', function(event) {
+            if (event.target === notificationModal) { 
+                hideNotificationModal();
+            }
+        });
+
+        btnActionNotif.addEventListener('click', function() {
+            hideNotificationModal(); 
+            if (currentNewOrderId) {
+                tampilkanDetail(currentNewOrderId); 
+            }
+        });
+
+        // ... (Fungsi showLoading, hideLoading, formatRupiah, formatDate, getStatusClass) ...
+
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        function formatCurrency(val) {
+            if (isNaN(val) || val === null || typeof val === 'undefined') {
+                return "Rp0";
+            }
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val);
+        }
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        }
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'dibatalkan';
+                default: return '';
+            }
+        }
+
+
+        function loadData(statusFilter = activeFilterStatus) {
+            showLoading();
+            daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
+            
+            filterButtons.forEach(btn => {
+                if (btn.dataset.status === statusFilter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            activeFilterStatus = statusFilter;
+
+            let query = db.collection("pesanan").orderBy("waktu", "desc");
+
+            if (statusFilter !== 'All') {
+                query = query.where('status', '==', statusFilter);
+            }
+
+            query.get()
+                .then(snapshot => {
+                    hideLoading();
+
+                    let totalIncomeAllTime = 0;
+                    let totalOrderCount = 0;
+                    let todayIncome = 0;
+                    const now = new Date(); 
+                    now.setHours(0, 0, 0, 0); 
+
+                    daftar.innerHTML = ""; 
+
+                    let firstOrderTime = null; 
+
+                    if (snapshot.empty) {
+                        daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
+                    } else {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const orderId = doc.id; 
+                            
+                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
+                            
+                            if (isNaN(waktu.getTime())) {
+                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
+                                return; 
+                            }
+
+                            if (!firstOrderTime) firstOrderTime = waktu; 
+
+                            const isToday = waktu.toDateString() === now.toDateString();
+                            const totalHarga = data.totalAmount || 0; 
+
+                            if (isToday) todayIncome += totalHarga;
+                            totalIncomeAllTime += totalHarga;
+                            totalOrderCount++;
+
+                            const customerName = data.customer?.fullName || "Pelanggan";
+                            const customerPhone = data.customer?.phoneNumber || "-";
+                            const currentStatus = data.status || "Pending";
+
+                            const itemsHtml = (data.items || []).map(item => {
+                                const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                                return `
+                                    <div style="margin-bottom: 5px;">
+                                        🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                    </div>
+                                `;
+                            }).join("");
+
+                            daftar.innerHTML += `
+                                <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
+                                    <div class='order-row-top'>
+                                        <div class='customer'>
+                                            <div class='avatar'>${customerName[0]?.toUpperCase() || "P"}</div>
+                                            <div class='info'>
+                                                <div class='name'>${customerName}</div>
+                                                <div class='phone'>${customerPhone}</div>
+                                            </div>
+                                        </div>
+                                        <div class='meta'>
+                                            <div class='total'>${formatCurrency(totalHarga)}</div>
+                                            <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
+                                        </div>
+                                    </div>
+                                    <div class='order-row-bottom'>
+                                        <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                                        <div class='items'>${itemsHtml}</div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    totalOrdersEl.textContent = totalOrderCount;
+                    todayIncomeEl.textContent = formatCurrency(todayIncome);
+                    avgOrderEl.textContent = formatCurrency(totalIncomeAllTime / Math.max(1, totalOrderCount)); 
+                    lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
+
+                })
+                .catch(err => {
+                    hideLoading();
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
+                    console.error("Error loading orders from Firestore:", err); 
+                });
+        }
+
+        // --- Fungsi Popup Detail Pesanan ---
+        function tampilkanDetail(orderId) {
+            currentOrderIdForDetail = orderId;
+            db.collection("pesanan").doc(orderId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        const customer = data.customer || {};
+                        const waktu = data.waktu?.toDate?.() || new Date(0); 
+                        const items = data.items || [];
+                        
+                        document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                        document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                        document.getElementById("popupAlamat").textContent = customer.address || "-";
+                        document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                        document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                        document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+                        
+                        const popupStatusEl = document.getElementById("popupStatus");
+                        const currentStatus = data.status || "Pending";
+                        popupStatusEl.textContent = currentStatus;
+                        popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+                        
+                        const statusUpdater = document.getElementById("statusUpdater");
+                        statusUpdater.value = currentStatus;
+                        
+                        document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                        const popupItemsHtml = items.map(item => {
+                            const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                            return `
+                                <div style="margin-bottom:5px;">
+                                    - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                </div>
+                            `;
+                        }).join("");
+                        document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+                        document.getElementById("popupDetail").style.display = "flex"; 
+                    } else {
+                        alert("Pesanan tidak ditemukan di database.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error getting order detail from Firestore:", error);
+                    alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
+                });
+        }
+
+        function tutupDetail() {
+            document.getElementById("popupDetail").style.display = "none";
+            currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
+        }
+
+        // --- Fungsi Update Status Pesanan ---
+        document.getElementById("statusUpdater").addEventListener("change", function() {
+            const newStatus = this.value;
+            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
+                db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                    status: newStatus
+                }).then(() => {
+                    alert("Status pesanan berhasil diperbarui!");
+                    tutupDetail();
+                }).catch(error => {
+                    console.error("Error updating order status:", error);
+                    alert("Gagal memperbarui status pesanan.");
+                });
+            }
+        });
+
+        // --- Event Listeners untuk Tombol Filter ---
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                loadData(status);
+            });
+        });
+
+        // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Implementasi Terbaru) ---
+        const sound = document.getElementById("notifSound");
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalContent = document.getElementById('notificationModalContent');
+        const closeBtnNotif = document.querySelector('.close-btn-notif');
+        const btnActionNotif = document.querySelector('.btn-action-notif');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
+        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah
+
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
+        let sedangBerbunyi = false; 
+        let audioSudahDiizinkan = false;
+        let currentNewOrderId = null; // ID pesanan terbaru yang sedang ditampilkan notifikasinya
+
+        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                sound.play().catch(() => {});
+                sound.pause();
+                sound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true });
+
+        // Fungsi tampilkan popup notifikasi baru
+        function showNotificationModal(orderData) {
+            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
+            
+            notificationModal.style.display = 'flex'; 
+            setTimeout(() => {
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
+
+            currentNewOrderId = orderData.id; 
+        }
+
+        // Fungsi tutup popup notifikasi baru
+        function hideNotificationModal() {
+            notificationModal.classList.remove('show-notification'); 
+            setTimeout(() => {
+                notificationModal.style.display = 'none'; 
+            }, 300); 
+
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; 
+
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+            localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); 
+
+            notifLonceng.classList.remove("berkedip-kuat");
+            navPesanan.classList.remove("berkedip-kuat"); 
+        }
+
+        closeBtnNotif.addEventListener('click', hideNotificationModal);
+
+        notificationModal.addEventListener('click', function(event) {
+            if (event.target === notificationModal) { 
+                hideNotificationModal();
+            }
+        });
+
+        btnActionNotif.addEventListener('click', function() {
+            hideNotificationModal(); 
+            if (currentNewOrderId) {
+                tampilkanDetail(currentNewOrderId); 
+            }
+        });
+
+        function cekPesananBaru() {
+            db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    const data = doc.data();
+                    data.id = doc.id; 
+                    
+                    const waktuPesanan = data.waktu?.toDate?.() || new Date();
+                    const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
+                    const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
+
+                    if (doc.id !== terakhirDitampilkan && waktuPesanan > waktuBukaTerakhir) {
+                        terakhirDitampilkan = doc.id; 
+                        localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+
+                        if (doc.id !== idPesananTerakhirDibunyikan && !sedangBerbunyi) {
+                            sound.play().catch(error => {
+                                console.warn("Gagal memutar suara notifikasi:", error);
+                            });
+                            sedangBerbunyi = true; 
+                            localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
+                        }
+
+                        showNotificationModal(data); 
+
+                        notifLonceng.classList.add("berkedip-kuat");
+                        navPesanan.classList.add("berkedip-kuat");
+
+                    } else {
+                        if (notificationModal.classList.contains("hidden") || notificationModal.style.display === 'none') {
+                            sound.pause();
+                            sound.currentTime = 0;
+                            sedangBerbunyi = false;
+                            notifLonceng.classList.remove("berkedip-kuat");
+                            navPesanan.classList.remove("berkedip-kuat");
+                        }
+                    }
+                } else {
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sedangBerbunyi = false;
+                    notifLonceng.classList.remove("berkedip-kuat");
+                    navPesanan.classList.remove("berkedip-kuat");
+                }
+            }).catch(error => {
+                console.error("Error fetching latest order:", error);
+                sound.pause();
+                sound.currentTime = 0;
+                sedangBerbunyi = false;
+                notifLonceng.classList.remove("berkedip-kuat");
+                navPesanan.classList.remove("berkedip-kuat");
+            });
+        }
+
+        // --- Jalankan saat halaman selesai dimuat ---
+        window.addEventListener("DOMContentLoaded", () => {
+            loadData('All');
+            cekPesananBaru(); // Panggil pertama kali
+            setInterval(cekPesananBaru, 3000); // Cek setiap 3 detik
+
+            // Event listener untuk tombol navigasi "Pesanan"
+            navPesanan.addEventListener("click", function () {
+                hideNotificationModal(); // Pastikan popup notifikasi baru tertutup
+            });
+
+            // Event listener untuk tombol lonceng notifikasi di header
+            notifLonceng.addEventListener("click", function() {
+                cekPesananBaru(); 
+            });
+
+            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Escape") {
+                    if (notificationModal.classList.contains('show-notification')) {
+                        hideNotificationModal();
+                    } else if (document.getElementById("popupDetail").style.display === "flex") {
+                        tutupDetail();
+                    }
+                }
+            });
+
+            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
+            window.closeAuthModal = function() {
+                const authModal = document.getElementById('authModal');
+                if (authModal) authModal.classList.add('hidden');
+            };
+            window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
+            window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
+            window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
+        });
+    </script>
+</body>
+</html>
