@@ -324,6 +324,18 @@
             }).format(amount);
         }
 
+        // --- Fungsi untuk Membuat ID Tampilan Pesanan yang Unik ---
+        function generateDisplayOrderId() {
+            // Menggunakan timestamp (dalam milidetik sejak epoch) dan konversi ke base 36
+            const timestampPart = Date.now().toString(36).toUpperCase(); 
+            // Menggunakan bagian acak untuk memastikan keunikan jika ada pesanan bersamaan
+            const randomPart = Math.random().toString(36).substr(2, 4).toUpperCase(); // 4 karakter acak
+
+            // Gabungkan menjadi format yang diinginkan, misalnya #TXXX-YYYY
+            return `#${timestampPart}-${randomPart}`; 
+            // Contoh output: #1S5V8Q-Q2X4Z atau #24K5F-3A1Z
+        }
+
         // --- Fungsi untuk Menampilkan Ringkasan Pesanan ---
         function renderOrderSummary() {
             let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -460,6 +472,7 @@
             // Data pesanan untuk dikirim ke koleksi 'pesanan' di Firebase Firestore
             const orderData = {
                 userId: currentUserId, // Simpan UID pengguna yang memesan
+                displayOrderId: generateDisplayOrderId(), // NEW: ID tampilan yang unik dan tetap
                 customer: {
                     fullName: fullName,
                     phoneNumber: phoneNumber,
@@ -488,7 +501,8 @@
                 // Kirim data pesanan ke koleksi 'pesanan' di Firebase Firestore
                 const docRef = await pesananCollection.add(orderData);
                 
-                alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nTerima kasih sudah memesan! Nomor Pesanan Anda: ${docRef.id}`);
+                // Alert menampilkan displayOrderId baru
+                alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nTerima kasih sudah memesan! Nomor Pesanan Anda: ${orderData.displayOrderId}`);
                 
                 localStorage.removeItem('cart'); // Kosongkan keranjang di localStorage setelah pesanan berhasil dibuat
 
@@ -503,8 +517,8 @@
             }
         });
 
-        // --- Inisialisasi Awal ---
-        // renderOrderSummary() dan proteksi halaman akan dijalankan di auth.onAuthStateChanged
-    </script>
+        // --- Inisialisasi Awal ---
+        // renderOrderSummary() dan proteksi halaman akan dijalankan di auth.onAuthStateChanged
+    </script>
 </body>
 </html>
