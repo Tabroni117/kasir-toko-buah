@@ -697,7 +697,7 @@
     </nav>
 
     <script>
-        // 1. Konfigurasi Firebase
+        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -707,7 +707,7 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
-       
+
         // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -736,15 +736,45 @@
                 
                 // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
                 if (!isLoggingOut) { 
-                    alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
                 }
                 window.location.href = 'index.html'; // Arahkan kembali ke halaman login
             } else {
-                // User sudah login dan role cocok ('penjual'), lanjutkan memuat konten
+                // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
                 renderMenuItems();
                 startAutoScroll();
             }
         });
+
+        // --- Elemen Utama ---
+        const menuList = document.getElementById('menuList');
+
+        // --- Fungsi untuk Logout ---
+        async function logout() {
+            try {
+                // Set flag di localStorage bahwa logout disengaja
+                localStorage.setItem('isLoggingOut', 'true'); 
+
+                await auth.signOut(); // Logout dari Firebase Auth
+                // auth.onAuthStateChanged akan otomatis terpicu setelah ini
+                // dan akan mengarahkan ke index.html tanpa alert karena flag isLoggingOut
+                
+                // Opsional: Langsung bersihkan localStorage di sini juga jika ingin lebih cepat responsif
+                localStorage.removeItem('isLoggedIn'); 
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                
+                alert('Anda telah berhasil logout.'); // Notifikasi logout berhasil
+                window.location.href = 'index.html'; // Redirect
+            } catch (error) {
+                console.error("Error saat logout:", error);
+                alert('Gagal logout. Coba lagi.');
+                // Hapus flag jika logout gagal agar proteksi tetap aktif
+                localStorage.removeItem('isLoggingOut'); 
+            }
+        }
+
         // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
         const daftar = document.getElementById("daftarPesanan");
         const totalOrdersEl = document.getElementById("totalOrders");
