@@ -2,285 +2,249 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RUJAK BUAH INDONESIA - Aplikasi Kasir Premium</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Akun Penjual - Rujak Buah Indonesia</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f0fff0 0%, #e0f7e0 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
-        
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-        }
-        
-        .text-primary {
-            color: #27ae60;
-        }
-        
-        .border-primary {
-            border-color: #27ae60;
-        }
-        
-        .bg-primary {
-            background-color: #27ae60;
-        }
-        
-        .bg-primary-light {
-            background-color: rgba(46, 204, 113, 0.1);
-        }
-        
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #e0e0e0;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        .header {
+            background: linear-gradient(135deg, #16a34a, #22c55e); /* Warna hijau khas */
+            color: white;
+            padding: 15px 20px;
             display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .bottom-nav a {
+        .header .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+        .header .back-button:hover {
+            transform: translateX(-5px);
+        }
+        .header .title {
+            font-size: 1.5em;
+            font-weight: bold;
+            flex-grow: 1;
             text-align: center;
-            color: #27ae60;
-            text-decoration: none;
-            font-size: 12px;
+            margin-left: -30px; /* Adjust to center title despite back button */
         }
-
-        .bottom-nav i {
-            display: block;
-            font-size: 20px;
+        .container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .profile-section {
+            margin-bottom: 25px;
+        }
+        .profile-section h2 {
+            color: #15803d; /* Warna primary-dark */
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .profile-info p {
+            margin: 10px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .profile-info p strong {
+            width: 120px; /* Lebar tetap untuk label */
+            display: inline-block;
+            color: #555;
+        }
+        .profile-info p i {
+            margin-right: 10px;
+            color: #777;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .action-buttons button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .action-buttons .btn-logout {
+            background-color: #f44336; /* Merah untuk logout */
+            color: white;
+        }
+        .action-buttons .btn-logout:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+        }
+        .action-buttons .btn-edit-profile {
+            background-color: #2196F3; /* Biru untuk edit */
+            color: white;
+        }
+        .action-buttons .btn-edit-profile:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+        }
+        .loading-message {
+            text-align: center;
+            margin-top: 50px;
+            font-size: 18px;
+            color: #777;
         }
     </style>
 </head>
-<body class="py-4 px-3 sm:py-8 sm:px-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
-            <div class="flex items-center space-x-2 w-full sm:w-auto">
-                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e64864ff-c873-4198-a7f9-1e8499db00b6.png" alt="Logo Rujak Buah Indonesia" class="w-12 h-12 rounded-full">
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-primary">RUJAK BUAH INDONESIA</h1>
-                    <p class="text-sm text-gray-600">Aplikasi Kasir Premium</p>
-                </div>
-            </div>
-            <div class="hidden md:flex items-center space-x-4">
-                <button class="px-4 py-2 rounded-full bg-primary text-white hover:bg-green-700 transition">
-                    <i class="fas fa-bell mr-2"></i>Notifikasi
-                </button>
-                <button class="px-4 py-2 rounded-full bg-white text-primary border border-primary hover:bg-primary-light transition">
-                    <i class="fas fa-gear mr-2"></i>Pengaturan
-                </button>
-            </div>
-        </header>
+<body>
+    <header class="header">
+        <button class="back-button" onclick="window.location.href='pesanan.html'"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">Profil Akun Penjual</div>
+        <div></div> 
+    </header>
+
+    <div class="container">
+        <div id="loadingMessage" class="loading-message">Memuat informasi profil...</div>
         
-        <!-- Main Content -->
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Profile Section -->
-            <div class="lg:col-span-1">
-                <div class="glass-card p-6">
-                    <div class="flex flex-col items-center">
-                        <div class="relative mb-4">
-                            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/16d2d117-3997-4042-ad83-92eed89ff630.png" alt="Profil pengguna" class="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg">
-                            <span class="absolute bottom-0 right-0 bg-green-500 text-white rounded-full p-1">
-                                <i class="fas fa-crown text-xs"></i>
-                            </span>
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-800">Elin Yuliyanah</h2>
-                        <p class="text-sm text-gray-600">Owner & Founder</p>
-                        <div class="bg-yellow-100 rounded-full px-4 py-1 mt-2 flex items-center">
-                            <span class="text-yellow-800 text-xs font-medium">Verified Owner</span>
-                        </div>
-                        
-                        <div class="w-full mt-6 grid grid-cols-2 gap-2">
-                            <div class="bg-white p-3 rounded-lg text-center border border-gray-100">
-                                <p class="text-xs text-gray-500">Bergabung Sejak</p>
-                                <p class="font-medium">12 Jun 2022</p>
-                            </div>
-                            <div class="bg-white p-3 rounded-lg text-center border border-gray-100">
-                                <p class="text-xs text-gray-500">Cabang</p>
-                                <p class="font-medium">Pondok Indah</p>
-                            </div>
-                        </div>
-                        
-                        <div class="w-full mt-4">
-                            <button class="w-full btn-primary text-white py-2 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-pen mr-2"></i> Edit Profil
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Quick Stats -->
-                <div class="glass-card p-6 mt-6">
-                    <h3 class="font-bold text-gray-800 mb-4">Statistik Bisnis</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <p class="text-sm text-gray-600">Omzet Bulan Ini</p>
-                            <div class="flex items-center justify-between">
-                                <p class="font-bold">Rp 428.560.000</p>
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">+22%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Profit Bersih</p>
-                            <div class="flex items-center justify-between">
-                                <p class="font-bold">Rp 128.568.000</p>
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">+15%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Karyawan</p>
-                            <p class="font-bold">87</p>
-                        </div>
-                    </div>
+        <div id="profileContent" style="display: none;">
+            <div class="profile-section">
+                <h2>Informasi Akun</h2>
+                <div class="profile-info">
+                    <p><i class="fas fa-user"></i><strong>Nama Lengkap:</strong> <span id="userName"></span></p>
+                    <p><i class="fas fa-envelope"></i><strong>Email:</strong> <span id="userEmail"></span></p>
+                    <p><i class="fas fa-map-marker-alt"></i><strong>Alamat:</strong> <span id="userAddress"></span></p>
+                    <p><i class="fas fa-phone"></i><strong>Telepon:</strong> <span id="userPhone"></span></p>
+                    <p><i class="fas fa-id-badge"></i><strong>Role:</strong> <span id="userRole"></span></p>
                 </div>
             </div>
-            
-            <!-- Main Profile Info -->
-            <div class="lg:col-span-2">
-                <div class="glass-card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">Informasi Pemilik</h2>
-                        <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-green-700 transition">Edit Informasi</button>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Nama Lengkap</label>
-                            <p class="font-medium">Elin Yuliyanah</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Nama Pengguna</label>
-                            <p class="font-medium">azka.aira</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Email</label>
-                            <p class="font-medium">zaira.s@rujakbuah.com</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">No. Telepon</label>
-                            <p class="font-medium">+89687618276</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Tanggal Lahir</label>
-                            <p class="font-medium">14 Maret 1990</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">Jabatan</label>
-                            <p class="font-medium">Owner & Founder</p>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm text-gray-600 mb-1">Alamat</label>
-                            <p class="font-medium">Jl. Buah Segar No. 123, Ds. Randusari, Losari Brebes</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recent Activity -->
-                <div class="glass-card p-6 mt-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6">Aktivitas Terakhir</h2>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-start border-b border-gray-100 pb-3 text-sm sm:text-base">
-                            <div class="bg-green-100 p-2 rounded-lg mr-3 sm:mr-4">
-                                <i class="fas fa-cash-register text-green-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium">Transaksi #RB-2023-01752</p>
-                                <p class="text-sm text-gray-600">Paket Rujak Premium dengan 8 jenis buah</p>
-                                <p class="text-xs text-gray-500 mt-1">30 menit lalu</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-medium text-primary">Rp 175.000</p>
-                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Lunas</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start border-b border-gray-100 pb-4">
-                            <div class="bg-blue-100 p-2 rounded-lg mr-4">
-                                <i class="fas fa-user-plus text-blue-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium">Member Baru</p>
-                                <p class="text-sm text-gray-600">Budi Santoso terdaftar sebagai member premium</p>
-                                <p class="text-xs text-gray-500 mt-1">2 jam lalu</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-medium">-</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-start pb-2">
-                            <div class="bg-yellow-100 p-2 rounded-lg mr-4">
-                                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium">Stok Hampir Habis</p>
-                                <p class="text-sm text-gray-600">Mangga gedong hanya tersisa 5 kg</p>
-                                <p class="text-xs text-gray-500 mt-1">3 jam lalu</p>
-                            </div>
-                            <div class="text-right">
-                                <button class="text-xs text-primary hover:underline">Update Stok</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button class="w-full mt-4 text-sm text-primary hover:underline flex items-center justify-center">
-                        Lihat Semua Aktivitas <i class="fas fa-chevron-down ml-2 text-xs"></i>
-                    </button>
-                </div>
+
+            <div class="action-buttons">
+                <button id="editProfileButton" class="btn-edit-profile">Edit Profil</button>
+                <button id="logoutButton" class="btn-logout">Logout</button>
             </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="apl05.html">
-            <i class="fas fa-home"></i>
-            <span>Beranda</span>
-        </a>
-        <a href="Inputstok.html">
-            <i class="fas fa-box"></i>
-            <span>Inventori</span>
-        </a>
-        <a href="pesanan.html">
-            <i class="fas fa-receipt"></i>
-            <span>Pesanan</span>
-        </a>
-        <a href="akun.html">
-            <i class="fas fa-user"></i>
-            <span>Profil</span>
-        </a>
-    </nav>
-
     <script>
-        // Simple animation for elements
-        document.querySelectorAll('.glass-card').forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = `opacity 0.3s ease-out ${index * 0.1}s, transform 0.3s ease-out ${index * 0.1}s`;
-            
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 100);
+        // Konfigurasi Firebase Anda (PASTIKAN SAMA DENGAN FILE LAIN)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const usersCollection = db.collection('users');
+
+        // Elemen DOM
+        const userEmailSpan = document.getElementById('userEmail');
+        const userNameSpan = document.getElementById('userName'); 
+        const userAddressSpan = document.getElementById('userAddress'); 
+        const userPhoneSpan = document.getElementById('userPhone'); 
+        const userRoleSpan = document.getElementById('userRole'); // Menampilkan peran
+
+        const logoutButton = document.getElementById('logoutButton');
+        const editProfileButton = document.getElementById('editProfileButton');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const profileContent = document.getElementById('profileContent');
+
+        // Proteksi Halaman dan Tampilkan Info Profil
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userUid = user.uid;
+
+                usersCollection.doc(userUid).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        
+                        // Periksa peran di sini
+                        if (userData.role === 'penjual') {
+                            userNameSpan.textContent = userData.fullName || 'Belum diatur'; 
+                            userEmailSpan.textContent = userData.email || user.email; 
+                            userAddressSpan.textContent = userData.address || 'Belum diatur'; 
+                            userPhoneSpan.textContent = userData.phoneNumber || 'Belum diatur'; 
+                            userRoleSpan.textContent = userData.role || 'Tidak Diketahui';
+
+                            loadingMessage.style.display = 'none';
+                            profileContent.style.display = 'block';
+                        } else {
+                            alert('Akses Ditolak: Anda harus login sebagai Penjual untuk melihat halaman ini.');
+                            window.location.href = 'index.html'; // Redirect ke halaman login
+                        }
+                    } else {
+                        // User terautentikasi di Firebase Auth, tapi tidak ada profil di Firestore
+                        alert('Profil pengguna tidak ditemukan di database. Silakan hubungi admin.');
+                        console.warn("User authenticated but no profile found in Firestore for UID:", userUid);
+                        window.location.href = 'index.html'; 
+                    }
+                }).catch(error => {
+                    console.error("Error fetching user data or role:", error);
+                    alert('Gagal memuat data profil. Silakan coba lagi atau hubungi admin.');
+                    window.location.href = 'index.html'; // Redirect jika ada error
+                });
+
+            } else {
+                // Pengguna belum login, arahkan ke halaman login
+                alert('Anda harus login untuk melihat halaman profil penjual.');
+                window.location.href = 'index.html'; 
+            }
+        });
+
+        // Fungsionalitas Tombol Edit Profil
+        editProfileButton.addEventListener('click', () => {
+            alert('Fitur edit profil penjual akan segera dikembangkan!');
+            // window.location.href = 'edit-profile-penjual.html'; // Nanti arahkan ke halaman edit
+        });
+
+        // Fungsi Logout
+        logoutButton.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                alert('Anda telah berhasil logout.');
+                // Bersihkan data sesi yang tersimpan di localStorage terkait login
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                window.location.href = 'index.html'; // Arahkan ke halaman login setelah logout
+            }).catch(error => {
+                console.error("Error during logout:", error);
+                alert('Gagal logout. Silakan coba lagi.');
+            });
         });
     </script>
 </body>
