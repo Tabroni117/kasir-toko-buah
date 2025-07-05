@@ -6,8 +6,7 @@
     <title>Riwayat Pesanan - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
@@ -155,8 +154,7 @@
         </header>
 
         <div class="order-history-content" id="orderHistoryContent">
-            
-<div class="empty-state" id="emptyOrderState" style="display: none;">
+            <div class="empty-state" id="emptyOrderState" style="display: none;">
                 <i class="fas fa-box-open"></i>
                 <p>Anda belum memiliki riwayat pesanan.</p>
                 <p>Ayo mulai pesan rujak buah favoritmu sekarang!</p>
@@ -199,28 +197,26 @@
 
         // --- Fungsi untuk Menampilkan Riwayat Pesanan ---
         async function loadOrderHistory(userId) {
-            orderHistoryContent.innerHTML = ''; // Bersihkan konten sebelumnya
-            emptyOrderState.style.display = 'none'; // Sembunyikan pesan kosong
+            orderHistoryContent.innerHTML = ''; 
+            emptyOrderState.style.display = 'none'; 
 
             try {
-                // Ambil pesanan dari Firestore yang userId-nya sesuai dengan pengguna yang login
-                // Urutkan berdasarkan waktu (terbaru di atas)
                 const querySnapshot = await pesananCollection
                                             .where('userId', '==', userId)
                                             .orderBy('waktu', 'desc')
                                             .get();
 
                 if (querySnapshot.empty) {
-                    emptyOrderState.style.display = 'block'; // Tampilkan pesan kosong
+                    emptyOrderState.style.display = 'block'; 
                     return;
                 }
 
-                // NEW: Inisialisasi counter untuk nomor urut tampilan
-                let orderCounter = 1; 
-
                 querySnapshot.forEach(doc => {
                     const order = doc.data();
-                    const orderId = doc.id; // ID dokumen Firebase yang sebenarnya
+                    const orderFirebaseId = doc.id; // Ini ID dokumen Firebase asli
+                    // NEW: Ambil 6 karakter pertama dari orderFirebaseId untuk display
+                    const displayOrderId = '#' + orderFirebaseId.substring(0, 6).toUpperCase(); 
+
                     const orderDate = order.waktu ? new Date(order.waktu.toDate()).toLocaleString('id-ID', {
                         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     }) : 'Tanggal tidak tersedia';
@@ -237,11 +233,8 @@
                             statusClass = 'cancelled';
                             break;
                         default:
-                            statusClass = ''; // Default green
+                            statusClass = ''; 
                     }
-
-                    // NEW: Format nomor urut tampilan
-                    const displayOrderId = '#' + String(orderCounter).padStart(3, '0'); // Contoh: #001, #002
 
                     const orderCard = document.createElement('div');
                     orderCard.classList.add('order-card');
@@ -269,7 +262,6 @@
                         </div>
                     `;
                     orderHistoryContent.appendChild(orderCard);
-                    orderCounter++; // NEW: Tingkatkan counter untuk pesanan berikutnya
                 });
 
             } catch (error) {
@@ -293,7 +285,6 @@
                 }
                 window.location.href = 'index.html'; // Arahkan kembali ke halaman login
             } else {
-                // Jika user adalah pembeli dan login, muat riwayat pesanan
                 loadOrderHistory(user.uid);
             }
         });
