@@ -288,56 +288,68 @@
             }
         });
 
-     // --- Cek Status Login Saat Halaman Dimuat ---
-auth.onAuthStateChanged(user => {
-    if (user) {
-        const storedRole = localStorage.getItem('userRole');
+        // --- Cek Status Login Saat Halaman Dimuat ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Jika sudah ada user yang login, ambil perannya dari Firestore
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const role = doc.data().role;
+                        const isLoggedIn = localStorage.getItem('isLoggedIn');
+                        const storedRole = localStorage.getItem('userRole');
 
-        if (!storedRole) {
-            // ⛔ Tidak ada role tersimpan → logout supaya user pilih ulang
-            auth.signOut();
-            console.warn("Tidak ada role tersimpan. Logout agar user bisa pilih ulang role di UI.");
-            return;
-        }
-
-        // ✅ Ambil role dari Firestore untuk dibandingkan
-        db.collection('users').doc(user.uid).get().then(doc => {
-            if (doc.exists) {
-                const role = doc.data().role;
-
-                if (storedRole === role) {
-                    // ✅ Role cocok → update localStorage & redirect
-                    localStorage.setItem('isLoggedIn', 'true');
-                    localStorage.setItem('userEmail', user.email);
-                    localStorage.setItem('userUid', user.uid);
-
-                    if (role === 'penjual') {
-                        window.location.href = 'pesanan.html';
-                    } else if (role === 'pembeli') {
-                        window.location.href = 'apl05.html';
+                        // Jika sudah login dan peran cocok, arahkan langsung
+                        // Pastikan role yang tersimpan di localStorage juga cocok
+                        if (isLoggedIn === 'true' && storedRole === role) {
+                            if (role === 'penjual') {
+                                window.location.href = 'pesanan.html';
+                            } else if (role === 'pembeli') {
+                                window.location.href = 'apl05.html';
+                            }
+                        } else {
+                            // Sesi Firebase Auth aktif, tapi localStorage tidak cocok (mungkin tab baru atau localStorage terhapus)
+                            // Arahkan ke halaman berdasarkan role dari Firestore
+                            if (role === 'penjual') {
+                                window.location.href = 'pesanan.html';
+                            } else if (role === 'pembeli') {
+                                window.location.href = 'apl05.html';
+                            }
+                            // Update localStorage agar konsisten
+                            localStorage.setItem('isLoggedIn', 'true');
+                            localStorage.setItem('userRole', role);
+                            localStorage.setItem('userEmail', user.email);
+                            localStorage.setItem('userUid', user.uid);
+                        }
+                    } else {
+                        // User terautentikasi di Firebase Auth, tapi tidak ada profil di Firestore
+                        // Ini bisa terjadi jika pendaftaran belum lengkap atau ada bug.
+                        // Logout saja user dari Firebase Auth.
+                        auth.signOut();
+                        console.warn("User authenticated but no profile found in Firestore. Logging out.");
+                        // Pastikan localStorage juga dibersihkan
+                        localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userEmail');
+                        localStorage.removeItem('userUid');
                     }
-                } else {
-                    // ❌ Role tidak cocok → logout paksa
-                    auth.signOut();
-                    alert(`Login gagal: Akun ini adalah ${role}, bukan ${storedRole}. Silakan login ulang.`);
-                }
+                }).catch(error => {
+                    console.error("Error fetching user role from Firestore:", error);
+                    auth.signOut(); // Log out on error
+                    // Bersihkan localStorage juga
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userUid');
+                });
             } else {
-                // ❌ Tidak ada dokumen profil user
-                auth.signOut();
-                alert("Profil pengguna tidak ditemukan di database.");
+                // Tidak ada user yang login, pastikan localStorage juga bersih
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
             }
-        }).catch(error => {
-            console.error("Gagal ambil data role:", error);
-            auth.signOut();
+            // Jika tidak ada user, biarkan di halaman login
         });
-    } else {
-        // ❌ Tidak ada user login → bersihkan localStorage
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userUid');
-    }
-});
     </script>
 </body>
 </html>
