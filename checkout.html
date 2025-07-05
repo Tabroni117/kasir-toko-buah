@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script> <style>
         * {
             margin: 0;
             padding: 0;
@@ -80,6 +81,7 @@
         }
 
         .form-group input[type="text"],
+        .form-group input[type="tel"], /* Added tel type */
         .form-group textarea {
             width: 100%;
             padding: 10px;
@@ -91,6 +93,7 @@
         }
 
         .form-group input[type="text"]:focus,
+        .form-group input[type="tel"]:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #00C853;
@@ -173,9 +176,6 @@
             background: linear-gradient(135deg, #00B04C, #5BB914);
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -192,8 +192,7 @@
             </div>
             <div class="form-group">
                 <label for="phoneNumber">Nomor Telepon</label>
-                <input type="text" id="phoneNumber" placeholder="Masukkan nomor telepon" required>
-            </div>
+                <input type="tel" id="phoneNumber" placeholder="Masukkan nomor telepon" required> </div>
             <div class="form-group">
                 <label for="deliveryAddress">Alamat Pengiriman</label>
                 <textarea id="deliveryAddress" rows="3" placeholder="Contoh: Jl. Merdeka No. 123, Jakarta Pusat" required></textarea>
@@ -243,88 +242,182 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Konfigurasi Firebase (pastikan sama dengan yang di halaman kasir Anda)
-            const firebaseConfig = {
-                apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-                authDomain: "tokobuahkasir.firebaseapp.com",
-                projectId: "tokobuahkasir",
-                storageBucket: "tokobuahkasir.appspot.com",
-                messagingSenderId: "731011133713",
-                appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-            };
+        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app", // Pastikan ini konsisten
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV" // Pastikan ini konsisten
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore(); // Inisialisasi Firestore
+        }
+        const auth = firebase.auth(); // Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // Inisialisasi Firestore
+        const usersCollection = db.collection('users'); // Koleksi untuk data profil pengguna
+        const pesananCollection = db.collection('pesanan'); // Koleksi untuk menyimpan pesanan
 
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            
-            // Tampilkan ringkasan pesanan
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const deliveryFee = 10000; // Contoh biaya pengiriman (bisa disesuaikan)
-            const totalAmount = subtotal + deliveryFee;
+        // --- Elemen Form & Ringkasan ---
+        const fullNameInput = document.getElementById('fullName');
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const deliveryAddressInput = document.getElementById('deliveryAddress');
+        const notesInput = document.getElementById('notes');
+        const placeOrderButton = document.getElementById('placeOrderButton');
 
-            document.getElementById('itemCount').textContent = cart.length;
-            document.getElementById('subtotalCheckout').textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
-            document.getElementById('deliveryFeeCheckout').textContent = `Rp ${deliveryFee.toLocaleString('id-ID')}`;
-            document.getElementById('totalAmountCheckout').textContent = `Rp ${totalAmount.toLocaleString('id-ID')}`;
+        const itemCountSpan = document.getElementById('itemCount');
+        const subtotalCheckoutSpan = document.getElementById('subtotalCheckout');
+        const deliveryFeeCheckoutSpan = document.getElementById('deliveryFeeCheckout');
+        const totalAmountCheckoutSpan = document.getElementById('totalAmountCheckout');
 
-            document.getElementById('placeOrderButton').addEventListener('click', function() {
-                const fullName = document.getElementById('fullName').value.trim();
-                const phoneNumber = document.getElementById('phoneNumber').value.trim();
-                const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
-                const notes = document.getElementById('notes').value.trim();
-                const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        // --- Variabel Keranjang & Harga ---
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const DELIVERY_FEE = 10000; // Biaya pengiriman tetap
 
-                if (!fullName || !phoneNumber || !deliveryAddress) {
-                    alert('Harap lengkapi semua informasi pengiriman.');
-                    return;
+        let currentUserId = null; // Untuk menyimpan UID user yang login
+
+        // --- Fungsi untuk Memformat Mata Uang Rupiah ---
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // --- Fungsi untuk Menampilkan Ringkasan Pesanan ---
+        function renderOrderSummary() {
+            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let total = subtotal + (subtotal > 0 ? DELIVERY_FEE : 0); // Tambah ongkir hanya jika ada item
+
+            itemCountSpan.textContent = cart.length;
+            subtotalCheckoutSpan.textContent = formatRupiah(subtotal);
+            deliveryFeeCheckoutSpan.textContent = formatRupiah(subtotal > 0 ? DELIVERY_FEE : 0);
+            totalAmountCheckoutSpan.textContent = formatRupiah(total);
+
+            if (cart.length === 0) {
+                alert('Keranjang Anda kosong. Tidak dapat melanjutkan pembayaran.');
+                placeOrderButton.disabled = true;
+                // Redirect ke halaman keranjang atau menu jika keranjang kosong
+                window.location.href = 'cart.html'; 
+            } else {
+                placeOrderButton.disabled = false;
+            }
+        }
+
+        // --- Proteksi Halaman & Muat Data Profil Otomatis ---
+        auth.onAuthStateChanged(user => {
+            const storedRole = localStorage.getItem('userRole');
+            const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+            if (isLoggingOut) {
+                localStorage.removeItem('isLoggingOut');
+            }
+
+            if (!user || storedRole !== 'pembeli') {
+                if (!isLoggingOut) {
+                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk melanjutkan ke pembayaran.');
                 }
+                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            } else {
+                currentUserId = user.uid; // Simpan UID user yang login
 
-                if (cart.length === 0) {
-                    alert('Keranjang Anda kosong. Tidak ada yang bisa dipesan.');
-                    return;
-                }
-
-                // Data pesanan untuk dikirim ke koleksi 'pesanan' di Firebase Firestore
-                const orderData = {
-                    customer: {
-                        fullName: fullName,
-                        phoneNumber: phoneNumber,
-                        address: deliveryAddress,
-                        notes: notes
-                    },
-                    items: cart.map(item => ({
-                        id: item.id,
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        image: item.image // Sertakan juga gambar jika diperlukan di kasir
-                    })),
-                    subtotal: subtotal,
-                    deliveryFee: deliveryFee,
-                    totalAmount: totalAmount,
-                    paymentMethod: selectedPaymentMethod,
-                    status: 'Pending', // Status awal pesanan
-                    waktu: firebase.firestore.FieldValue.serverTimestamp() // Timestamp dari server Firebase
-                };
-
-                // 2. Kirim data pesanan ke Firebase Firestore
-                db.collection('pesanan').add(orderData)
-                    .then((docRef) => {
-                        alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: Rp ${totalAmount.toLocaleString('id-ID')}\n\nTerima kasih sudah memesan! Nomor Pesanan Anda: ${docRef.id}`);
-                        
-                        // Kosongkan keranjang di localStorage setelah pesanan berhasil dibuat
-                        localStorage.removeItem('cart');
-
-                        // Arahkan ke halaman konfirmasi
-                        window.location.href = 'payment-confirmation.html';
-                    })
-                    .catch((error) => {
-                        console.error("Error adding document to Firestore: ", error);
-                        alert("Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
-                    });
-            });
+                // Muat data profil pengguna dari Firestore
+                usersCollection.doc(currentUserId).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        fullNameInput.value = userData.fullName || '';
+                        phoneNumberInput.value = userData.phoneNumber || '';
+                        deliveryAddressInput.value = userData.address || '';
+                    } else {
+                        console.warn("Profil pengguna tidak ditemukan di Firestore untuk UID:", currentUserId);
+                        // Biarkan form kosong, user harus mengisi manual
+                        alert('Data profil Anda belum lengkap. Mohon lengkapi informasi pengiriman secara manual.');
+                    }
+                    renderOrderSummary(); // Tampilkan ringkasan setelah data profil dimuat
+                }).catch(error => {
+                    console.error("Error memuat data profil:", error);
+                    alert('Gagal memuat data profil Anda secara otomatis. Mohon isi secara manual.');
+                    renderOrderSummary(); // Tetap tampilkan ringkasan bahkan jika profil gagal dimuat
+                });
+            }
         });
+
+        // --- Logika Pembuatan Pesanan ---
+        placeOrderButton.addEventListener('click', async function() {
+            const fullName = fullNameInput.value.trim();
+            const phoneNumber = phoneNumberInput.value.trim();
+            const deliveryAddress = deliveryAddressInput.value.trim();
+            const notes = notesInput.value.trim();
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+            if (!fullName || !phoneNumber || !deliveryAddress) {
+                alert('Harap lengkapi semua informasi pengiriman: Nama, Nomor Telepon, dan Alamat.');
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert('Keranjang Anda kosong. Tidak ada yang bisa dipesan.');
+                window.location.href = 'apl05.html'; // Kembali ke menu utama
+                return;
+            }
+
+            // Dapatkan subtotal dan total terakhir
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal + (subtotal > 0 ? DELIVERY_FEE : 0);
+
+            // Data pesanan untuk dikirim ke koleksi 'pesanan' di Firebase Firestore
+            const orderData = {
+                userId: currentUserId, // Simpan UID pengguna yang memesan
+                customer: {
+                    fullName: fullName,
+                    phoneNumber: phoneNumber,
+                    address: deliveryAddress,
+                    notes: notes
+                },
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    image: item.image // Sertakan juga gambar jika diperlukan di kasir
+                })),
+                subtotal: subtotal,
+                deliveryFee: (subtotal > 0 ? DELIVERY_FEE : 0),
+                totalAmount: total,
+                paymentMethod: selectedPaymentMethod,
+                status: 'Pending', // Status awal pesanan
+                waktu: firebase.firestore.FieldValue.serverTimestamp() // Timestamp dari server Firebase
+            };
+
+            placeOrderButton.disabled = true; // Nonaktifkan tombol untuk mencegah double click
+            placeOrderButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Membuat Pesanan...';
+
+            try {
+                // Kirim data pesanan ke koleksi 'pesanan' di Firebase Firestore
+                const docRef = await pesananCollection.add(orderData);
+                
+                alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nTerima kasih sudah memesan! Nomor Pesanan Anda: ${docRef.id}`);
+                
+                localStorage.removeItem('cart'); // Kosongkan keranjang di localStorage setelah pesanan berhasil dibuat
+
+                // Arahkan ke halaman konfirmasi pembayaran atau riwayat pesanan
+                window.location.href = 'payment-confirmation.html'; // Anda bisa membuat halaman ini
+            } catch (error) {
+                console.error("Error adding document to Firestore: ", error);
+                alert("Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
+            } finally {
+                placeOrderButton.innerHTML = 'Buat Pesanan'; // Reset teks tombol
+                placeOrderButton.disabled = false; // Aktifkan kembali tombol
+            }
+        });
+
+        // --- Inisialisasi Awal ---
+        // renderOrderSummary() dan proteksi halaman akan dijalankan di auth.onAuthStateChanged
     </script>
 </body>
 </html>
