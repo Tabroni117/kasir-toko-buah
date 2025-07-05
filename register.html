@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daftar Akun - Rujak Buah Indonesia</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            padding-bottom: 70px;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        .custom-header {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(16, 181, 129, 0.3);
+            border-radius: 10px;
+            background: #f8fafc;
+            font-size: 16px;
+            margin-top: 8px;
+            -webkit-appearance: none;
+            min-height: 48px;
+        }
+        .btn-green {
+            background-color: #16a34a; /* primary color */
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-green:hover {
+            background-color: #15803d; /* primary-dark */
+        }
+    </style>
+</head>
+<body class="bg-green-50 min-h-screen flex flex-col">
+
+    <header class="text-white p-4 rounded-b-2xl shadow-md fixed top-0 left-0 right-0 z-50 custom-header">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-leaf text-2xl"></i>
+                <div>
+                    <h1 class="font-bold text-lg">RUJAK BUAH INDONESIA</h1>
+                    <p class="text-sm">Aplikasi Pelanggan</p>
+                </div>
+            </div>
+            <button onclick="window.location.href='login.html'" class="bg-white text-green-600 px-3 py-1 rounded-lg hover:bg-gray-100 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> Kembali ke Login
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center pt-32 px-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+                <i class="fas fa-user-plus mr-2 text-green-500"></i>Daftar Akun Baru
+            </h2>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Peran Anda:</label>
+                <div class="flex space-x-4">
+                    <div id="pembeliRegisterOption" class="flex-1 role-card cursor-pointer p-3 border-2 border-gray-200 rounded-xl flex items-center justify-center hover:border-green-400"
+                        onclick="selectRegisterRole('pembeli')">
+                        <i class="fas fa-user-tag text-lg text-green-600 mr-2"></i>
+                        <span class="font-semibold text-gray-800 text-sm">Pembeli</span>
+                    </div>
+                    <div id="penjualRegisterOption" class="flex-1 role-card cursor-pointer p-3 border-2 border-gray-200 rounded-xl flex items-center justify-center hover:border-green-400"
+                        onclick="selectRegisterRole('penjual')">
+                        <i class="fas fa-store-alt text-lg text-green-600 mr-2"></i>
+                        <span class="font-semibold text-gray-800 text-sm">Penjual</span>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="registerForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-green-500"></i>Nama Lengkap
+                    </label>
+                    <input type="text" id="registerFullName" class="form-input" placeholder="Masukkan Nama Lengkap Anda" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-envelope mr-2 text-green-500"></i>Email
+                    </label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="Masukkan Email Anda" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2 text-green-500"></i>Password
+                    </label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Buat Password (min. 6 karakter)" required minlength="6">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2 text-green-500"></i>Konfirmasi Password
+                    </label>
+                    <input type="password" id="registerConfirmPassword" class="form-input" placeholder="Ketik Ulang Password Anda" required minlength="6">
+                </div>
+                <button type="submit" id="registerSubmitBtn" class="w-full btn-green flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i>Daftar Sekarang
+                </button>
+            </form>
+
+            <p class="text-center text-sm text-gray-600 mt-4">
+                Sudah punya akun? <a href="login.html" class="text-green-600 hover:underline font-medium">Login di sini</a>
+            </p>
+        </div>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-md flex justify-around items-center py-2 z-40">
+        <a href="apl05.html" class="flex flex-col items-center text-green-600 text-sm">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span>Beranda</span>
+        </a>
+        <a href="Inputstok.html" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+            <i class="fas fa-boxes text-xl mb-1"></i>
+            <span>Inventori</span>
+        </a>
+        <a href="pesanan.html" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+            <i class="fas fa-receipt text-xl mb-1"></i>
+            <span>Pesanan</span>
+        </a>
+        <a href="akun.html" class="flex flex-col items-center text-gray-500 hover:text-green-600 text-sm">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span>Profil</span>
+        </a>
+    </nav>
+
+    <script>
+        // --- Konfigurasi Firebase Anda (SAMA DENGAN login.html, Inputstok.html, apl05.html) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app", // Pastikan ini konsisten
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV" // Pastikan ini konsisten
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth(); // Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // Inisialisasi Firestore untuk data user profile (koleksi 'users')
+
+        let selectedRegisterRole = null; // Variable untuk peran yang dipilih saat daftar
+
+        // --- Fungsi untuk Pilih Peran saat Pendaftaran ---
+        function selectRegisterRole(role) {
+            selectedRegisterRole = role;
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('border-green-400', 'bg-green-50');
+            });
+            document.getElementById(`${role}RegisterOption`).classList.add('border-green-400', 'bg-green-50');
+        }
+
+        // --- Logika Pendaftaran Akun Baru dengan Firebase Authentication ---
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const fullName = document.getElementById('registerFullName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const confirmPassword = document.getElementById('registerConfirmPassword').value.trim();
+
+            if (!selectedRegisterRole) {
+                alert('Silakan pilih peran Anda (Pembeli atau Penjual)!');
+                return;
+            }
+            if (!fullName || !email || !password || !confirmPassword) {
+                alert('Harap lengkapi semua kolom!');
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert('Password dan Konfirmasi Password tidak cocok!');
+                return;
+            }
+            if (password.length < 6) {
+                alert('Password minimal 6 karakter!');
+                return;
+            }
+
+            const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+            registerSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Mendaftar...';
+            registerSubmitBtn.disabled = true;
+
+            try {
+                // 1. Buat user di Firebase Authentication
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user; // Dapatkan objek user dari Firebase Auth
+
+                // 2. Simpan data profil user ke Firestore (koleksi 'users')
+                await db.collection('users').doc(user.uid).set({
+                    email: user.email,
+                    fullName: fullName,
+                    role: selectedRegisterRole,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() // Timestamp pembuatan akun
+                });
+
+                alert('Pendaftaran berhasil! Silakan login dengan akun Anda.');
+                window.location.href = 'login.html'; // Arahkan ke halaman login
+            } catch (error) {
+                console.error("Error saat pendaftaran:", error);
+                let errorMessage = "Pendaftaran Gagal: Terjadi kesalahan. Coba lagi.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "Pendaftaran Gagal: Email sudah terdaftar. Silakan login atau gunakan email lain.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Pendaftaran Gagal: Format email tidak valid.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "Pendaftaran Gagal: Password terlalu lemah. Gunakan minimal 6 karakter yang lebih kompleks.";
+                }
+                alert(errorMessage);
+            } finally {
+                registerSubmitBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Daftar Sekarang';
+                registerSubmitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
