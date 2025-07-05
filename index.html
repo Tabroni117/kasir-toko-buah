@@ -170,23 +170,23 @@
     </nav>
 
     <script>
-        // --- Konfigurasi Firebase Anda ---
+        // --- Konfigurasi Firebase Anda (SAMA DENGAN Inputstok.html dan apl05.html) ---
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
             projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
+            storageBucket: "tokobuahkasir.firebasestorage.app", // Pastikan ini konsisten
             messagingSenderId: "731011133713",
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
+            measurementId: "G-7CPE2DB2BV" // Pastikan ini konsisten
         };
 
         // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
-        const db = firebase.firestore(); // NEW: Inisialisasi Firestore untuk data user profile
+        const auth = firebase.auth(); // Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // Inisialisasi Firestore untuk data user profile (koleksi 'users')
 
         let selectedRole = null; // Global variable to store selected role
 
@@ -194,11 +194,9 @@
         function selectRole(role) {
             selectedRole = role;
             document.querySelectorAll('.role-card').forEach(card => {
-                card.classList.remove('selected'); // Remove specific selected class
-                card.classList.remove('border-green-400', 'bg-green-50'); // Remove Tailwind classes
+                card.classList.remove('selected', 'border-green-400', 'bg-green-50');
             });
-            document.getElementById(`${role}Option`).classList.add('selected'); // Add specific selected class
-            document.getElementById(`${role}Option`).classList.add('border-green-400', 'bg-green-50'); // Add Tailwind classes
+            document.getElementById(`${role}Option`).classList.add('selected', 'border-green-400', 'bg-green-50');
             
             const btn = document.getElementById('continueBtn');
             btn.disabled = false;
@@ -242,12 +240,12 @@
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user; // Dapatkan objek pengguna
 
-                // Ambil data peran dari Firestore
+                // Ambil data peran dari Firestore (dari koleksi 'users')
                 const userDoc = await db.collection('users').doc(user.uid).get();
 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
-                    // Cek apakah peran yang dipilih user cocok dengan peran di database
+                    // Cek apakah peran yang dipilih user di halaman ini cocok dengan peran di database
                     if (userData.role === selectedRole) {
                         alert('Login Berhasil!');
                         localStorage.setItem('isLoggedIn', 'true');
@@ -263,23 +261,21 @@
                         }
                     } else {
                         // Jika peran tidak cocok, logout pengguna dan beri tahu
-                        await auth.signOut();
+                        await auth.signOut(); // Logout dari Firebase Auth
                         alert(`Login Gagal: Akun ini adalah ${userData.role}, bukan ${selectedRole}.`);
                         closeAuthModal(); // Tutup modal dan reset
                     }
                 } else {
-                    // Jika data profil tidak ditemukan di Firestore (harusnya tidak terjadi jika pendaftaran benar)
+                    // Jika data profil tidak ditemukan di Firestore (ini bisa terjadi jika user terdaftar di Auth tapi belum ada dokumen di 'users')
                     await auth.signOut(); // Logout user dari Firebase Auth
-                    alert('Login Gagal: Data profil tidak ditemukan. Harap hubungi admin.');
+                    alert('Login Gagal: Data profil tidak ditemukan. Harap hubungi admin atau daftar ulang.');
                     closeAuthModal();
                 }
             } catch (error) {
                 console.error("Error saat login:", error);
                 let errorMessage = "Login Gagal: Terjadi kesalahan. Coba lagi.";
-                if (error.code === 'auth/user-not-found') {
-                    errorMessage = "Login Gagal: Akun tidak ditemukan. Silakan daftar atau periksa kembali email Anda.";
-                } else if (error.code === 'auth/wrong-password') {
-                    errorMessage = "Login Gagal: Password salah.";
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "Login Gagal: Email atau Password salah."; // Gabungkan pesan untuk keamanan
                 } else if (error.code === 'auth/invalid-email') {
                     errorMessage = "Login Gagal: Format email tidak valid.";
                 } else if (error.code === 'auth/too-many-requests') {
@@ -303,24 +299,54 @@
                         const storedRole = localStorage.getItem('userRole');
 
                         // Jika sudah login dan peran cocok, arahkan langsung
+                        // Pastikan role yang tersimpan di localStorage juga cocok
                         if (isLoggedIn === 'true' && storedRole === role) {
                             if (role === 'penjual') {
                                 window.location.href = 'pesanan.html';
                             } else if (role === 'pembeli') {
                                 window.location.href = 'apl05.html';
                             }
+                        } else {
+                            // Sesi Firebase Auth aktif, tapi localStorage tidak cocok (mungkin tab baru atau localStorage terhapus)
+                            // Arahkan ke halaman berdasarkan role dari Firestore
+                            if (role === 'penjual') {
+                                window.location.href = 'pesanan.html';
+                            } else if (role === 'pembeli') {
+                                window.location.href = 'apl05.html';
+                            }
+                            // Update localStorage agar konsisten
+                            localStorage.setItem('isLoggedIn', 'true');
+                            localStorage.setItem('userRole', role);
+                            localStorage.setItem('userEmail', user.email);
+                            localStorage.setItem('userUid', user.uid);
                         }
                     } else {
                         // User terautentikasi di Firebase Auth, tapi tidak ada profil di Firestore
                         // Ini bisa terjadi jika pendaftaran belum lengkap atau ada bug.
                         // Logout saja user dari Firebase Auth.
                         auth.signOut();
-                        console.warn("User authenticated but no profile found in Firestore.");
+                        console.warn("User authenticated but no profile found in Firestore. Logging out.");
+                        // Pastikan localStorage juga dibersihkan
+                        localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userEmail');
+                        localStorage.removeItem('userUid');
                     }
                 }).catch(error => {
                     console.error("Error fetching user role from Firestore:", error);
                     auth.signOut(); // Log out on error
+                    // Bersihkan localStorage juga
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('userUid');
                 });
+            } else {
+                // Tidak ada user yang login, pastikan localStorage juga bersih
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
             }
             // Jika tidak ada user, biarkan di halaman login
         });
