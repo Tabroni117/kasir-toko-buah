@@ -8,7 +8,9 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -30,7 +32,7 @@
             padding-bottom: 50px; /* Space for bottom nav */
         }
 
-        /* Header */
+        /* Header Asli yang Dipertahankan */
         .header {
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
@@ -42,17 +44,23 @@
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
             display: flex; /* Make header a flex container */
-            justify-content: space-between; /* Space out items */
-            align-items: center; /* Vertically align items */
+            flex-direction: column; /* Menjaga app-header dan address-bar bertumpuk */
+            align-items: flex-start; /* Mengatur alignment ke kiri */
+        }
+
+        .header-top-row { /* Kontainer untuk judul & logout button */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%; /* Agar memenuhi lebar header */
+            margin-bottom: 8px; /* Jarak ke address-bar */
         }
 
         .app-header {
-            margin-bottom: 0; /* Remove margin-bottom if it's not the only item */
+            margin-bottom: 0; /* Tidak perlu margin-bottom di sini */
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Align left within its container */
-            text-align: left; /* Align text left */
-            flex-grow: 1; /* Allow it to take available space */
+            align-items: flex-start; /* Default alignment */
         }
 
         .app-title {
@@ -71,11 +79,11 @@
         .app-tagline {
             font-size: 12px;
             font-style: italic;
-            margin-bottom: 0; /* Remove margin-bottom if it's not the only item */
+            margin-bottom: 0;
             color: rgba(255,255,255,0.9);
         }
 
-        /* NEW: Logout Button Style */
+        /* Logout Button Style */
         .logout-btn {
             background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
             color: white;
@@ -85,7 +93,7 @@
             cursor: pointer;
             font-size: 0.9em;
             transition: background-color 0.3s, border-color 0.3s;
-            margin-left: 15px; /* Add some space from address bar if needed */
+            margin-left: auto; /* Push button to the right */
             white-space: nowrap; /* Prevent text from wrapping */
         }
         .logout-btn:hover {
@@ -99,7 +107,6 @@
             background: white;
             border-radius: 8px;
             padding: 10px;
-            margin-top: 8px; /* Adjusted margin from app-header */
             position: relative;
             width: 100%; /* Make it full width again below the header info */
         }
@@ -337,16 +344,18 @@
 <body>
     <div class="container">
         <header class="header">
-            <div class="app-header">
-                <div class="app-title">
-                    <i class="fas fa-leaf leaf-icon"></i>
-                    RUJAK BUAH INDONESIA
+            <div class="header-top-row">
+                <div class="app-header">
+                    <div class="app-title">
+                        <i class="fas fa-leaf leaf-icon"></i>
+                        RUJAK BUAH INDONESIA
+                    </div>
+                    <div class="app-tagline">Aplikasi Pelanggan</div>
                 </div>
-                <div class="app-tagline">Aplikasi Pelanggan</div>
+                <button onclick="logout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
             </div>
-            <button onclick="logout()" class="logout-btn">
-                <i class="fas fa-sign-out-alt mr-1"></i> Logout
-            </button>
             <div class="address-bar">
                 <i class="fas fa-map-marker-alt gps-icon"></i>
                 <input type="text" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
@@ -468,12 +477,32 @@
         const menuCollection = db.collection('buah');
 
         // --- Proteksi Halaman: Cek Status Login ---
+        // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
+        // Ini adalah listener utama yang memastikan user diotorisasi
         auth.onAuthStateChanged(user => {
-            // Kita ingin halaman ini hanya diakses oleh Pembeli yang sudah login
+            // Ambil flag `isLoggingOut` dari localStorage
+            const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+            // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
+            if (isLoggingOut) {
+                localStorage.removeItem('isLoggingOut');
+            }
+
             const storedRole = localStorage.getItem('userRole');
+
             if (!user || storedRole !== 'pembeli') {
-                alert('Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+                // Jika tidak ada user login di Firebase Auth,
+                // ATAU role di localStorage bukan 'pembeli'
+                
+                // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
+                if (!isLoggingOut) { 
+                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+                }
                 window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            } else {
+                // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
+                renderMenuItems();
+                startAutoScroll();
             }
         });
 
@@ -483,16 +512,26 @@
         // --- Fungsi untuk Logout ---
         async function logout() {
             try {
+                // Set flag di localStorage bahwa logout disengaja
+                localStorage.setItem('isLoggingOut', 'true'); 
+
                 await auth.signOut(); // Logout dari Firebase Auth
-                localStorage.removeItem('isLoggedIn'); // Bersihkan status di localStorage
+                // auth.onAuthStateChanged akan otomatis terpicu setelah ini
+                // dan akan mengarahkan ke index.html tanpa alert karena flag isLoggingOut
+                
+                // Opsional: Langsung bersihkan localStorage di sini juga jika ingin lebih cepat responsif
+                localStorage.removeItem('isLoggedIn'); 
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('userUid');
-                alert('Anda telah berhasil logout.');
-                window.location.href = 'index.html'; // Arahkan ke halaman login (index.html)
+                
+                alert('Anda telah berhasil logout.'); // Notifikasi logout berhasil
+                window.location.href = 'index.html'; // Redirect
             } catch (error) {
                 console.error("Error saat logout:", error);
                 alert('Gagal logout. Coba lagi.');
+                // Hapus flag jika logout gagal agar proteksi tetap aktif
+                localStorage.removeItem('isLoggingOut'); 
             }
         }
 
@@ -622,11 +661,11 @@
             });
         });
 
-        // --- Inisialisasi Halaman ---
-        document.addEventListener('DOMContentLoaded', function() {
-            renderMenuItems(); // Muat menu dari Firebase saat DOM siap
-            startAutoScroll(); // Mulai auto-scroll promo banner
-        });
+        // --- Inisialisasi Halaman (Dipindahkan ke dalam onAuthStateChanged) ---
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     renderMenuItems();
+        //     startAutoScroll();
+        // });
     </script>
 </body>
 </html>
