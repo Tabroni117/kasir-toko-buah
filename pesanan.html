@@ -707,32 +707,44 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth(); 
-        
-        // --- Proteksi Halaman: Cek Status Login untuk PENJUAL ---
-    showLoading();   
-    auth.onAuthStateChanged(user => {
-    const isLoggingOut = localStorage.getItem('isLoggingOut');
-    if (isLoggingOut) {
-        localStorage.removeItem('isLoggingOut');
-    }
-
-    const storedRole = localStorage.getItem('userRole');
-
-    if (!user || storedRole !== 'penjual') {
-        if (!isLoggingOut) {
-            alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+       
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-        window.location.href = 'login.html';
-    } else {
-        // ✅ Lanjutkan jika user sah & role cocok
-        loadData('All');
-        cekPesananBaru();
-    }
-});
+        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // NEW: Inisialisasi Firestore
+        const menuCollection = db.collection('buah');
 
+        // --- Proteksi Halaman: Cek Status Login ---
+        // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
+        // Ini adalah listener utama yang memastikan user diotorisasi
+        auth.onAuthStateChanged(user => {
+            // Ambil flag `isLoggingOut` dari localStorage
+            const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+            // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
+            if (isLoggingOut) {
+                localStorage.removeItem('isLoggingOut');
+            }
+
+            const storedRole = localStorage.getItem('userRole');
+
+            if (!user || storedRole !== 'penjual') {
+                // Jika tidak ada user login di Firebase Auth,
+                // ATAU role di localStorage bukan 'pembeli'
+                
+                // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
+                if (!isLoggingOut) { 
+                    alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+                }
+                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            } else {
+                // User sudah login dan role cocok ('penjual'), lanjutkan memuat konten
+                renderMenuItems();
+                startAutoScroll();
+            }
+        });
         // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
         const daftar = document.getElementById("daftarPesanan");
         const totalOrdersEl = document.getElementById("totalOrders");
