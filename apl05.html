@@ -548,44 +548,46 @@
                 menuList.innerHTML = ''; 
 
                 if (snapshot.empty) {
-                    menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
-                } else {
-                    snapshot.forEach(doc => {
-                        const productFromFirebase = { id: doc.id, ...doc.data() }; 
+            // ...
+        } else {
+            snapshot.forEach(doc => {
+                const productFromFirebase = { id: doc.id, ...doc.data() }; 
 
-                        // --- PEMETAAN FIELD UNTUK product-detail.html ---
-                        const productForDetail = {
-                            id: productFromFirebase.id,
-                            name: productFromFirebase.nama, // 'nama' dari Firebase -> 'name'
-                            description: productFromFirebase.deskripsi, // 'deskripsi' dari Firebase
-                            price: productFromFirebase.harga, // 'harga' dari Firebase
-                            image: productFromFirebase.imageUrl, // 'imageUrl' dari Firebase -> 'image'
-                            rating: productFromFirebase.rating,
-                            deliveryTime: productFromFirebase.deliveryTime,
-                        };
-                        // --- AKHIR PEMETAAN FIELD ---
-                        
-                        const card = document.createElement('div');
-                        card.classList.add('restaurant-card', 'fade-in'); 
+                const productForDetail = {
+                    id: productFromFirebase.id,
+                    name: productFromFirebase.nama, 
+                    description: productFromFirebase.deskripsi,
+                    price: productFromFirebase.harga,
+                    image: productFromFirebase.imageUrl, 
+                    rating: productFromFirebase.rating,
+                    deliveryTime: productFromFirebase.deliveryTime,
+                };
+                
+                const card = document.createElement('div');
+                card.classList.add('restaurant-card', 'fade-in'); 
 
-                        card.innerHTML = `
-                            <img src="${productForDetail.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
-                            <div class="restaurant-info">
-                                <div class="restaurant-name">${productForDetail.name}</div>
-                                <div class="restaurant-meta">
-                                    <span class="rating"><i class="fas fa-star"></i> ${productForDetail.rating ? productForDetail.rating.toFixed(1) : 'N/A'}</span>
-                                    <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
-                                </div>
-                            </div>
-                        `;
-                        
-                        card.addEventListener('click', () => {
-                            sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                            window.location.href = 'product-detail.html'; 
-                        });
-                        menuList.appendChild(card);
-                    });
-                }
+                card.innerHTML = `
+                    <img src="${productForDetail.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
+                    <div class="restaurant-info">
+                        <div class="restaurant-name">${productForDetail.name}</div>
+                        <div class="restaurant-meta">
+                            <span class="rating"><i class="fas fa-star"></i> ${productForDetail.rating ? productForDetail.rating.toFixed(1) : 'N/A'}</span>
+                            <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
+                    // NEW DEBUGGING: Cek data yang masuk ke sessionStorage dari apl05.html
+                    alert("DEBUG APL05: Data ke sessionStorage: " + JSON.stringify(productForDetail)); // <-- TAMBAHKAN INI
+                    window.location.href = 'product-detail.html'; 
+                });
+                menuList.appendChild(card);
+            });
+        }
+    }
+
             } catch (error) {
                 console.error("Error memuat menu dari Firebase: ", error);
                 menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
