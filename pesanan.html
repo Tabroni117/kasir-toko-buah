@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard Pesanan Penjual</title>
+    <title>Dashboard Penjual - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
-
+    
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -19,6 +20,39 @@
             color: #1e293b;
             padding: 20px;
         }
+        .header {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header .title {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .header .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .header .btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .header .btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -27,40 +61,88 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        .filter-section {
+            background-color: #f0fdf4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
         .order-item {
             border: 1px solid #e2e8f0;
             padding: 15px;
             margin-bottom: 10px;
             border-radius: 6px;
             background-color: #fefefe;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .order-header-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #eee;
         }
         .order-id {
             font-weight: bold;
             color: #16a34a;
             font-size: 1.1em;
         }
-        .customer-info {
-            font-size: 0.9em;
+        .order-date {
+            font-size: 0.8em;
             color: #64748b;
         }
+        .customer-info-item {
+            font-size: 0.9em;
+            color: #444;
+            margin-bottom: 5px;
+        }
+        .order-total-item {
+            font-weight: bold;
+            font-size: 1em;
+            color: #15803d;
+            margin-top: 10px;
+        }
         .status {
+            display: inline-block;
             padding: 4px 10px;
             border-radius: 15px;
             font-size: 0.8em;
             font-weight: 600;
+            color: white;
         }
-        .status.Pending { background-color: #fffbeb; color: #d97706; }
-        .status.Diproses { background-color: #eff6ff; color: #2563eb; }
-        .status.Selesai { background-color: #d1fae5; color: #059669; }
-        .status.Dibatalkan { background-color: #fee2e2; color: #dc2626; }
-        .loading-spinner {
+        .status.Pending { background-color: #ffc107; } /* Yellow */
+        .status.Diproses { background-color: #0d6efd; } /* Blue */
+        .status.Selesai { background-color: #198754; } /* Green */
+        .status.Dibatalkan { background-color: #dc3545; } /* Red */
+
+        .loading-spinner-content {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100px;
+            height: 150px;
+            flex-direction: column;
+            gap: 10px;
         }
         .spinner {
             border: 4px solid rgba(16, 185, 129, 0.2);
@@ -74,24 +156,53 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .no-orders-message {
+            text-align: center;
+            padding: 50px 20px;
+            color: #777;
+            font-size: 1em;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-2xl font-bold text-center mb-6 text-green-600">Daftar Pesanan Penjual</h1>
-        <div id="orderList" class="order-list">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-            </div>
-            <p class="text-center text-gray-500 mt-4">Memuat pesanan...</p>
+    <header class="header">
+        <div class="title">Dashboard Penjual</div>
+        <div class="actions">
+            <button onclick="window.location.href='pesanan.html'" class="btn">
+                <i class="fas fa-arrow-left mr-1"></i> Kembali
+            </button>
+            <button id="logoutBtn" class="btn">
+                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+            </button>
         </div>
-        <button id="logoutBtn" class="mt-8 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
-            Logout
-        </button>
+    </header>
+
+    <div class="container">
+        <div class="filter-section">
+            <h2 class="section-title">Cari & Filter Pesanan</h2>
+            <div class="form-group">
+                <label for="searchQuery">Nomor Pesanan / Nama Pelanggan:</label>
+                <input type="text" id="searchQuery" placeholder="Cari pesanan...">
+            </div>
+            <div class="form-group">
+                <label for="filterDate">Filter Per Tanggal:</label>
+                <input type="date" id="filterDate">
+            </div>
+            <button id="resetFiltersBtn" class="btn bg-gray-300 hover:bg-gray-400 text-gray-800">
+                <i class="fas fa-redo mr-1"></i> Reset Filter
+            </button>
+        </div>
+
+        <div id="orderList" class="order-list">
+            <div class="loading-spinner-content">
+                <div class="spinner"></div>
+                <p class="text-gray-500">Memuat pesanan...</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase Anda
+        // Konfigurasi Firebase Anda (PASTIKAN SAMA DENGAN FILE LAIN)
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -102,23 +213,45 @@
             measurementId: "G-7CPE2DB2BV"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const pesananCollection = db.collection('pesanan');
+        const usersCollection = db.collection('users'); // Digunakan untuk cek peran
 
+        // Elemen DOM
         const orderListDiv = document.getElementById('orderList');
         const logoutBtn = document.getElementById('logoutBtn');
+        const searchQueryInput = document.getElementById('searchQuery');
+        const filterDateInput = document.getElementById('filterDate');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
-        // Fungsi untuk mendapatkan kelas status CSS
-        function getStatusClass(status) {
-            switch (status) {
-                case 'Pending': return 'Pending';
-                case 'Diproses': return 'Diproses';
-                case 'Selesai': return 'Selesai';
-                case 'Dibatalkan': return 'Dibatalkan';
-                default: return '';
+        // Proteksi Halaman
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in, check their role
+                usersCollection.doc(user.uid).get().then((doc) => {
+                    if (doc.exists && doc.data().role === 'penjual') {
+                        // User is a seller, load data
+                        loadData(); // Memuat data awal tanpa filter
+                    } else {
+                        // User is not a seller or role not found, redirect to login
+                        alert("Anda tidak memiliki akses sebagai penjual. Silakan login dengan akun penjual.");
+                        window.location.href = 'index.html'; // Redirect ke halaman login
+                    }
+                }).catch(error => {
+                    console.error("Error getting user role:", error);
+                    alert("Terjadi kesalahan saat memeriksa peran pengguna. Silakan coba lagi.");
+                    window.location.href = 'index.html'; // Redirect jika ada error
+                });
+            } else {
+                // No user is signed in, redirect to login
+                window.location.href = 'index.html';
             }
-        }
+        });
 
         // Fungsi untuk memformat mata uang
         function formatCurrency(amount) {
@@ -130,88 +263,126 @@
         }
 
         // Fungsi untuk memuat data pesanan
-        function loadData() {
+        async function loadData() {
             orderListDiv.innerHTML = `
-                <div class="loading-spinner">
+                <div class="loading-spinner-content">
                     <div class="spinner"></div>
+                    <p class="text-gray-500">Memuat pesanan...</p>
                 </div>
-                <p class="text-center text-gray-500 mt-4">Memuat pesanan...</p>
             `;
 
-            db.collection("pesanan").orderBy("waktu", "desc").get()
-                .then((querySnapshot) => {
-                    orderListDiv.innerHTML = ''; // Bersihkan konten loading
-                    if (querySnapshot.empty) {
-                        orderListDiv.innerHTML = '<p class="text-center text-gray-500">Tidak ada pesanan.</p>';
-                        return;
-                    }
+            try {
+                let query = pesananCollection.orderBy("waktu", "desc");
 
-                    querySnapshot.forEach((doc) => {
+                // Filter Pencarian (Nomor Pesanan / Nama Pelanggan)
+                const searchTxt = searchQueryInput.value.trim().toUpperCase();
+                if (searchTxt) {
+                    // Jika mencari, kita tidak bisa pakai orderBy waktu lagi secara langsung dengan where di nama/displayOrderId
+                    // Solusi: Ambil semua data lalu filter di client-side, atau buat indeks lebih kompleks.
+                    // Untuk saat ini, kita akan ambil semua dan filter di client-side untuk kesederhanaan.
+                    // Ini mungkin kurang efisien untuk database besar, tapi mudah diimplementasi.
+                }
+
+                // Filter Tanggal
+                const filterDateVal = filterDateInput.value;
+                let startOfDay, endOfDay;
+                if (filterDateVal) {
+                    const selectedDate = new Date(filterDateVal);
+                    startOfDay = firebase.firestore.Timestamp.fromDate(new Date(selectedDate.setHours(0, 0, 0, 0)));
+                    endOfDay = firebase.firestore.Timestamp.fromDate(new Date(selectedDate.setHours(23, 59, 59, 999)));
+                    query = query.where('waktu', '>=', startOfDay).where('waktu', '<=', endOfDay);
+                }
+
+                const querySnapshot = await query.get();
+
+                let filteredDocs = [];
+                if (searchTxt) {
+                    querySnapshot.forEach(doc => {
                         const data = doc.data();
-                        const orderFirebaseId = doc.id;
-                        // Ambil displayOrderId dari Firestore, atau buat dari doc.id
-                        const displayId = data.displayOrderId || '#' + orderFirebaseId.substring(0, 6).toUpperCase();
+                        const customerName = (data.customer?.fullName || '').toUpperCase();
+                        const displayId = (data.displayOrderId || '#' + doc.id.substring(0, 6).toUpperCase());
 
-                        const orderItem = `
-                            <div class="order-item">
-                                <div>
-                                    <div class="order-id">Nomor Pesanan: ${displayId}</div>
-                                    <div class="customer-info">
-                                        ${data.customer?.fullName || 'Pelanggan'} - ${data.customer?.phoneNumber || '-'}
-                                    </div>
-                                    <div class="customer-info">
-                                        Total: ${formatCurrency(data.totalAmount || 0)}
-                                    </div>
+                        // Cek apakah teks pencarian cocok dengan nama pelanggan atau nomor pesanan
+                        if (customerName.includes(searchTxt) || displayId.includes(searchTxt)) {
+                            filteredDocs.push(doc);
+                        }
+                    });
+                } else {
+                    // Jika tidak ada pencarian, semua dokumen dari query (mungkin difilter tanggal) akan ditampilkan
+                    filteredDocs = querySnapshot.docs;
+                }
+
+                orderListDiv.innerHTML = ''; // Bersihkan konten loading
+
+                if (filteredDocs.length === 0) {
+                    orderListDiv.innerHTML = '<p class="text-center text-gray-500">Tidak ada pesanan.</p>';
+                    return;
+                }
+
+                filteredDocs.forEach((doc) => {
+                    const data = doc.data();
+                    const orderFirebaseId = doc.id;
+                    const displayId = data.displayOrderId || '#' + orderFirebaseId.substring(0, 6).toUpperCase(); // Display ID
+
+                    const orderDate = data.waktu ? new Date(data.waktu.toDate()).toLocaleString('id-ID', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }) : 'Tanggal tidak tersedia';
+
+                    const orderItem = `
+                        <div class="order-item">
+                            <div>
+                                <div class="order-id">Nomor Pesanan: ${displayId}</div>
+                                <div class="customer-info-item">
+                                    ${data.customer?.fullName || 'Pelanggan'} - ${data.customer?.phoneNumber || '-'}
                                 </div>
-                                <div class="status ${getStatusClass(data.status)}">
-                                    ${data.status || 'Tidak Diketahui'}
+                                <div class="customer-info-item">
+                                    Total: ${formatCurrency(data.totalAmount || 0)}
                                 </div>
                             </div>
-                        `;
-                        orderListDiv.innerHTML += orderItem;
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting documents: ", error);
-                    orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data pesanan.</p>';
+                            <div class="status ${getStatusClass(data.status)}">
+                                ${data.status || 'Tidak Diketahui'}
+                            </div>
+                        </div>
+                    `;
+                    orderListDiv.innerHTML += orderItem;
                 });
+
+            } catch (error) {
+                console.error("Error getting documents: ", error);
+                orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data pesanan.</p>';
+            }
         }
 
-        // Proteksi Halaman
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // User is signed in, check their role
-                db.collection("users").doc(user.uid).get().then((doc) => {
-                    if (doc.exists && doc.data().role === 'penjual') {
-                        // User is a seller, load data
-                        loadData();
-                    } else {
-                        // User is not a seller or role not found, redirect to login
-                        alert("Anda tidak memiliki akses sebagai penjual. Silakan login dengan akun penjual.");
-                        window.location.href = 'login.html'; // Redirect ke halaman login
-                    }
-                }).catch(error => {
-                    console.error("Error getting user role:", error);
-                    alert("Terjadi kesalahan saat memeriksa peran pengguna. Silakan coba lagi.");
-                    window.location.href = 'login.html'; // Redirect jika ada error
-                });
-            } else {
-                // No user is signed in, redirect to login
-                window.location.href = 'login.html';
-            }
+        // Event Listeners untuk Filter
+        searchQueryInput.addEventListener('input', loadData);
+        filterDateInput.addEventListener('change', loadData);
+        resetFiltersBtn.addEventListener('click', () => {
+            searchQueryInput.value = '';
+            filterDateInput.value = '';
+            loadData();
         });
+
 
         // Logout functionality
         logoutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 alert("Anda telah logout.");
-                window.location.href = 'login.html'; // Redirect to login page after logout
+                // Hapus data sesi di localStorage
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                window.location.href = 'index.html'; // Redirect ke halaman login
             }).catch((error) => {
                 console.error("Error signing out: ", error);
                 alert("Gagal logout. Silakan coba lagi.");
             });
         });
 
+        // Inisialisasi awal
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ini akan dipanggil setelah Auth memeriksa status pengguna
+        });
     </script>
 </body>
 </html>
