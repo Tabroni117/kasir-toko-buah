@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profil - Rujak Buah Indonesia</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc; /* Latar belakang lembut */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #16a34a, #22c55e); /* Gradien hijau konsisten */
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s;
+        }
+        .header .back-button:hover {
+            transform: translateX(-5px);
+        }
+        .header .title {
+            font-size: 20px;
+            font-weight: bold;
+            flex-grow: 1;
+            text-align: center;
+            margin-left: -30px; /* Offset back button */
+        }
+        .container {
+            flex-grow: 1;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1); /* Bayangan lebih dalam */
+        }
+        .form-section h2 {
+            color: #15803d; /* primary-dark */
+            font-size: 24px;
+            margin-bottom: 25px;
+            text-align: center;
+            position: relative;
+        }
+        .form-section h2::after { /* Garis bawah elegan */
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background-color: #16a34a;
+            border-radius: 2px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600; /* Lebih tebal */
+            color: #555;
+            font-size: 15px;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"] {
+            width: calc(100% - 22px); /* Mengakomodasi padding */
+            padding: 12px;
+            border: 1px solid #ddd; /* Border lebih halus */
+            border-radius: 8px; /* Lebih rounded */
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: #fcfcfc; /* Sedikit latar belakang */
+        }
+        .form-group input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); /* Shadow saat fokus */
+            outline: none;
+        }
+        .form-group input:disabled { /* Styling untuk input disabled (email) */
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        .save-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #16a34a, #22c55e); /* Gradien hijau */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .save-button:hover {
+            background: linear-gradient(135deg, #15803d, #1c9e4e);
+            transform: translateY(-2px);
+        }
+        .save-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 15px;
+            }
+            .header .title {
+                font-size: 18px;
+            }
+            .container {
+                margin: 20px auto;
+                padding: 20px;
+            }
+            .form-section h2 {
+                font-size: 22px;
+                margin-bottom: 20px;
+            }
+            .form-group label {
+                font-size: 14px;
+            }
+            .form-group input {
+                padding: 10px;
+                font-size: 15px;
+            }
+            .save-button {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <button class="back-button" onclick="window.history.back()"><i class="fas fa-arrow-left"></i></button>
+        <div class="title">Edit Profil</div>
+        <div></div> 
+    </header>
+
+    <div class="container">
+        <div id="loadingMessage" class="loading-message">Memuat data profil...</div>
+        
+        <div id="profileEditFormContainer" class="form-section" style="display: none;">
+            <h2>Ubah Informasi Profil</h2>
+            <div id="statusMessage" class="message" style="display: none;"></div>
+            
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="fullName">Nama Lengkap:</label>
+                    <input type="text" id="fullName" required placeholder="Masukkan nama lengkap Anda">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" disabled> </div>
+                <div class="form-group">
+                    <label for="address">Alamat:</label>
+                    <input type="text" id="address" placeholder="Masukkan alamat lengkap Anda">
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Nomor Telepon:</label>
+                    <input type="tel" id="phoneNumber" placeholder="Masukkan nomor telepon Anda">
+                </div>
+                
+                <button type="submit" id="saveProfileButton" class="save-button">
+                    <i class="fas fa-save mr-2"></i> Simpan Perubahan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Konfigurasi Firebase (PASTIKAN SAMA DENGAN FILE LAIN) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const usersCollection = db.collection('users'); // Koleksi untuk data profil pengguna
+
+        // --- Elemen DOM ---
+        const loadingMessage = document.getElementById('loadingMessage');
+        const profileEditFormContainer = document.getElementById('profileEditFormContainer');
+        const statusMessage = document.getElementById('statusMessage');
+
+        const editProfileForm = document.getElementById('editProfileForm');
+        const fullNameInput = document.getElementById('fullName');
+        const emailInput = document.getElementById('email');
+        const addressInput = document.getElementById('address');
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const saveProfileButton = document.getElementById('saveProfileButton');
+
+        let currentUserUid = null; // UID pengguna yang sedang login
+
+        // --- Fungsi untuk Menampilkan Pesan Status ---
+        function showStatusMessage(msg, type = 'success') {
+            statusMessage.textContent = msg;
+            statusMessage.className = `message ${type}`;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        // --- Proteksi Halaman dan Muat Data Profil ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserUid = user.uid; // Simpan UID pengguna
+                emailInput.value = user.email; // Langsung set email dari Firebase Auth (read-only)
+
+                // Muat data profil dari Firestore
+                usersCollection.doc(currentUserUid).get().then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        fullNameInput.value = userData.fullName || '';
+                        addressInput.value = userData.address || '';
+                        phoneNumberInput.value = userData.phoneNumber || '';
+                    } else {
+                        // Jika dokumen user belum ada (misal: user lama yang daftar sebelum ada field ini)
+                        // Inisialisasi saja dengan data yang ada
+                        fullNameInput.value = user.displayName || ''; // Jika nama ada dari Auth
+                        showStatusMessage('Profil Anda belum lengkap. Silakan isi dan simpan.', 'error');
+                        console.warn("Profil pengguna tidak ditemukan di Firestore, UID:", currentUserUid);
+                    }
+                    loadingMessage.style.display = 'none';
+                    profileEditFormContainer.style.display = 'block';
+                }).catch(error => {
+                    console.error("Error memuat data profil:", error);
+                    loadingMessage.style.display = 'none';
+                    showStatusMessage('Gagal memuat data profil. Coba lagi atau hubungi admin.', 'error');
+                    // Opsional: Logout jika ada error fatal
+                    // auth.signOut(); window.location.href = 'index.html';
+                });
+
+            } else {
+                // Pengguna belum login, arahkan ke halaman login
+                alert('Anda harus login untuk mengedit profil.');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // --- Logika Simpan Perubahan Profil ---
+        editProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newFullName = fullNameInput.value.trim();
+            const newAddress = addressInput.value.trim();
+            const newPhoneNumber = phoneNumberInput.value.trim();
+
+            if (!newFullName) {
+                showStatusMessage('Nama lengkap wajib diisi!', 'error');
+                return;
+            }
+
+            saveProfileButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+            saveProfileButton.disabled = true;
+
+            try {
+                await usersCollection.doc(currentUserUid).update({
+                    fullName: newFullName,
+                    address: newAddress,
+                    phoneNumber: newPhoneNumber,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp() // Catat waktu update
+                });
+
+                showStatusMessage('Profil berhasil diperbarui!', 'success');
+                // Setelah berhasil disimpan, bisa diarahkan kembali ke halaman profil atau biarkan di sini
+                setTimeout(() => {
+                    window.location.href = 'profile.html'; 
+                }, 1500); // Tunggu sebentar sebelum redirect
+                
+            } catch (error) {
+                console.error("Error saat menyimpan profil:", error);
+                showStatusMessage('Gagal menyimpan perubahan. Coba lagi.', 'error');
+            } finally {
+                saveProfileButton.innerHTML = '<i class="fas fa-save mr-2"></i> Simpan Perubahan';
+                saveProfileButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
