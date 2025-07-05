@@ -8,8 +8,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-    <style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <style>
         * {
             margin: 0;
             padding: 0;
@@ -42,14 +41,18 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
+            display: flex; /* Make header a flex container */
+            justify-content: space-between; /* Space out items */
+            align-items: center; /* Vertically align items */
         }
 
         .app-header {
-            margin-bottom: 8px;
+            margin-bottom: 0; /* Remove margin-bottom if it's not the only item */
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start; /* Align left within its container */
+            text-align: left; /* Align text left */
+            flex-grow: 1; /* Allow it to take available space */
         }
 
         .app-title {
@@ -68,8 +71,26 @@
         .app-tagline {
             font-size: 12px;
             font-style: italic;
-            margin-bottom: 8px;
+            margin-bottom: 0; /* Remove margin-bottom if it's not the only item */
             color: rgba(255,255,255,0.9);
+        }
+
+        /* NEW: Logout Button Style */
+        .logout-btn {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s, border-color 0.3s;
+            margin-left: 15px; /* Add some space from address bar if needed */
+            white-space: nowrap; /* Prevent text from wrapping */
+        }
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
         .address-bar {
@@ -78,8 +99,9 @@
             background: white;
             border-radius: 8px;
             padding: 10px;
-            margin-bottom: 8px;
+            margin-top: 8px; /* Adjusted margin from app-header */
             position: relative;
+            width: 100%; /* Make it full width again below the header info */
         }
 
         .gps-icon {
@@ -320,8 +342,11 @@
                     <i class="fas fa-leaf leaf-icon"></i>
                     RUJAK BUAH INDONESIA
                 </div>
-                <div class="app-tagline">Aplikasi Kasir Premium</div>
+                <div class="app-tagline">Aplikasi Pelanggan</div>
             </div>
+            <button onclick="logout()" class="logout-btn">
+                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+            </button>
             <div class="address-bar">
                 <i class="fas fa-map-marker-alt gps-icon"></i>
                 <input type="text" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
@@ -438,28 +463,53 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const db = firebase.firestore();
-        const menuCollection = db.collection('buah'); // Mengambil data dari koleksi 'buah'
+        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // NEW: Inisialisasi Firestore
+        const menuCollection = db.collection('buah');
+
+        // --- Proteksi Halaman: Cek Status Login ---
+        auth.onAuthStateChanged(user => {
+            // Kita ingin halaman ini hanya diakses oleh Pembeli yang sudah login
+            const storedRole = localStorage.getItem('userRole');
+            if (!user || storedRole !== 'pembeli') {
+                alert('Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            }
+        });
 
         // --- Elemen Utama ---
         const menuList = document.getElementById('menuList');
 
+        // --- Fungsi untuk Logout ---
+        async function logout() {
+            try {
+                await auth.signOut(); // Logout dari Firebase Auth
+                localStorage.removeItem('isLoggedIn'); // Bersihkan status di localStorage
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                alert('Anda telah berhasil logout.');
+                window.location.href = 'index.html'; // Arahkan ke halaman login (index.html)
+            } catch (error) {
+                console.error("Error saat logout:", error);
+                alert('Gagal logout. Coba lagi.');
+            }
+        }
+
         // --- Fungsi untuk Memuat dan Menampilkan Menu dari Firebase ---
         async function renderMenuItems() {
-            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>'; // Tampilkan pesan loading
+            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>'; 
 
             try {
-                // Ambil semua dokumen dari koleksi 'buah', urutkan berdasarkan nama, dan filter yang isAvailable: true
                 const snapshot = await menuCollection
-                                        .where('isAvailable', '==', true) // Hanya tampilkan yang tersedia
+                                        .where('isAvailable', '==', true) 
                                         .orderBy('nama')
                                         .get();
 
-                menuList.innerHTML = ''; // Kosongkan daftar menu
+                menuList.innerHTML = ''; 
 
                 if (snapshot.empty) {
                     menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
-                    // alert("DEBUG: Koleksi 'buah' kosong atau tidak ada yang isAvailable: true."); // DIKOMENTARI
                 } else {
                     snapshot.forEach(doc => {
                         const productFromFirebase = { id: doc.id, ...doc.data() }; 
@@ -473,15 +523,12 @@
                             image: productFromFirebase.imageUrl, // 'imageUrl' dari Firebase -> 'image'
                             rating: productFromFirebase.rating,
                             deliveryTime: productFromFirebase.deliveryTime,
-                            // Tambahkan properti lain yang mungkin dibutuhkan product-detail.html
-                            // contoh: stok: productFromFirebase.stok,
                         };
                         // --- AKHIR PEMETAAN FIELD ---
                         
                         const card = document.createElement('div');
                         card.classList.add('restaurant-card', 'fade-in'); 
 
-                        // Gunakan data yang sudah dipetakan
                         card.innerHTML = `
                             <img src="${productForDetail.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
                             <div class="restaurant-info">
@@ -499,12 +546,10 @@
                         });
                         menuList.appendChild(card);
                     });
-                    // alert(`DEBUG: Berhasil memuat ${snapshot.docs.length} menu.`); // DIKOMENTARI
                 }
             } catch (error) {
                 console.error("Error memuat menu dari Firebase: ", error);
                 menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
-                // alert("ERROR: Gagal memuat menu. Pesan: " + error.message); // DIKOMENTARI
             }
         }
 
@@ -558,7 +603,6 @@
         let currentIndex = 0;
         let slideInterval;
 
-        // Function to start auto-scrolling
         function startAutoScroll() {
             if (promoSlides.length <= 1) return;
 
@@ -566,7 +610,7 @@
             slideInterval = setInterval(() => {
                 currentIndex = (currentIndex + 1) % promoSlides.length;
                 promoContainer.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-            }, 3000); // Ganti slide setiap 3 detik
+            }, 3000);
         }
 
         // --- Navigasi Aktif ---
