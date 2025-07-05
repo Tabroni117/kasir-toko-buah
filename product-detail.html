@@ -168,8 +168,7 @@
 
             if (selectedProduct) {
                 // Tampilkan detail produk
-                // Pastikan menggunakan properti yang benar (name, image) yang sudah dipetakan di apl05.html
-                document.getElementById('productImage').src = selectedProduct.image || 'https://via.placeholder.com/250?text=No+Image'; // Fallback
+                document.getElementById('productImage').src = selectedProduct.image;
                 document.getElementById('productName').textContent = selectedProduct.name;
                 document.getElementById('productDescription').textContent = selectedProduct.description;
                 document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
@@ -196,38 +195,34 @@
                 // Logic untuk menambahkan produk ke keranjang (localStorage)
                 addToCartButton.addEventListener('click', () => {
                     const quantity = parseInt(productQuantityInput.value);
-                    let cart = JSON.parse(localStorage.getItem('cart')) || []; // Menggunakan localStorage untuk persistensi
-
-                    // NEW: Objek item yang akan disimpan ke keranjang
-                    // Pastikan ini menggunakan properti yang sudah dipetakan (id, name, price, image)
-                    const itemToAdd = {
-                        id: selectedProduct.id,
-                        name: selectedProduct.name,
-                        price: selectedProduct.price,
-                        image: selectedProduct.image, // Menggunakan properti 'image'
-                        quantity: quantity
-                    };
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
                     
                     // Cek apakah produk sudah ada di keranjang
-                    const existingItemIndex = cart.findIndex(item => item.id === itemToAdd.id);
+                    const existingItemIndex = cart.findIndex(item => item.id === selectedProduct.id);
 
                     if (existingItemIndex > -1) {
                         // Jika sudah ada, update kuantitasnya
                         cart[existingItemIndex].quantity += quantity;
                     } else {
                         // Jika belum ada, tambahkan sebagai item baru
-                        cart.push(itemToAdd);
+                        cart.push({
+                            id: selectedProduct.id,
+                            name: selectedProduct.name,
+                            price: selectedProduct.price,
+                            image: selectedProduct.image, // Pastikan gambar juga disimpan
+                            quantity: quantity
+                        });
                     }
 
-                    localStorage.setItem('cart', JSON.stringify(cart)); // Simpan ke localStorage
-                    alert(`${quantity} ${itemToAdd.name} telah ditambahkan ke keranjang!`);
-                    
-                    window.location.href = 'cart.html'; // Arahkan ke halaman keranjang
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    alert(`${quantity} ${selectedProduct.name} telah ditambahkan ke keranjang!`);
+                    // Setelah ditambahkan ke keranjang, arahkan ke halaman keranjang
+                    window.location.href = 'cart.html'; 
                 });
             } else {
                 // Jika tidak ada produk yang dipilih (misalnya, diakses langsung), arahkan kembali ke halaman utama
                 alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-                window.location.href = 'apl05.html'; // Kembali ke halaman menu utama
+                window.location.href = 'apl05.html'; 
             }
         });
     </script>
