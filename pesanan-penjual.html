@@ -126,10 +126,10 @@
             font-weight: 600;
             color: white;
         }
-        .status.Pending { background-color: #ffc107; } /* Yellow */
-        .status.Diproses { background-color: #0d6efd; } /* Blue */
-        .status.Selesai { background-color: #198754; } /* Green */
-        .status.Dibatalkan { background-color: #dc3545; } /* Red */
+        .status.Pending { background-color: #ffc107; }
+        .status.Diproses { background-color: #0d6efd; }
+        .status.Selesai { background-color: #198754; }
+        .status.Dibatalkan { background-color: #dc3545; }
 
         .loading-spinner-content {
             display: flex;
@@ -196,9 +196,61 @@
         </div>
     </div>
 
-    <script>
-        // --- Bagian JavaScript akan ditambahkan di sini secara bertahap ---
-        // (Akan menyertakan konfigurasi Firebase, proteksi, loadData, dan filter logic)
+    <!-- Firebase & JS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadData() {
+            const orderList = document.getElementById("orderList");
+            orderList.innerHTML = "";
+
+            try {
+                const q = query(collection(db, "pesanan"), orderBy("waktu", "desc"));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    orderList.innerHTML = `<div class="no-orders-message">Belum ada pesanan.</div>`;
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const waktu = data.waktu?.seconds ? new Date(data.waktu.seconds * 1000) : new Date();
+                    const html = `
+                        <div class="order-item">
+                            <div class="order-header-item">
+                                <div class="order-id">#${doc.id}</div>
+                                <div class="order-date">${waktu.toLocaleString()}</div>
+                            </div>
+                            <div class="customer-info-item">Nama: ${data.nama || '-'}</div>
+                            <div class="customer-info-item">Alamat: ${data.alamat || '-'}</div>
+                            <div class="customer-info-item">Telepon: ${data.telepon || '-'}</div>
+                            <div class="order-total-item">Total: Rp ${data.total || 0}</div>
+                            <div class="status ${data.status || 'Pending'}">${data.status || 'Pending'}</div>
+                        </div>
+                    `;
+                    orderList.innerHTML += html;
+                });
+            } catch (error) {
+                orderList.innerHTML = `<div class="no-orders-message">Gagal memuat pesanan: ${error.message}</div>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
