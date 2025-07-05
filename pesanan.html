@@ -9,10 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-    <style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <style>
         :root {
             --primary: #16a34a;
             --primary-light: #22c55e;
@@ -53,14 +52,24 @@
             margin-bottom: 15px;
         }
         /* Penyesuaian untuk header-top agar elemennya berada di ujung */
-        .header-top .left-controls {
+        .header-top .app-info { /* Menyesuaikan class 'app-info' yang ada di header apl05.html */
             display: flex;
-            gap: 10px; /* Jarak antara tombol */
             align-items: center;
+            gap: 8px; /* Jarak antara icon dan teks */
         }
-        .header-top .right-controls {
+        .header-top .app-info .app-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .header-top .app-info .app-tagline {
+            font-size: 11px;
+            color: var(--secondary);
+        }
+
+        .header-top .right-controls { /* Menyesuaikan class 'right-controls' yang ada di header apl05.html */
             display: flex;
-            gap: 10px; /* Jarak antara lonceng dan tombol kembali dashboard */
+            gap: 10px;
             align-items: center;
         }
 
@@ -88,7 +97,7 @@
             background: var(--primary-light);
             color: white;
         }
-        h1 {
+        h1 { /* Ini akan digantikan oleh .app-title di .sticky-header */
             font-size: 16px;
             margin-bottom: 2px;
             color: var(--primary);
@@ -224,36 +233,51 @@
             animation: spin 1s linear infinite;
         }
         
-        /* Fixed Header utama aplikasi - Dihapus karena akan digabung ke sticky-header */
-        /* .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background: white;
-            padding: 15px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e2e8f0;
-        } */
-
-        .content-wrapper {
-            /* padding-top akan disesuaikan dengan tinggi sticky-header */
-            padding-top: 0; /* Akan diatur dinamis oleh JS atau biarkan elemen mengikuti aliran normal */
-        }
-        /* Sticky header yang sudah ada, akan ditingkatkan */
+        /* Updated Sticky Header for consistent top bar */
         .sticky-header {
             position: sticky;
             top: 0;
-            z-index: 20; /* Lebih rendah dari modal notifikasi */
+            z-index: 20; 
             background: white;
-            padding: 15px; /* Tambahkan padding ke sticky-header */
+            padding: 15px; /* Consistent padding */
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             border-bottom: 1px solid #e2e8f0;
         }
+        .sticky-header .header-top { /* Menyesuaikan agar app-info dan right-controls sejajar */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px; /* Jarak ke stats */
+        }
+        .sticky-header .app-info .app-title {
+            font-size: 18px; /* Lebih besar dari sebelumnya (16px) */
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .sticky-header .app-info .app-tagline {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+        /* Style for logout button in pesanan.html header */
+        .header-logout-btn { /* Gaya khusus untuk tombol logout di header penjual */
+            background-color: rgba(0, 0, 0, 0.1); /* Agak gelap transparan */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+        .header-logout-btn:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
 
-        /* Padding pada body agar konten tidak tertutup fixed header di halaman lain */
-        body { padding-top: 0; } /* Reset padding-top body jika sebelumnya diatur untuk fixed-header */
+        .content-wrapper {
+            padding-top: 0;
+        }
+        body { padding-top: 0; } /* Reset padding-top body */
+
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -325,22 +349,21 @@
             margin-left: 10px;
         }
 
-        /* Perbaikan untuk popupDetail: HANYA SATU DISPLAY NONE */
         #popupDetail {
-            display: none; /* Default hidden, JS will set to flex */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6); /* Lebih gelap */
+            background: rgba(0,0,0,0.6);
             z-index: 9999;
             padding: 20px;
             align-items: center;
             justify-content: center;
         }
 
-        #popupDetail > div { /* Konten popup */
+        #popupDetail > div {
             background: white;
             padding: 20px;
             border-radius: 12px;
@@ -691,15 +714,15 @@
 
     <script>
         // 1. Konfigurasi Firebase
-  const firebaseConfig = {
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-  authDomain: "tokobuahkasir.firebaseapp.com",
-  projectId: "tokobuahkasir",
-  storageBucket: "tokobuahkasir.firebasestorage.app",
-  messagingSenderId: "731011133713",
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-  measurementId: "G-7CPE2DB2BV"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -712,19 +735,88 @@
         const loadingSpinner = document.getElementById("loadingSpinner");
         const filterButtons = document.querySelectorAll('.filter-btn');
 
-        let currentOrderIdForDetail = null; // Digunakan untuk popup detail
-        let activeFilterStatus = 'All'; // Default filter
+        let currentOrderIdForDetail = null;
+        let activeFilterStatus = 'All';
 
-        // --- Fungsi Loading Spinner ---
+        // NEW: Elemen untuk notifikasi
+        const sound = document.getElementById("notifSound");
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalContent = document.getElementById('notificationModalContent');
+        const closeBtnNotif = document.querySelector('.close-btn-notif');
+        const btnActionNotif = document.querySelector('.btn-action-notif');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
+        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah
+
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
+        let sedangBerbunyi = false; 
+        let audioSudahDiizinkan = false;
+        let currentNewOrderId = null; 
+
+        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                sound.play().catch(() => {});
+                sound.pause();
+                sound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true });
+
+        // Fungsi tampilkan popup notifikasi baru
+        function showNotificationModal(orderData) {
+            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
+            
+            notificationModal.style.display = 'flex'; 
+            setTimeout(() => {
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
+
+            currentNewOrderId = orderData.id; 
+        }
+
+        // Fungsi tutup popup notifikasi baru
+        function hideNotificationModal() {
+            notificationModal.classList.remove('show-notification'); 
+            setTimeout(() => {
+                notificationModal.style.display = 'none'; 
+            }, 300); 
+
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; 
+
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+            localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); 
+
+            notifLonceng.classList.remove("berkedip-kuat");
+            navPesanan.classList.remove("berkedip-kuat"); 
+        }
+
+        closeBtnNotif.addEventListener('click', hideNotificationModal);
+
+        notificationModal.addEventListener('click', function(event) {
+            if (event.target === notificationModal) { 
+                hideNotificationModal();
+            }
+        });
+
+        btnActionNotif.addEventListener('click', function() {
+            hideNotificationModal(); 
+            if (currentNewOrderId) {
+                tampilkanDetail(currentNewOrderId); 
+            }
+        });
+
+        // ... (Fungsi showLoading, hideLoading, formatRupiah, formatDate, getStatusClass) ...
+
         function showLoading() { loadingSpinner.style.display = 'flex'; }
         function hideLoading() { loadingSpinner.style.display = 'none'; }
 
-        // --- Utilitas Format ---
-        function formatCurrency(val) {
-            if (isNaN(val) || val === null || typeof val === 'undefined') {
-                return "Rp0";
-            }
-            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
         }
         function formatDate(date) {
             if (!date) return "-";
@@ -742,7 +834,7 @@
             }
         }
 
-        // --- Fungsi Utama: Muat Data Pesanan ---
+
         function loadData(statusFilter = activeFilterStatus) {
             showLoading();
             daftar.innerHTML = "<p style='text-align:center;'>Memuat data pesanan...</p>";
@@ -958,95 +1050,77 @@
         function showNotificationModal(orderData) {
             notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
             
-            notificationModal.style.display = 'flex'; // Aktifkan display
+            notificationModal.style.display = 'flex'; 
             setTimeout(() => {
-                notificationModal.classList.add('show-notification'); // Tambahkan kelas untuk animasi
-            }, 50); // Sedikit delay agar transisi CSS berjalan
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
 
-            // Simpan ID pesanan yang sedang ditampilkan notifikasinya
-            currentNewOrderId = orderData.id;
+            currentNewOrderId = orderData.id; 
         }
 
         // Fungsi tutup popup notifikasi baru
         function hideNotificationModal() {
-            notificationModal.classList.remove('show-notification'); // Hapus kelas untuk animasi keluar
+            notificationModal.classList.remove('show-notification'); 
             setTimeout(() => {
-                notificationModal.style.display = 'none'; // Sembunyikan sepenuhnya setelah animasi
-            }, 300); // Sesuaikan dengan durasi transisi CSS
+                notificationModal.style.display = 'none'; 
+            }, 300); 
 
             sound.pause();
             sound.currentTime = 0;
-            sedangBerbunyi = false; // Reset flag sedang berbunyi
+            sedangBerbunyi = false; 
 
-            // Tandai pesanan ini sudah "dibuka" atau "dibaca"
             localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
             localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
-            localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); // Update agar tidak bunyi lagi untuk ID ini
+            localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); 
 
             notifLonceng.classList.remove("berkedip-kuat");
             navPesanan.classList.remove("berkedip-kuat"); 
         }
 
-        // Event listener untuk tombol tutup 'X' di notificationModal
         closeBtnNotif.addEventListener('click', hideNotificationModal);
 
-        // Event listener untuk klik di luar konten notificationModal (overlay)
         notificationModal.addEventListener('click', function(event) {
             if (event.target === notificationModal) { 
                 hideNotificationModal();
             }
         });
 
-        // Event listener untuk tombol aksi "Lihat Detail Pesanan" di notificationModal
         btnActionNotif.addEventListener('click', function() {
-            hideNotificationModal(); // Tutup notifikasi popup
-            // Langsung tampilkan detail pesanan dari popup lama
+            hideNotificationModal(); 
             if (currentNewOrderId) {
                 tampilkanDetail(currentNewOrderId); 
             }
         });
 
-        // Fungsi utama cek pesanan baru dari Firebase
         function cekPesananBaru() {
             db.collection("pesanan").orderBy("waktu", "desc").limit(1).get().then(snapshot => {
                 if (!snapshot.empty) {
                     const doc = snapshot.docs[0];
                     const data = doc.data();
-                    data.id = doc.id; // Tambahkan ID dokumen ke objek data
+                    data.id = doc.id; 
                     
                     const waktuPesanan = data.waktu?.toDate?.() || new Date();
                     const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
                     const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
 
-                    // KONDISI UNTUK MEMICU NOTIFIKASI
-                    // Notifikasi (popup dan kedip lonceng) akan muncul jika:
-                    // 1. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir ditampilkan/diproses (global)
-                    // 2. Waktu pesanan terbaru lebih baru dari waktu terakhir user "membuka" notifikasi
                     if (doc.id !== terakhirDitampilkan && waktuPesanan > waktuBukaTerakhir) {
-                        // Update terakhirDitampilkan agar tidak memicu notifikasi visual berulang-ulang dalam satu sesi
                         terakhirDitampilkan = doc.id; 
                         localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
 
-                        // Logic untuk SUARA: Hanya berbunyi jika ID pesanan belum pernah dibunyikan sebelumnya
-                        // dan suara belum sedang aktif berbunyi
                         if (doc.id !== idPesananTerakhirDibunyikan && !sedangBerbunyi) {
                             sound.play().catch(error => {
                                 console.warn("Gagal memutar suara notifikasi:", error);
                             });
-                            sedangBerbunyi = true; // Tandai bahwa suara sedang berbunyi
+                            sedangBerbunyi = true; 
                             localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
                         }
 
-                        // Tampilkan popup notifikasi baru
                         showNotificationModal(data); 
 
-                        // Aktifkan efek berkedip pada lonceng dan tombol nav
                         notifLonceng.classList.add("berkedip-kuat");
                         navPesanan.classList.add("berkedip-kuat");
 
                     } else {
-                        // KONDISI UNTUK MEMASTIKAN NOTIFIKASI MATI jika tidak ada pesanan baru yang valid
-                        // dan popup notifikasi tidak sedang terbuka
                         if (notificationModal.classList.contains("hidden") || notificationModal.style.display === 'none') {
                             sound.pause();
                             sound.currentTime = 0;
@@ -1056,7 +1130,6 @@
                         }
                     }
                 } else {
-                    // Jika tidak ada pesanan sama sekali di Firebase
                     sound.pause();
                     sound.currentTime = 0;
                     sedangBerbunyi = false;
@@ -1065,7 +1138,6 @@
                 }
             }).catch(error => {
                 console.error("Error fetching latest order:", error);
-                // Jika ada error dalam mengambil data, matikan juga notifikasi
                 sound.pause();
                 sound.currentTime = 0;
                 sedangBerbunyi = false;
@@ -1074,42 +1146,42 @@
             });
         }
 
-        // --- Jalankan saat halaman selesai dimuat ---
-        window.addEventListener("DOMContentLoaded", () => {
-            loadData('All');
-            cekPesananBaru(); // Panggil pertama kali
-            setInterval(cekPesananBaru, 3000); // Cek setiap 3 detik
+        // --- Jalankan saat halaman selesai dimuat ---
+        window.addEventListener("DOMContentLoaded", () => {
+            loadData('All');
+            cekPesananBaru(); // Panggil pertama kali
+            setInterval(cekPesananBaru, 3000); // Cek setiap 3 detik
 
-            // Event listener untuk tombol navigasi "Pesanan"
-            navPesanan.addEventListener("click", function () {
-                hideNotificationModal(); // Pastikan popup notifikasi baru tertutup
-            });
+            // Event listener untuk tombol navigasi "Pesanan"
+            navPesanan.addEventListener("click", function () {
+                hideNotificationModal(); // Pastikan popup notifikasi baru tertutup
+            });
 
-            // Event listener untuk tombol lonceng notifikasi di header
-            notifLonceng.addEventListener("click", function() {
-                cekPesananBaru(); 
-            });
+            // Event listener untuk tombol lonceng notifikasi di header
+            notifLonceng.addEventListener("click", function() {
+                cekPesananBaru(); 
+            });
 
-            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
-            document.addEventListener("keydown", function(event) {
-                if (event.key === "Escape") {
-                    if (notificationModal.classList.contains('show-notification')) {
-                        hideNotificationModal();
-                    } else if (document.getElementById("popupDetail").style.display === "flex") {
-                        tutupDetail();
-                    }
-                }
-            });
+            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Escape") {
+                    if (notificationModal.classList.contains('show-notification')) {
+                        hideNotificationModal();
+                    } else if (document.getElementById("popupDetail").style.display === "flex") {
+                        tutupDetail();
+                    }
+                }
+            });
 
-            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
-            window.closeAuthModal = function() {
-                const authModal = document.getElementById('authModal');
-                if (authModal) authModal.classList.add('hidden');
-            };
-            window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
-            window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
-            window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
-        });
-    </script>
+            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
+            window.closeAuthModal = function() {
+                const authModal = document.getElementById('authModal');
+                if (authModal) authModal.classList.add('hidden');
+            };
+            window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
+            window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
+            window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
+        });
+    </script>
 </body>
 </html>
