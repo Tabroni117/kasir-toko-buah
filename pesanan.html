@@ -11,7 +11,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> <style>
+    <style>
         :root {
             --primary: #16a34a;
             --primary-light: #22c55e;
@@ -52,24 +52,14 @@
             margin-bottom: 15px;
         }
         /* Penyesuaian untuk header-top agar elemennya berada di ujung */
-        .header-top .app-info { 
+        .header-top .left-controls {
             display: flex;
+            gap: 10px; /* Jarak antara tombol */
             align-items: center;
-            gap: 8px; 
         }
-        .header-top .app-info .app-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        .header-top .app-info .app-tagline {
-            font-size: 11px;
-            color: var(--secondary);
-        }
-
-        .header-top .right-controls { 
+        .header-top .right-controls {
             display: flex;
-            gap: 10px;
+            gap: 10px; /* Jarak antara lonceng dan tombol kembali dashboard */
             align-items: center;
         }
 
@@ -97,7 +87,7 @@
             background: var(--primary-light);
             color: white;
         }
-        h1 { 
+        h1 {
             font-size: 16px;
             margin-bottom: 2px;
             color: var(--primary);
@@ -687,7 +677,7 @@
         <div>
             <button onclick="tutupDetail()" class="close-button">&times;</button>
             <h3 id="popupNama">Nama Pelanggan</h3>
-            <p><strong>ID Pesanan:</strong> <span id="popupOrderId"></span></p>
+            <p><strong>ID Pesanan:</strong> <span id="popupOrderId"></span></p> 
             <p><strong>Nomor HP:</strong> <span id="popupNomor"></span></p>
             <p><strong>Alamat:</strong> <span id="popupAlamat"></span></p>
             <p><strong>Total Pembayaran:</strong> <span id="popupTotal"></span></p>
@@ -730,6 +720,7 @@
             measurementId: "G-7CPE2DB2BV"
         };
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth (diperlukan untuk onAuthStateChanged dan proteksi)
         const db = firebase.firestore();
 
         // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
@@ -744,7 +735,7 @@
         let currentOrderIdForDetail = null; // Digunakan untuk popup detail
         let activeFilterStatus = 'All'; // Default filter
 
-        // NEW: Elemen untuk notifikasi
+        // Elemen untuk notifikasi
         const sound = document.getElementById("notifSound");
         const notificationModal = document.getElementById('notificationModal');
         const notificationModalContent = document.getElementById('notificationModalContent');
@@ -757,12 +748,12 @@
         let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
         let sedangBerbunyi = false; 
         let audioSudahDiizinkan = false;
-        let currentNewOrderId = null; // ID pesanan terbaru yang sedang ditampilkan notifikasinya
+        let currentNewOrderId = null; 
 
         // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
         document.addEventListener("click", () => {
             if (!audioSudahDiizinkan) {
-                sound.play().catch(() => {}); // Play and immediately pause to enable autoplay later
+                sound.play().catch(() => {});
                 sound.pause();
                 sound.currentTime = 0;
                 audioSudahDiizinkan = true;
@@ -883,7 +874,7 @@
                     sound.currentTime = 0;
                     sedangBerbunyi = false;
                     notifLonceng.classList.remove("berkedip-kuat");
-                    notifLonceng.classList.remove("berkedip-kuat");
+                    navPesanan.classList.remove("berkedip-kuat");
                 });
         }
 
@@ -1028,7 +1019,7 @@
 
                     const itemsContainer = document.getElementById("popupItems");
                     itemsContainer.innerHTML = ''; // Bersihkan konten sebelumnya
-                    if (data.items && data.items.length > 0) { 
+                    if (data.items && data.items.length > 0) { // PERBAIKAN BUG: data.data.items menjadi data.items
                         data.items.forEach(item => {
                             const itemDiv = document.createElement('div');
                             itemDiv.textContent = `${item.name} (${item.quantity}x) - ${formatCurrency(item.price)}`;
