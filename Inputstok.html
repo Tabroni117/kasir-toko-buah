@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <!-- Menambahkan Firebase Auth -->
     <style>
-          body {
+        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
@@ -67,17 +67,14 @@
             font-size: 1.5em; /* Ukuran font */
             text-align: left; /* Rata kiri */
             font-family: 'Lora', serif; /* Menggunakan font Lora */
-            font-style: italic; /* Menerapkan gaya miring */
             animation: blink 1s infinite; /* Menambahkan animasi berkedip */
             margin-left: 10px; /* Menambahkan margin kiri untuk menggeser ke kanan */
         }
         .user-info {
-            color: #FFFFFF; /* Mengubah warna teks menjadi putih */
+            color: #00C853; /* Mengubah warna teks menjadi hijau */
             font-size: 1em; /* Ukuran font untuk informasi pengguna */
             align-self: flex-start; /* Pusatkan secara vertikal */
             margin-bottom: 10px; /* Menambahkan margin bawah untuk memberikan jarak */
-            background: rgba(0, 128, 0, 0.5); /* Latar belakang hijau transparan */
-            backdrop-filter: blur(10px); /* Efek blur */
             border-radius: 10px; /* Sudut membulat */
             padding: 10px; /* Padding untuk ruang di dalam */
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Bayangan */
@@ -101,8 +98,8 @@
         }
         .form-section {
             margin-top: 20px; /* Memberikan ruang di atas kontainer */
-            margin-bottom: 40px;
-            padding: 20px;
+            margin-bottom: 20px; /* Mengurangi ruang di bawah kontainer */
+            padding: 15px; /* Mengurangi padding untuk ruang di dalam */
             border: 1px solid #e0e0e0;
             border-radius: 10px;
             background-color: #fdfdfd;
@@ -306,102 +303,86 @@
             }
         }
 
+        .table-scroll-nav {
+            overflow: hidden; /* Sembunyikan overflow */
+            position: relative; /* Posisi relatif untuk kontainer */
+            margin-top: 10px; /* Memberikan jarak di atas */
+        }
 
-.table-scroll-nav {
-  display: flex;
-  justify-content: center;
-  background-color: #4CAF50;
-  padding: 8px 0;
-  border-top: 2px solid #3e9e3e;
-  border-bottom: 2px solid #3e9e3e;
-}
+        .scroll-content {
+            display: flex; /* Flexbox untuk konten */
+            transition: transform 0.3s ease; /* Transisi halus saat scroll */
+        }
 
-.scroll-btn {
-  background-color: white;
-  color: #4CAF50;
-  border: none;
-  padding: 10px 15px;
-  margin: 0 5px;
-  border-radius: 50%;
-  font-size: 18px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.scroll-btn:hover {
-  background-color: #f0f0f0;
-}
-        
-  </style>
+        .scroll-content table {
+            min-width: 100%; /* Pastikan tabel memenuhi lebar konten */
+        }
+    </style>
 </head>
 <body>
-  <div class="fixed-top-header">
-    <button onclick="window.location.href='pesanan.html'" class="back-button-top">
-      <i class="fas fa-arrow-left"></i> Kembali
-    </button>
-  </div>
-
-  <div class="header-title-container">
-    <div class="user-info" id="userInfo">Admin [ ]</div>
-    <h1 class="header-title">Manajemen Menu Rujak Buah</h1>
-  </div>
-
-  <div class="container">
-    <div class="form-section">
-      <h2>Tambah/Edit Menu</h2>
-      <form id="menuForm">
-        <input type="hidden" id="menuId" />
-        <div class="form-group"><label>Nama Menu:</label><input type="text" id="namaBuah" required /></div>
-        <div class="form-group"><label>Harga (Rp):</label><input type="number" id="harga" required min="0" /></div>
-        <div class="form-group"><label>Stok (kg):</label><input type="number" id="stok" required min="0" /></div>
-        <div class="form-group"><label>Deskripsi:</label><textarea id="deskripsi"></textarea></div>
-        <div class="form-group"><label>URL Gambar:</label><input type="text" id="imageUrl" /></div>
-        <div class="form-group"><label>Rating (1.0 - 5.0):</label><input type="number" id="rating" step="0.1" min="0" max="5" /></div>
-        <div class="form-group"><label>Estimasi Waktu Pengiriman:</label><input type="text" id="deliveryTime" /></div>
-        <div class="form-group"><label><input type="checkbox" id="isAvailable" checked /> Tersedia untuk Pelanggan</label></div>
-        <div class="button-group">
-          <button type="submit" class="primary" id="submitButton">Tambah Menu</button>
-          <button type="button" class="secondary" id="cancelEditButton" style="display: none;">Batal Edit</button>
-        </div>
-      </form>
+    <div class="fixed-top-header">
+        <button onclick="window.location.href='pesanan.html'" class="back-button-top">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
     </div>
 
-   <div class="list-section">
-  <h2>Daftar Menu Tersedia</h2>
+    <div class="header-title-container">
+        <div class="user-info" id="userInfo">Admin [ ]</div>
+        <h1 class="header-title">Manajemen Menu Rujak Buah</h1>
+    </div>
 
-  <div style="overflow-x:auto;">
-    <table id="menuTable">
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Harga</th>
-          <th>Stok</th>
-          <th>Deskripsi</th>
-          <th>Gambar</th>
-          <th>Rating</th>
-          <th>Waktu Kirim</th>
-          <th>Tersedia</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <div class="container">
+        <div class="form-section">
+            <h2>Tambah/Edit Menu</h2>
+            <form id="menuForm">
+                <input type="hidden" id="menuId" />
+                <div class="form-group"><label>Nama Menu:</label><input type="text" id="namaBuah" required /></div>
+                <div class="form-group"><label>Harga (Rp):</label><input type="number" id="harga" required min="0" /></div>
+                <div class="form-group"><label>Stok (kg):</label><input type="number" id="stok" required min="0" /></div>
+                <div class="form-group"><label>Deskripsi:</label><textarea id="deskripsi"></textarea></div>
+                <div class="form-group"><label>URL Gambar:</label><input type="text" id="imageUrl" /></div>
+                <div class="form-group"><label>Rating (1.0 - 5.0):</label><input type="number" id="rating" step="0.1" min="0" max="5" /></div>
+                <div class="form-group"><label>Estimasi Waktu Pengiriman:</label><input type="text" id="deliveryTime" /></div>
+                <div class="form-group"><label><input type="checkbox" id="isAvailable" checked /> Tersedia untuk Pelanggan</label></div>
+                <div class="button-group">
+                    <button type="submit" class="primary" id="submitButton">Tambah Menu</button>
+                    <button type="button" class="secondary" id="cancelEditButton" style="display: none;">Batal Edit</button>
+                </div>
+            </form>
+        </div>
 
-  <!-- 👇 Tambahkan tombol scroll di sini -->
-  <div class="table-scroll-nav">
-    <button onclick="scrollTableLeft()" class="scroll-btn"><i class="fas fa-chevron-left"></i></button>
-    <button onclick="scrollTableRight()" class="scroll-btn"><i class="fas fa-chevron-right"></i></button>
-  </div>
+        <div class="list-section">
+            <h2>Daftar Menu Tersedia</h2>
 
+            <div class="table-scroll-nav" id="scrollContainer">
+                <div class="scroll-content" id="scrollContent">
+                    <table id="menuTable">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Harga</th>
+                                <th>Stok</th>
+                                <th>Deskripsi</th>
+                                <th>Gambar</th>
+                                <th>Rating</th>
+                                <th>Waktu Kirim</th>
+                                <th>Tersedia</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
-  <script>
+         <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+        authDomain: "tokobuahkasir.firebaseapp.com",
+        projectId: "tokobuahkasir",
+        storageBucket: "tokobuahkasir.appspot.com",
+        messagingSenderId: "731011133713",
+        appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -423,134 +404,184 @@
     const menuTableBody = document.querySelector("#menuTable tbody");
     const userInfo = document.getElementById("userInfo");
 
-      
-function displayUserName() {
-  const user = auth.currentUser;
-  if (user) {
-    db.collection("users").doc(user.uid).get().then(doc => {
-      if (doc.exists && doc.data().fullName) {
-        const namaLengkap = doc.data().fullName;
-        userInfo.textContent = `Admin [${namaLengkap} - Penjual]`;
-      } else {
-        userInfo.textContent = `Admin [${user.email} - Penjual]`; // fallback jika tidak ada nama
-      }
-    }).catch(() => {
-      userInfo.textContent = `Admin [${user.email} - Penjual]`;
-    });
-  } else {
-    userInfo.textContent = "Admin [Tidak Dikenal]";
-  }
-}
-
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    displayUserName();
-  } else {
-    window.location.href = "login.html";
-  }
-});
-    menuForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const id = menuIdInput.value;
-      const data = {
-        nama: namaBuahInput.value,
-        harga: parseInt(hargaInput.value),
-        stok: parseInt(stokInput.value),
-        deskripsi: deskripsiInput.value,
-        imageUrl: imageUrlInput.value,
-        rating: parseFloat(ratingInput.value),
-        deliveryTime: deliveryTimeInput.value,
-        isAvailable: isAvailableInput.checked,
-      };
-
-      if (id) {
-        menuCollection.doc(id).update(data).then(() => {
-          menuForm.reset();
-          menuIdInput.value = "";
-          submitButton.textContent = "Tambah Menu";
-          cancelEditButton.style.display = "none";
-          fetchMenu();
-        });
-      } else {
-        menuCollection.add(data).then(() => {
-          menuForm.reset();
-          fetchMenu();
-        });
-      }
-    });
-
-    cancelEditButton.addEventListener("click", () => {
-      menuForm.reset();
-      menuIdInput.value = "";
-      submitButton.textContent = "Tambah Menu";
-      cancelEditButton.style.display = "none";
-    });
-
-    function fetchMenu() {
-      menuCollection.orderBy("nama").get().then((snapshot) => {
-        menuTableBody.innerHTML = "";
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.nama}</td>
-            <td>Rp ${data.harga}</td>
-            <td>${data.stok}</td>
-            <td>${data.deskripsi}</td>
-            <td><img src="${data.imageUrl}" alt="${data.nama}" /></td>
-            <td>${data.rating || "-"}</td>
-            <td>${data.deliveryTime || "-"}</td>
-            <td>${data.isAvailable ? "✔️" : "❌"}</td>
-            <td class="actions">
-              <button onclick="editMenu('${doc.id}')"><i class="fas fa-edit"></i></button>
-              <button class="delete" onclick="deleteMenu('${doc.id}')"><i class="fas fa-trash"></i></button>
-            </td>`;
-          menuTableBody.appendChild(row);
-        });
-      });
+    function displayUserName() {
+        const user = auth.currentUser;
+        if (user) {
+            db.collection("users").doc(user.uid).get().then(doc => {
+                if (doc.exists && doc.data().fullName) {
+                    const namaLengkap = doc.data().fullName;
+                    userInfo.textContent = `Admin [${namaLengkap} - Penjual]`;
+                } else {
+                    userInfo.textContent = `Admin [${user.email} - Penjual]`;
+                }
+            }).catch(() => {
+                userInfo.textContent = `Admin [${user.email} - Penjual]`;
+            });
+        } else {
+            userInfo.textContent = "Admin [Tidak Dikenal]";
+        }
     }
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            displayUserName();
+        } else {
+            window.location.href = "login.html";
+        }
+    });
+
+    const scrollContainer = document.getElementById('scrollContainer');
+    const scrollContent = document.getElementById('scrollContent');
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    scrollContainer.addEventListener('mousedown', (e) => {
+        isDown = true;
+        scrollContainer.classList.add('active');
+        startX = e.pageX - scrollContainer.offsetLeft;
+        scrollLeft = scrollContent.scrollLeft;
+    });
+
+    scrollContainer.addEventListener('mouseleave', () => {
+        isDown = false;
+        scrollContainer.classList.remove('active');
+    });
+
+    scrollContainer.addEventListener('mouseup', () => {
+        isDown = false;
+        scrollContainer.classList.remove('active');
+    });
+
+    scrollContainer.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - scrollContainer.offsetLeft;
+        const walk = (x - startX) * 2;
+        scrollContent.scrollLeft = scrollLeft - walk;
+    });
+
+    function loadMenu() {
+        menuTableBody.innerHTML = "";
+        menuCollection.orderBy("nama").onSnapshot((snapshot) => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${data.nama || ""}</td>
+                    <td>Rp${data.harga?.toLocaleString("id-ID") || "0"}</td>
+                    <td>${data.stok || 0}</td>
+                    <td>${data.deskripsi || "-"}</td>
+                    <td><img src="${data.imageUrl || "#"}" alt="Gambar" /></td>
+                    <td>${data.rating || "-"}</td>
+                    <td>${data.deliveryTime || "-"}</td>
+                    <td>${data.isAvailable ? "✅" : "❌"}</td>
+                    <td class="actions">
+                        <button onclick="editMenu('${doc.id}')"><i class="fas fa-edit"></i></button>
+                        <button class="delete" onclick="deleteMenu('${doc.id}')"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                `;
+                menuTableBody.appendChild(row);
+            });
+        });
+    }
+
+    menuForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const menuData = {
+            nama: namaBuahInput.value.trim(),
+            harga: parseFloat(hargaInput.value),
+            stok: parseInt(stokInput.value),
+            deskripsi: deskripsiInput.value.trim(),
+            imageUrl: imageUrlInput.value.trim(),
+            rating: parseFloat(ratingInput.value),
+            deliveryTime: deliveryTimeInput.value.trim(),
+            isAvailable: isAvailableInput.checked,
+            updatedAt: new Date()
+        };
+
+        const id = menuIdInput.value;
+        if (id) {
+            menuCollection.doc(id).update(menuData).then(() => {
+                resetForm();
+            });
+        } else {
+            menuCollection.add(menuData).then(() => {
+                resetForm();
+            });
+        }
+    });
 
     function editMenu(id) {
-      menuCollection.doc(id).get().then((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          menuIdInput.value = id;
-          namaBuahInput.value = data.nama;
-          hargaInput.value = data.harga;
-          stokInput.value = data.stok;
-          deskripsiInput.value = data.deskripsi;
-          imageUrlInput.value = data.imageUrl;
-          ratingInput.value = data.rating;
-          deliveryTimeInput.value = data.deliveryTime;
-          isAvailableInput.checked = data.isAvailable;
-          submitButton.textContent = "Simpan Perubahan";
-          cancelEditButton.style.display = "inline-block";
-        }
-      });
-    }
-
-   function deleteMenu(id) {
-      if (confirm("Yakin ingin menghapus menu ini?")) {
-        menuCollection.doc(id).delete().then(() => {
-          fetchMenu();
+        menuCollection.doc(id).get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                menuIdInput.value = doc.id;
+                namaBuahInput.value = data.nama || "";
+                hargaInput.value = data.harga || 0;
+                stokInput.value = data.stok || 0;
+                deskripsiInput.value = data.deskripsi || "";
+                imageUrlInput.value = data.imageUrl || "";
+                ratingInput.value = data.rating || "";
+                deliveryTimeInput.value = data.deliveryTime || "";
+                isAvailableInput.checked = data.isAvailable || false;
+                submitButton.textContent = "Simpan Perubahan";
+                cancelEditButton.style.display = "inline-block";
+            }
         });
-      }
     }
 
-    function scrollTableLeft() {
-      document.querySelector('[style*="overflow-x:auto"]').scrollBy({ left: -200, behavior: 'smooth' });
+    function deleteMenu(id) {
+        if (confirm("Yakin ingin menghapus menu ini?")) {
+            menuCollection.doc(id).delete();
+        }
     }
 
-    function scrollTableRight() {
-      document.querySelector('[style*="overflow-x:auto"]').scrollBy({ left: 200, behavior: 'smooth' });
+    cancelEditButton.addEventListener("click", () => {
+        resetForm();
+    });
+
+    function resetForm() {
+        menuIdInput.value = "";
+        menuForm.reset();
+        submitButton.textContent = "Tambah Menu";
+        cancelEditButton.style.display = "none";
     }
 
-    // ⬇️ Pastikan fungsi bisa dipanggil dari HTML
-    window.editMenu = editMenu;
-    window.deleteMenu = deleteMenu;
-
-    // ⬇️ Ambil data saat halaman dimuat
-    fetchMenu();
-  </script>
+    loadMenu();
+    </script>
+        </div>
+    </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                     
