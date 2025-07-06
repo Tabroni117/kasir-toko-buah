@@ -341,22 +341,24 @@
 
     <div class="list-section">
       <h2>Daftar Menu Tersedia</h2>
-      <table id="menuTable">
-        <thead>
-          <tr>
-            <th>Nama</th>
-            <th>Harga</th>
-            <th>Stok</th>
-            <th>Deskripsi</th>
-            <th>Gambar</th>
-            <th>Rating</th>
-            <th>Waktu Kirim</th>
-            <th>Tersedia</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div style="overflow-x:auto;">
+        <table id="menuTable">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Harga</th>
+              <th>Stok</th>
+              <th>Deskripsi</th>
+              <th>Gambar</th>
+              <th>Rating</th>
+              <th>Waktu Kirim</th>
+              <th>Tersedia</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -389,24 +391,22 @@
     const menuTableBody = document.querySelector("#menuTable tbody");
     const userInfo = document.getElementById("userInfo");
 
-   function displayUserName() {
+function displayUserName() {
   const user = auth.currentUser;
   if (user) {
-    db.collection("users").doc(user.uid).get().then((doc) => {
+    db.collection("users").doc(user.uid).get().then(doc => {
       if (doc.exists && doc.data().fullName) {
         userInfo.textContent = `Admin [${doc.data().fullName}]`;
       } else {
-        userInfo.textContent = `Admin [${user.email}]`; // fallback
+        userInfo.textContent = `Admin [${user.email}]`; // fallback jika tidak ada nama
       }
-    }).catch((error) => {
-      console.error("Gagal mengambil nama lengkap:", error);
-      userInfo.textContent = `Admin [${user.email}]`; // fallback jika error
+    }).catch(() => {
+      userInfo.textContent = `Admin [${user.email}]`;
     });
   } else {
     userInfo.textContent = "Admin [Tidak Dikenal]";
   }
 }
-
 auth.onAuthStateChanged((user) => {
   if (user) {
     displayUserName();
