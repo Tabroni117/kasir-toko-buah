@@ -125,6 +125,7 @@
       padding: 16px;
       margin-bottom: 16px;
       transition: transform 0.2s ease;
+      cursor: pointer; /* Menambahkan cursor pointer */
     }
 
     .order-item:hover {
@@ -182,6 +183,119 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Gaya untuk Pop-up */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateY(-20px);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #6b7280;
+    }
+
+    .modal-close-btn:hover {
+      color: #1f2937;
+    }
+
+    .modal-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #16a34a;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .modal-detail-item {
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: #374151;
+      display: flex;
+      align-items: center;
+    }
+
+    .modal-detail-item strong {
+      margin-right: 8px;
+      color: #1f2937;
+    }
+
+    .modal-product-list {
+      margin-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 15px;
+    }
+
+    .modal-product-list h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #065f46;
+    }
+
+    .modal-product-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      padding: 4px 0;
+      border-bottom: 1px dotted #e5e7eb;
+    }
+
+    .modal-product-item:last-child {
+      border-bottom: none;
+    }
+
+    .modal-product-name {
+      font-weight: 500;
+    }
+
+    .modal-product-qty {
+      color: #6b7280;
+    }
+
+    .modal-product-price {
+      font-weight: 600;
+      color: #1f2937;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +327,24 @@
     </div>
   </div>
 
+  <div id="orderDetailModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      <h2 class="modal-title" id="modalOrderId"></h2>
+      <div class="modal-detail-item"><strong>Waktu Pesanan:</strong> <span id="modalOrderTime"></span></div>
+      <div class="modal-detail-item"><strong>Nama Pelanggan:</strong> <span id="modalCustomerName"></span></div>
+      <div class="modal-detail-item"><strong>No. Telepon:</strong> <span id="modalCustomerPhone"></span></div>
+      <div class="modal-detail-item"><strong>Alamat:</strong> <span id="modalCustomerAddress"></span></div>
+      <div class="modal-detail-item"><strong>Total Harga:</strong> <span id="modalTotalAmount"></span></div>
+      <div class="modal-detail-item"><strong>Status:</strong> <span id="modalStatus" class="status"></span></div>
+
+      <div class="modal-product-list">
+        <h3>Detail Produk:</h3>
+        <div id="modalProductItems">
+          </div>
+      </div>
+    </div>
+  </div>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
@@ -236,6 +368,18 @@
     const filterDateInput = document.getElementById('filterDate');
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
+    // Elemen Modal
+    const orderDetailModal = document.getElementById('orderDetailModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const modalOrderId = document.getElementById('modalOrderId');
+    const modalOrderTime = document.getElementById('modalOrderTime');
+    const modalCustomerName = document.getElementById('modalCustomerName');
+    const modalCustomerPhone = document.getElementById('modalCustomerPhone');
+    const modalCustomerAddress = document.getElementById('modalCustomerAddress');
+    const modalTotalAmount = document.getElementById('modalTotalAmount');
+    const modalStatus = document.getElementById('modalStatus');
+    const modalProductItems = document.getElementById('modalProductItems');
+
     auth.onAuthStateChanged(user => {
       if (user) {
         usersCollection.doc(user.uid).get().then(doc => {
@@ -245,6 +389,10 @@
             alert("Anda tidak memiliki akses.");
             window.location.href = "index.html";
           }
+        }).catch(error => {
+          console.error("Error getting user role:", error);
+          alert("Gagal memeriksa peran pengguna. Silakan coba lagi.");
+          auth.signOut(); // Force logout on error
         });
       } else {
         window.location.href = "index.html";
@@ -257,6 +405,18 @@
         currency: 'IDR',
         minimumFractionDigits: 0
       }).format(amount);
+    }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return '-';
+        const date = timestamp.toDate(); // Mengubah Firestore Timestamp menjadi objek Date
+        return date.toLocaleString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
     function getStatusClass(status) {
@@ -309,8 +469,9 @@
         filteredDocs.forEach(doc => {
           const data = doc.data();
           const orderId = data.displayOrderId || '#' + doc.id.substring(0, 6).toUpperCase();
+          // Tambahkan data-order-id untuk mengambil ID Firestore
           const html = `
-            <div class="order-item">
+            <div class="order-item" data-order-id="${doc.id}">
               <div class="order-id">${orderId}</div>
               <div class="customer-info-item">👤 ${data.customer?.fullName || 'Pelanggan'} (${data.customer?.phoneNumber || '-'})</div>
               <div class="customer-info-item">📍 ${data.customer?.address || '-'}</div>
@@ -320,11 +481,73 @@
           orderListDiv.innerHTML += html;
         });
 
+        // Setelah item-item ditambahkan, tambahkan event listener
+        document.querySelectorAll('.order-item').forEach(item => {
+          item.addEventListener('click', (event) => {
+            const orderDocId = event.currentTarget.dataset.orderId;
+            showOrderDetail(orderDocId);
+          });
+        });
+
       } catch (error) {
-        console.error(error);
+        console.error("Error loading data:", error);
         orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>';
       }
     }
+
+    async function showOrderDetail(docId) {
+        try {
+            const doc = await pesananCollection.doc(docId).get();
+            if (doc.exists) {
+                const data = doc.data();
+                const displayId = data.displayOrderId || '#' + doc.id.substring(0, 6).toUpperCase();
+
+                modalOrderId.textContent = `Detail Pesanan: ${displayId}`;
+                modalOrderTime.textContent = formatDate(data.waktu);
+                modalCustomerName.textContent = data.customer?.fullName || 'N/A';
+                modalCustomerPhone.textContent = data.customer?.phoneNumber || 'N/A';
+                modalCustomerAddress.textContent = data.customer?.address || 'N/A';
+                modalTotalAmount.textContent = formatCurrency(data.totalAmount || 0);
+                modalStatus.textContent = data.status || 'Tidak Diketahui';
+                modalStatus.className = `status ${getStatusClass(data.status)}`; // Update class based on status
+
+                // Menampilkan daftar produk
+                modalProductItems.innerHTML = ''; // Bersihkan konten sebelumnya
+                if (data.products && data.products.length > 0) {
+                    data.products.forEach(product => {
+                        const productItemHtml = `
+                            <div class="modal-product-item">
+                                <span class="modal-product-name">${product.name}</span>
+                                <span class="modal-product-qty">${product.quantity}x</span>
+                                <span class="modal-product-price">${formatCurrency(product.price * product.quantity)}</span>
+                            </div>
+                        `;
+                        modalProductItems.innerHTML += productItemHtml;
+                    });
+                } else {
+                    modalProductItems.innerHTML = '<p class="text-gray-500">Tidak ada detail produk.</p>';
+                }
+
+                orderDetailModal.classList.add('active'); // Tampilkan pop-up
+            } else {
+                alert("Detail pesanan tidak ditemukan.");
+            }
+        } catch (error) {
+            console.error("Error showing order detail:", error);
+            alert("Gagal memuat detail pesanan.");
+        }
+    }
+
+    closeModalBtn.addEventListener('click', () => {
+        orderDetailModal.classList.remove('active'); // Sembunyikan pop-up
+    });
+
+    // Menutup modal jika klik di luar area konten modal
+    orderDetailModal.addEventListener('click', (event) => {
+        if (event.target === orderDetailModal) {
+            orderDetailModal.classList.remove('active');
+        }
+    });
 
     searchQueryInput.addEventListener('input', loadData);
     filterDateInput.addEventListener('change', loadData);
@@ -338,6 +561,9 @@
       auth.signOut().then(() => {
         localStorage.clear();
         window.location.href = "index.html";
+      }).catch(error => {
+        console.error("Error signing out:", error);
+        alert("Gagal logout. Silakan coba lagi.");
       });
     });
   </script>
@@ -348,4 +574,4 @@
     <div class="nav-icon"><i class="fas fa-cog"></i></div>
   </div>
 </body>
-</html> 
+</html>
