@@ -389,21 +389,31 @@
     const menuTableBody = document.querySelector("#menuTable tbody");
     const userInfo = document.getElementById("userInfo");
 
-    function displayUserName() {
-      const user = auth.currentUser;
-      if (user) {
-        userInfo.textContent = `Admin [${user.displayName || user.email}]`;
+   function displayUserName() {
+  const user = auth.currentUser;
+  if (user) {
+    db.collection("users").doc(user.uid).get().then((doc) => {
+      if (doc.exists && doc.data().fullName) {
+        userInfo.textContent = `Admin [${doc.data().fullName}]`;
       } else {
-        userInfo.textContent = "Admin [Tidak Dikenal]";
+        userInfo.textContent = `Admin [${user.email}]`; // fallback
       }
-    }
-
-    auth.onAuthStateChanged((user) => {
-      displayUserName();
-      if (!user) {
-        window.location.href = "login.html";
-      }
+    }).catch((error) => {
+      console.error("Gagal mengambil nama lengkap:", error);
+      userInfo.textContent = `Admin [${user.email}]`; // fallback jika error
     });
+  } else {
+    userInfo.textContent = "Admin [Tidak Dikenal]";
+  }
+}
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    displayUserName();
+  } else {
+    window.location.href = "login.html";
+  }
+});
 
     menuForm.addEventListener("submit", (e) => {
       e.preventDefault();
