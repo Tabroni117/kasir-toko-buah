@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Menu - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400&display=swap" rel="stylesheet"> <!-- Menambahkan Google Font -->
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script> <!-- Menambahkan Firebase Auth -->
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +17,78 @@
             padding: 20px;
             background-color: #f4f7f6;
             color: #333;
-            padding-top: 70px; /* Tambahkan padding-top untuk memberi ruang pada fixed header */
+            padding-top: 70px; /* Ruang untuk header tetap */
+        }
+        .fixed-top-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 10px 20px; /* Padding header */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        .fixed-top-header .back-button-top {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s, border-color 0.3s;
+            margin-right: 20px; /* Margin kanan untuk tombol */
+        }
+        .fixed-top-header .back-button-top:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        .header-title-container {
+            position: fixed; /* Membuat judul tetap di atas */
+            top: 50px; /* Jarak dari atas */
+            left: 0; /* Jarak dari kiri */
+            right: 0; /* Jarak dari kanan */
+            background-color: white; /* Warna latar belakang kontainer */
+            padding: 10px 20px; /* Padding untuk kontainer */
+            border-radius: 8px; /* Sudut membulat */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); /* Bayangan */
+            z-index: 999; /* Pastikan di atas konten lainnya */
+            display: flex; /* Menggunakan flexbox untuk tata letak */
+            flex-direction: column; /* Mengatur arah kolom */
+            align-items: flex-start; /* Mengatur elemen ke kiri */
+        }
+        .header-title {
+            color: #00C853; /* Warna hijau untuk judul */
+            margin: 0; /* Menghapus margin */
+            font-size: 1.5em; /* Ukuran font */
+            text-align: left; /* Rata kiri */
+            font-family: 'Lora', serif; /* Menggunakan font Lora */
+            font-style: italic; /* Menerapkan gaya miring */
+            animation: blink 1s infinite; /* Menambahkan animasi berkedip */
+            margin-left: 10px; /* Menambahkan margin kiri untuk menggeser ke kanan */
+        }
+        .user-info {
+            color: #FFFFFF; /* Mengubah warna teks menjadi putih */
+            font-size: 1em; /* Ukuran font untuk informasi pengguna */
+            align-self: flex-start; /* Pusatkan secara vertikal */
+            margin-bottom: 10px; /* Menambahkan margin bawah untuk memberikan jarak */
+            background: rgba(0, 128, 0, 0.5); /* Latar belakang hijau transparan */
+            backdrop-filter: blur(10px); /* Efek blur */
+            border-radius: 10px; /* Sudut membulat */
+            padding: 10px; /* Padding untuk ruang di dalam */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Bayangan */
+        }
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1; /* Tidak terlihat */
+            }
+            50% {
+                opacity: 0; /* Menghilang */
+            }
         }
         .container {
             max-width: 900px;
@@ -24,55 +97,18 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 100px; /* Memberikan ruang untuk judul fixed */
         }
-        /* Style untuk Fixed Header BARU */
-        .fixed-top-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(135deg, #00C853, #64DD17); /* Warna hijau yang sama dengan header aplikasi lain */
-            color: white;
-            padding: 10px 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-            z-index: 1000; /* Pastikan di atas elemen lain */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .fixed-top-header h1 {
-            margin: 0;
-            color: white; /* Ubah warna teks judul menjadi putih */
-            font-size: 1.5em; /* Ukuran yang sesuai untuk header fixed */
-        }
-        .fixed-top-header .back-button-top {
-            background-color: rgba(255, 255, 255, 0.2); /* Transparan */
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        .fixed-top-header .back-button-top:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
-
-        /* H1 di dalam container tidak diperlukan lagi, diganti oleh fixed-top-header */
-        /* h1 {
-            text-align: center;
-            color: #00C853;
-            margin-bottom: 30px;
-            font-size: 2em;
-        } */
-        .form-section, .list-section {
+        .form-section {
+            margin-top: 20px; /* Memberikan ruang di atas kontainer */
             margin-bottom: 40px;
             padding: 20px;
             border: 1px solid #e0e0e0;
             border-radius: 10px;
             background-color: #fdfdfd;
+        }
+        .list-section {
+            margin-bottom: 80px; /* Ruang di bawah tabel */
         }
         .form-group {
             margin-bottom: 15px;
@@ -107,6 +143,7 @@
             display: flex;
             gap: 10px;
             margin-top: 20px;
+            flex-wrap: wrap; /* Tombol bisa membungkus di layar kecil */
         }
         .button-group button {
             padding: 12px 25px;
@@ -116,6 +153,8 @@
             font-size: 1em;
             font-weight: bold;
             transition: background-color 0.3s, transform 0.2s;
+            flex: 1; /* Tombol bisa tumbuh */
+            min-width: 120px; /* Lebar minimum untuk tombol */
         }
         .button-group button.primary {
             background-color: #00C853;
@@ -209,19 +248,18 @@
             .fixed-top-header {
                 padding: 10px 15px; /* Sesuaikan padding header di mobile */
             }
-            .fixed-top-header h1 {
-                font-size: 1.3em; /* Kecilkan ukuran judul di mobile header */
-            }
             .fixed-top-header .back-button-top {
                 padding: 6px 12px;
                 font-size: 0.85em;
+                margin-right: 20px; /* Pastikan margin kanan tetap ada */
+            }
+            .header-title-container {
+                right: 10px; /* Sesuaikan jarak dari kanan di mobile */
             }
             .container {
                 margin: 10px auto;
                 padding: 15px;
             }
-            /* h1 di dalam container (jika ada) disembunyikan jika fixed header aktif */
-            /* h1 { display: none; } */ 
             .form-section, .list-section {
                 padding: 15px;
             }
@@ -238,22 +276,14 @@
                 width: 100%;
                 margin-bottom: 10px;
             }
-
-            /* Optimalisasi Tabel untuk Mobile */
-            .list-section {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
             table {
                 display: block;
+                overflow-x: auto;
                 white-space: nowrap;
-                width: max-content;
-                min-width: 100%;
             }
             table th, table td {
                 white-space: normal;
                 font-size: 0.85em;
-                box-sizing: border-box;
             }
             table td img {
                 width: 60px;
@@ -263,8 +293,6 @@
                 font-size: 1em;
                 margin-right: 5px;
             }
-
-            /* Specific for isAvailable checkbox */
             .form-group #isAvailable {
                 width: auto;
                 margin-left: 10px;
@@ -277,291 +305,199 @@
                 font-weight: normal;
             }
         }
-    </style>
+  </style>
 </head>
 <body>
-    <div class="fixed-top-header">
-        <h1>Manajemen Menu Rujak Buah</h1>
-        <button onclick="window.location.href='pesanan.html'" class="back-button-top">
-            <i class="fas fa-arrow-left"></i> Kembali
-        </button>
+  <div class="fixed-top-header">
+    <button onclick="window.location.href='pesanan.html'" class="back-button-top">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+
+  <div class="header-title-container">
+    <div class="user-info" id="userInfo">Admin [ ]</div>
+    <h1 class="header-title">Manajemen Menu Rujak Buah</h1>
+  </div>
+
+  <div class="container">
+    <div class="form-section">
+      <h2>Tambah/Edit Menu</h2>
+      <form id="menuForm">
+        <input type="hidden" id="menuId" />
+        <div class="form-group"><label>Nama Menu:</label><input type="text" id="namaBuah" required /></div>
+        <div class="form-group"><label>Harga (Rp):</label><input type="number" id="harga" required min="0" /></div>
+        <div class="form-group"><label>Stok (kg):</label><input type="number" id="stok" required min="0" /></div>
+        <div class="form-group"><label>Deskripsi:</label><textarea id="deskripsi"></textarea></div>
+        <div class="form-group"><label>URL Gambar:</label><input type="text" id="imageUrl" /></div>
+        <div class="form-group"><label>Rating (1.0 - 5.0):</label><input type="number" id="rating" step="0.1" min="0" max="5" /></div>
+        <div class="form-group"><label>Estimasi Waktu Pengiriman:</label><input type="text" id="deliveryTime" /></div>
+        <div class="form-group"><label><input type="checkbox" id="isAvailable" checked /> Tersedia untuk Pelanggan</label></div>
+        <div class="button-group">
+          <button type="submit" class="primary" id="submitButton">Tambah Menu</button>
+          <button type="button" class="secondary" id="cancelEditButton" style="display: none;">Batal Edit</button>
+        </div>
+      </form>
     </div>
 
-    <div class="container">
-        <div class="form-section">
-            <h2>Tambah/Edit Menu</h2>
-            <form id="menuForm">
-                <input type="hidden" id="menuId">
-                <div class="form-group">
-                    <label for="namaBuah">Nama Menu:</label>
-                    <input type="text" id="namaBuah" required>
-                </div>
-                <div class="form-group">
-                    <label for="harga">Harga (Rp):</label>
-                    <input type="number" id="harga" required min="0">
-                </div>
-                <div class="form-group">
-                    <label for="stok">Stok (kg):</label>
-                    <input type="number" id="stok" required min="0">
-                </div>
-                <div class="form-group">
-                    <label for="deskripsi">Deskripsi:</label>
-                    <textarea id="deskripsi" placeholder="Contoh: Rujak Mangga Muda segar dengan bumbu kacang yang kaya rasa, sedikit asam dan manis."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="imageUrl">URL Gambar:</label>
-                    <input type="text" id="imageUrl" placeholder="Contoh: https://example.com/rujak-mangga.png">
-                </div>
-                <div class="form-group">
-                    <label for="rating">Rating (1.0 - 5.0):</label>
-                    <input type="number" id="rating" step="0.1" min="0" max="5" placeholder="Contoh: 4.7">
-                </div>
-                <div class="form-group">
-                    <label for="deliveryTime">Estimasi Waktu Pengiriman:</label>
-                    <input type="text" id="deliveryTime" placeholder="Contoh: 15-25 menit">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="isAvailable" checked> Tersedia untuk Pelanggan
-                    </label>
-                </div>
-                <div class="button-group">
-                    <button type="submit" class="primary" id="submitButton">Tambah Menu</button>
-                    <button type="button" class="secondary" id="cancelEditButton" style="display: none;">Batal Edit</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="list-section">
-            <h2>Daftar Menu Tersedia</h2>
-            <table id="menuTable">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Harga</th>
-                        <th>Stok (kg)</th>
-                        <th>Deskripsi</th>
-                        <th>Gambar</th>
-                        <th>Rating</th>
-                        <th>Waktu Kirim</th>
-                        <th>Tersedia</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
-        </div>
+    <div class="list-section">
+      <h2>Daftar Menu Tersedia</h2>
+      <table id="menuTable">
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Harga</th>
+            <th>Stok</th>
+            <th>Deskripsi</th>
+            <th>Gambar</th>
+            <th>Rating</th>
+            <th>Waktu Kirim</th>
+            <th>Tersedia</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
+  </div>
 
-    <script>
-        // Konfigurasi Firebase Anda (PASTIKAN INI SUDAH ADA DAN BENAR DARI PROYEK ANDA)
-   const firebaseConfig = {
-  apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-  authDomain: "tokobuahkasir.firebaseapp.com",
-  projectId: "tokobuahkasir",
-  storageBucket: "tokobuahkasir.firebasestorage.app",
-  messagingSenderId: "731011133713",
-  appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-  measurementId: "G-7CPE2DB2BV"
-};
-        // Inisialisasi Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-        const menuCollection = db.collection('buah'); // Menggunakan koleksi 'buah' sesuai diskusi
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const menuCollection = db.collection("buah");
 
-        // --- Elemen Form ---
-        const menuForm = document.getElementById('menuForm');
-        const menuIdInput = document.getElementById('menuId');
-        const namaBuahInput = document.getElementById('namaBuah');
-        const hargaInput = document.getElementById('harga');
-        const stokInput = document.getElementById('stok');
-        const deskripsiInput = document.getElementById('deskripsi');
-        const imageUrlInput = document.getElementById('imageUrl');
-        const ratingInput = document.getElementById('rating');
-        const deliveryTimeInput = document.getElementById('deliveryTime');
-        const isAvailableInput = document.getElementById('isAvailable');
-        const submitButton = document.getElementById('submitButton');
-        const cancelEditButton = document.getElementById('cancelEditButton');
-        const menuTableBody = document.querySelector('#menuTable tbody');
+    const menuForm = document.getElementById("menuForm");
+    const menuIdInput = document.getElementById("menuId");
+    const namaBuahInput = document.getElementById("namaBuah");
+    const hargaInput = document.getElementById("harga");
+    const stokInput = document.getElementById("stok");
+    const deskripsiInput = document.getElementById("deskripsi");
+    const imageUrlInput = document.getElementById("imageUrl");
+    const ratingInput = document.getElementById("rating");
+    const deliveryTimeInput = document.getElementById("deliveryTime");
+    const isAvailableInput = document.getElementById("isAvailable");
+    const submitButton = document.getElementById("submitButton");
+    const cancelEditButton = document.getElementById("cancelEditButton");
+    const menuTableBody = document.querySelector("#menuTable tbody");
+    const userInfo = document.getElementById("userInfo");
 
-        let currentEditId = null; // Untuk menyimpan ID menu yang sedang diedit
+    function displayUserName() {
+      const user = auth.currentUser;
+      if (user) {
+        userInfo.textContent = `Admin [${user.displayName || user.email}]`;
+      } else {
+        userInfo.textContent = "Admin [Tidak Dikenal]";
+      }
+    }
 
-        // --- Fungsi untuk Menampilkan Pesan ---
-        function showMessage(msg, type = 'success') {
-            const container = document.querySelector('.container');
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', type);
-            messageDiv.textContent = msg;
-            // Sisipkan pesan di bawah fixed header, di atas container
-            document.body.insertBefore(messageDiv, container); 
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 3000);
-        }
+    auth.onAuthStateChanged((user) => {
+      displayUserName();
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
 
-        // --- Fungsi untuk Mereset Form ---
-        function resetForm() {
-            menuForm.reset();
-            menuIdInput.value = '';
-            currentEditId = null;
-            submitButton.textContent = 'Tambah Menu';
-            cancelEditButton.style.display = 'none';
-            isAvailableInput.checked = true; // Default kembali ke tersedia
-        }
+    menuForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = menuIdInput.value;
+      const data = {
+        namaBuah: namaBuahInput.value,
+        harga: parseInt(hargaInput.value),
+        stok: parseInt(stokInput.value),
+        deskripsi: deskripsiInput.value,
+        imageUrl: imageUrlInput.value,
+        rating: parseFloat(ratingInput.value),
+        deliveryTime: deliveryTimeInput.value,
+        isAvailable: isAvailableInput.checked,
+      };
 
-        // --- Fungsi untuk Menambah/Mengedit Buah ---
-        menuForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const nama = namaBuahInput.value;
-            const harga = parseFloat(hargaInput.value);
-            const stok = parseFloat(stokInput.value);
-            const deskripsi = deskripsiInput.value;
-            const imageUrl = imageUrlInput.value;
-            const rating = parseFloat(ratingInput.value) || null; // Bisa null jika tidak diisi
-            const deliveryTime = deliveryTimeInput.value;
-            const isAvailable = isAvailableInput.checked;
-
-            if (!nama || isNaN(harga) || isNaN(stok)) {
-                showMessage('Nama, Harga, dan Stok harus diisi.', 'error');
-                return;
-            }
-
-            const menuData = {
-                nama: nama,
-                harga: harga,
-                stok: stok,
-                deskripsi: deskripsi,
-                imageUrl: imageUrl,
-                rating: rating,
-                deliveryTime: deliveryTime,
-                isAvailable: isAvailable,
-                createdAt: currentEditId ? undefined : firebase.firestore.FieldValue.serverTimestamp(), // Hanya saat tambah baru
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp() // Selalu update saat edit/tambah
-            };
-
-            try {
-                if (currentEditId) {
-                    // Mode Edit
-                    await menuCollection.doc(currentEditId).update(menuData);
-                    showMessage('Menu berhasil diperbarui!');
-                } else {
-                    // Mode Tambah
-                    await menuCollection.add(menuData);
-                    showMessage('Menu berhasil ditambahkan!');
-                }
-                resetForm();
-            } catch (error) {
-                console.error("Error saat menyimpan data: ", error);
-                showMessage('Gagal menyimpan menu. Coba lagi.', 'error');
-            }
+      if (id) {
+        menuCollection.doc(id).update(data).then(() => {
+          menuForm.reset();
+          menuIdInput.value = "";
+          submitButton.textContent = "Tambah Menu";
+          cancelEditButton.style.display = "none";
+          fetchMenu();
         });
-
-        // --- Fungsi untuk Memuat Data ke Form untuk Edit ---
-        async function loadMenuForEdit(id) {
-            try {
-                const doc = await menuCollection.doc(id).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    currentEditId = id;
-                    namaBuahInput.value = data.nama;
-                    hargaInput.value = data.harga;
-                    stokInput.value = data.stok;
-                    deskripsiInput.value = data.deskripsi || '';
-                    imageUrlInput.value = data.imageUrl || '';
-                    ratingInput.value = data.rating !== null ? data.rating : ''; // Ubah null ke string kosong untuk input
-                    deliveryTimeInput.value = data.deliveryTime || '';
-                    isAvailableInput.checked = data.isAvailable !== undefined ? data.isAvailable : true; // Default true
-                    submitButton.textContent = 'Update Menu';
-                    cancelEditButton.style.display = 'inline-block';
-                    // Scroll ke bagian atas halaman untuk melihat form
-                    window.scrollTo({ top: 0, behavior: 'smooth' }); 
-                } else {
-                    showMessage('Menu tidak ditemukan.', 'error');
-                }
-            } catch (error) {
-                console.error("Error saat memuat data untuk edit: ", error);
-                showMessage('Gagal memuat menu untuk edit.', 'error');
-            }
-        }
-
-        // --- Fungsi untuk Menghapus Buah ---
-        async function deleteMenu(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus menu ini?')) {
-                try {
-                    await menuCollection.doc(id).delete();
-                    showMessage('Menu berhasil dihapus!');
-                } catch (error) {
-                    console.error("Error saat menghapus data: ", error);
-                    showMessage('Gagal menghapus menu. Coba lagi.', 'error');
-                }
-            }
-        }
-
-        // --- Listener untuk Tombol Batal Edit ---
-        cancelEditButton.addEventListener('click', resetForm);
-
-        // --- Realtime Listener untuk Menampilkan Buah ---
-        menuCollection.orderBy('nama').onSnapshot((snapshot) => {
-            menuTableBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi ulang
-            if (snapshot.empty) {
-                const row = menuTableBody.insertRow();
-                const cell = row.insertCell(0);
-                cell.colSpan = 9; // Sesuaikan dengan jumlah kolom
-                cell.textContent = 'Belum ada data menu.';
-                cell.style.textAlign = 'center';
-                cell.style.padding = '20px';
-            } else {
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const row = menuTableBody.insertRow();
-                    row.insertCell(0).textContent = data.nama;
-                    row.insertCell(1).textContent = `Rp ${data.harga.toLocaleString('id-ID')}`;
-                    row.insertCell(2).textContent = `${data.stok} kg`;
-                    row.insertCell(3).textContent = data.deskripsi || '-';
-                    const imgCell = row.insertCell(4);
-                    if (data.imageUrl) {
-                        const img = document.createElement('img');
-                        img.src = data.imageUrl;
-                        img.alt = data.nama;
-                        imgCell.appendChild(img);
-                    } else {
-                        imgCell.textContent = '-';
-                    }
-                    row.insertCell(5).textContent = data.rating !== null ? data.rating : '-';
-                    row.insertCell(6).textContent = data.deliveryTime || '-';
-                    row.insertCell(7).textContent = data.isAvailable ? 'Ya' : 'Tidak';
-
-                    const actionsCell = row.insertCell(8);
-                    actionsCell.classList.add('actions');
-                    const editButton = document.createElement('button');
-                    editButton.innerHTML = '<i class="fas fa-edit"></i> Edit'; // Tambahkan teks "Edit"
-                    editButton.title = 'Edit';
-                    editButton.addEventListener('click', () => loadMenuForEdit(doc.id));
-                    actionsCell.appendChild(editButton);
-
-                    const deleteButton = document.createElement('button');
-                    deleteButton.classList.add('delete');
-                    deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus'; // Tambahkan teks "Hapus"
-                    deleteButton.title = 'Hapus';
-                    deleteButton.addEventListener('click', () => deleteMenu(doc.id));
-                    actionsCell.appendChild(deleteButton);
-                });
-            }
-        }, (error) => {
-            console.error("Error saat mengambil data menu: ", error);
-            showMessage('Gagal memuat daftar menu.', 'error');
-            const row = menuTableBody.insertRow();
-            const cell = row.insertCell(0);
-            cell.colSpan = 9;
-            cell.textContent = 'Terjadi kesalahan saat memuat data.';
-            cell.style.textAlign = 'center';
-            cell.style.color = 'red';
-            cell.style.padding = '20px';
+      } else {
+        menuCollection.add(data).then(() => {
+          menuForm.reset();
+          fetchMenu();
         });
-    </script>
+      }
+    });
+
+    cancelEditButton.addEventListener("click", () => {
+      menuForm.reset();
+      menuIdInput.value = "";
+      submitButton.textContent = "Tambah Menu";
+      cancelEditButton.style.display = "none";
+    });
+
+    function fetchMenu() {
+      menuCollection.orderBy("namaBuah").get().then((snapshot) => {
+        menuTableBody.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.namaBuah}</td>
+            <td>Rp ${data.harga}</td>
+            <td>${data.stok}</td>
+            <td>${data.deskripsi}</td>
+            <td><img src="${data.imageUrl}" alt="${data.namaBuah}" /></td>
+            <td>${data.rating || "-"}</td>
+            <td>${data.deliveryTime || "-"}</td>
+            <td>${data.isAvailable ? "✔️" : "❌"}</td>
+            <td class="actions">
+              <button onclick="editMenu('${doc.id}')"><i class="fas fa-edit"></i></button>
+              <button class="delete" onclick="deleteMenu('${doc.id}')"><i class="fas fa-trash"></i></button>
+            </td>`;
+          menuTableBody.appendChild(row);
+        });
+      });
+    }
+
+    function editMenu(id) {
+      menuCollection.doc(id).get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          menuIdInput.value = id;
+          namaBuahInput.value = data.namaBuah;
+          hargaInput.value = data.harga;
+          stokInput.value = data.stok;
+          deskripsiInput.value = data.deskripsi;
+          imageUrlInput.value = data.imageUrl;
+          ratingInput.value = data.rating;
+          deliveryTimeInput.value = data.deliveryTime;
+          isAvailableInput.checked = data.isAvailable;
+          submitButton.textContent = "Simpan Perubahan";
+          cancelEditButton.style.display = "inline-block";
+        }
+      });
+    }
+
+    function deleteMenu(id) {
+      if (confirm("Yakin ingin menghapus menu ini?")) {
+        menuCollection.doc(id).delete().then(() => {
+          fetchMenu();
+        });
+      }
+    }
+
+    window.editMenu = editMenu;
+    window.deleteMenu = deleteMenu;
+
+    fetchMenu();
+  </script>
 </body>
 </html>
+
