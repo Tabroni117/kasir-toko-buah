@@ -305,6 +305,32 @@
                 font-weight: normal;
             }
         }
+
+
+.table-scroll-nav {
+  display: flex;
+  justify-content: center;
+  background-color: #4CAF50;
+  padding: 8px 0;
+  border-top: 2px solid #3e9e3e;
+  border-bottom: 2px solid #3e9e3e;
+}
+
+.scroll-btn {
+  background-color: white;
+  color: #4CAF50;
+  border: none;
+  padding: 10px 15px;
+  margin: 0 5px;
+  border-radius: 50%;
+  font-size: 18px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.scroll-btn:hover {
+  background-color: #f0f0f0;
+}
+        
   </style>
 </head>
 <body>
@@ -339,28 +365,34 @@
       </form>
     </div>
 
-    <div class="list-section">
-      <h2>Daftar Menu Tersedia</h2>
-      <div style="overflow-x:auto;">
-        <table id="menuTable">
-          <thead>
-            <tr>
-              <th>Nama</th>
-              <th>Harga</th>
-              <th>Stok</th>
-              <th>Deskripsi</th>
-              <th>Gambar</th>
-              <th>Rating</th>
-              <th>Waktu Kirim</th>
-              <th>Tersedia</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
+   <div class="list-section">
+  <h2>Daftar Menu Tersedia</h2>
+
+  <div style="overflow-x:auto;">
+    <table id="menuTable">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Harga</th>
+          <th>Stok</th>
+          <th>Deskripsi</th>
+          <th>Gambar</th>
+          <th>Rating</th>
+          <th>Waktu Kirim</th>
+          <th>Tersedia</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
+
+  <!-- 👇 Tambahkan tombol scroll di sini -->
+  <div class="table-scroll-nav">
+    <button onclick="scrollTableLeft()" class="scroll-btn"><i class="fas fa-chevron-left"></i></button>
+    <button onclick="scrollTableRight()" class="scroll-btn"><i class="fas fa-chevron-right"></i></button>
+  </div>
+
 
   <script>
     const firebaseConfig = {
@@ -495,7 +527,7 @@ auth.onAuthStateChanged((user) => {
       });
     }
 
-    function deleteMenu(id) {
+   function deleteMenu(id) {
       if (confirm("Yakin ingin menghapus menu ini?")) {
         menuCollection.doc(id).delete().then(() => {
           fetchMenu();
@@ -503,9 +535,19 @@ auth.onAuthStateChanged((user) => {
       }
     }
 
+    function scrollTableLeft() {
+      document.querySelector('[style*="overflow-x:auto"]').scrollBy({ left: -200, behavior: 'smooth' });
+    }
+
+    function scrollTableRight() {
+      document.querySelector('[style*="overflow-x:auto"]').scrollBy({ left: 200, behavior: 'smooth' });
+    }
+
+    // ⬇️ Pastikan fungsi bisa dipanggil dari HTML
     window.editMenu = editMenu;
     window.deleteMenu = deleteMenu;
 
+    // ⬇️ Ambil data saat halaman dimuat
     fetchMenu();
   </script>
 </body>
