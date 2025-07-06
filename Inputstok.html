@@ -423,22 +423,25 @@
     const menuTableBody = document.querySelector("#menuTable tbody");
     const userInfo = document.getElementById("userInfo");
 
+      
 function displayUserName() {
   const user = auth.currentUser;
   if (user) {
     db.collection("users").doc(user.uid).get().then(doc => {
       if (doc.exists && doc.data().fullName) {
-        userInfo.textContent = `Admin [${doc.data().fullName}]`;
+        const namaLengkap = doc.data().fullName;
+        userInfo.textContent = `Admin [${namaLengkap} - Penjual]`;
       } else {
-        userInfo.textContent = `Admin [${user.email}]`; // fallback jika tidak ada nama
+        userInfo.textContent = `Admin [${user.email} - Penjual]`; // fallback jika tidak ada nama
       }
     }).catch(() => {
-      userInfo.textContent = `Admin [${user.email}]`;
+      userInfo.textContent = `Admin [${user.email} - Penjual]`;
     });
   } else {
     userInfo.textContent = "Admin [Tidak Dikenal]";
   }
 }
+
 auth.onAuthStateChanged((user) => {
   if (user) {
     displayUserName();
@@ -446,7 +449,6 @@ auth.onAuthStateChanged((user) => {
     window.location.href = "login.html";
   }
 });
-
     menuForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const id = menuIdInput.value;
