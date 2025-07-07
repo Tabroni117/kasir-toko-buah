@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Beranda Utama Rujak Buah Indonesia</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+
+  <!-- ✅ Firebase SDK WAJIB ditaruh di sini -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
   <style>
     body {
       font-family: sans-serif;
@@ -278,6 +284,116 @@
       <div class="label">Marketing</div>
     </a>
   </div>
+
+
+
+  <script>
+        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
+        const db = firebase.firestore(); // NEW: Inisialisasi Firestore
+        const menuCollection = db.collection('buah');
+
+        // --- Proteksi Halaman: Cek Status Login ---
+        // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
+        // Ini adalah listener utama yang memastikan user diotorisasi
+        auth.onAuthStateChanged(user => {
+            // Ambil flag `isLoggingOut` dari localStorage
+            const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+            // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
+            if (isLoggingOut) {
+                localStorage.removeItem('isLoggingOut');
+            }
+
+            const storedRole = localStorage.getItem('userRole');
+
+            if (!user || storedRole !== 'penjual') {
+                // Jika tidak ada user login di Firebase Auth,
+                // ATAU role di localStorage bukan 'pembeli'
+                
+                // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
+                if (!isLoggingOut) { 
+                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+                }
+                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            } else {
+                // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
+                renderMenuItems();
+                startAutoScroll();
+            }
+        });
+
+        // --- Elemen Utama ---
+        const menuList = document.getElementById('menuList');
+
+        // --- Fungsi untuk Logout ---
+        async function logout() {
+            try {
+                // Set flag di localStorage bahwa logout disengaja
+                localStorage.setItem('isLoggingOut', 'true'); 
+
+                await auth.signOut(); // Logout dari Firebase Auth
+                // auth.onAuthStateChanged akan otomatis terpicu setelah ini
+                // dan akan mengarahkan ke index.html tanpa alert karena flag isLoggingOut
+                
+                // Opsional: Langsung bersihkan localStorage di sini juga jika ingin lebih cepat responsif
+                localStorage.removeItem('isLoggedIn'); 
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                
+                alert('Anda telah berhasil logout.'); // Notifikasi logout berhasil
+                window.location.href = 'index.html'; // Redirect
+            } catch (error) {
+                console.error("Error saat logout:", error);
+                alert('Gagal logout. Coba lagi.');
+                // Hapus flag jika logout gagal agar proteksi tetap aktif
+                localStorage.removeItem('isLoggingOut'); 
+            }
+        }
+
+  async function logout() {
+    try {
+      localStorage.setItem('isLoggingOut', 'true');
+      await auth.signOut();
+
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userUid');
+
+      alert('Anda telah berhasil logout.');
+      window.location.href = 'index.html';
+    } catch (error) {
+      console.error("Error saat logout:", error);
+      alert('Gagal logout. Coba lagi.');
+      localStorage.removeItem('isLoggingOut');
+    }
+  }
+
+  function renderMenuItems() {
+    console.log('Menu penjual dimuat...');
+  }
+
+  function startAutoScroll() {
+    console.log('Auto-scroll aktif...');
+  }
+</script>
+
 
 </body>
 </html>
