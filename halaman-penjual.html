@@ -247,6 +247,22 @@
   100% { transform: rotate(360deg); }
 }
 
+    
+.berkedip-kuat {
+  animation: kedipHebat 1s infinite;
+  background-color: #00FF00  !important;
+  color: white !important;
+  font-weight: bold;
+  border: 2px solid white !important;
+  box-shadow: 0 0 10px #ff5252;
+}
+
+@keyframes kedipHebat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+
 
     
 .logout-button:hover {
@@ -332,9 +348,13 @@
       </a>
     </div>
 
-    <div class="special-feature" onclick="window.location.href='pesanan.html'">
-      Lihat / Cek Pesanan Masuk
-    </div>
+
+ <div id="btnCekPesanan" class="special-feature" onclick="window.location.href='pesanan.html'" style="position: relative;">
+  Lihat / Cek Pesanan Masuk
+  <span id="notifLonceng" style="display: none; position: absolute; top: -6px; right: -6px;">🔔</span>
+</div>
+
+    
   </div>
 
   <div class="navbar">
@@ -435,7 +455,7 @@ async function logout() {
     setTimeout(() => {
       spinner.style.display = 'none';
       window.location.href = 'index.html';
-    }, 20000);
+    }, 2000);
 
   } catch (error) {
     console.error("Error saat logout:", error);
@@ -452,7 +472,66 @@ async function logout() {
   function startAutoScroll() {
     console.log('Auto-scroll aktif...');
   }
+
+
+
+
+
+
+
+
+const notifEl = document.getElementById("notifLonceng");
+const tombolPesanan = document.getElementById("btnCekPesanan");
+
+function cekPesananBaru() {
+  db.collection("pesanan")
+    .orderBy("waktu", "desc")
+    .limit(1)
+    .get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+        const sound = document.getElementById("notifSound");
+
+        if (waktuPesanan > waktuBuka) {
+          notifEl.style.display = "inline";
+          tombolPesanan.classList.add("berkedip-kuat");
+          sound.play();
+        } else {
+          notifEl.style.display = "none";
+          tombolPesanan.classList.remove("berkedip-kuat");
+          sound.pause();
+          sound.currentTime = 0;
+        }
+      }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 5000); // cek setiap 5 detik
+});
+
+tombolPesanan.addEventListener("click", () => {
+  const sekarang = new Date().toISOString();
+  localStorage.setItem("pesananSudahDibuka", sekarang);
+
+  const sound = document.getElementById("notifSound");
+  sound.pause();
+  sound.currentTime = 0;
+});
+
+
+
+
+
+
+    
 </script>
+
+<audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
 
 </body>
