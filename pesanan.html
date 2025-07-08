@@ -866,16 +866,40 @@
                 });
         }
 
-        // --- Fungsi Popup Detail Pesanan ---
-      // --- Fungsi Popup Detail Pesanan ---
+
+
+
+
+
+
+        
+      
 function tampilkanDetail(orderId) {
   currentOrderIdForDetail = orderId;
   const docRef = db.collection("pesanan").doc(orderId);
+  const uid = localStorage.getItem("userUid") || "Unknown";
+  const nama = localStorage.getItem("userEmail") || "Tanpa Nama";
 
-  docRef.get()
-    .then(doc => {
+  db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(docRef);
+    if (!snapshot.exists) throw "Pesanan tidak ditemukan.";
+    const d = snapshot.data();
+    if (!d.dibukaOlehUid) {
+      transaction.update(docRef, {
+        dibukaOlehUid: uid,
+        dibukaOlehNama: nama,
+        waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  })
+  .catch(err => {
+    console.warn("Gagal update data pembuka:", err);
+  })
+  .finally(() => {
+    // Ambil ulang data terbaru setelah transaksi
+    docRef.get().then(doc => {
       if (!doc.exists) {
-        alert("Pesanan tidak ditemukan di database.");
+        alert("Pesanan tidak ditemukan.");
         return;
       }
 
@@ -884,28 +908,9 @@ function tampilkanDetail(orderId) {
       const waktu = data.waktu?.toDate?.() || new Date(0);
       const items = data.items || [];
 
-      // ✅ Simpan info pembuka pesanan (jika belum ada)
-      const uid = localStorage.getItem("userUid") || "Unknown";
-      const nama = localStorage.getItem("userEmail") || "Tanpa Nama";
-      db.runTransaction(async (transaction) => {
-        const snapshot = await transaction.get(docRef);
-        if (!snapshot.exists) return;
-        const d = snapshot.data();
-        if (!d.dibukaOlehUid) {
-          transaction.update(docRef, {
-            dibukaOlehUid: uid,
-            dibukaOlehNama: nama,
-            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      });
-
-      // ✅ Tampilkan semua data ke popup
       document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-
       const displayId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
       document.getElementById("popupOrderId").textContent = displayId;
-
       document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
       document.getElementById("popupAlamat").textContent = customer.address || "-";
       document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
@@ -922,6 +927,7 @@ function tampilkanDetail(orderId) {
 
       document.getElementById("popupWaktu").textContent = formatDate(waktu);
 
+      // ⬇️ Daftar Item
       const popupItemsHtml = items.map(item => {
         const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
         return `
@@ -938,22 +944,31 @@ function tampilkanDetail(orderId) {
       document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
       document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
 
-      // ✅ Tampilkan info siapa yang mengubah status
+      // ✅ Info pengubah status
       const diubahOleh = data.diubahOlehNama || "-";
       const waktuDiubah = data.waktuDiubah?.toDate?.();
       document.getElementById("popupDiubahOleh").textContent = diubahOleh;
       document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
-      // ✅ Tampilkan popup
+      // ✅ Tampilkan Popup
       document.getElementById("popupDetail").style.display = "flex";
 
-    })
-    .catch(error => {
-      console.error("Error getting order detail from Firestore:", error);
-      alert("Gagal memuat detail pesanan. Silakan periksa koneksi internet atau konsol browser.");
+    }).catch(error => {
+      console.error("Gagal ambil ulang detail:", error);
+      alert("Gagal menampilkan detail pesanan.");
     });
+  });
 }
 
+
+
+
+
+
+
+
+
+        
         function tutupDetail() {
             document.getElementById("popupDetail").style.display = "none";
             currentOrderIdForDetail = null; 
