@@ -438,7 +438,7 @@
         // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
         // Ini adalah listener utama yang memastikan user diotorisasi
         auth.onAuthStateChanged(user => {
-            // Ambil flag `isLoggingOut` dari localStorage
+           
             const isLoggingOut = localStorage.getItem('isLoggingOut');
 
             // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
@@ -461,9 +461,18 @@
                 // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
                 renderMenuItems();
                 startAutoScroll();
+                hitungStatistikHarian();
             }
         });
 
+
+
+
+
+
+
+
+    
         // --- Elemen Utama ---
         const menuList = document.getElementById('menuList');
 
@@ -533,6 +542,56 @@ function startAutoScroll() {
 // --- Cek Pesanan Baru ---
 const notifEl = document.getElementById("notifLonceng");
 const tombolPesanan = document.getElementById("btnCekPesanan");
+
+
+function hitungStatistikHarian() {
+  const hariIni = new Date();
+  const awalHari = new Date(hariIni.setHours(0, 0, 0, 0));
+  const akhirHari = new Date(hariIni.setHours(23, 59, 59, 999));
+
+  db.collection("pesanan")
+    .where("waktu", ">=", awalHari)
+    .where("waktu", "<=", akhirHari)
+    .get()
+    .then(snapshot => {
+      let totalTransaksi = 0;
+      let totalPendapatan = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.totalHarga) {
+          totalTransaksi++;
+          totalPendapatan += parseFloat(data.totalHarga);
+        }
+      });
+
+      // Masukkan data ke DOM
+      document.querySelectorAll(".info-box")[0].querySelector(".value").innerText =
+        "Rp " + totalPendapatan.toLocaleString('id-ID');
+      document.querySelectorAll(".info-box")[1].querySelector(".value").innerText =
+        totalTransaksi.toLocaleString('id-ID');
+    })
+    .catch(error => {
+      console.error("Gagal mengambil data harian:", error);
+    });
+}
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+    
 
 function cekPesananBaru() {
   db.collection("pesanan")
