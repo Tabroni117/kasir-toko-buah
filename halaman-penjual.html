@@ -573,20 +573,43 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(cekPesananBaru, 5000);
 });
 
-tombolPesanan.addEventListener("click", () => {
+tombolPesanan.addEventListener("click", async () => {
   const sekarang = new Date().toISOString();
   localStorage.setItem("pesananSudahDibuka", sekarang);
-
-  // Simpan bahwa order ini sudah dibuka
-  const lastOrderId = localStorage.getItem("lastOrderId");
-  if (lastOrderId) {
-    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
-  }
 
   const sound = document.getElementById("notifSound");
   sound.pause();
   sound.currentTime = 0;
+
+  const lastOrderId = localStorage.getItem("lastOrderId");
+  if (lastOrderId) {
+    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
+
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const docRef = db.collection("pesanan").doc(lastOrderId);
+      const docSnap = await docRef.get();
+      const data = docSnap.data();
+
+      if (data && !data.dibukaOleh) {
+        await docRef.update({
+          dibukaOleh: user.uid,
+          dibukaOlehNama: user.email,
+          dibukaAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("✅ Ditandai sudah dibuka oleh:", user.email);
+      } else {
+        console.log("ℹ️ Sudah dibuka oleh:", data.dibukaOlehNama || 'pegawai lain');
+      }
+    }
+  }
 });
+
+
+
+
+
+    
 document.addEventListener("click", () => {
   const sound = document.getElementById("notifSound");
   sound.play().then(() => {
