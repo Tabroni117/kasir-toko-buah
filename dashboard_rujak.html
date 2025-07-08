@@ -1,409 +1,306 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penjualan - RUJAK BUAH INDONESIA (Responsif)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        /* Global Styles */
-        body {
-            font-family: 'Lato', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #F8F9FA; /* Sangat ringan, abu-abu putih */
-            color: rgb(33, 37, 41);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            text-rendering: optimizeLegibility;
-        }
-
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Header */
-        .dashboard-header {
-            background: linear-gradient(to right, #388E3C, #4CAF50); /* Hijau Tua ke Hijau Primer */
-            color: #FFFFFF;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-        }
-
-        .dashboard-header .logo {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            font-size: 28px;
-            color: #FFFFFF;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .dashboard-header .title {
-            font-family: 'Lato', sans-serif;
-            font-weight: 300;
-            font-size: 18px;
-            margin-left: 15px;
-            color: #E0E0E0;
-        }
-
-        /* Metrics Grid */
-        .metrics-grid {
-            /* Perubahan di sini: Memaksa 2 kolom di layar yang lebih lebar dari 500px */
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Default untuk lebar > 500px */
-            gap: 20px;
-        }
-
-        .metric-card {
-            background-color: #FFFFFF;
-            border-radius: 8px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid #E0E6EB;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
-        }
-
-        .metric-card .label {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 15px;
-            color: #495057;
-            margin-bottom: 10px;
-        }
-
-        .metric-card .value {
-            font-family: 'Lato', sans-serif;
-            font-weight: 900;
-            font-size: 36px;
-            color: #4CAF50; /* Hijau Primer */
-            margin-bottom: 5px;
-        }
-
-        .metric-card .change {
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #4CAF50; /* Hijau untuk positif */
-        }
-
-        .metric-card .change.negative {
-            color: #C0392B; /* Merah untuk negatif */
-        }
-
-        .metric-card .change .arrow {
-            margin-right: 5px;
-        }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: 1fr; /* Hanya satu kolom untuk chart yang tersisa */
-            gap: 20px;
-        }
-
-        .chart-card {
-            background-color: #FFFFFF;
-            border-radius: 8px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid #E0E6EB;
-        }
-
-        .chart-card .chart-title {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 17px;
-            color: #495057;
-            margin-bottom: 15px;
-            width: 100%;
-            text-align: left;
-            border-bottom: 1px solid #DEE2E6;
-            padding-bottom: 10px;
-        }
-
-        .chart-canvas {
-            width: 100% !important;
-            height: 250px; /* Consistent height for charts */
-        }
-
-        /* --- Media Queries untuk Responsif --- */
-
-        /* Untuk layar dengan lebar minimum 500px hingga 992px (misalnya tablet) */
-        @media (min-width: 500px) and (max-width: 992px) {
-            .dashboard-container {
-                padding: 0 15px;
-            }
-            .dashboard-header {
-                padding: 18px 25px;
-            }
-            .dashboard-header .logo {
-                font-size: 26px;
-            }
-            .dashboard-header .title {
-                font-size: 16px;
-            }
-            .metrics-grid {
-                /* Perubahan di sini: Memastikan 2 kolom di rentang ini */
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .metric-card .value {
-                font-size: 32px;
-            }
-            .chart-canvas {
-                height: 220px;
-            }
-        }
-
-        /* Untuk layar dengan lebar maksimum 768px (misalnya smartphone landscape) */
-        /* Pastikan layar tidak lebih kecil dari 500px untuk tetap 2 kolom */
-        @media (min-width: 500px) and (max-width: 768px) {
-            .dashboard-container {
-                margin: 15px auto;
-                padding: 0 10px;
-                gap: 15px;
-            }
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 15px 20px;
-                border-radius: 8px;
-            }
-            .dashboard-header .logo {
-                font-size: 22px;
-            }
-            .dashboard-header .title {
-                font-size: 14px;
-                margin-left: 0;
-                margin-top: 5px;
-            }
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr); /* Pertahankan 2 kolom di sini */
-                gap: 15px;
-            }
-            .metric-card {
-                padding: 20px;
-            }
-            .metric-card .value {
-                font-size: 28px;
-            }
-            .metric-card .label {
-                font-size: 14px;
-            }
-            .metric-card .change {
-                font-size: 12px;
-            }
-            .charts-section {
-                grid-template-columns: 1fr; /* Tetap 1 kolom untuk chart */
-                gap: 15px;
-            }
-            .chart-card {
-                min-height: 250px;
-                padding: 15px;
-            }
-            .chart-card .chart-title {
-                font-size: 16px;
-                margin-bottom: 10px;
-                padding-bottom: 8px;
-            }
-            .chart-canvas {
-                height: 200px;
-            }
-        }
-
-        /* Untuk layar dengan lebar maksimum 499px (misalnya smartphone portrait) */
-        @media (max-width: 499px) {
-            .dashboard-container {
-                padding: 0 10px;
-                margin: 10px auto;
-            }
-            .dashboard-header {
-                padding: 10px 15px;
-            }
-            .dashboard-header .logo {
-                font-size: 20px;
-            }
-            .dashboard-header .title {
-                font-size: 13px;
-                margin-top: 3px;
-            }
-            .metrics-grid {
-                grid-template-columns: 1fr; /* Kembali ke 1 kolom jika sangat sempit */
-                gap: 10px;
-            }
-            .metric-card {
-                padding: 15px;
-            }
-            .metric-card .value {
-                font-size: 24px;
-            }
-            .chart-card {
-                min-height: 220px;
-            }
-            .chart-canvas {
-                height: 180px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Laporan | Rujak Buah Indonesia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #4ADE80;
+      --primary-dark: #22C55E;
+      --accent: #F59E0B;
+      --white: #FFFFFF;
+      --light-bg: #F0FDF4;
+      --dark: #1E293B;
+      --radius: 1rem;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: var(--light-bg);
+      color: var(--dark);
+      padding-top: 80px;
+      padding-bottom: 70px;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow);
+    }
+    header .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    header .brand i {
+      font-size: 1.5rem;
+    }
+    header .brand-text h1 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .logout-button {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-left: 10px;
+      margin-right: 10px;
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      transition: background 0.3s;
+    }
+    .logout-button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .logout-button i {
+      font-size: 14px;
+      margin-right: 5px;
+    }
+    .app-container {
+      background: white;
+      margin: 1rem;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .card {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    .button-group {
+      margin: 1rem 0;
+    }
+    .button-group button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.5rem 1rem;
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+    .button-group button:hover {
+      background: var(--primary-dark);
+    }
+    .button-group .refresh-button {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      margin-left: 20px;
+    }
+    .button-group .refresh-button:hover {
+      background: rgba(74, 222, 128, 0.1);
+    }
+    canvas {
+      margin-top: 1rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+  </style>
 </head>
 <body>
-
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <div style="display: flex; align-items: baseline;">
-                <span class="logo">RUJAK BUAH INDONESIA</span>
-                <span class="title">Dashboard Penjualan</span>
-            </div>
-        </header>
-
-        <section class="metrics-grid">
-            <div class="metric-card">
-                <div class="label">Total Penjualan</div>
-                <div class="value" id="grossSalesValue">Rp 12.345.678</div>
-                <div class="change positive" id="grossSalesChange"><span class="arrow">&#9650;</span> 15.2% dari Bulan Lalu</div>
-            </div>
-
-            <div class="metric-card">
-                <div class="label">Total Transaksi</div>
-                <div class="value" id="totalOrdersValue">56.789</div>
-                <div class="change positive" id="totalOrdersChange"><span class="arrow">&#9650;</span> 8.9% dari Bulan Lalu</div>
-            </div>
-
-            <div class="metric-card">
-                <div class="label">Margin Keuntungan</div>
-                <div class="value" id="profitMarginValue">28.5%</div>
-                <div class="change positive" id="profitMarginChange"><span class="arrow">&#9650;</span> 1.1% Poin</div>
-            </div>
-
-            <div class="metric-card">
-                <div class="label">Nilai Rata-rata Pesanan</div>
-                <div class="value" id="aovValue">Rp 195.500</div>
-                <div class="change negative" id="aovChange"><span class="arrow">&#9660;</span> 2.1% dari Bulan Lalu</div>
-            </div>
-        </section>
-
-        <section class="charts-section">
-            <div class="chart-card">
-                <div class="chart-title">Distribusi Penjualan Saluran</div>
-                <canvas id="salesChannelsChart" class="chart-canvas"></canvas>
-            </div>
-        </section>
-
+  <header>
+    <div class="brand">
+      <i class="fas fa-leaf"></i>
+      <div class="brand-text">
+        <h1>Rujak Buah Indonesia</h1>
+      </div>
     </div>
+    <button class="logout-button" onclick="window.location.href='navigator-input.html'">
+      <i class="fas fa-sign-out-alt"></i> Kembali
+    </button>
+  </header>
 
-    <script>
-        // --- Data Dummy (Anda bisa ubah angka di sini) ---
-        const dummyData = {
-            // Metrik Utama
-            grossSales: { value: 12345678, change: 15.2, positive: true },
-            totalOrders: { value: 56789, change: 8.9, positive: true },
-            profitMargin: { value: 28.5, change: 1.1, positive: true },
-            aov: { value: 195500, change: 2.1, positive: false }, // false untuk negatif
+  <main class="app-container">
+    <h2 class="section-title"><i class="fas fa-chart-bar"></i> Laporan</h2>
+    <div class="button-group">
+      <button onclick="ambilLaporan('harian')">Harian</button>
+      <button onclick="ambilLaporan('mingguan')">Mingguan</button>
+      <button onclick="ambilLaporan('bulanan')">Bulanan</button>
+      <button class="refresh-button" onclick="ambilLaporan('harian')">Refresh</button>
+    </div>
+    <div class="stats">
+      <div class="card">
+        <h3>Total Transaksi</h3>
+        <p id="totalTransaksi">0</p>
+      </div>
+      <div class="card">
+        <h3>Total Pendapatan</h3>
+        <p id="totalPendapatan">Rp 0</p>
+      </div>
+      <div class="card">
+        <h3>Rata-rata</h3>
+        <p id="rataRata">Rp 0</p>
+      </div>
+    </div>
+    <canvas id="laporanChart" width="400" height="200"></canvas>
+  </main>
 
-            // Data untuk Grafik Saluran Penjualan (Donut Chart)
-            salesChannels: {
-                labels: ['Toko Fisik', 'GoFood', 'GrabFood', 'WhatsApp', 'Event'],
-                data: [45, 30, 15, 7, 3] // Persentase
-            }
-        };
+  <script>
+    // --- Inisialisasi Firebase ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
+    };
 
-        // --- Fungsi Format (Opsional, untuk tampilan lebih rapi) ---
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(amount);
-        };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
 
-        // --- Inisialisasi Grafik ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Inisialisasi Chart.js untuk Distribusi Saluran Penjualan
-            const salesChannelsCtx = document.getElementById('salesChannelsChart').getContext('2d');
-            new Chart(salesChannelsCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: dummyData.salesChannels.labels,
-                    datasets: [{
-                        data: dummyData.salesChannels.data,
-                        backgroundColor: [
-                            '#4CAF50',   /* Hijau Primer */
-                            '#8BC34A',   /* Hijau Lebih Muda */
-                            '#AED581',   /* Hijau Paling Muda */
-                            '#FFD700',   /* Emas untuk kontras */
-                            '#C0392B'    /* Sedikit merah untuk minoritas/lain-lain */
-                        ],
-                        borderColor: '#FFFFFF',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#333',
-                                font: { size: 14 }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) { label += ': '; }
-                                    if (context.parsed !== null) { label += context.parsed.toFixed(1) + '%'; }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // --- Proteksi Halaman untuk Penjual ---
+    auth.onAuthStateChanged(user => {
+      const isLoggingOut = localStorage.getItem('isLoggingOut');
+      const storedRole = localStorage.getItem('userRole');
+
+      if (isLoggingOut) {
+        localStorage.removeItem('isLoggingOut');
+      }
+
+      if (!user || storedRole !== 'penjual') {
+        if (!isLoggingOut) {
+          alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+        }
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Jika validasi sukses, jalankan fitur utama
+      ambilLaporan('harian');
+    });
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+      }).format(amount);
+    }
+
+    function ambilLaporan(jenis) {
+      const sekarang = new Date();
+      let mulai, akhir;
+
+      if (jenis === 'harian') {
+        mulai = new Date(sekarang); mulai.setHours(0, 0, 0, 0);
+        akhir = new Date(sekarang); akhir.setHours(23, 59, 59, 999);
+      } else if (jenis === 'mingguan') {
+        mulai = new Date(sekarang); mulai.setDate(sekarang.getDate() - sekarang.getDay()); mulai.setHours(0, 0, 0, 0);
+        akhir = new Date(sekarang); akhir.setDate(mulai.getDate() + 6); akhir.setHours(23, 59, 59, 999);
+      } else if (jenis === 'bulanan') {
+        mulai = new Date(sekarang.getFullYear(), sekarang.getMonth(), 1);
+        akhir = new Date(sekarang.getFullYear(), sekarang.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
+
+      db.collection("pesanan")
+        .where("waktu", ">=", mulai)
+        .where("waktu", "<=", akhir)
+        .get()
+        .then(snapshot => {
+          let total = 0;
+          let jumlah = snapshot.size;
+
+          snapshot.forEach(doc => {
+            total += doc.data().total || 0;
+          });
+
+          document.getElementById("totalTransaksi").textContent = jumlah;
+          document.getElementById("totalPendapatan").textContent = formatCurrency(total);
+          document.getElementById("rataRata").textContent = formatCurrency(jumlah ? total / jumlah : 0);
+
+          updateChart(jumlah, total, jumlah ? total / jumlah : 0);
         });
+    }
 
-        // --- Update Metrik di Awal (Dari Data Dummy) ---
-        document.getElementById('grossSalesValue').textContent = formatCurrency(dummyData.grossSales.value);
-        document.getElementById('grossSalesChange').className = `change ${dummyData.grossSales.positive ? 'positive' : 'negative'}`;
-        document.getElementById('grossSalesChange').innerHTML = `<span class="arrow">${dummyData.grossSales.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.grossSales.change}% dari Bulan Lalu`;
+    function updateChart(totalTransaksi, totalPendapatan, rataRata) {
+      const ctx = document.getElementById('laporanChart').getContext('2d');
+      if (window.laporanChart) window.laporanChart.destroy();
 
-        document.getElementById('totalOrdersValue').textContent = dummyData.totalOrders.value.toLocaleString('id-ID');
-        document.getElementById('totalOrdersChange').className = `change ${dummyData.totalOrders.positive ? 'positive' : 'negative'}`;
-        document.getElementById('totalOrdersChange').innerHTML = `<span class="arrow">${dummyData.totalOrders.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.totalOrders.change}% dari Bulan Lalu`;
-
-        document.getElementById('profitMarginValue').textContent = `${dummyData.profitMargin.value.toFixed(1)}%`;
-        document.getElementById('profitMarginChange').className = `change ${dummyData.profitMargin.positive ? 'positive' : 'negative'}`;
-        document.getElementById('profitMarginChange').innerHTML = `<span class="arrow">${dummyData.profitMargin.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.profitMargin.change}% Poin`;
-
-        document.getElementById('aovValue').textContent = formatCurrency(dummyData.aov.value);
-        document.getElementById('aovChange').className = `change ${dummyData.aov.positive ? 'positive' : 'negative'}`;
-        document.getElementById('aovChange').innerHTML = `<span class="arrow">${dummyData.aov.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.aov.change}% dari Bulan Lalu`;
-
-    </script>
+      window.laporanChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Total Transaksi', 'Total Pendapatan', 'Rata-rata'],
+          datasets: [{
+            label: 'Jumlah',
+            data: [totalTransaksi, totalPendapatan, rataRata],
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.6)',
+              'rgba(245, 158, 11, 0.6)',
+              'rgba(59, 130, 246, 0.6)'
+            ],
+            borderColor: [
+              'rgba(34, 197, 94, 1)',
+              'rgba(245, 158, 11, 1)',
+              'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
