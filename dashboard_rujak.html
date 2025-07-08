@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penjualan - RUJAK BUAH INDONESIA (Responsif)</title>
+    <title>Dashboard Penjualan - RUJAK BUAH INDONESIA (Ringkas Responsif)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -115,7 +115,7 @@
         /* Charts Section */
         .charts-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: 1fr; /* Hanya satu kolom untuk chart yang tersisa */
             gap: 20px;
         }
 
@@ -154,7 +154,7 @@
         /* Untuk layar dengan lebar maksimum 992px (misalnya tablet) */
         @media (max-width: 992px) {
             .dashboard-container {
-                padding: 0 15px; /* Sedikit padding lebih kecil */
+                padding: 0 15px;
             }
             .dashboard-header {
                 padding: 18px 25px;
@@ -165,14 +165,14 @@
             .dashboard-header .title {
                 font-size: 16px;
             }
-            .metrics-grid, .charts-section {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Kolom lebih fleksibel */
+            .metrics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             }
             .metric-card .value {
                 font-size: 32px;
             }
             .chart-canvas {
-                height: 220px; /* Sedikit lebih pendek di tablet */
+                height: 220px;
             }
         }
 
@@ -180,22 +180,22 @@
         @media (max-width: 768px) {
             .dashboard-container {
                 margin: 15px auto;
-                padding: 0 10px; /* Padding lebih kecil lagi */
+                padding: 0 10px;
                 gap: 15px;
             }
             .dashboard-header {
-                flex-direction: column; /* Header jadi satu kolom */
-                align-items: flex-start; /* Elemen ke kiri */
+                flex-direction: column;
+                align-items: flex-start;
                 padding: 15px 20px;
-                border-radius: 8px; /* Border radius sedikit lebih kecil */
+                border-radius: 8px;
             }
             .dashboard-header .logo {
                 font-size: 22px;
             }
             .dashboard-header .title {
                 font-size: 14px;
-                margin-left: 0; /* Hilangkan margin kiri */
-                margin-top: 5px; /* Sedikit ruang di atas */
+                margin-left: 0;
+                margin-top: 5px;
             }
             .metrics-grid, .charts-section {
                 grid-template-columns: 1fr; /* Semua kartu dan grafik menjadi satu kolom */
@@ -214,7 +214,7 @@
                 font-size: 12px;
             }
             .chart-card {
-                min-height: 250px; /* Konsisten tinggi untuk chart */
+                min-height: 250px;
                 padding: 15px;
             }
             .chart-card .chart-title {
@@ -223,7 +223,7 @@
                 padding-bottom: 8px;
             }
             .chart-canvas {
-                height: 200px; /* Lebih pendek di HP */
+                height: 200px;
             }
         }
 
@@ -296,16 +296,6 @@
 
         <section class="charts-section">
             <div class="chart-card">
-                <div class="chart-title">Tren Penjualan Bulanan</div>
-                <canvas id="monthlySalesTrend" class="chart-canvas"></canvas>
-            </div>
-
-            <div class="chart-card">
-                <div class="chart-title">Top 5 Produk Terlaris</div>
-                <canvas id="topProductsChart" class="chart-canvas"></canvas>
-            </div>
-
-            <div class="chart-card">
                 <div class="chart-title">Distribusi Penjualan Saluran</div>
                 <canvas id="salesChannelsChart" class="chart-canvas"></canvas>
             </div>
@@ -322,16 +312,6 @@
             profitMargin: { value: 28.5, change: 1.1, positive: true },
             aov: { value: 195500, change: 2.1, positive: false }, // false untuk negatif
 
-            // Data untuk Grafik Tren Penjualan Bulanan
-            monthlySales: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul'],
-                data: [10000000, 10500000, 11000000, 11500000, 12000000, 12500000, 13000000]
-            },
-            // Data untuk Grafik Top Produk
-            topProducts: {
-                labels: ['Rujak Jumbo', 'Rujak Sedang', 'Es Buah Spesial', 'Sop Buah', 'Salad Buah'],
-                data: [5000000, 3500000, 2000000, 1000000, 800000]
-            },
             // Data untuk Grafik Saluran Penjualan (Donut Chart)
             salesChannels: {
                 labels: ['Toko Fisik', 'GoFood', 'GrabFood', 'WhatsApp', 'Event'],
@@ -351,112 +331,6 @@
 
         // --- Inisialisasi Grafik ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Inisialisasi Chart.js untuk Tren Penjualan Bulanan
-            const monthlySalesCtx = document.getElementById('monthlySalesTrend').getContext('2d');
-            new Chart(monthlySalesCtx, {
-                type: 'line',
-                data: {
-                    labels: dummyData.monthlySales.labels,
-                    datasets: [{
-                        label: 'Pendapatan',
-                        data: dummyData.monthlySales.data,
-                        borderColor: '#4CAF50', /* Hijau Primer */
-                        backgroundColor: 'rgba(76, 175, 80, 0.2)', /* Transparan dari Hijau Primer */
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#4CAF50',
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#6C757D' }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#E9ECEF' },
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'Jt';
-                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'Rb';
-                                    return 'Rp' + value;
-                                },
-                                color: '#6C757D'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Inisialisasi Chart.js untuk Top 5 Produk Terlaris
-            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
-            new Chart(topProductsCtx, {
-                type: 'bar',
-                data: {
-                    labels: dummyData.topProducts.labels,
-                    datasets: [{
-                        label: 'Pendapatan',
-                        data: dummyData.topProducts.data,
-                        backgroundColor: [
-                            '#4CAF50',   /* Hijau Primer */
-                            '#66BB6A',   /* Hijau Lebih Muda 1 */
-                            '#8BC34A',   /* Hijau Lebih Muda 2 */
-                            '#AED581',   /* Hijau Paling Muda */
-                            '#C5E1A5'    /* Hijau Sangat Pucat */
-                        ],
-                        borderColor: '#fff',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', // Horizontal bars
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.x);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: { display: false },
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'Jt';
-                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'Rb';
-                                    return 'Rp' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
             // Inisialisasi Chart.js untuk Distribusi Saluran Penjualan
             const salesChannelsCtx = document.getElementById('salesChannelsChart').getContext('2d');
             new Chart(salesChannelsCtx, {
@@ -503,7 +377,6 @@
         });
 
         // --- Update Metrik di Awal (Dari Data Dummy) ---
-        // Ini adalah contoh, Anda bisa membuat fungsi untuk mengupdate ini jika datanya dinamis
         document.getElementById('grossSalesValue').textContent = formatCurrency(dummyData.grossSales.value);
         document.getElementById('grossSalesChange').className = `change ${dummyData.grossSales.positive ? 'positive' : 'negative'}`;
         document.getElementById('grossSalesChange').innerHTML = `<span class="arrow">${dummyData.grossSales.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.grossSales.change}% dari Bulan Lalu`;
