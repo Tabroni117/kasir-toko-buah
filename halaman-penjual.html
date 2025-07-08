@@ -262,11 +262,13 @@
   50% { opacity: 0.2; }
 }
     
-@keyframes spin {
+.fa-sync-alt.spin {
+  animation: rotateRefresh 1s linear infinite;
+}
+@keyframes rotateRefresh {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 
     
 .logout-button:hover {
@@ -499,11 +501,22 @@ async function logout() {
   }
 }
     
-  function manualReload() {
+function manualReload() {
+  // Hapus flag agar reload otomatis bisa aktif lagi nanti
+  localStorage.removeItem("sudahReloadOtomatis");
+
+  // Tampilkan loading overlay
   document.getElementById("loadingOverlay").style.display = "flex";
+
+  // Tambahkan animasi spin pada ikon reload
+  const icon = document.querySelector('.fa-sync-alt');
+  if (icon) icon.classList.add('spin');
+
+  // Reload halaman setelah sedikit delay
   setTimeout(() => {
+    if (icon) icon.classList.remove('spin'); // Hentikan spin (opsional jika reload batal)
     location.reload();
-  }, 500); // Efek tampil sebentar
+  }, 500);
 }
  
   function renderMenuItems() {
@@ -560,14 +573,14 @@ function cekPesananBaru() {
 
 
 // 🔁 Reload otomatis satu kali (tidak mengganggu notifikasi)
-if (!localStorage.getItem("sudahReload")) {
-  localStorage.setItem("sudahReload", "true");
+if (!localStorage.getItem("sudahReloadOtomatis")) {
+  localStorage.setItem("sudahReloadOtomatis", "true");
   document.getElementById("loadingOverlay").style.display = "flex";
   setTimeout(() => {
     location.reload();
-  }, 500); // delay sedikit agar loading terlihat
+  }, 500);
 } else {
-  localStorage.removeItem("sudahReload");
+  localStorage.removeItem("sudahReloadOtomatis");
   document.getElementById("loadingOverlay").style.display = "none";
 }
 
