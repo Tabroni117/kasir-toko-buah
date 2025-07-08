@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penjualan - RUJAK BUAH INDONESIA</title>
+    <title>Dashboard Penjualan - RUJAK BUAH INDONESIA (Sederhana)</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
     <style>
         /* Global Styles */
         body {
             font-family: 'Lato', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #E6EDF2; /* Soft light blue-gray background */
+            background-color: #F0F4F7; /* Soft light background */
             color: rgb(33, 37, 41);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -22,239 +21,164 @@
         }
 
         .dashboard-container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 20px auto;
             padding: 0 20px;
             display: flex;
             flex-direction: column;
-            gap: 25px; /* Space between rows */
+            gap: 20px;
         }
 
         /* Header */
         .dashboard-header {
             background: linear-gradient(to right, #1E643E, #2E8B57); /* Darker Green Gradient */
             color: #FFFFFF;
-            padding: 25px 40px;
+            padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
         .dashboard-header .logo {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
-            font-size: 32px;
-            color: #FFFFFF; /* White for logo */
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            font-size: 28px;
+            color: #FFFFFF;
         }
 
         .dashboard-header .title {
             font-family: 'Lato', sans-serif;
             font-weight: 300;
-            font-size: 22px;
-            margin-left: 20px;
+            font-size: 18px;
+            margin-left: 15px;
             color: #E0E0E0;
         }
 
-        .dashboard-header .period-selector {
-            display: flex;
-            align-items: center;
-        }
-
-        .dashboard-header .period-selector label {
-            margin-right: 15px;
-            font-size: 16px;
-            color: #E0E0E0;
-        }
-
-        .dashboard-header .period-selector select {
-            background-color: rgba(255, 255, 255, 0.15); /* Slightly transparent white */
-            color: #FFFFFF;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.3s ease;
-            appearance: none; /* Remove default dropdown arrow */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 20px;
-        }
-
-        .dashboard-header .period-selector select:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-        }
-
-        .dashboard-header .period-selector select:focus {
-            border-color: #FFFFFF;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Cards Layout */
-        .metrics-grid, .charts-grid {
+        /* Metrics Grid */
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
         }
 
-        .card {
+        .metric-card {
             background-color: #FFFFFF;
-            border-radius: 12px;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            border: 1px solid #E0E6EB; /* Subtle border */
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.2s ease;
+            border: 1px solid #E0E6EB;
         }
 
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
         }
 
-        .card-title {
+        .metric-card .label {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
-            font-size: 18px;
+            font-size: 15px;
             color: #495057;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #DEE2E6; /* Subtle separator */
-            padding-bottom: 12px;
+            margin-bottom: 10px;
         }
 
-        .card-value {
+        .metric-card .value {
             font-family: 'Lato', sans-serif;
             font-weight: 900;
-            font-size: 44px;
-            color: #212529;
-            margin-bottom: 15px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 36px;
+            color: #2E8B57; /* Primary Green */
+            margin-bottom: 5px;
         }
 
-        .card-change {
-            font-size: 15px;
+        .metric-card .change {
+            font-size: 13px;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
-            font-weight: 600;
+            justify-content: center;
+            color: #2E8B57; /* Green for positive */
         }
 
-        .card-change.positive {
-            color: #2E8B57; /* Primary Green */
+        .metric-card .change.negative {
+            color: #C0392B; /* Red for negative */
         }
 
-        .card-change.negative {
-            color: #C0392B; /* A more subtle red for negative */
+        .metric-card .change .arrow {
+            margin-right: 5px;
         }
 
-        .card-change .arrow {
-            margin-right: 8px;
-            font-size: 14px;
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
-        .chart-canvas {
-            width: 100% !important;
-            height: 160px; /* Increased height for better sparkline */
-            opacity: 0.9; /* Slightly transparent for elegance */
-        }
-
-        /* Full-sized Chart Cards */
-        .full-chart-card {
-            grid-column: span 2; /* Take up 2 columns */
-            min-height: 450px; /* Increased height */
+        .chart-card {
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            min-height: 300px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-        }
-        .full-chart-card.span-3 {
-            grid-column: span 3;
-        }
-        .full-chart-card.map-chart {
-            grid-column: 1 / -1; /* Span all columns */
-            min-height: 550px; /* Increased height for map */
-            padding: 20px;
+            border: 1px solid #E0E6EB;
         }
 
+        .chart-card .chart-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: #495057;
+            margin-bottom: 15px;
+            width: 100%;
+            text-align: left;
+            border-bottom: 1px solid #DEE2E6;
+            padding-bottom: 10px;
+        }
+
+        .chart-canvas {
+            width: 100% !important;
+            height: 250px; /* Consistent height for charts */
+        }
 
         /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .dashboard-header .logo {
-                font-size: 28px;
-            }
-            .dashboard-header .title {
-                font-size: 18px;
-            }
-            .card-value {
-                font-size: 38px;
-            }
-            .full-chart-card {
-                min-height: 400px;
-            }
-            .full-chart-card.map-chart {
-                min-height: 450px;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .full-chart-card {
-                grid-column: span 1; /* On smaller screens, make charts single column */
-            }
-            .full-chart-card.span-3 {
-                grid-column: span 1;
-            }
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 20px 25px;
-            }
-            .dashboard-header .period-selector {
-                margin-top: 20px;
-                width: 100%;
-                justify-content: space-between;
-            }
-            .dashboard-header .period-selector select {
-                flex-grow: 1;
-            }
-        }
-
         @media (max-width: 768px) {
             .dashboard-container {
                 padding: 0 15px;
                 gap: 15px;
             }
-            .metrics-grid, .charts-grid {
-                grid-template-columns: 1fr; /* Single column on very small screens */
-                gap: 15px;
-            }
-            .card {
-                padding: 20px;
-            }
-            .card-title {
-                font-size: 16px;
-                margin-bottom: 15px;
-            }
-            .card-value {
-                font-size: 32px;
-            }
-            .full-chart-card, .full-chart-card.map-chart {
-                grid-column: 1fr;
-                min-height: 300px;
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px 20px;
             }
             .dashboard-header .logo {
-                font-size: 26px;
+                font-size: 24px;
             }
             .dashboard-header .title {
-                font-size: 16px;
+                font-size: 15px;
                 margin-left: 0;
                 margin-top: 5px;
+            }
+            .metrics-grid, .charts-section {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .metric-card {
+                padding: 20px;
+            }
+            .metric-card .value {
+                font-size: 30px;
+            }
+            .chart-card {
+                min-height: 250px;
             }
         }
     </style>
@@ -263,113 +187,84 @@
 
     <div class="dashboard-container">
         <header class="dashboard-header">
-            <div>
+            <div style="display: flex; align-items: baseline;">
                 <span class="logo">RUJAK BUAH INDONESIA</span>
-                <span class="title">Analisis Performa Penjualan Global</span>
+                <span class="title">Dashboard Penjualan</span>
             </div>
-            <div class="period-selector">
-                <label for="time-range">Periode Data:</label>
-                <select id="time-range">
-                    <option value="today">Hari Ini</option>
-                    <option value="week">Minggu Ini</option>
-                    <option value="month" selected>Bulan Ini</option>
-                    <option value="quarter">Kuartal Ini</option>
-                    <option value="year">Tahun Ini</option>
-                    <option value="custom">Rentang Kustom</option>
-                </select>
-            </div>
-        </header>
+            </header>
 
         <section class="metrics-grid">
-            <div class="card">
-                <div class="card-title">Total Penjualan (Gross Sales)</div>
-                <div class="card-value" id="grossSalesValue">$0</div>
-                <div class="card-change positive" id="grossSalesChange"><span class="arrow">&#9650;</span> 0%</div>
-                <canvas id="grossSalesSparkline" class="chart-canvas"></canvas>
+            <div class="metric-card">
+                <div class="label">Total Penjualan</div>
+                <div class="value" id="grossSalesValue">Rp 12.345.678</div>
+                <div class="change positive" id="grossSalesChange"><span class="arrow">&#9650;</span> 15.2% dari Bulan Lalu</div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Pendapatan Bersih (Net Revenue)</div>
-                <div class="card-value" id="netRevenueValue">$0</div>
-                <div class="card-change positive" id="netRevenueChange"><span class="arrow">&#9650;</span> 0%</div>
-                <canvas id="netRevenueSparkline" class="chart-canvas"></canvas>
+            <div class="metric-card">
+                <div class="label">Total Transaksi</div>
+                <div class="value" id="totalOrdersValue">56.789</div>
+                <div class="change positive" id="totalOrdersChange"><span class="arrow">&#9650;</span> 8.9% dari Bulan Lalu</div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Margin Keuntungan (Profit Margin)</div>
-                <div class="card-value" id="profitMarginValue">0%</div>
-                <div class="card-change positive" id="profitMarginChange"><span class="arrow">&#9650;</span> 0% Poin</div>
-                <canvas id="profitMarginSparkline" class="chart-canvas"></canvas>
+            <div class="metric-card">
+                <div class="label">Margin Keuntungan</div>
+                <div class="value" id="profitMarginValue">28.5%</div>
+                <div class="change positive" id="profitMarginChange"><span class="arrow">&#9650;</span> 1.1% Poin</div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Jumlah Transaksi (Total Orders)</div>
-                <div class="card-value" id="totalOrdersValue">0</div>
-                <div class="card-change positive" id="totalOrdersChange"><span class="arrow">&#9650;</span> 0%</div>
-                <canvas id="totalOrdersSparkline" class="chart-canvas"></canvas>
+            <div class="metric-card">
+                <div class="label">Nilai Rata-rata Pesanan</div>
+                <div class="value" id="aovValue">Rp 195.500</div>
+                <div class="change negative" id="aovChange"><span class="arrow">&#9660;</span> 2.1% dari Bulan Lalu</div>
             </div>
         </section>
 
-        <section class="charts-grid">
-            <div class="card full-chart-card">
-                <div class="card-title">Tren Penjualan Bulanan</div>
+        <section class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">Tren Penjualan Bulanan</div>
                 <canvas id="monthlySalesTrend" class="chart-canvas"></canvas>
             </div>
 
-            <div class="card full-chart-card">
-                <div class="card-title">Top 5 Produk Terlaris</div>
+            <div class="chart-card">
+                <div class="chart-title">Top 5 Produk Terlaris</div>
                 <canvas id="topProductsChart" class="chart-canvas"></canvas>
             </div>
 
-            <div class="card full-chart-card map-chart">
-                <div class="card-title">Distribusi Penjualan Berdasarkan Wilayah</div>
-                <canvas id="salesByRegionMap" class="chart-canvas"></canvas>
-            </div>
-        </section>
-
-        <section class="charts-grid">
-            <div class="card">
-                <div class="card-title">Nilai Rata-rata Pesanan (AOV)</div>
-                <div class="card-value" id="aovValue">$0</div>
-                <div class="card-change negative" id="aovChange"><span class="arrow">&#9660;</span> 0%</div>
-                <canvas id="aovSparkline" class="chart-canvas"></canvas>
-            </div>
-
-            <div class="card full-chart-card">
-                <div class="card-title">Top 5 Sumber Traffic / Saluran Penjualan</div>
+            <div class="chart-card">
+                <div class="chart-title">Distribusi Penjualan Saluran</div>
                 <canvas id="salesChannelsChart" class="chart-canvas"></canvas>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Tingkat Konversi</div>
-                <div class="card-value" id="conversionRateValue">0%</div>
-                <div class="card-change positive" id="conversionRateChange"><span class="arrow">&#9650;</span> 0% Poin</div>
-                <canvas id="conversionRateSparkline" class="chart-canvas"></canvas>
             </div>
         </section>
 
     </div>
 
     <script>
-        // --- Konfigurasi Firebase Anda ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
+        // --- Data Dummy (Anda bisa ubah angka di sini) ---
+        const dummyData = {
+            // Metrik Utama
+            grossSales: { value: 12345678, change: 15.2, positive: true },
+            totalOrders: { value: 56789, change: 8.9, positive: true },
+            profitMargin: { value: 28.5, change: 1.1, positive: true },
+            aov: { value: 195500, change: 2.1, positive: false }, // false untuk negatif
+
+            // Data untuk Grafik Tren Penjualan Bulanan
+            monthlySales: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul'],
+                data: [10000000, 10500000, 11000000, 11500000, 12000000, 12500000, 13000000]
+            },
+            // Data untuk Grafik Top Produk
+            topProducts: {
+                labels: ['Rujak Jumbo', 'Rujak Sedang', 'Es Buah Spesial', 'Sop Buah', 'Salad Buah'],
+                data: [5000000, 3500000, 2000000, 1000000, 800000]
+            },
+            // Data untuk Grafik Saluran Penjualan (Donut Chart)
+            salesChannels: {
+                labels: ['Toko Fisik', 'GoFood', 'GrabFood', 'WhatsApp', 'Event'],
+                data: [45, 30, 15, 7, 3] // Persentase
+            }
         };
 
-        // Inisialisasi Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // --- Variabel Global untuk Grafik ---
-        let charts = {}; // Objek untuk menyimpan instance Chart.js
-
-        // --- Fungsi Bantuan ---
+        // --- Fungsi Format (Opsional, untuk tampilan lebih rapi) ---
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -379,88 +274,26 @@
             }).format(amount);
         };
 
-        const calculatePercentageChange = (current, previous) => {
-            if (previous === 0) return current > 0 ? 100 : 0; // Handle division by zero
-            return ((current - previous) / previous) * 100;
-        };
-
-        // Fungsi untuk mengupdate nilai angka dan indikator perubahan
-        function updateMetricCard(id, currentValue, previousValue, isPercentage = false, isPointChange = false, prefix = '') {
-            const valueElement = document.getElementById(`${id}Value`);
-            const changeElement = document.getElementById(`${id}Change`);
-
-            valueElement.textContent = isPercentage ? `${currentValue.toFixed(1)}%` : `${prefix}${formatCurrency(currentValue).replace('IDR', '')}`;
-            if (prefix === '$') { // Specific formatting for dollars if needed
-                valueElement.textContent = prefix + currentValue.toLocaleString('en-US');
-            }
-
-
-            const change = calculatePercentageChange(currentValue, previousValue);
-            changeElement.textContent = `${change.toFixed(1)}% ${isPointChange ? 'Poin ' : ''}dari bulan lalu`;
-            changeElement.className = `card-change ${change >= 0 ? 'positive' : 'negative'}`;
-            changeElement.querySelector('.arrow').innerHTML = change >= 0 ? '&#9650;' : '&#9660;'; // Up arrow or down arrow
-        }
-
-        // Fungsi untuk membuat Sparkline
-        function createSparkline(ctx, data, label, color) {
-            if (charts[ctx.canvas.id]) {
-                charts[ctx.canvas.id].destroy(); // Hancurkan chart lama jika ada
-            }
-            charts[ctx.canvas.id] = new Chart(ctx, {
+        // --- Inisialisasi Grafik ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inisialisasi Chart.js untuk Tren Penjualan Bulanan
+            const monthlySalesCtx = document.getElementById('monthlySalesTrend').getContext('2d');
+            new Chart(monthlySalesCtx, {
                 type: 'line',
                 data: {
-                    labels: Array.from({length: data.length}, (_, i) => `Day ${i + 1}`), // Contoh label
-                    datasets: [{
-                        label: label,
-                        data: data,
-                        borderColor: color,
-                        borderWidth: 2,
-                        fill: false,
-                        pointRadius: 0,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false }
-                    },
-                    scales: {
-                        x: { display: false },
-                        y: { display: false }
-                    },
-                    elements: {
-                        line: { borderWidth: 2 }
-                    },
-                    animation: false
-                }
-            });
-        }
-
-        // Fungsi untuk membuat Grafik Garis Utama (Monthly Sales Trend)
-        function createMonthlySalesTrend(ctx, labels, data) {
-            if (charts[ctx.canvas.id]) {
-                charts[ctx.canvas.id].destroy();
-            }
-            charts[ctx.canvas.id] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
+                    labels: dummyData.monthlySales.labels,
                     datasets: [{
                         label: 'Pendapatan',
-                        data: data,
-                        borderColor: '#2E8B57', // Primary Green
-                        backgroundColor: 'rgba(46, 139, 87, 0.2)', /* Light fill below line */
+                        data: dummyData.monthlySales.data,
+                        borderColor: '#2E8B57', /* Primary Green */
+                        backgroundColor: 'rgba(46, 139, 87, 0.2)',
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
+                        pointRadius: 4,
                         pointBackgroundColor: '#2E8B57',
                         pointBorderColor: '#fff',
-                        pointHoverRadius: 7,
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: '#2E8B57',
+                        pointHoverRadius: 6,
                     }]
                 },
                 options: {
@@ -471,12 +304,6 @@
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(33, 37, 41, 0.9)',
-                            titleColor: '#E9ECEF',
-                            bodyColor: '#CED4DA',
-                            borderColor: '#495057',
-                            borderWidth: 1,
-                            caretPadding: 10,
                             callbacks: {
                                 label: function(context) {
                                     return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
@@ -486,24 +313,16 @@
                     },
                     scales: {
                         x: {
-                            grid: {
-                                display: false,
-                                drawBorder: false
-                            },
-                            ticks: {
-                                color: '#6C757D'
-                            }
+                            grid: { display: false },
+                            ticks: { color: '#6C757D' }
                         },
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: '#E9ECEF',
-                                drawBorder: false
-                            },
+                            grid: { color: '#E9ECEF' },
                             ticks: {
-                                callback: function(value, index, values) {
-                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'K';
+                                callback: function(value) {
+                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'Jt';
+                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'Rb';
                                     return 'Rp' + value;
                                 },
                                 color: '#6C757D'
@@ -512,20 +331,16 @@
                     }
                 }
             });
-        }
 
-        // Fungsi untuk membuat Grafik Batang (Top Products)
-        function createTopProductsChart(ctx, labels, data) {
-            if (charts[ctx.canvas.id]) {
-                charts[ctx.canvas.id].destroy();
-            }
-            charts[ctx.canvas.id] = new Chart(ctx, {
+            // Inisialisasi Chart.js untuk Top 5 Produk Terlaris
+            const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+            new Chart(topProductsCtx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: dummyData.topProducts.labels,
                     datasets: [{
                         label: 'Pendapatan',
-                        data: data,
+                        data: dummyData.topProducts.data,
                         backgroundColor: [
                             '#2E8B57', '#4CAF50', '#66BB6A', '#81C784', '#A5D6A7' // Gradasi Hijau
                         ],
@@ -534,7 +349,7 @@
                     }]
                 },
                 options: {
-                    indexAxis: 'y',
+                    indexAxis: 'y', // Horizontal bars
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -553,37 +368,30 @@
                             grid: { display: false },
                             ticks: {
                                 callback: function(value) {
-                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'K';
+                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'Jt';
+                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'Rb';
                                     return 'Rp' + value;
                                 }
                             }
-                        },
-                        y: {
-                            grid: { display: false }
                         }
                     }
                 }
             });
-        }
 
-        // Fungsi untuk membuat Donut Chart (Sales Channels)
-        function createSalesChannelsChart(ctx, labels, data) {
-            if (charts[ctx.canvas.id]) {
-                charts[ctx.canvas.id].destroy();
-            }
-            charts[ctx.canvas.id] = new Chart(ctx, {
+            // Inisialisasi Chart.js untuk Distribusi Saluran Penjualan
+            const salesChannelsCtx = document.getElementById('salesChannelsChart').getContext('2d');
+            new Chart(salesChannelsCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: dummyData.salesChannels.labels,
                     datasets: [{
-                        data: data,
+                        data: dummyData.salesChannels.data,
                         backgroundColor: [
                             '#2E8B57', // Hijau Primer
                             '#4CAF50', // Hijau Aksen
                             '#FFD700', // Emas (untuk kontras/mewah)
-                            '#007ACC', // Biru Tua (profesional)
-                            '#8D6E63'  // Coklat (alami/organik)
+                            '#A5D6A7', // Hijau Lebih Muda
+                            '#66BB6A'  // Hijau Sedang
                         ],
                         borderColor: '#FFFFFF',
                         borderWidth: 2
@@ -594,24 +402,18 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: 'right', // Posisi legend di kanan
                             labels: {
                                 color: '#333',
-                                font: {
-                                    size: 14
-                                }
+                                font: { size: 14 }
                             }
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += context.parsed.toFixed(1) + '%';
-                                    }
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) { label += context.parsed.toFixed(1) + '%'; }
                                     return label;
                                 }
                             }
@@ -619,252 +421,26 @@
                     }
                 }
             });
-        }
-
-        // Fungsi untuk membuat Peta Penjualan (Placeholder - Bar Chart)
-        function createSalesByRegionMap(ctx, labels, data) {
-            if (charts[ctx.canvas.id]) {
-                charts[ctx.canvas.id].destroy();
-            }
-            charts[ctx.canvas.id] = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Penjualan Regional',
-                        data: data,
-                        backgroundColor: [
-                            '#2E8B57', '#4CAF50', '#66BB6A', '#81C784', '#A5D6A7'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.label + ': ' + formatCurrency(context.parsed.y);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    if (value >= 1000000) return 'Rp' + (value / 1000000).toFixed(1) + 'M';
-                                    if (value >= 1000) return 'Rp' + (value / 1000).toFixed(0) + 'K';
-                                    return 'Rp' + value;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-
-        // --- Fungsi untuk Mengambil Data dari Firebase (Contoh) ---
-        async function fetchSalesData(period) {
-            // Ini adalah contoh data dummy. Anda perlu menggantinya dengan logika
-            // untuk menarik data dari koleksi Firestore Anda.
-            // Misalnya, Anda memiliki koleksi 'transactions' dengan dokumen yang berisi 'amount', 'product', 'timestamp', 'region'.
-
-            console.log(`Mengambil data untuk periode: ${period}`);
-            let startDate, endDate;
-            const now = new Date();
-
-            // Logika untuk menentukan rentang tanggal berdasarkan periode
-            if (period === 'today') {
-                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-            } else if (period === 'week') {
-                const day = now.getDay();
-                startDate = new Date(now.setDate(now.getDate() - day + (day === 0 ? -6 : 1))); // Start of current week (Monday)
-                endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + 7);
-            } else if (period === 'month') {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
-            } else if (period === 'quarter') {
-                const currentMonth = now.getMonth();
-                const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
-                startDate = new Date(now.getFullYear(), quarterStartMonth, 1);
-                endDate = new Date(now.getFullYear(), quarterStartMonth + 3, 0);
-            } else if (period === 'year') {
-                startDate = new Date(now.getFullYear(), 0, 1);
-                endDate = new Date(now.getFullYear() + 1, 0, 0);
-            }
-            // else if (period === 'custom') {
-            //     // Implementasi untuk rentang kustom (misalnya, dengan date picker)
-            // }
-
-            // Contoh query Firestore (Anda harus menyesuaikan dengan struktur data Anda)
-            // Asumsi Anda memiliki koleksi 'sales' dengan setiap dokumen adalah penjualan.
-            // Setiap dokumen penjualan memiliki field 'amount', 'timestamp', 'product', 'region', 'channel'.
-            try {
-                const salesSnapshot = await db.collection('sales')
-                                              .where('timestamp', '>=', startDate)
-                                              .where('timestamp', '<=', endDate)
-                                              .orderBy('timestamp', 'asc') // Penting untuk tren
-                                              .get();
-
-                let totalSales = 0;
-                let totalNetRevenue = 0;
-                let totalTransactions = 0;
-                let totalProfit = 0;
-                let productSales = {}; // { 'Product A': amount }
-                let channelSales = {}; // { 'Website': amount }
-                let regionSales = {};  // { 'Jawa': amount }
-                let dailySales = {};   // { '2025-07-01': amount }
-                let transactionAmounts = [];
-
-                salesSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    const amount = data.amount || 0;
-                    const cost = data.cost || 0; // Asumsi ada field cost
-                    const product = data.product || 'Unknown';
-                    const channel = data.channel || 'Unknown';
-                    const region = data.region || 'Unknown';
-                    const timestamp = data.timestamp ? data.timestamp.toDate() : new Date(); // Convert Firestore Timestamp to Date
-
-                    totalSales += amount;
-                    totalNetRevenue += (amount - cost);
-                    totalProfit += (amount - cost); // Simplifikasi profit
-                    totalTransactions++;
-                    transactionAmounts.push(amount);
-
-                    productSales[product] = (productSales[product] || 0) + amount;
-                    channelSales[channel] = (channelSales[channel] || 0) + amount;
-                    regionSales[region] = (regionSales[region] || 0) + amount;
-
-                    // Untuk tren harian/bulanan
-                    const dateKey = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
-                    dailySales[dateKey] = (dailySales[dateKey] || 0) + amount;
-                });
-
-                // --- Calculate AOV ---
-                const aov = totalTransactions > 0 ? totalSales / totalTransactions : 0;
-
-                // --- Calculate Conversion Rate (Placeholder) ---
-                // Anda perlu data kunjungan atau impresi untuk menghitung konversi yang akurat.
-                // Untuk contoh, kita gunakan dummy:
-                const dummyTraffic = 10000;
-                const conversionRate = dummyTraffic > 0 ? (totalTransactions / dummyTraffic) * 100 : 0;
-
-                // --- Calculate Profit Margin ---
-                const profitMargin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
-
-
-                // --- Format data untuk grafik ---
-                const sortedProducts = Object.entries(productSales).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                const topProductsLabels = sortedProducts.map(p => p[0]);
-                const topProductsData = sortedProducts.map(p => p[1]);
-
-                const sortedChannels = Object.entries(channelSales).sort((a, b) => b[1] - a[1]);
-                const totalChannelSales = sortedChannels.reduce((sum, [, amount]) => sum + amount, 0);
-                const channelPercentages = sortedChannels.map(([, amount]) => (amount / totalChannelSales) * 100);
-                const channelLabels = sortedChannels.map(c => c[0]);
-
-                const sortedRegions = Object.entries(regionSales).sort((a, b) => b[1] - a[1]);
-                const regionLabels = sortedRegions.map(r => r[0]);
-                const regionData = sortedRegions.map(r => r[1]);
-
-                // Untuk monthly sales trend (asumsi labels bulan atau hari dari data.timestamp)
-                const sortedDailySalesKeys = Object.keys(dailySales).sort();
-                const monthlyTrendLabels = sortedDailySalesKeys; // Bisa diubah ke bulan jika periode > 1 bulan
-                const monthlyTrendData = sortedDailySalesKeys.map(key => dailySales[key]);
-
-
-                // --- Dummy Data untuk "periode sebelumnya" (Anda harus mengambil ini dari Firebase juga) ---
-                // Ini adalah bagian krusial yang harus diimplementasikan dengan benar.
-                // Anda akan menjalankan query serupa untuk periode waktu yang mendahului 'current' period.
-                const dummyPrevGrossSales = totalSales * 0.85; // Contoh 15% peningkatan
-                const dummyPrevNetRevenue = totalNetRevenue * 0.87;
-                const dummyPrevProfitMargin = profitMargin * 0.98; // Turun sedikit
-                const dummyPrevTotalOrders = totalTransactions * 0.91;
-                const dummyPrevAOV = aov * 1.02; // AOV menurun
-                const dummyPrevConversionRate = conversionRate * 0.95; // Konversi naik
-
-                return {
-                    grossSales: { current: totalSales, previous: dummyPrevGrossSales, sparkline: monthlyTrendData },
-                    netRevenue: { current: totalNetRevenue, previous: dummyPrevNetRevenue, sparkline: monthlyTrendData.map(d => d * 0.9) },
-                    profitMargin: { current: profitMargin, previous: dummyPrevProfitMargin, sparkline: sampleSparklineDataCR }, // pakai dummy CR
-                    totalOrders: { current: totalTransactions, previous: dummyPrevTotalOrders, sparkline: monthlyTrendData.map(d => d / 10) },
-                    aov: { current: aov, previous: dummyPrevAOV, sparkline: sampleSparklineDataAOV },
-                    conversionRate: { current: conversionRate, previous: dummyPrevConversionRate, sparkline: sampleSparklineDataCR },
-                    monthlySalesTrend: { labels: monthlyTrendLabels, data: monthlyTrendData },
-                    topProducts: { labels: topProductsLabels, data: topProductsData },
-                    salesChannels: { labels: channelLabels, data: channelPercentages },
-                    salesByRegion: { labels: regionLabels, data: regionData }
-                };
-
-            } catch (error) {
-                console.error("Error fetching sales data from Firebase:", error);
-                alert("Gagal memuat data penjualan dari Firebase. Memuat data dummy.");
-                // Fallback to dummy data if Firebase fails
-                return {
-                    grossSales: { current: 12345678, previous: 10735372, sparkline: [1000, 1100, 1050, 1200, 1150, 1300, 1250] },
-                    netRevenue: { current: 10987654, previous: 9741280, sparkline: [800, 850, 820, 900, 880, 950, 920] },
-                    profitMargin: { current: 28.5, previous: 27.4, sparkline: [25, 26, 25.5, 27, 26.8, 28, 28.5] },
-                    totalOrders: { current: 56789, previous: 52100, sparkline: [10000, 10500, 10200, 11000, 10800, 11500, 11200] },
-                    aov: { current: 195.50, previous: 199.50, sparkline: [200, 210, 205, 198, 202, 195, 190] },
-                    conversionRate: { current: 3.2, previous: 3.05, sparkline: [2.5, 2.7, 2.6, 2.8, 3.0, 3.1, 3.2] },
-                    monthlySalesTrend: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'], data: [1000000, 1200000, 1150000, 1300000, 1450000, 1400000, 1550000] },
-                    topProducts: { labels: ['Rujak Jumbo', 'Rujak Sedang', 'Es Buah Special', 'Sop Buah', 'Keripik Buah'], data: [500000, 450000, 380000, 320000, 290000] },
-                    salesChannels: { labels: ['Toko Fisik', 'Gofood', 'Grabfood', 'Website', 'Event Bazaar'], data: [40, 25, 20, 10, 5] },
-                    salesByRegion: { labels: ['Jakarta', 'Bandung', 'Surabaya', 'Medan', 'Makassar'], data: [3000000, 1800000, 900000, 500000, 200000] }
-                };
-            }
-        }
-
-
-        // Fungsi untuk mengupdate semua grafik dan metrik
-        async function updateDashboard(period) {
-            const data = await fetchSalesData(period);
-
-            // Update Metric Cards
-            updateMetricCard('grossSales', data.grossSales.current, data.grossSales.previous, false, false, 'Rp');
-            updateMetricCard('netRevenue', data.netRevenue.current, data.netRevenue.previous, false, false, 'Rp');
-            updateMetricCard('profitMargin', data.profitMargin.current, data.profitMargin.previous, true, true);
-            updateMetricCard('totalOrders', data.totalOrders.current, data.totalOrders.previous, false, false, '');
-            updateMetricCard('aov', data.aov.current, data.aov.previous, false, false, 'Rp');
-            updateMetricCard('conversionRate', data.conversionRate.current, data.conversionRate.previous, true, true);
-
-            // Update Sparklines
-            createSparkline(document.getElementById('grossSalesSparkline').getContext('2d'), data.grossSales.sparkline, 'Gross Sales', '#2E8B57');
-            createSparkline(document.getElementById('netRevenueSparkline').getContext('2d'), data.netRevenue.sparkline, 'Net Revenue', '#2E8B57');
-            createSparkline(document.getElementById('profitMarginSparkline').getContext('2d'), data.profitMargin.sparkline, 'Profit Margin', '#2E8B57');
-            createSparkline(document.getElementById('totalOrdersSparkline').getContext('2d'), data.totalOrders.sparkline, 'Total Orders', '#2E8B57');
-            createSparkline(document.getElementById('aovSparkline').getContext('2d'), data.aov.sparkline, 'AOV', '#C0392B'); // AOV maybe negative trend
-            createSparkline(document.getElementById('conversionRateSparkline').getContext('2d'), data.conversionRate.sparkline, 'Conversion Rate', '#2E8B57');
-
-            // Update Main Charts
-            createMonthlySalesTrend(document.getElementById('monthlySalesTrend').getContext('2d'), data.monthlySalesTrend.labels, data.monthlySalesTrend.data);
-            createTopProductsChart(document.getElementById('topProductsChart').getContext('2d'), data.topProducts.labels, data.topProducts.data);
-            createSalesChannelsChart(document.getElementById('salesChannelsChart').getContext('2d'), data.salesChannels.labels, data.salesChannels.data);
-            createSalesByRegionMap(document.getElementById('salesByRegionMap').getContext('2d'), data.salesByRegion.labels, data.salesByRegion.data);
-        }
-
-        // --- Event Listener untuk Periode Data ---
-        const timeRangeSelect = document.getElementById('time-range');
-        timeRangeSelect.addEventListener('change', (event) => {
-            const selectedPeriod = event.target.value;
-            updateDashboard(selectedPeriod);
         });
 
-        // --- Inisialisasi Dashboard Saat Halaman Dimuat ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Muat data untuk periode default (Bulan Ini)
-            updateDashboard(timeRangeSelect.value);
-        });
+        // --- Update Metrik di Awal (Dari Data Dummy) ---
+        // Ini adalah contoh, Anda bisa membuat fungsi untuk mengupdate ini jika datanya dinamis
+        document.getElementById('grossSalesValue').textContent = formatCurrency(dummyData.grossSales.value);
+        document.getElementById('grossSalesChange').className = `change ${dummyData.grossSales.positive ? 'positive' : 'negative'}`;
+        document.getElementById('grossSalesChange').innerHTML = `<span class="arrow">${dummyData.grossSales.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.grossSales.change}% dari Bulan Lalu`;
+
+        document.getElementById('totalOrdersValue').textContent = dummyData.totalOrders.value.toLocaleString('id-ID');
+        document.getElementById('totalOrdersChange').className = `change ${dummyData.totalOrders.positive ? 'positive' : 'negative'}`;
+        document.getElementById('totalOrdersChange').innerHTML = `<span class="arrow">${dummyData.totalOrders.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.totalOrders.change}% dari Bulan Lalu`;
+
+        document.getElementById('profitMarginValue').textContent = `${dummyData.profitMargin.value.toFixed(1)}%`;
+        document.getElementById('profitMarginChange').className = `change ${dummyData.profitMargin.positive ? 'positive' : 'negative'}`;
+        document.getElementById('profitMarginChange').innerHTML = `<span class="arrow">${dummyData.profitMargin.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.profitMargin.change}% Poin`;
+
+        document.getElementById('aovValue').textContent = formatCurrency(dummyData.aov.value);
+        document.getElementById('aovChange').className = `change ${dummyData.aov.positive ? 'positive' : 'negative'}`;
+        document.getElementById('aovChange').innerHTML = `<span class="arrow">${dummyData.aov.positive ? '&#9650;' : '&#9660;'}</span> ${dummyData.aov.change}% dari Bulan Lalu`;
+
     </script>
 </body>
 </html>
