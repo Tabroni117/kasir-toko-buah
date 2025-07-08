@@ -492,15 +492,22 @@ function cekPesananBaru() {
     .get()
     .then(snapshot => {
       if (!snapshot.empty) {
-        const data = snapshot.docs[0].data();
+        const doc = snapshot.docs[0];
+        const data = doc.data();
         const waktuPesanan = data.waktu?.toDate?.() || new Date();
         const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
         const sound = document.getElementById("notifSound");
 
-        if (waktuPesanan > waktuBuka) {
+        const lastOrderId = localStorage.getItem("lastOrderId");
+        const currentOrderId = doc.id;
+
+        if (waktuPesanan > waktuBuka && currentOrderId !== lastOrderId) {
           notifEl.style.display = "inline";
           tombolPesanan.classList.add("berkedip-kuat");
           sound.play();
+
+          // Simpan ID terakhir agar tidak muncul lagi setelah reload
+          localStorage.setItem("lastOrderId", currentOrderId);
         } else {
           notifEl.style.display = "none";
           tombolPesanan.classList.remove("berkedip-kuat");
@@ -509,6 +516,16 @@ function cekPesananBaru() {
         }
       }
     });
+}
+
+
+
+// 🔁 Reload otomatis satu kali (tidak mengganggu notifikasi)
+if (!localStorage.getItem("sudahReload")) {
+  localStorage.setItem("sudahReload", "true");
+  location.reload();
+} else {
+  localStorage.removeItem("sudahReload");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
