@@ -545,7 +545,13 @@ const tombolPesanan = document.getElementById("btnCekPesanan");
 
 
 function hitungStatistikHarian() {
+  const now = new Date();
+  const awalHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const akhirHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
   db.collection("pesanan")
+    .where("waktu", ">=", awalHari)
+    .where("waktu", "<=", akhirHari)
     .get()
     .then(snapshot => {
       let totalTransaksi = 0;
@@ -565,11 +571,9 @@ function hitungStatistikHarian() {
         totalTransaksi.toLocaleString('id-ID');
     })
     .catch(error => {
-      console.error("Gagal mengambil data:", error);
+      console.error("Gagal mengambil data harian:", error);
     });
 }
-
-
 
 
 
