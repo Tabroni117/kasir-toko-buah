@@ -550,16 +550,18 @@ function cekPesananBaru() {
         const lastOrderId = localStorage.getItem("lastOrderId");
         const currentOrderId = doc.id;
 
-        if (waktuPesanan > waktuBuka && currentOrderId !== lastOrderId) {
+        const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
+
+        if (waktuPesanan > waktuBuka && !sudahDibuka) {
           notifEl.style.display = "inline";
           tombolPesanan.classList.add("berkedip-kuat");
-          sound.play();
-          localStorage.setItem("lastOrderId", currentOrderId);
+
+          // hanya play kalau belum diputar
+          if (sound.paused) sound.play();
         } else {
           notifEl.style.display = "none";
           tombolPesanan.classList.remove("berkedip-kuat");
-          sound.pause();
-          sound.currentTime = 0;
+          // JANGAN pause di sini, biarkan sampai user klik tombol
         }
       }
     });
@@ -575,11 +577,16 @@ tombolPesanan.addEventListener("click", () => {
   const sekarang = new Date().toISOString();
   localStorage.setItem("pesananSudahDibuka", sekarang);
 
+  // Simpan bahwa order ini sudah dibuka
+  const lastOrderId = localStorage.getItem("lastOrderId");
+  if (lastOrderId) {
+    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
+  }
+
   const sound = document.getElementById("notifSound");
   sound.pause();
   sound.currentTime = 0;
 });
-
 document.addEventListener("click", () => {
   const sound = document.getElementById("notifSound");
   sound.play().then(() => {
