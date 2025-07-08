@@ -148,9 +148,59 @@
       box-shadow: var(--shadow);
       height: 300px; /* ✅ Tambahan agar chart terlihat */
     }
-  </style>
+
+
+  #loader {
+    position: fixed;
+    z-index: 9999;
+    background: white;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #22C55E; /* Warna hijau premium */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 </head>
-<body>
+<body>    
+  
+  <div id="loader">
+    <div class="spinner"></div>
+  </div>
+  
+  <!-- Header dan konten halaman lainnya -->
+
+  
   <header>
     <div class="brand">
       <i class="fas fa-leaf"></i>
@@ -188,119 +238,124 @@
     <canvas id="laporanChart" width="400" height="200"></canvas>
   </main>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-      measurementId: "G-7CPE2DB2BV"
-    };
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  auth.onAuthStateChanged(user => {
+    const isLoggingOut = localStorage.getItem('isLoggingOut');
+    const storedRole = localStorage.getItem('userRole');
+
+    if (isLoggingOut) {
+      localStorage.removeItem('isLoggingOut');
     }
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    auth.onAuthStateChanged(user => {
-      const isLoggingOut = localStorage.getItem('isLoggingOut');
-      const storedRole = localStorage.getItem('userRole');
-
-      if (isLoggingOut) {
-        localStorage.removeItem('isLoggingOut');
+    if (!user || storedRole !== 'penjual') {
+      if (!isLoggingOut) {
+        alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
       }
-
-      if (!user || storedRole !== 'penjual') {
-        if (!isLoggingOut) {
-          alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
-        }
-        window.location.href = 'index.html';
-        return;
-      }
-
-      ambilLaporan('harian');
-    });
-
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(amount);
+      window.location.href = 'index.html';
+      return;
     }
 
-    function ambilLaporan(jenis) {
-      const sekarang = new Date();
-      let mulai, akhir;
+    ambilLaporan('harian');
+  });
 
-      if (jenis === 'harian') {
-        mulai = new Date(sekarang); mulai.setHours(0, 0, 0, 0);
-        akhir = new Date(sekarang); akhir.setHours(23, 59, 59, 999);
-      } else if (jenis === 'mingguan') {
-        mulai = new Date(sekarang); mulai.setDate(sekarang.getDate() - sekarang.getDay()); mulai.setHours(0, 0, 0, 0);
-        akhir = new Date(sekarang); akhir.setDate(mulai.getDate() + 6); akhir.setHours(23, 59, 59, 999);
-      } else if (jenis === 'bulanan') {
-        mulai = new Date(sekarang.getFullYear(), sekarang.getMonth(), 1);
-        akhir = new Date(sekarang.getFullYear(), sekarang.getMonth() + 1, 0, 23, 59, 59, 999);
-      }
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  }
 
-      db.collection("pesanan")
-        .where("waktu", ">=", mulai)
-        .where("waktu", "<=", akhir)
-        .get()
-        .then(snapshot => {
-          let total = 0;
-          let jumlah = snapshot.size;
+  function ambilLaporan(jenis) {
+    const sekarang = new Date();
+    let mulai, akhir;
 
-          snapshot.forEach(doc => {
-            total += doc.data().total || 0;
-          });
+    if (jenis === 'harian') {
+      mulai = new Date(sekarang); mulai.setHours(0, 0, 0, 0);
+      akhir = new Date(sekarang); akhir.setHours(23, 59, 59, 999);
+    } else if (jenis === 'mingguan') {
+      mulai = new Date(sekarang); mulai.setDate(sekarang.getDate() - sekarang.getDay()); mulai.setHours(0, 0, 0, 0);
+      akhir = new Date(sekarang); akhir.setDate(mulai.getDate() + 6); akhir.setHours(23, 59, 59, 999);
+    } else if (jenis === 'bulanan') {
+      mulai = new Date(sekarang.getFullYear(), sekarang.getMonth(), 1);
+      akhir = new Date(sekarang.getFullYear(), sekarang.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
 
-          document.getElementById("totalTransaksi").textContent = jumlah;
-          document.getElementById("totalPendapatan").textContent = formatCurrency(total);
-          document.getElementById("rataRata").textContent = formatCurrency(jumlah ? total / jumlah : 0);
+    db.collection("pesanan")
+      .where("waktu", ">=", mulai)
+      .where("waktu", "<=", akhir)
+      .get()
+      .then(snapshot => {
+        let total = 0;
+        let jumlah = snapshot.size;
 
-          updateChart(jumlah, total, jumlah ? total / jumlah : 0);
+        snapshot.forEach(doc => {
+          total += doc.data().total || 0;
         });
-    }
 
-    function updateChart(totalTransaksi, totalPendapatan, rataRata) {
-      const ctx = document.getElementById('laporanChart').getContext('2d');
-      if (window.laporanChart) window.laporanChart.destroy();
+        document.getElementById("totalTransaksi").textContent = jumlah;
+        document.getElementById("totalPendapatan").textContent = formatCurrency(total);
+        document.getElementById("rataRata").textContent = formatCurrency(jumlah ? total / jumlah : 0);
 
-      window.laporanChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Total Transaksi', 'Total Pendapatan', 'Rata-rata'],
-          datasets: [{
-            label: 'Jumlah',
-            data: [totalTransaksi, totalPendapatan, rataRata],
-            backgroundColor: [
-              'rgba(34, 197, 94, 0.6)',
-              'rgba(245, 158, 11, 0.6)',
-              'rgba(59, 130, 246, 0.6)'
-            ],
-            borderColor: [
-              'rgba(34, 197, 94, 1)',
-              'rgba(245, 158, 11, 1)',
-              'rgba(59, 130, 246, 1)'
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+        updateChart(jumlah, total, jumlah ? total / jumlah : 0);
       });
-    }
-  </script>
+  }
+
+  function updateChart(totalTransaksi, totalPendapatan, rataRata) {
+    const ctx = document.getElementById('laporanChart').getContext('2d');
+    if (window.laporanChart) window.laporanChart.destroy();
+
+    window.laporanChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Total Transaksi', 'Total Pendapatan', 'Rata-rata'],
+        datasets: [{
+          label: 'Jumlah',
+          data: [totalTransaksi, totalPendapatan, rataRata],
+          backgroundColor: [
+            'rgba(34, 197, 94, 0.6)',
+            'rgba(245, 158, 11, 0.6)',
+            'rgba(59, 130, 246, 0.6)'
+          ],
+          borderColor: [
+            'rgba(34, 197, 94, 1)',
+            'rgba(245, 158, 11, 1)',
+            'rgba(59, 130, 246, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const loader = document.getElementById("loader");
+    if (loader) loader.style.display = "none";
+  });
+</script>
 </body>
 </html>
