@@ -545,13 +545,7 @@ const tombolPesanan = document.getElementById("btnCekPesanan");
 
 
 function hitungStatistikHarian() {
-  const hariIni = new Date();
-  const awalHari = new Date(hariIni.setHours(0, 0, 0, 0));
-  const akhirHari = new Date(hariIni.setHours(23, 59, 59, 999));
-
   db.collection("pesanan")
-    .where("waktu", ">=", awalHari)
-    .where("waktu", "<=", akhirHari)
     .get()
     .then(snapshot => {
       let totalTransaksi = 0;
@@ -559,20 +553,19 @@ function hitungStatistikHarian() {
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (data.totalHarga) {
+        if (data.total) {
           totalTransaksi++;
-          totalPendapatan += parseFloat(data.totalHarga);
+          totalPendapatan += parseFloat(data.total);
         }
       });
 
-      // Masukkan data ke DOM
       document.querySelectorAll(".info-box")[0].querySelector(".value").innerText =
         "Rp " + totalPendapatan.toLocaleString('id-ID');
       document.querySelectorAll(".info-box")[1].querySelector(".value").innerText =
         totalTransaksi.toLocaleString('id-ID');
     })
     .catch(error => {
-      console.error("Gagal mengambil data harian:", error);
+      console.error("Gagal mengambil data:", error);
     });
 }
 
