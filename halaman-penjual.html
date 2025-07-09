@@ -515,12 +515,11 @@ function manualReload() {
   }, 500);
 }
 
-// --- Reload Otomatis Saat Pertama Buka Halaman ---
 const isManual = localStorage.getItem("manualReload") === "true";
-const isAutoDone = localStorage.getItem("sudahReloadOtomatis") === "true";
+let autoReloadCount = parseInt(localStorage.getItem("autoReloadCount") || "0");
 
-if (!isManual && !isAutoDone) {
-  localStorage.setItem("sudahReloadOtomatis", "true");
+if (!isManual && autoReloadCount < 2) {
+  localStorage.setItem("autoReloadCount", (autoReloadCount + 1).toString());
   document.getElementById("loadingOverlay").style.display = "flex";
   setTimeout(() => {
     location.reload();
