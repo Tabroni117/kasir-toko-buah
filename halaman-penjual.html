@@ -411,273 +411,220 @@
     </a>
   </div>
 
-<audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+<!-- HAPUS <audio id="notifSound"> -->
 
+<script>
+  // --- NOTIFIKASI SUARA TANPA DELAY ---
+  let notifAudio = new Audio("https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3");
+  notifAudio.loop = true;
+  let audioDiizinkan = false;
 
-  <script>
-        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
-
-        // Inisialisasi Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
-        const db = firebase.firestore(); // NEW: Inisialisasi Firestore
-        const menuCollection = db.collection('buah');
-
-        // --- Proteksi Halaman: Cek Status Login ---
-        // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
-        // Ini adalah listener utama yang memastikan user diotorisasi
-        auth.onAuthStateChanged(user => {
-           
-            const isLoggingOut = localStorage.getItem('isLoggingOut');
-
-            // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
-            if (isLoggingOut) {
-                localStorage.removeItem('isLoggingOut');
-            }
-
-            const storedRole = localStorage.getItem('userRole');
-
-            if (!user || storedRole !== 'penjual') {
-                // Jika tidak ada user login di Firebase Auth,
-                // ATAU role di localStorage bukan 'pembeli'
-                
-                // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
-                if (!isLoggingOut) { 
-                    alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
-                }
-                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
-            } else {
-                // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
-                renderMenuItems();
-                startAutoScroll();
-                hitungStatistikHarian();
-            }
-        });
-
-
-
-
-
-
-
-
-    
-        // --- Elemen Utama ---
-        const menuList = document.getElementById('menuList');
-
-
-// --- Fungsi untuk Logout ---
-async function logout() {
-  try {
-    const spinner = document.getElementById('logoutSpinner');
-    spinner.style.display = 'flex';
-
-    localStorage.setItem('isLoggingOut', 'true');
-
-    await auth.signOut();
-
-    localStorage.removeItem('isLoggedIn'); 
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userUid');
-
-    setTimeout(() => {
-      spinner.style.display = 'none';
-      window.location.href = 'index.html';
-    }, 2000);
-  } catch (error) {
-    console.error("Error saat logout:", error);
-    alert('Gagal logout. Coba lagi.');
-    localStorage.removeItem('isLoggingOut');
-    document.getElementById('logoutSpinner').style.display = 'none';
-  }
-}
-
-// --- Reload Manual ---
-function manualReload() {
-  localStorage.setItem("manualReload", "true"); // ➕ Tandai ini sebagai manual
-  const icon = document.querySelector('.fa-sync-alt');
-  if (icon) icon.classList.add('spin');
-  document.getElementById("loadingOverlay").style.display = "flex";
-  setTimeout(() => {
-    location.reload();
-  }, 500);
-}
-
-// --- Reload Otomatis Saat Pertama Buka Halaman ---
-const isManual = localStorage.getItem("manualReload") === "true";
-const isAutoDone = localStorage.getItem("sudahReloadOtomatis") === "true";
-
-if (!isManual && !isAutoDone) {
-  localStorage.setItem("sudahReloadOtomatis", "true");
-  document.getElementById("loadingOverlay").style.display = "flex";
-  setTimeout(() => {
-    location.reload();
-  }, 500);
-} else {
-  localStorage.removeItem("manualReload");
-  document.getElementById("loadingOverlay").style.display = "none";
-}
-
-// --- Fungsi Pendukung ---
-function renderMenuItems() {
-  console.log('Menu penjual dimuat...');
-}
-
-function startAutoScroll() {
-  console.log('Auto-scroll aktif...');
-}
-
-// --- Cek Pesanan Baru ---
-const notifEl = document.getElementById("notifLonceng");
-const tombolPesanan = document.getElementById("btnCekPesanan");
-
-
-function hitungStatistikHarian() {
-  const now = new Date();
-  const awalHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  const akhirHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-
-  db.collection("pesanan")
-    .where("waktu", ">=", awalHari)
-    .where("waktu", "<=", akhirHari)
-    .get()
-    .then(snapshot => {
-      let totalTransaksi = 0;
-      let totalPendapatan = 0;
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.total) {
-          totalTransaksi++;
-          totalPendapatan += parseFloat(data.total);
-        }
-      });
-
-      document.querySelectorAll(".info-box")[0].querySelector(".value").innerText =
-        "Rp " + totalPendapatan.toLocaleString('id-ID');
-      document.querySelectorAll(".info-box")[1].querySelector(".value").innerText =
-        totalTransaksi.toLocaleString('id-ID');
-    })
-    .catch(error => {
-      console.error("Gagal mengambil data harian:", error);
-    });
-}
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  // 🎯 Pancing izin autoplay SEBELUM cekPesananBaru dipanggil
   document.addEventListener("click", () => {
-    const sound = document.getElementById("notifSound");
-    sound.play().then(() => {
-      sound.pause();
-      sound.currentTime = 0;
-      console.log("🎧 Autoplay audio sudah diizinkan");
-    }).catch((e) => {
-      console.warn("❌ Autoplay masih diblokir", e);
-    });
+    if (!audioDiizinkan) {
+      notifAudio.play().then(() => {
+        notifAudio.pause();
+        notifAudio.currentTime = 0;
+        audioDiizinkan = true;
+        console.log("🔊 Audio notifikasi siap digunakan.");
+      }).catch(err => {
+        console.warn("❌ Autoplay masih diblokir:", err);
+      });
+    }
   }, { once: true });
 
-  // Baru mulai cek pesanan
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 5000);
-});
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-function cekPesananBaru() {
-  db.collection("pesanan")
-    .orderBy("waktu", "desc")
-    .limit(1)
-    .get()
-    .then(snapshot => {
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        const data = doc.data();
-        const waktuPesanan = data.waktu?.toDate?.() || new Date();
-        const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-        const sound = document.getElementById("notifSound");
-
-        const lastOrderId = localStorage.getItem("lastOrderId");
-        const currentOrderId = doc.id;
-
-        const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
-
-        if (waktuPesanan > waktuBuka && !sudahDibuka) {
-          notifEl.style.display = "inline";
-          tombolPesanan.classList.add("berkedip-kuat");
-
-          // hanya play kalau belum diputar
-          if (sound.paused) sound.play();
-        } else {
-          notifEl.style.display = "none";
-          tombolPesanan.classList.remove("berkedip-kuat");
-          // JANGAN pause di sini, biarkan sampai user klik tombol
-        }
-      }
-    });
-}
-
-
-
-tombolPesanan.addEventListener("click", async () => {
-  const sekarang = new Date().toISOString();
-  localStorage.setItem("pesananSudahDibuka", sekarang);
-
-  const sound = document.getElementById("notifSound");
-  sound.pause();
-  sound.currentTime = 0;
-
-  const lastOrderId = localStorage.getItem("lastOrderId");
-  if (lastOrderId) {
-    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
-
-    const user = firebase.auth().currentUser;
-    if (user) {
-      const docRef = db.collection("pesanan").doc(lastOrderId);
-      const docSnap = await docRef.get();
-      const data = docSnap.data();
-
-      if (data && !data.dibukaOleh) {
-        await docRef.update({
-          dibukaOleh: user.uid,
-          dibukaOlehNama: user.email,
-          dibukaAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log("✅ Ditandai sudah dibuka oleh:", user.email);
-      } else {
-        console.log("ℹ️ Sudah dibuka oleh:", data.dibukaOlehNama || 'pegawai lain');
-      }
+  function bunyikanNotifikasi() {
+    if (audioDiizinkan) {
+      notifAudio.play().catch(err => {
+        console.warn("Gagal memutar audio:", err);
+      });
     }
   }
-});
 
+  function matikanNotifikasi() {
+    notifAudio.pause();
+    notifAudio.currentTime = 0;
+  }
 
+  // --- FIREBASE SETUP ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.firebasestorage.app",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
 
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const menuCollection = db.collection('buah');
 
+  auth.onAuthStateChanged(user => {
+    const isLoggingOut = localStorage.getItem('isLoggingOut');
+    if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+    const storedRole = localStorage.getItem('userRole');
+    if (!user || storedRole !== 'penjual') {
+      if (!isLoggingOut) {
+        alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+      }
+      window.location.href = 'index.html';
+    } else {
+      renderMenuItems();
+      startAutoScroll();
+      hitungStatistikHarian();
+    }
+  });
 
+  const menuList = document.getElementById('menuList');
+  const notifEl = document.getElementById("notifLonceng");
+  const tombolPesanan = document.getElementById("btnCekPesanan");
 
+  async function logout() {
+    try {
+      const spinner = document.getElementById('logoutSpinner');
+      spinner.style.display = 'flex';
+      localStorage.setItem('isLoggingOut', 'true');
+      await auth.signOut();
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userUid');
+      setTimeout(() => {
+        spinner.style.display = 'none';
+        window.location.href = 'index.html';
+      }, 2000);
+    } catch (error) {
+      console.error("Error saat logout:", error);
+      alert('Gagal logout. Coba lagi.');
+      localStorage.removeItem('isLoggingOut');
+      document.getElementById('logoutSpinner').style.display = 'none';
+    }
+  }
+
+  function manualReload() {
+    localStorage.setItem("manualReload", "true");
+    const icon = document.querySelector('.fa-sync-alt');
+    if (icon) icon.classList.add('spin');
+    document.getElementById("loadingOverlay").style.display = "flex";
+    setTimeout(() => {
+      location.reload();
+    }, 500);
+  }
+
+  const isManual = localStorage.getItem("manualReload") === "true";
+  const isAutoDone = localStorage.getItem("sudahReloadOtomatis") === "true";
+
+  if (!isManual && !isAutoDone) {
+    localStorage.setItem("sudahReloadOtomatis", "true");
+    document.getElementById("loadingOverlay").style.display = "flex";
+    setTimeout(() => location.reload(), 500);
+  } else {
+    localStorage.removeItem("manualReload");
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+
+  function renderMenuItems() {
+    console.log('Menu penjual dimuat...');
+  }
+
+  function startAutoScroll() {
+    console.log('Auto-scroll aktif...');
+  }
+
+  function hitungStatistikHarian() {
+    const now = new Date();
+    const awalHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const akhirHari = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+    db.collection("pesanan")
+      .where("waktu", ">=", awalHari)
+      .where("waktu", "<=", akhirHari)
+      .get()
+      .then(snapshot => {
+        let totalTransaksi = 0;
+        let totalPendapatan = 0;
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.total) {
+            totalTransaksi++;
+            totalPendapatan += parseFloat(data.total);
+          }
+        });
+
+        document.querySelectorAll(".info-box")[0].querySelector(".value").innerText =
+          "Rp " + totalPendapatan.toLocaleString('id-ID');
+        document.querySelectorAll(".info-box")[1].querySelector(".value").innerText =
+          totalTransaksi.toLocaleString('id-ID');
+      })
+      .catch(error => {
+        console.error("Gagal mengambil data harian:", error);
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    cekPesananBaru();
+    setInterval(cekPesananBaru, 5000);
+  });
+
+  function cekPesananBaru() {
+    db.collection("pesanan")
+      .orderBy("waktu", "desc")
+      .limit(1)
+      .get()
+      .then(snapshot => {
+        if (!snapshot.empty) {
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          const waktuPesanan = data.waktu?.toDate?.() || new Date();
+          const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
+          const currentOrderId = doc.id;
+          const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
+
+          localStorage.setItem("lastOrderId", currentOrderId);
+
+          if (waktuPesanan > waktuBuka && !sudahDibuka) {
+            notifEl.style.display = "inline";
+            tombolPesanan.classList.add("berkedip-kuat");
+            bunyikanNotifikasi();
+          } else {
+            notifEl.style.display = "none";
+            tombolPesanan.classList.remove("berkedip-kuat");
+          }
+        }
+      });
+  }
+
+  tombolPesanan.addEventListener("click", async () => {
+    const sekarang = new Date().toISOString();
+    localStorage.setItem("pesananSudahDibuka", sekarang);
+    matikanNotifikasi();
+
+    const lastOrderId = localStorage.getItem("lastOrderId");
+    if (lastOrderId) {
+      localStorage.setItem("sudahBuka_" + lastOrderId, "true");
+      const user = firebase.auth().currentUser;
+
+      if (user) {
+        const docRef = db.collection("pesanan").doc(lastOrderId);
+        const docSnap = await docRef.get();
+        const data = docSnap.data();
+
+        if (data && !data.dibukaOleh) {
+          await docRef.update({
+            dibukaOleh: user.uid,
+            dibukaOlehNama: user.email,
+            dibukaAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          console.log("✅ Ditandai sudah dibuka oleh:", user.email);
+        } else {
+          console.log("ℹ️ Sudah dibuka oleh:", data.dibukaOlehNama || 'pegawai lain');
+        }
+      }
+    }
+  });
 </script>
 </body>
 </html>
