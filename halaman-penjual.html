@@ -608,23 +608,90 @@ function cekPesananBaru() {
 
         const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
 
-        if (waktuPesanan > waktuBuka && !sudahDibuka) {
-          notifEl.style.display = "inline";
-          tombolPesanan.classList.add("berkedip-kuat");
-
-          // hanya play kalau belum diputar
-          if (sound.paused) sound.play();
-        } else {
-          notifEl.style.display = "none";
-          tombolPesanan.classList.remove("berkedip-kuat");
-          // JANGAN pause di sini, biarkan sampai user klik tombol
-        }
+       if (waktuPesanan > waktuBuka && !sudahDibuka) {
+  localStorage.setItem("perluReloadSuara", "true");
+  localStorage.setItem("lastOrderId", currentOrderId);
+  setTimeout(() => location.reload(), 300);
+}
       }
     });
 }
 
-// --- Event Listener ---
 document.addEventListener("DOMContentLoaded", () => {
+  const perluSuara = localStorage.getItem("perluReloadSuara");
+  const sound = document.getElementById("notifSound");
+
+  if (perluSuara === "true") {
+    sound.play().catch(err => {
+      console.warn("❗ Gagal memutar suara setelah reload:", err);
+    });
+    localStorage.removeItem("perluReloadSuara");
+  }
+
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 5000);
+});
+
+tombolPesanan.addEventListener("click", async () => {
+  const sekarang = new Date().toISOString();
+  localStorage.setItem("pesananSudahDibuka", sekarang);
+
+  const sound = document.getElementById("notifSound");
+  sound.pause();
+  sound.currentTime = 0;
+
+  const lastOrderId = localStorage.getItem("lastOrderId");
+  if (lastOrderId) {
+    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
+
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const docRef = db.collection("pesanan").doc(lastOrderId);
+      const docSnap = await docRef.get();
+      const data = docSnap.data();
+
+      if (data && !data.dibukaOleh) {
+        await docRef.update({
+          dibukaOleh: user.uid,
+          dibukaOlehNama: user.email,
+          dibukaAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("✅ Ditandai sudah dibuka oleh:", user.email);
+      } else {
+        console.log("ℹ️ Sudah dibuka oleh:", data.dibukaOlehNama || 'pegawai lain');
+      }
+    }
+  }
+});
+
+
+
+
+
+    
+document.addEventListener("click", () => {
+  const sound = document.getElementById("notifSound");
+  sound.play().then(() => {
+    sound.pause();
+    sound.currentTime = 0;
+  }).catch(() => {});
+}, { once: true });
+</script>
+</body>
+</html>
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const perluSuara = localStorage.getItem("perluReloadSuara");
+  const sound = document.getElementById("notifSound");
+
+  if (perluSuara === "true") {
+    sound.play().catch(err => {
+      console.warn("❗ Gagal memutar suara setelah reload:", err);
+    });
+    localStorage.removeItem("perluReloadSuara");
+  }
+
   cekPesananBaru();
   setInterval(cekPesananBaru, 5000);
 });
