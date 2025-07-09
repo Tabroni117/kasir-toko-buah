@@ -594,43 +594,37 @@ function hitungStatistikHarian() {
 
     
 
-function cekPesananBaru() {
+function listenPesananBaru() {
   db.collection("pesanan")
     .orderBy("waktu", "desc")
     .limit(1)
-    .get()
-    .then(snapshot => {
+    .onSnapshot(snapshot => {
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
         const data = doc.data();
         const waktuPesanan = data.waktu?.toDate?.() || new Date();
         const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
-        const sound = document.getElementById("notifSound");
-
-        const lastOrderId = localStorage.getItem("lastOrderId");
         const currentOrderId = doc.id;
-
         const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
 
+        // ✅ Cek apakah pesanan baru dan belum dibuka
         if (waktuPesanan > waktuBuka && !sudahDibuka) {
-          notifEl.style.display = "inline";
-          tombolPesanan.classList.add("berkedip-kuat");
-
-          // hanya play kalau belum diputar
-          if (sound.paused) sound.play();
-        } else {
-          notifEl.style.display = "none";
-          tombolPesanan.classList.remove("berkedip-kuat");
-          // JANGAN pause di sini, biarkan sampai user klik tombol
+          // 🔄 Lakukan reload hanya SATU KALI untuk pesanan ini
+          const sudahReload = localStorage.getItem("sudahReloadUntuk_" + currentOrderId);
+          if (!sudahReload) {
+            localStorage.setItem("sudahReloadUntuk_" + currentOrderId, "true");
+            document.getElementById("loadingOverlay").style.display = "flex";
+            setTimeout(() => location.reload(), 500);
+            return;
+          }
         }
       }
     });
 }
 
-// --- Event Listener ---
+// Jalankan saat halaman selesai dimuat
 document.addEventListener("DOMContentLoaded", () => {
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 5000);
+  listenPesananBaru(); // ✅ ganti pemanggilan fungsi lama
 });
 
 tombolPesanan.addEventListener("click", async () => {
