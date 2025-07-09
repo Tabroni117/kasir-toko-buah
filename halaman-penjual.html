@@ -606,25 +606,38 @@ function listenPesananBaru() {
         const waktuBuka = new Date(localStorage.getItem("pesananSudahDibuka") || 0);
         const currentOrderId = doc.id;
         const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
+        const sudahReload = localStorage.getItem("sudahReloadUntuk_" + currentOrderId);
 
-        // ✅ Cek apakah pesanan baru dan belum dibuka
-        if (waktuPesanan > waktuBuka && !sudahDibuka) {
-          // 🔄 Lakukan reload hanya SATU KALI untuk pesanan ini
-          const sudahReload = localStorage.getItem("sudahReloadUntuk_" + currentOrderId);
-          if (!sudahReload) {
-            localStorage.setItem("sudahReloadUntuk_" + currentOrderId, "true");
-            document.getElementById("loadingOverlay").style.display = "flex";
-            setTimeout(() => location.reload(), 500);
-            return;
-          }
+        if (waktuPesanan > waktuBuka && !sudahDibuka && !sudahReload) {
+          // ⏳ Tandai bahwa reload karena pesanan ini
+          localStorage.setItem("sudahReloadUntuk_" + currentOrderId, "true");
+          localStorage.setItem("pesananBaruPendingSound", currentOrderId); // 🔊
+          document.getElementById("loadingOverlay").style.display = "flex";
+          setTimeout(() => location.reload(), 500);
         }
       }
     });
 }
-
-// Jalankan saat halaman selesai dimuat
 document.addEventListener("DOMContentLoaded", () => {
-  listenPesananBaru(); // ✅ ganti pemanggilan fungsi lama
+  listenPesananBaru();
+
+  // 🔊 Cek apakah reload karena ada pesanan baru
+  const pendingOrderId = localStorage.getItem("pesananBaruPendingSound");
+  if (pendingOrderId) {
+    const notifEl = document.getElementById("notifLonceng");
+    const tombolPesanan = document.getElementById("btnCekPesanan");
+    const sound = document.getElementById("notifSound");
+
+    notifEl.style.display = "inline";
+    tombolPesanan.classList.add("berkedip-kuat");
+
+    setTimeout(() => {
+      sound.play();
+    }, 800); // beri jeda agar UI sudah siap
+
+    // Bersihkan setelah diputar
+    localStorage.removeItem("pesananBaruPendingSound");
+  }
 });
 
 tombolPesanan.addEventListener("click", async () => {
