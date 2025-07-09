@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -27,8 +28,9 @@
     body {
       background: var(--light-bg);
       color: var(--dark);
-      padding-top: 80px;
+      padding-top: 80px; /* Space for fixed header */
       padding-bottom: 70px;
+      touch-action: manipulation; /* Mencegah zoom */
     }
     header {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -37,7 +39,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: fixed;
+      position: fixed; /* Make header fixed */
       top: 0;
       left: 0;
       right: 0;
@@ -55,6 +57,28 @@
     header .brand-text h1 {
       font-size: 1.2rem;
       font-weight: bold;
+    }
+    .logout-button {
+      background: rgba(255, 255, 255, 0.15); /* semi transparan */
+      color: white;
+      border: 1px solid white; /* garis putih */
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-left: 10px;
+      margin-right: 10px; /* kasih jarak aman dari kanan */
+      backdrop-filter: blur(3px); /* efek halus */
+      display: flex;
+      align-items: center;
+      transition: background 0.3s; /* Transisi untuk efek hover */
+    }
+    .logout-button:hover {
+      background: rgba(255, 255, 255, 0.25); /* Ubah latar belakang saat hover */
+    }
+    .logout-button i {
+      font-size: 14px;
+      margin-right: 5px; /* Jarak antara ikon dan teks */
     }
     .app-container {
       background: white;
@@ -94,35 +118,39 @@
       font-size: 1.2rem;
       font-weight: bold;
     }
-    nav.app-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--white);
-      display: flex;
-      justify-content: space-around;
-      padding: 0.5rem 0;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
+    .button-group {
+      margin: 1rem 0;
     }
-    .nav-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      font-size: 0.75rem;
-      color: var(--primary);
-      text-decoration: none;
-    }
-    .nav-btn i {
-      font-size: 1.2rem;
-      margin-bottom: 0.2rem;
-    }
-    .nav-btn.active {
-      color: white;
+    .button-group button {
       background: var(--primary);
-      padding: 0.4rem 1rem;
+      color: white;
+      border: none;
       border-radius: var(--radius);
+      padding: 0.5rem 1rem;
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+    .button-group button:hover {
+      background: var(--primary-dark);
+    }
+    .refresh-button {
+      background: rgba(74, 222, 128, 0.6); /* Semi transparan hijau */
+      color: white; /* Teks berwarna putih */
+      border: 1px solid white; /* Border putih */
+      border-radius: var(--radius); /* Sudut membulat */
+      padding: 8px 16px; /* Padding */
+      cursor: pointer; /* Kursor pointer */
+      font-size: 14px; /* Ukuran font */
+      margin-top: 10px; /* Margin di atas */
+      transition: background 0.3s; /* Transisi untuk efek hover */
+    }
+    .refresh-button:hover {
+      background: rgba(74, 222, 128, 0.8); /* Warna lebih gelap saat hover */
+    }
+    canvas {
+      margin-top: 1rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
   </style>
 </head>
@@ -131,18 +159,22 @@
     <div class="brand">
       <i class="fas fa-leaf"></i>
       <div class="brand-text">
-        <h1>Laporan</h1>
+        <h1>Rujak Buah Indonesia</h1>
       </div>
     </div>
-    <button onclick="window.location.href='navigator-input.html'" style="background: none; border: none; color: white;">
-      <i class="fas fa-arrow-left"></i> Kembali
+    <button class="logout-button" onclick="window.location.href='navigator-input.html'">
+      <i class="fas fa-sign-out-alt"></i> Kembali
     </button>
   </header>
 
-  
-
   <main class="app-container">
-    <h2 class="section-title"><i class="fas fa-chart-bar"></i> Laporan Hari Ini</h2>
+    <h2 class="section-title"><i class="fas fa-chart-bar"></i> Laporan</h2>
+    <div class="button-group">
+      <button onclick="ambilLaporan('harian')">Harian</button>
+      <button onclick="ambilLaporan('mingguan')">Mingguan</button>
+      <button onclick="ambilLaporan('bulanan')">Bulanan</button>
+    </div>
+    <button class="refresh-button" onclick="ambilLaporan('harian')">Refresh</button> <!-- Tombol Refresh -->
     <div class="stats">
       <div class="card">
         <h3>Total Transaksi</h3>
@@ -157,21 +189,8 @@
         <p id="rataRata">Rp 0</p>
       </div>
     </div>
+    <canvas id="laporanChart" width="400" height="200"></canvas>
   </main>
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   <script>
     const firebaseConfig = {
@@ -190,12 +209,30 @@
       }).format(amount);
     }
 
-    function ambilLaporan() {
-      const hariIni = new Date();
-      hariIni.setHours(0, 0, 0, 0);
+    function ambilLaporan(jenis) {
+      const sekarang = new Date();
+      let mulai, akhir;
+
+      if (jenis === 'harian') {
+        mulai = new Date(sekarang);
+        mulai.setHours(0, 0, 0, 0);
+        akhir = new Date(sekarang);
+        akhir.setHours(23, 59, 59, 999);
+      } else if (jenis === 'mingguan') {
+        mulai = new Date(sekarang);
+        mulai.setDate(sekarang.getDate() - sekarang.getDay());
+        mulai.setHours(0, 0, 0, 0);
+        akhir = new Date(sekarang);
+        akhir.setDate(sekarang.getDate() + (6 - sekarang.getDay()));
+        akhir.setHours(23, 59, 59, 999);
+      } else if (jenis === 'bulanan') {
+        mulai = new Date(sekarang.getFullYear(), sekarang.getMonth(), 1);
+        akhir = new Date(sekarang.getFullYear(), sekarang.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
 
       db.collection("pesanan")
-        .where("waktu", ">=", hariIni)
+        .where("waktu", ">=", mulai)
+        .where("waktu", "<=", akhir)
         .get()
         .then(snapshot => {
           let total = 0;
@@ -208,10 +245,50 @@
           document.getElementById("totalTransaksi").textContent = jumlah;
           document.getElementById("totalPendapatan").textContent = formatCurrency(total);
           document.getElementById("rataRata").textContent = formatCurrency(jumlah ? total / jumlah : 0);
+
+          // Update chart
+          updateChart(jumlah, total, jumlah ? total / jumlah : 0);
         });
     }
 
-    document.addEventListener("DOMContentLoaded", ambilLaporan);
+    function updateChart(totalTransaksi, totalPendapatan, rataRata) {
+      const ctx = document.getElementById('laporanChart').getContext('2d');
+
+      // Clear previous chart
+      if (window.laporanChart) window.laporanChart.destroy();
+
+      // Create new chart
+      window.laporanChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Total Transaksi', 'Total Pendapatan', 'Rata-rata'],
+          datasets: [{
+            label: 'Jumlah',
+            data: [totalTransaksi, totalPendapatan, rataRata],
+            backgroundColor: [
+              'rgba(74, 222, 128, 0.6)',
+              'rgba(74, 222, 128, 0.6)',
+              'rgba(74, 222, 128, 0.6)'
+            ],
+            borderColor: [
+              'rgba(74, 222, 128, 1)',
+              'rgba(74, 222, 128, 1)',
+              'rgba(74, 222, 128, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => ambilLaporan('harian'));
   </script>
 </body>
 </html>
