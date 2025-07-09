@@ -608,12 +608,14 @@ function cekPesananBaru() {
 
         const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
 
-       if (waktuPesanan > waktuBuka && !sudahDibuka) {
-  localStorage.setItem("perluReloadSuara", "true");
-  localStorage.setItem("lastOrderId", currentOrderId);
-  setTimeout(() => location.reload(), 300);
+      if (waktuPesanan > waktuBuka && !sudahDibuka) {
+  if (!localStorage.getItem("sudahReloadUntuk_" + currentOrderId)) {
+    localStorage.setItem("perluReloadSuara", "true");
+    localStorage.setItem("lastOrderId", currentOrderId);
+    localStorage.setItem("sudahReloadUntuk_" + currentOrderId, "true");
+    setTimeout(() => location.reload(), 300);
+  }
 }
-      }
     });
 }
 
@@ -680,66 +682,3 @@ document.addEventListener("click", () => {
 </body>
 </html>
 
-
-document.addEventListener("DOMContentLoaded", () => {
-  const perluSuara = localStorage.getItem("perluReloadSuara");
-  const sound = document.getElementById("notifSound");
-
-  if (perluSuara === "true") {
-    sound.play().catch(err => {
-      console.warn("❗ Gagal memutar suara setelah reload:", err);
-    });
-    localStorage.removeItem("perluReloadSuara");
-  }
-
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 5000);
-});
-
-tombolPesanan.addEventListener("click", async () => {
-  const sekarang = new Date().toISOString();
-  localStorage.setItem("pesananSudahDibuka", sekarang);
-
-  const sound = document.getElementById("notifSound");
-  sound.pause();
-  sound.currentTime = 0;
-
-  const lastOrderId = localStorage.getItem("lastOrderId");
-  if (lastOrderId) {
-    localStorage.setItem("sudahBuka_" + lastOrderId, "true");
-
-    const user = firebase.auth().currentUser;
-    if (user) {
-      const docRef = db.collection("pesanan").doc(lastOrderId);
-      const docSnap = await docRef.get();
-      const data = docSnap.data();
-
-      if (data && !data.dibukaOleh) {
-        await docRef.update({
-          dibukaOleh: user.uid,
-          dibukaOlehNama: user.email,
-          dibukaAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log("✅ Ditandai sudah dibuka oleh:", user.email);
-      } else {
-        console.log("ℹ️ Sudah dibuka oleh:", data.dibukaOlehNama || 'pegawai lain');
-      }
-    }
-  }
-});
-
-
-
-
-
-    
-document.addEventListener("click", () => {
-  const sound = document.getElementById("notifSound");
-  sound.play().then(() => {
-    sound.pause();
-    sound.currentTime = 0;
-  }).catch(() => {});
-}, { once: true });
-</script>
-</body>
-</html>
