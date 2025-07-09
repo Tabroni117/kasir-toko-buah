@@ -454,7 +454,7 @@
                 
                 // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
                 if (!isLoggingOut) { 
-                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+                    alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
                 }
                 window.location.href = 'index.html'; // Arahkan kembali ke halaman login
             } else {
@@ -576,7 +576,23 @@ function hitungStatistikHarian() {
 }
 
 
+document.addEventListener("DOMContentLoaded", () => {
+  // 🎯 Pancing izin autoplay SEBELUM cekPesananBaru dipanggil
+  document.addEventListener("click", () => {
+    const sound = document.getElementById("notifSound");
+    sound.play().then(() => {
+      sound.pause();
+      sound.currentTime = 0;
+      console.log("🎧 Autoplay audio sudah diizinkan");
+    }).catch((e) => {
+      console.warn("❌ Autoplay masih diblokir", e);
+    });
+  }, { once: true });
 
+  // Baru mulai cek pesanan
+  cekPesananBaru();
+  setInterval(cekPesananBaru, 5000);
+});
 
     
 
@@ -623,11 +639,7 @@ function cekPesananBaru() {
     });
 }
 
-// --- Event Listener ---
-document.addEventListener("DOMContentLoaded", () => {
-  cekPesananBaru();
-  setInterval(cekPesananBaru, 5000);
-});
+
 
 tombolPesanan.addEventListener("click", async () => {
   const sekarang = new Date().toISOString();
@@ -665,14 +677,7 @@ tombolPesanan.addEventListener("click", async () => {
 
 
 
-    
-document.addEventListener("click", () => {
-  const sound = document.getElementById("notifSound");
-  sound.play().then(() => {
-    sound.pause();
-    sound.currentTime = 0;
-  }).catch(() => {});
-}, { once: true });
+
 </script>
 </body>
 </html>
