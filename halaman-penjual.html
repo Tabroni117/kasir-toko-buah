@@ -353,7 +353,7 @@
         <div class="icon">&#9776;</div>
         <div class="label">Menu</div>
       </a>
-      <a href="dashboard_rujak.html" class="menu-item nav-link">
+      <a href="keuangan.html" class="menu-item nav-link">
         <div class="icon">&#x1F4B0;</div>
         <div class="label">Keuangan</div>
       </a>
@@ -527,12 +527,7 @@ if (!isManual && !isAutoDone) {
   }, 500);
 } else {
   localStorage.removeItem("manualReload");
-
-  // ✅ FIX untuk kasus reload karena notifikasi
-  const suaraDariReload = localStorage.getItem("perluReloadSuara");
-  if (suaraDariReload !== "true") {
-    document.getElementById("loadingOverlay").style.display = "none";
-  }
+  document.getElementById("loadingOverlay").style.display = "none";
 }
 
 // --- Fungsi Pendukung ---
@@ -613,34 +608,27 @@ function cekPesananBaru() {
 
         const sudahDibuka = localStorage.getItem("sudahBuka_" + currentOrderId);
 
-      if (waktuPesanan > waktuBuka && !sudahDibuka) {
-  if (!localStorage.getItem("sudahReloadUntuk_" + currentOrderId)) {
-    localStorage.setItem("perluReloadSuara", "true");
-    localStorage.setItem("lastOrderId", currentOrderId);
-    localStorage.setItem("sudahReloadUntuk_" + currentOrderId, "true");
-    setTimeout(() => location.reload(), 300);
-  }
-}
+        if (waktuPesanan > waktuBuka && !sudahDibuka) {
+          notifEl.style.display = "inline";
+          tombolPesanan.classList.add("berkedip-kuat");
+
+          // hanya play kalau belum diputar
+          if (sound.paused) sound.play();
+        } else {
+          notifEl.style.display = "none";
+          tombolPesanan.classList.remove("berkedip-kuat");
+          // JANGAN pause di sini, biarkan sampai user klik tombol
+        }
+      }
     });
 }
 
+// --- Event Listener ---
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loadingOverlay").style.display = "none";
-
-  const perluSuara = localStorage.getItem("perluReloadSuara");
-  const sound = document.getElementById("notifSound");
-
-  if (perluSuara === "true") {
-    sound.play().catch(err => {
-      console.warn("❗ Gagal memutar suara setelah reload:", err);
-    });
-    localStorage.removeItem("perluReloadSuara");
-  }
-
   cekPesananBaru();
   setInterval(cekPesananBaru, 5000);
 });
-    
+
 tombolPesanan.addEventListener("click", async () => {
   const sekarang = new Date().toISOString();
   localStorage.setItem("pesananSudahDibuka", sekarang);
@@ -652,9 +640,6 @@ tombolPesanan.addEventListener("click", async () => {
   const lastOrderId = localStorage.getItem("lastOrderId");
   if (lastOrderId) {
     localStorage.setItem("sudahBuka_" + lastOrderId, "true");
-    localStorage.removeItem("sudahReloadUntuk_" + lastOrderId);
-    
-  
 
     const user = firebase.auth().currentUser;
     if (user) {
@@ -691,4 +676,3 @@ document.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
