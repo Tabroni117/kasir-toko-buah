@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Uji Coba QRIS Dinamis Tripay</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #qrisBox { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>🧪 Uji Coba QRIS Dinamis Tripay</h2>
+  <p>Total Bayar: <strong>Rp18.000</strong></p>
+  <button onclick="buatQRIS()">🔁 Buat QRIS Sekarang</button>
+
+  <div id="qrisBox"></div>
+
+  <script>
+    async function buatQRIS() {
+      const apiKey = "DEV-WOUvJMLGzGNpjo9ycYMLr1d2pIXBZ1CbpiI4VNh2";
+      const merchantCode = "dfcy2-VmRnN-EHfPg-QlQTo-S1jdr";
+      const privateKey = ""; // untuk server, dikosongkan di client
+
+      const payload = {
+        method: "QRIS",
+        merchant_ref: "INV-" + Date.now(),
+        amount: 18000,
+        customer_name: "Pembeli Uji Coba",
+        order_items: [
+          {
+            sku: "RUJAK-01",
+            name: "Rujak Uji Coba",
+            price: 18000,
+            quantity: 1
+          }
+        ],
+        callback_url: "https://yourdomain.com/callback", // bisa dummy dulu
+        return_url: "https://yourdomain.com/thankyou"
+      };
+
+      document.getElementById("qrisBox").innerHTML = "⏳ Membuat QRIS...";
+
+      try {
+        const res = await fetch("https://tripay.co.id/api-sandbox/transaction/create", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          const qrUrl = data.data.qr_url;
+          document.getElementById("qrisBox").innerHTML = `
+            <p>✅ QRIS berhasil dibuat:</p>
+            <img src="${qrUrl}" width="250" alt="QRIS Dinamis" />
+            <p><strong>Kode Bayar:</strong> ${data.data.reference}</p>
+          `;
+        } else {
+          document.getElementById("qrisBox").innerHTML = `<p>❌ Gagal: ${data.message}</p>`;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById("qrisBox").innerHTML = `<p>⚠️ Gagal membuat QRIS (CORS atau jaringan error)</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
