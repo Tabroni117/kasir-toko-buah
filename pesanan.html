@@ -731,6 +731,19 @@
         <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
     </nav>
 
+<!-- 🔐 Modal Verifikasi Password -->
+<div id="modalVerifikasi" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background-color:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0,0,0,0.3);">
+    <h3>🔐 Verifikasi Ulang</h3>
+    <p>Masukkan kembali password Anda:</p>
+    <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
+    <div style="margin-top:15px; text-align:right;">
+      <button onclick="tutupModalVerifikasi()" style="margin-right:10px;">Batal</button>
+      <button onclick="verifikasiPasswordDanHapus()">Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
     <script>
         // 1. Konfigurasi Firebase
         const firebaseConfig = {
@@ -1227,34 +1240,66 @@ function tampilkanDetail(orderId) {
             });
 
 
-// ✅ Fungsi hapus semua pesanan penjual
-window.hapusSemuaPesananPenjual = function() {
-  if (confirm("Yakin ingin menghapus SEMUA pesanan dari database penjual?")) {
-    db.collection("pesanan").get().then(snapshot => {
-      const batch = db.batch();
-      snapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      return batch.commit();
-    }).then(() => {
-      alert("✅ Semua pesanan berhasil dihapus.");
-      location.reload();
-    }).catch(err => {
-      console.error("❌ Gagal menghapus:", err);
-    });
+// ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
+window.hapusSemuaPesananPenjual = function () {
+  const konfirmasi = confirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+  if (!konfirmasi) return;
+
+  // Tampilkan modal verifikasi password
+  const authModal = document.getElementById('authModal');
+  if (authModal) {
+    authModal.classList.remove('hidden');
+  } else {
+    alert("❌ Modal verifikasi tidak ditemukan di halaman.");
   }
 };
 
-// --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
-window.closeAuthModal = function() {
+// ✅ Fungsi dipanggil saat tombol 'Verifikasi' di modal ditekan
+window.verifikasiDanHapusPesanan = async function () {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert("⚠️ Anda belum login.");
+    return;
+  }
+
+  const passwordInput = document.getElementById('verifPassword');
+  if (!passwordInput || !passwordInput.value) {
+    alert("⚠️ Masukkan password terlebih dahulu.");
+    return;
+  }
+
+  const password = passwordInput.value;
+  const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+  try {
+    await user.reauthenticateWithCredential(credential);
+
+    // Lanjutkan hapus pesanan
+    const snapshot = await db.collection("pesanan").get();
+    const batch = db.batch();
+
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    alert("✅ Semua pesanan berhasil dihapus.");
+    location.reload();
+  } catch (error) {
+    console.error("❌ Gagal re-auth:", error);
+    alert("❌ Password salah atau gagal autentikasi.");
+  }
+};
+
+// --- Fungsi DUMMY ---
+window.closeAuthModal = function () {
   const authModal = document.getElementById('authModal');
   if (authModal) authModal.classList.add('hidden');
 };
-window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
-window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
-window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
-
-          
+window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
+window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
+window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
 
         });
     </script>
