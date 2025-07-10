@@ -631,10 +631,30 @@ document.addEventListener("DOMContentLoaded", () => {
     tombolPesanan.classList.add("berkedip-kuat");
 
     setTimeout(() => {
-      sound.play();
+      if (sound) {
+        try {
+          // 🔊 Putar suara pertama
+          sound.currentTime = 0;
+          sound.play();
+
+          // 🔁 Putar ulang setelah 1 detik
+          setTimeout(() => {
+            sound.currentTime = 0;
+            sound.play();
+          }, 1000);
+
+          // 📳 Vibrasi (jika HP mendukung)
+          if (navigator.vibrate) {
+            navigator.vibrate([300, 200, 300]);
+          }
+
+        } catch (e) {
+          console.error("Gagal memainkan suara atau getar:", e);
+        }
+      }
     }, 800); // beri jeda agar UI sudah siap
 
-    // Bersihkan setelah diputar
+    // 🧹 Bersihkan flag supaya tidak ulang
     localStorage.removeItem("pesananBaruPendingSound");
   }
 });
