@@ -14,7 +14,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { background: #f9f9f9; color: #333; }
-    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; position: relative; padding-bottom: 20px; }
+    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; }
 
     .header-detail {
       background: linear-gradient(135deg, #00C853, #64DD17);
@@ -112,7 +112,9 @@
       emptyOrderState.style.display = 'none';
 
       try {
-        const snapshot = await db.collectionGroup('pesanan').get(); // Tanpa orderBy
+        const snapshot = await db.collection('pesanan')
+          .orderBy('waktu', 'desc')
+          .get();
 
         if (snapshot.empty) {
           emptyOrderState.style.display = 'block';
@@ -136,10 +138,10 @@
 
           const orderDate = order.waktu?.toDate
             ? order.waktu.toDate().toLocaleString('id-ID', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-              })
-            : (typeof order.waktu === 'string' ? order.waktu : 'Tanggal tidak tersedia');
+              year: 'numeric', month: 'long', day: 'numeric',
+              hour: '2-digit', minute: '2-digit'
+            })
+            : 'Tanggal tidak tersedia';
 
           let statusClass = '';
           switch ((order.status || '').toLowerCase()) {
