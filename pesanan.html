@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -635,25 +634,10 @@
     🗑️ Hapus Semua
   </button>
 </div>
-      </div>
-
-
-<!-- Loader -->
-<div id="loader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; display:flex; align-items:center; justify-content:center;">
-  <div style="border:6px solid #f3f3f3; border-top:6px solid #4CAF50; border-radius:50%; width:40px; height:40px; animation: spin 1s linear infinite;"></div>
-</div>
-
-<style>
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
+        </div>
 
 
 
-
-        
 
 
 
@@ -1261,23 +1245,23 @@ window.hapusSemuaPesananPenjual = function () {
   if (!konfirmasi) return;
 
   // Tampilkan modal verifikasi password
-  const modal = document.getElementById('modalVerifikasi');
-  if (modal) {
-    modal.style.display = 'flex';
+  const authModal = document.getElementById('authModal');
+  if (authModal) {
+    authModal.classList.remove('hidden');
   } else {
     alert("❌ Modal verifikasi tidak ditemukan di halaman.");
   }
 };
 
-// ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
-window.verifikasiPasswordDanHapus = async function () {
+// ✅ Fungsi dipanggil saat tombol 'Verifikasi' di modal ditekan
+window.verifikasiDanHapusPesanan = async function () {
   const user = firebase.auth().currentUser;
   if (!user) {
     alert("⚠️ Anda belum login.");
     return;
   }
 
-  const passwordInput = document.getElementById('inputPassword');
+  const passwordInput = document.getElementById('verifPassword');
   if (!passwordInput || !passwordInput.value) {
     alert("⚠️ Masukkan password terlebih dahulu.");
     return;
@@ -1297,33 +1281,25 @@ window.verifikasiPasswordDanHapus = async function () {
       batch.delete(doc.ref);
     });
 
-    await batch.commit(); 
-      
-   alert("✅ Semua pesanan berhasil dihapus.");
+    await batch.commit();
 
-// Tampilkan loader
-document.getElementById("loader").style.display = "flex";
-
-// Tunggu 1 detik lalu reload halaman
-setTimeout(() => {
-  location.reload();
-}, 1000);      
+    alert("✅ Semua pesanan berhasil dihapus.");
+    location.reload();
   } catch (error) {
     console.error("❌ Gagal re-auth:", error);
     alert("❌ Password salah atau gagal autentikasi.");
   }
 };
 
-// ✅ Tutup modal jika klik "Batal"
-window.tutupModalVerifikasi = function () {
-  const modal = document.getElementById('modalVerifikasi');
-  if (modal) modal.style.display = 'none';
-};
-
 // --- Fungsi DUMMY ---
+window.closeAuthModal = function () {
+  const authModal = document.getElementById('authModal');
+  if (authModal) authModal.classList.add('hidden');
+};
 window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
 window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
 window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
+
         });
     </script>
 </body>
