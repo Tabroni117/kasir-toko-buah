@@ -976,20 +976,33 @@ function tampilkanDetail(orderId) {
         }
 
         // --- Fungsi Update Status Pesanan ---
-        document.getElementById("statusUpdater").addEventListener("change", function() {
-            const newStatus = this.value;
-            if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
-                db.collection("pesanan").doc(currentOrderIdForDetail).update({
-                    status: newStatus
-                }).then(() => {
-                    alert("Status pesanan berhasil diperbarui!");
-                    tutupDetail(); // Tutup dan refresh
-                }).catch(error => {
-                    console.error("Error updating order status:", error);
-                    alert("Gagal memperbarui status pesanan.");
-                });
-            }
-        });
+       document.getElementById("statusUpdater").addEventListener("change", async function () {
+    const newStatus = this.value;
+    if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
+        try {
+            // 🔁 Update status di koleksi pesanan
+            await db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                status: newStatus
+            });
+
+            // 📦 Ambil userId dari pesanan untuk update ke riwayat_customer
+            const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+            const data = docSnap.data();
+            const userId = data.userId;
+
+            // 🔁 Update status di riwayat customer
+            await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).update({
+                status: newStatus
+            });
+
+            alert("Status pesanan berhasil diperbarui!");
+            tutupDetail(); // ✅ Tutup dan refresh tampilan
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            alert("Gagal memperbarui status pesanan.");
+        }
+    }
+});
 
         // --- Event Listeners untuk Tombol Filter ---
         filterButtons.forEach(button => {
