@@ -1226,56 +1226,47 @@ function tampilkanDetail(orderId) {
             });
 
 
-// ✅ Hapus semua pesanan dengan verifikasi password
-window.hapusSemuaPesananPenjual = async function () {
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    alert("⚠️ Anda belum login.");
-    return;
-  }
-
-  const password = prompt("🛡️ Masukkan kembali password Anda untuk konfirmasi penghapusan:");
-
-  if (!password) {
-    alert("❌ Penghapusan dibatalkan. Password tidak dimasukkan.");
-    return;
-  }
-
-  const credential = firebase.auth.EmailAuthProvider.credential(
-    user.email,
-    password
-  );
-
-  try {
-    // ✅ Re-authenticate
-    await user.reauthenticateWithCredential(credential);
-
-    const konfirmasi = confirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
-    if (!konfirmasi) return;
-
-    // 🔥 Hapus semua data dari koleksi 'pesanan'
-    const snapshot = await db.collection("pesanan").get();
-    const batch = db.batch();
-
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    alert("✅ Semua pesanan berhasil dihapus.");
-    location.reload();
-  } catch (error) {
-    console.error("❌ Gagal re-auth:", error);
-    alert("❌ Password salah atau gagal autentikasi.");
-  }
-};
 
 
+  window.hapusSemuaPesananPenjual = async function () {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      alert("⚠️ Anda belum login.");
+      return;
+    }
 
+    const password = prompt("🛡️ Masukkan kembali password Anda untuk konfirmasi penghapusan:");
+    if (!password) {
+      alert("❌ Penghapusan dibatalkan. Password tidak dimasukkan.");
+      return;
+    }
 
+    const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
 
-            
-    </script>
+    try {
+      // ✅ Re-authenticate
+      await user.reauthenticateWithCredential(credential);
+
+      const konfirmasi = confirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+      if (!konfirmasi) return;
+
+      // 🔥 Hapus semua data dari koleksi 'pesanan'
+      const snapshot = await db.collection("pesanan").get();
+      const batch = db.batch();
+
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+
+      alert("✅ Semua pesanan berhasil dihapus.");
+      location.reload();
+    } catch (error) {
+      console.error("❌ Gagal re-auth:", error);
+      alert("❌ Password salah atau gagal autentikasi.");
+    }
+  };
+</script>
 </body>
 </html>
