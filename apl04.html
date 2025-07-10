@@ -112,8 +112,7 @@
       emptyOrderState.style.display = 'none';
 
       try {
-        // HAPUS ORDER BY SEMENTARA KARENA BUKAN TIMESTAMP
-        const snapshot = await db.collectionGroup('pesanan').get();
+        const snapshot = await db.collectionGroup('pesanan').get(); // Tanpa orderBy
 
         if (snapshot.empty) {
           emptyOrderState.style.display = 'block';
@@ -135,7 +134,12 @@
             console.warn('Gagal ambil nama user:', err);
           }
 
-          const orderDate = order.waktu || 'Tanggal tidak tersedia';
+          const orderDate = order.waktu?.toDate
+            ? order.waktu.toDate().toLocaleString('id-ID', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            : (typeof order.waktu === 'string' ? order.waktu : 'Tanggal tidak tersedia');
 
           let statusClass = '';
           switch ((order.status || '').toLowerCase()) {
