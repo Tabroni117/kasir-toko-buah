@@ -571,6 +571,17 @@
             background: #e0e0e0;
             transform: translateY(-2px);
         }
+
+.tombol-hapus {
+  margin-left: 20px;
+  background-color: crimson;
+  color: white;
+}
+
+
+
+
+        
     </style>
 </head>
 <body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
@@ -608,15 +619,30 @@
                 <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
                 <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div> </div>
 
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-status="All">Semua</button>
-                <button class="filter-btn" data-status="Pending">Pending</button>
-                <button class="filter-btn" data-status="Diproses">Diproses</button>
-                <button class="filter-btn" data-status="Selesai">Selesai</button>
-                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
-            </div>
+
+            
+<div class="filter-buttons">
+  <button class="filter-btn active" data-status="All">Semua</button>
+  <button class="filter-btn" data-status="Pending">Pending</button>
+  <button class="filter-btn" data-status="Diproses">Diproses</button>
+  <button class="filter-btn" data-status="Selesai">Selesai</button>
+  <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+
+  <!-- 🧼 Tambahkan margin kiri sebagai jarak pembeda -->
+  <button class="filter-btn" 
+          style="background-color: crimson; color: white; margin-left: 20px;" 
+          onclick="hapusSemuaPesananPenjual()">
+    🗑️ Hapus Semua
+  </button>
+</div>
         </div>
 
+
+
+
+
+
+        
         <div class="content-wrapper">
             <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
         </div>
@@ -1200,14 +1226,37 @@ function tampilkanDetail(orderId) {
                 }
             });
 
-            // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
-            window.closeAuthModal = function() {
-                const authModal = document.getElementById('authModal');
-                if (authModal) authModal.classList.add('hidden');
-            };
-            window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
-            window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
-            window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
+
+  // ✅ Fungsi hapus semua pesanan penjual
+  function hapusSemuaPesananPenjual() {
+    if (confirm("Yakin ingin menghapus SEMUA pesanan dari database penjual?")) {
+      db.collection("pesanan").get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        return batch.commit();
+      }).then(() => {
+        alert("✅ Semua pesanan berhasil dihapus.");
+        location.reload();
+      }).catch(err => {
+        console.error("❌ Gagal menghapus:", err);
+      });
+    }
+  }
+
+  // --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
+  window.closeAuthModal = function() {
+    const authModal = document.getElementById('authModal');
+    if (authModal) authModal.classList.add('hidden');
+  };
+  window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
+  window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
+  window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
+
+
+          
+
         });
     </script>
 </body>
