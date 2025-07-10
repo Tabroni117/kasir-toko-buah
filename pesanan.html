@@ -975,35 +975,43 @@ function tampilkanDetail(orderId) {
             loadData(activeFilterStatus); // Refresh data setelah menutup detail, untuk melihat status terbaru
         }
 
-        // --- Fungsi Update Status Pesanan ---
-       document.getElementById("statusUpdater").addEventListener("change", async function () {
+        document.getElementById("statusUpdater").addEventListener("change", async function () {
     const newStatus = this.value;
     if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
         try {
-            // 🔁 Update status di koleksi pesanan
+            // 🔁 Update status di koleksi utama pesanan
             await db.collection("pesanan").doc(currentOrderIdForDetail).update({
                 status: newStatus
             });
 
-            // 📦 Ambil userId dari pesanan untuk update ke riwayat_customer
+            // 📦 Ambil userId dari dokumen pesanan
             const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+            if (!docSnap.exists) {
+                alert("Pesanan tidak ditemukan.");
+                return;
+            }
+
             const data = docSnap.data();
             const userId = data.userId;
 
-            // 🔁 Update status di riwayat customer
-            await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).update({
+            if (!userId) {
+                alert("User ID tidak ditemukan di data pesanan.");
+                return;
+            }
+
+            // 🔁 Update status di riwayat_customer (gunakan .set dengan merge agar aman)
+            await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
                 status: newStatus
-            });
+            }, { merge: true });
 
             alert("Status pesanan berhasil diperbarui!");
-            tutupDetail(); // ✅ Tutup dan refresh tampilan
+            tutupDetail(); // ✅ Tutup popup & refresh tampilan
         } catch (error) {
-            console.error("Error updating order status:", error);
-            alert("Gagal memperbarui status pesanan.");
+            console.error("❌ Error saat update status pesanan:", error);
+            alert("Gagal memperbarui status pesanan. Coba lagi nanti.");
         }
     }
 });
-
         // --- Event Listeners untuk Tombol Filter ---
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
