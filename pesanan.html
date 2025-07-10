@@ -1227,36 +1227,39 @@ function tampilkanDetail(orderId) {
             });
 
 
-// ✅ Fungsi hapus semua pesanan penjual
-window.hapusSemuaPesananPenjual = function() {
-  if (confirm("Yakin ingin menghapus SEMUA pesanan dari database penjual?")) {
-    db.collection("pesanan").get().then(snapshot => {
-      const batch = db.batch();
-      snapshot.forEach(doc => {
-        batch.delete(doc.ref);
-      });
-      return batch.commit();
-    }).then(() => {
-      alert("✅ Semua pesanan berhasil dihapus.");
-      location.reload();
-    }).catch(err => {
-      console.error("❌ Gagal menghapus:", err);
+window.hapusSemuaPesananPenjual = async function () {
+  const user = firebase.auth().currentUser;
+  if (!user) return alert("⚠️ Anda belum login.");
+
+  const password = prompt("Masukkan kembali password Anda untuk konfirmasi penghapusan:");
+
+  if (!password) return alert("❌ Dibatalkan. Password tidak dimasukkan.");
+
+  const credential = firebase.auth.EmailAuthProvider.credential(
+    user.email,
+    password
+  );
+
+  try {
+    await user.reauthenticateWithCredential(credential);
+    const konfirmasi = confirm("Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+    if (!konfirmasi) return;
+
+    const snapshot = await db.collection("pesanan").get();
+    const batch = db.batch();
+
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
     });
+
+    await batch.commit();
+    alert("✅ Semua pesanan berhasil dihapus.");
+    location.reload();
+  } catch (error) {
+    console.error("❌ Gagal re-auth:", error);
+    alert("❌ Password salah atau gagal autentikasi.");
   }
 };
-
-// --- FUNGSI DUMMY UNTUK PAGE INI SAJA (Dihapus jika tidak diperlukan di halaman ini) ---
-window.closeAuthModal = function() {
-  const authModal = document.getElementById('authModal');
-  if (authModal) authModal.classList.add('hidden');
-};
-window.loadFruits = function() { console.log('loadFruits (dummy) called - not active on this page.'); };
-window.editFruit = function(id) { console.log('editFruit (dummy) called for:', id); };
-window.deleteFruit = function(id) { console.log('deleteFruit (dummy) called for:', id); };
-
-          
-
-        });
     </script>
 </body>
 </html>
