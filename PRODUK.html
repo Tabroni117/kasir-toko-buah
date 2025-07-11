@@ -3,112 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Stok Produk - Rujak Buah Request</title>
+    <title>Manajemen Menu - GrabMerchant Style</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
     <style>
-        /* CSS dasar untuk kerangka. Anda akan perlu lebih banyak CSS untuk desain "mewah" */
+        /* Variabel Warna Grab */
+        :root {
+            --grab-green-dark: #00A300;
+            --grab-green-light: #00CC00;
+            --text-dark: #222;
+            --text-medium: #555;
+            --text-light: #888;
+            --bg-light: #f0f2f5;
+            --border-color: #eee;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-strong: rgba(0, 0, 0, 0.2);
+            --active-tab-bg: linear-gradient(to right, var(--grab-green-light), var(--grab-green-dark));
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5; /* Warna latar belakang lembut */
-            color: #333;
+            background-color: var(--bg-light);
+            color: var(--text-medium);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
+            padding-top: 20px;
+            box-sizing: border-box;
         }
-        .container {
+
+        .app-container {
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-medium);
             width: 100%;
-            max-width: 500px;
+            max-width: 420px; /* Lebih mirip ukuran ponsel */
+            height: 80vh; /* Tinggi tetap agar terlihat seperti aplikasi */
             margin: 20px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-out;
+            position: relative; /* Untuk floating button */
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
         .header {
+            padding: 15px 20px;
+            background-color: white; /* Header ini mungkin putih */
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px var(--shadow-light);
+            z-index: 10;
+        }
+        .header-top {
             display: flex;
             align-items: center;
-            padding: 16px 20px;
-            border-bottom: 1px solid #eee;
-            color: #555;
-            font-weight: 600;
+            margin-bottom: 15px;
         }
-        .header a {
-            text-decoration: none;
-            color: #4CAF50; /* Warna hijau untuk ikon kembali */
-            font-size: 24px; /* Ukuran ikon kembali */
+        .header-top .material-icons {
+            font-size: 28px;
+            color: var(--text-dark);
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .header-top h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+            flex-grow: 1;
+        }
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-light);
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+        .search-bar .material-icons {
+            font-size: 20px;
+            color: var(--text-light);
             margin-right: 10px;
         }
-        .content {
-            padding: 20px;
+        .search-bar input {
+            border: none;
+            background: none;
+            outline: none;
+            flex-grow: 1;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            color: var(--text-dark);
         }
-        .product-image {
-            width: 100%;
-            height: 250px;
-            background-color: #f8f8f8;
+        .search-bar input::placeholder {
+            color: var(--text-light);
+        }
+
+        /* Tabs / Filter */
+        .category-tabs {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            background-color: white;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 9;
+        }
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .tab-item.active {
+            color: var(--grab-green-dark);
+            font-weight: 600;
+        }
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 3px;
+            background: var(--active-tab-bg);
+            border-radius: 2px;
+        }
+
+        /* Content Area for Menu Items */
+        .menu-list-container {
+            flex-grow: 1;
+            overflow-y: auto; /* Scrollable content */
+            padding: 20px;
+            background-color: var(--bg-light); /* Latar belakang konten bisa agak abu-abu */
+        }
+
+        .category-section {
+            margin-bottom: 25px;
+        }
+        .category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .category-header .item-count {
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .category-header .material-icons {
+            font-size: 24px;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .menu-item-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px var(--shadow-light);
+            margin-bottom: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+        .menu-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px var(--shadow-medium);
+        }
+
+        .menu-item-image {
+            width: 70px;
+            height: 70px;
             border-radius: 8px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-right: 15px;
+            flex-shrink: 0; /* Agar gambar tidak mengecil */
         }
-        .product-image img {
+        .menu-item-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
         }
-        h1.product-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #222;
-            margin-bottom: 4px;
+
+        .menu-item-details {
+            flex-grow: 1;
         }
-        .product-description {
+        .menu-item-details h3 {
             font-size: 16px;
-            color: #777;
-            margin-bottom: 10px;
-        }
-        .product-rating {
-            font-size: 18px;
-            color: #fbc02d; /* Warna bintang */
-            margin-bottom: 20px;
-        }
-        .section-divider {
-            border: none;
-            border-top: 1px solid #4CAF50; /* Warna hijau untuk divider */
-            margin: 25px 0;
-        }
-        .section-title {
-            font-size: 18px;
             font-weight: 600;
-            color: #444;
-            margin-bottom: 15px;
+            color: var(--text-dark);
+            margin: 0 0 5px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .form-group {
-            margin-bottom: 20px;
+        .menu-item-details p {
+            font-size: 14px;
+            color: var(--text-medium);
+            margin: 0;
         }
-        .form-group label {
-            display: block;
-            font-size: 16px;
-            font-weight: 500;
-            color: #555;
-            margin-bottom: 8px;
+        .menu-item-details .price {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--grab-green-dark);
+            margin-top: 5px;
         }
-        .toggle-switch {
+
+        /* Toggle Ketersediaan di Item Card */
+        .item-toggle-switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
+            width: 45px; /* Lebih kecil untuk di kartu */
+            height: 25px;
+            flex-shrink: 0; /* Agar toggle tidak mengecil */
+            margin-left: 15px;
         }
-        .toggle-switch input {
+        .item-toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-        .slider {
+        .item-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -116,212 +255,252 @@
             right: 0;
             bottom: 0;
             background-color: #ccc;
-            -webkit-transition: .4s;
             transition: .4s;
             border-radius: 34px;
         }
-        .slider:before {
+        .item-slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
+            height: 20px; /* Lebih kecil */
+            width: 20px;
+            left: 3px;
+            bottom: 2.5px; /* Menyesuaikan posisi */
             background-color: white;
-            -webkit-transition: .4s;
             transition: .4s;
             border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        input:checked + .slider {
-            background-color: #4CAF50; /* Warna hijau untuk ON */
+        .item-toggle-switch input:checked + .item-slider {
+            background: linear-gradient(to right, var(--grab-green-light), var(--grab-green-dark));
         }
-        input:focus + .slider {
-            box-shadow: 0 0 1px #4CAF50;
+        .item-toggle-switch input:checked + .item-slider:before {
+            transform: translateX(20px);
         }
-        input:checked + .slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
-        .availability-text {
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 10px;
-            font-weight: 500;
-            color: #555;
-        }
-        .price-display {
-            font-size: 24px;
-            font-weight: 700;
-            color: #28a745; /* Warna hijau untuk harga */
-            margin-bottom: 5px;
-        }
-        .stock-control {
+
+
+        /* Floating Action Bar / Bottom Navigation */
+        .bottom-action-bar {
+            background-color: white;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -5px 20px var(--shadow-light);
             display: flex;
+            justify-content: space-around;
             align-items: center;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
         }
-        .stock-control button {
-            background-color: #f0f2f5;
-            border: 1px solid #ddd;
-            color: #555;
-            font-size: 24px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        .action-button {
+            flex: 1;
             display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            align-items: center;
+            text-decoration: none;
+            color: var(--text-medium);
+            font-size: 12px;
+            font-weight: 500;
+            transition: color 0.2s ease;
             cursor: pointer;
-            transition: background-color 0.3s, border-color 0.3s;
         }
-        .stock-control button:hover {
-            background-color: #e0e2e5;
-            border-color: #ccc;
-        }
-        .stock-input {
+        .action-button .material-icons {
             font-size: 24px;
-            font-weight: 600;
-            text-align: center;
-            width: 80px;
-            margin: 0 15px;
-            border: none;
-            background: none;
-            color: #333;
-            -moz-appearance: textfield; /* Untuk Firefox */
+            margin-bottom: 5px;
+            color: var(--text-light);
+            transition: color 0.2s ease;
         }
-        .stock-input::-webkit-outer-spin-button,
-        .stock-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        .action-button:hover {
+            color: var(--grab-green-dark);
         }
-        .info-text {
-            font-size: 14px;
-            color: #888;
-            margin-top: 5px;
+        .action-button:hover .material-icons {
+            color: var(--grab-green-dark);
         }
-        .save-button {
-            width: 100%;
-            padding: 15px 0;
-            background-color: #4CAF50; /* Warna hijau untuk tombol simpan */
+
+        .add-menu-button {
+            background: linear-gradient(to right, var(--grab-green-light), var(--grab-green-dark));
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 50px; /* Bentuk pil */
+            padding: 12px 25px;
+            font-size: 16px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 163, 0, 0.3);
             cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 30px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .save-button:hover {
-            background-color: #388e3c; /* Warna hijau gelap untuk hover */
+        .add-menu-button .material-icons {
+            font-size: 24px;
+            color: white; /* Icon warna putih */
+        }
+        .add-menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 163, 0, 0.4);
+        }
+        .add-menu-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 163, 0, 0.2);
+        }
+        /* Mengatur posisi tombol "Tambahkan" di tengah bottom bar */
+        .bottom-action-bar .action-button:nth-child(2) { /* Untuk "Atur Massal" */
+            flex: 1.5; /* Memberi ruang lebih di tengah */
+        }
+        .bottom-action-bar .action-button:nth-child(3) { /* Untuk "Tambahkan" */
+            flex: 2; /* Tombol tambah lebih menonjol */
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <div class="header">
-            <a href="#" aria-label="Kembali">&#8592;</a> <span>Rincian & Stok Produk</span>
+            <div class="header-top">
+                <span class="material-icons">arrow_back</span>
+                <h2>Menu</h2>
+            </div>
+            <div class="search-bar">
+                <span class="material-icons">search</span>
+                <input type="text" placeholder="Cari nama menu / kategori varian / varian">
+            </div>
         </div>
-        <div class="content">
-            <div class="product-image">
-                <img src="https://cdn.rri.co.id/berita/Yogyakarta/o/1715417375710-gambar_rujak_buah/0iiegjwouuf76cw.jpeg" alt="Gambar Rujak Buah Request">
+
+        <div class="category-tabs">
+            <div class="tab-item active">Menu Utama</div>
+            <div class="tab-item">Kategori Varian</div>
             </div>
 
-            <h1 class="product-name">Rujak Buah Request</h1>
-            <p class="product-description">Buah Segar</p>
-            <div class="product-rating">
-                ⭐⭐⭐⭐⭐ (5)
-            </div>
-
-            <hr class="section-divider">
-
-            <div class="form-group">
-                <label for="isAvailable" class="section-title">Status Ketersediaan</label>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="isAvailable" checked>
-                    <span class="slider"></span>
-                </label>
-                <span class="availability-text" id="availabilityStatusText">Tersedia untuk Penjualan</span>
-                <p class="info-text">*(isAvailable: true)*</p>
-            </div>
-
-            <hr class="section-divider">
-
-            <div class="form-group">
-                <label class="section-title">Harga Produk</label>
-                <p class="price-display">Rp 45.500</p>
-                <p class="info-text">*(Harga per porsi/unit)*</p>
-            </div>
-
-            <hr class="section-divider">
-
-            <div class="form-group">
-                <label for="stockInput" class="section-title">Jumlah Stok</label>
-                <div class="stock-control">
-                    <button type="button" id="decreaseStock">-</button>
-                    <input type="number" id="stockInput" class="stock-input" value="15" min="0">
-                    <button type="button" id="increaseStock">+</button>
+        <div class="menu-list-container">
+            <div class="category-section">
+                <div class="category-header">
+                    <span>Menu Utama</span>
+                    <span class="item-count">3/3</span>
+                    <span class="material-icons">keyboard_arrow_up</span>
                 </div>
-                <p class="info-text">*(stok: 15)*</p>
+                <div class="menu-items">
+                    <div class="menu-item-card" onclick="alert('Buka detail Rujak Buah Manis')">
+                        <div class="menu-item-image">
+                            <img src="http://googleusercontent.com/file_content/0" alt="Rujak Buah Manis">
+                        </div>
+                        <div class="menu-item-details">
+                            <h3>RUJAK BUAH MANIS Komplit | Thinwal/100...</h3>
+                            <p class="price">Rp41.500</p>
+                        </div>
+                        <label class="item-toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="item-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="menu-item-card" onclick="alert('Buka detail Rujak Mangga')">
+                        <div class="menu-item-image">
+                            <img src="https://via.placeholder.com/70/FFC107/FFFFFF?text=M.M" alt="Rujak Mangga">
+                        </div>
+                        <div class="menu-item-details">
+                            <h3>Rujak Mangga Mengkal dan Jambu Thinwal...</h3>
+                            <p class="price">Rp35.500</p>
+                        </div>
+                        <label class="item-toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="item-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="menu-item-card" onclick="alert('Buka detail Rujak Mangga J.B.')">
+                        <div class="menu-item-image">
+                            <img src="https://via.placeholder.com/70/9C27B0/FFFFFF?text=R.J.B" alt="Rujak Mangga J.B.">
+                        </div>
+                        <div class="menu-item-details">
+                            <h3>RUJAK Mangga Jb Jr.Jb Kristal Nanas Thin...</h3>
+                            <p class="price">Rp35.500</p>
+                        </div>
+                        <label class="item-toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="item-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <hr class="section-divider">
-
-            <div class="form-group">
-                <label class="section-title">Estimasi Waktu Siap/Kirim</label>
-                <p class="time-display">15 Menit</p>
-                <p class="info-text">*(Waktu yang dibutuhkan untuk menyiapkan pesanan)*</p>
+            <div class="category-section">
+                <div class="category-header">
+                    <span>SPECIAL MIX</span>
+                    <span class="item-count">3/3</span>
+                    <span class="material-icons">keyboard_arrow_up</span>
+                </div>
+                <div class="menu-items">
+                    <div class="menu-item-card" onclick="alert('Buka detail Rujak Buah Manis')">
+                        <div class="menu-item-image">
+                            <img src="https://via.placeholder.com/70/4CAF50/FFFFFF?text=S.M.1" alt="Rujak Buah Manis">
+                        </div>
+                        <div class="menu-item-details">
+                            <h3>Buah Potong Segar Aneka Rasa - Besar</h3>
+                            <p class="price">Rp45.000</p>
+                        </div>
+                        <label class="item-toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="item-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <button type="submit" class="save-button">SIMPAN PERUBAHAN</button>
+            </div>
+
+        <div class="bottom-action-bar">
+            <div class="action-button" onclick="alert('Ubah Urutan Menu')">
+                <span class="material-icons">reorder</span>
+                Ubah Urutan
+            </div>
+            <div class="action-button" onclick="alert('Ubah Kategori Menu')">
+                <span class="material-icons">folder_open</span>
+                Ubah Kategori
+            </div>
+            <div class="action-button add-menu-button" onclick="alert('Buka halaman Tambah Produk Baru')">
+                <span class="material-icons">add</span>
+                Tambahkan
+            </div>
+            <div class="action-button" onclick="alert('Buka halaman Atur Massal')">
+                <span class="material-icons">ballot</span>
+                Atur Massal
+            </div>
         </div>
     </div>
 
     <script>
-        // JavaScript dasar untuk interaksi (Anda bisa kembangkan lebih lanjut)
-        const stockInput = document.getElementById('stockInput');
-        const decreaseStockBtn = document.getElementById('decreaseStock');
-        const increaseStockBtn = document.getElementById('increaseStock');
-        const isAvailableToggle = document.getElementById('isAvailable');
-        const availabilityStatusText = document.getElementById('availabilityStatusText');
+        // JavaScript untuk fungsionalitas dasar (simulasi)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Contoh untuk tab active
+            const tabItems = document.querySelectorAll('.tab-item');
+            tabItems.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabItems.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+                    // Di sini Anda akan memuat konten menu yang berbeda berdasarkan tab yang aktif
+                    alert('Memuat konten untuk tab: ' + tab.textContent);
+                });
+            });
 
-        decreaseStockBtn.addEventListener('click', () => {
-            let currentValue = parseInt(stockInput.value);
-            if (currentValue > 0) {
-                stockInput.value = currentValue - 1;
-            }
-        });
+            // Contoh untuk toggle switch di setiap item menu
+            const itemToggles = document.querySelectorAll('.item-toggle-switch input[type="checkbox"]');
+            itemToggles.forEach(toggle => {
+                toggle.addEventListener('change', (event) => {
+                    const itemName = event.target.closest('.menu-item-card').querySelector('h3').textContent;
+                    if (event.target.checked) {
+                        alert(itemName + ' diaktifkan!');
+                    } else {
+                        alert(itemName + ' dinonaktifkan!');
+                    }
+                    // Di sini Anda akan mengirim update status ke backend
+                });
+            });
 
-        increaseStockBtn.addEventListener('click', () => {
-            let currentValue = parseInt(stockInput.value);
-            stockInput.value = currentValue + 1;
-        });
-
-        isAvailableToggle.addEventListener('change', () => {
-            if (isAvailableToggle.checked) {
-                availabilityStatusText.textContent = 'Tersedia untuk Penjualan';
-                // Di sini Anda bisa menambahkan logika untuk mengirim update ke backend
-            } else {
-                availabilityStatusText.textContent = 'Tidak Tersedia untuk Penjualan';
-                // Di sini Anda bisa menambahkan logika untuk mengirim update ke backend
-            }
-        });
-
-        // Contoh untuk tombol Simpan Perubahan (Anda akan menambahkan logika AJAX/Fetch di sini)
-        document.querySelector('.save-button').addEventListener('click', () => {
-            const dataToSave = {
-                nama: "Rujak Buah Request",
-                deskripsi: "Buah Segar",
-                harga: 45500, // Ini bisa diubah jika ada input harga
-                imageUrl: "https://cdn.rri.co.id/berita/Yogyakarta/o/1715417375710-gambar_rujak_buah/0iiegjwouuf76cw.jpeg",
-                isAvailable: isAvailableToggle.checked,
-                stok: parseInt(stockInput.value),
-                rating: 5, // Ini biasanya dari data awal, tidak diinput di sini
-                deliveryTime: "15" // Ini juga biasanya dari data awal
-            };
-            console.log('Data yang akan disimpan:', dataToSave);
-            alert('Perubahan disimpan! (Simulasi)');
-            // Di sini Anda akan mengirim `dataToSave` ke API backend Anda.
+            // Simulasi klik untuk tombol "Tambahkan" akan membuka halaman input produk baru
+            document.querySelector('.add-menu-button').addEventListener('click', () => {
+                // Di sini Anda akan mengarahkan pengguna ke halaman input produk baru
+                // Misalnya: window.location.href = 'tambah_produk_baru.html';
+                console.log('Navigasi ke halaman Tambah Produk Baru');
+            });
         });
     </script>
 </body>
