@@ -113,6 +113,7 @@
     messagingSenderId: "731011133713",
     appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
   };
+
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
@@ -127,73 +128,82 @@
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) return location.href = "index.html";
-    const snapshot = await db.collection('riwayat_customer').doc(user.uid).collection('pesanan').where("paymentMethod", "==", "Transfer Bank").get();
-    
-    if (snapshot.empty) {
-      statusInfo.textContent = "❌ Tidak ada pesanan transfer bank ditemukan.";
+
+    try {
+      const snapshot = await db
+        .collection('riwayat_customer')
+        .doc(user.uid)
+        .collection('pesanan')
+        .where("paymentMethod", "==", "Transfer Bank")
+        .get();
+
+      if (snapshot.empty) {
+        statusInfo.textContent = "❌ Tidak ada pesanan transfer bank ditemukan.";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const opt = document.createElement("option");
+        opt.value = doc.id;
+        opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
+        orderIdSelect.appendChild(opt);
+      });
+    } catch (err) {
+      statusInfo.textContent = "❌ Gagal memuat pesanan.";
+      console.error(err);
+    }
+  });
+
+  kirimBtn.addEventListener("click", async () => {
+    const orderId = orderIdSelect.value;
+    const namaPengirim = namaPengirimInput.value.trim();
+    const bankTujuan = bankTujuanSelect.value;
+    const file = buktiInput.files[0];
+
+    if (!orderId || !namaPengirim || !bankTujuan || !file) {
+      statusInfo.textContent = "❌ Harap lengkapi semua data!";
       return;
     }
 
-    snapshot.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
-      orderIdSelect.appendChild(opt);
-    });
+    if (!file.type.startsWith("image/")) {
+      statusInfo.textContent = "❌ File harus berupa gambar!";
+      return;
+    }
+
+    kirimBtn.disabled = true;
+    statusInfo.textContent = "⏳ Mulai upload...";
+
+    try {
+      const fileName = `bukti_transfer/${orderId}_${Date.now()}.jpg`;
+      const storageRef = storage.ref().child(fileName);
+      const snapshot = await storageRef.put(file);
+
+      statusInfo.textContent = "✅ Upload sukses. Mengambil link download...";
+
+      const fileUrl = await snapshot.ref.getDownloadURL();
+      statusInfo.textContent = "✅ Link file dapat! Menyimpan ke Firestore...";
+
+      await db.collection("konfirmasi_pembayaran").add({
+        orderId,
+        namaPengirim,
+        bankTujuan,
+        buktiTransferUrl: fileUrl,
+        waktu: firebase.firestore.FieldValue.serverTimestamp(),
+        status: "Menunggu Verifikasi"
+      });
+
+      statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
+      buktiInput.value = "";
+      namaPengirimInput.value = "";
+      bankTujuanSelect.value = "";
+      orderIdSelect.selectedIndex = 0;
+    } catch (error) {
+      statusInfo.textContent = "❌ Error: " + error.message;
+      console.error(error);
+    }
+
+    kirimBtn.disabled = false;
   });
-
-kirimBtn.addEventListener("click", async () => {
-  const orderId = orderIdSelect.value;
-  const namaPengirim = namaPengirimInput.value.trim();
-  const bankTujuan = bankTujuanSelect.value;
-  const file = buktiInput.files[0];
-
-  if (!orderId || !namaPengirim || !bankTujuan || !file) {
-    statusInfo.textContent = "❌ Harap lengkapi semua data!";
-    return;
-  }
-
-  if (!file.type.startsWith("image/")) {
-    statusInfo.textContent = "❌ File harus berupa gambar!";
-    return;
-  }
-
-  kirimBtn.disabled = true;
-  statusInfo.textContent = "⏳ Mulai upload...";
-
-  try {
-    const fileName = `bukti_transfer/${orderId}_${Date.now()}.jpg`;
-    statusInfo.textContent = `⏳ Uploading file: ${fileName}`;
-    
-    const storageRef = storage.ref().child(fileName);
-    const snapshot = await storageRef.put(file);
-
-    statusInfo.textContent = "✅ Upload sukses. Mengambil link download...";
-
-    const fileUrl = await snapshot.ref.getDownloadURL();
-    statusInfo.textContent = "✅ Link file dapat! Menyimpan ke Firestore...";
-
-    await db.collection("konfirmasi_pembayaran").add({
-      orderId,
-      namaPengirim,
-      bankTujuan,
-      buktiTransferUrl: fileUrl,
-      waktu: firebase.firestore.FieldValue.serverTimestamp(),
-      status: "Menunggu Verifikasi"
-    });
-
-    statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
-    kirimBtn.disabled = false;
-    buktiInput.value = "";
-    namaPengirimInput.value = "";
-    bankTujuanSelect.value = "";
-    orderIdSelect.selectedIndex = 0;
-
-  } catch (error) {
-    statusInfo.textContent = "❌ Error: " + error.message;
-    kirimBtn.disabled = false;
-  }
-});
 </script>
 </body>
 </html>
