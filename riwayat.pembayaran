@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Transaksi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      background: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+      color: #00C853;
+    }
+    .transaksi-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .transaksi-card h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+    .transaksi-card p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+    .btn-konfirmasi {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background-color: #00C853;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Riwayat Transaksi</h2>
+  <div id="riwayatList"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.firebasestorage.app",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const riwayatList = document.getElementById("riwayatList");
+
+    auth.onAuthStateChanged(async user => {
+      if (!user || localStorage.getItem("userRole") !== "pembeli") {
+        alert("Akses ditolak");
+        window.location.href = "index.html";
+        return;
+      }
+
+      const pesananRef = db.collection("riwayat_customer").doc(user.uid).collection("pesanan").orderBy("waktu", "desc");
+      const snapshot = await pesananRef.get();
+      if (snapshot.empty) {
+        riwayatList.innerHTML = "<p>Belum ada transaksi.</p>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement("div");
+        card.className = "transaksi-card";
+        card.innerHTML = `
+          <h3>${data.displayOrderId || "(ID tidak tersedia)"}</h3>
+          <p><strong>Tanggal:</strong> ${data.waktu?.toDate().toLocaleString("id-ID")}</p>
+          <p><strong>Metode:</strong> ${data.paymentMethod} ${data.eWalletType ? "(" + data.eWalletType + ")" : ""}</p>
+          <p><strong>Total:</strong> Rp ${data.totalAmount?.toLocaleString("id-ID")}</p>
+          <p><strong>Status:</strong> ${data.status}</p>
+        `;
+
+        if (data.paymentMethod === "Transfer Bank" && data.status === "Pending") {
+          const btn = document.createElement("button");
+          btn.className = "btn-konfirmasi";
+          btn.innerText = "Konfirmasi Pembayaran";
+          btn.onclick = () => {
+            alert(`Silakan kirim bukti transfer ke admin untuk verifikasi.\nNomor pesanan: ${data.displayOrderId}`);
+          };
+          card.appendChild(btn);
+        }
+
+        riwayatList.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html>
