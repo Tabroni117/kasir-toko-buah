@@ -271,7 +271,8 @@
                 </div>
             </div>
         </div>
-
+        
+        <div id="qrisBox" style="text-align:center; margin: 20px 0;"></div>
         <button class="place-order-button" id="placeOrderButton">Buat Pesanan</button>
     </div>
 
@@ -488,7 +489,6 @@
 
 
 
-            
 try {
     // 1. Simpan ke koleksi 'pesanan' untuk PENJUAL
     const docRef = await pesananCollection.add(orderData);
@@ -507,26 +507,28 @@ try {
         displayOrderId: shortOrderId
     });
 
+    // Simpan ID pesanan ke sessionStorage
+    sessionStorage.setItem('lastOrderId', shortOrderId);
+    localStorage.removeItem('cart'); // Kosongkan keranjang
 
-    
-// ✅ Berhasil
-alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nNomor Pesanan Anda: ${shortOrderId}`);
+    if (selectedPaymentMethod === "E-Wallet") {
+        // Jika QRIS, tampilkan QR
+        await buatQRIS(total);
+        alert(`✅ Pesanan berhasil dibuat!\n\nSilakan lakukan pembayaran menggunakan QRIS di bawah ini.\n\nNomor Pesanan: ${shortOrderId}`);
+        placeOrderButton.disabled = false;
+        placeOrderButton.innerHTML = 'Buat Pesanan'; // Kembalikan tombol
+    } else {
+        // Jika COD / Transfer, langsung arahkan
+        alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nNomor Pesanan Anda: ${shortOrderId}`);
+        window.location.href = 'payment-confirmation.html';
+    }
 
-// Simpan ID pesanan untuk ditampilkan di payment-confirmation.html
-sessionStorage.setItem('lastOrderId', shortOrderId);
-
-localStorage.removeItem('cart'); // Kosongkan keranjang
-window.location.href = 'payment-confirmation.html'; // Arahkan
-
-
-
-    
-    
 } catch (error) {
     console.error("Gagal menyimpan pesanan: ", error);
-    alert("Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
+    alert("❌ Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
+    placeOrderButton.disabled = false;
+    placeOrderButton.innerHTML = 'Buat Pesanan';
 }
-
 
 
 
@@ -535,6 +537,38 @@ window.location.href = 'payment-confirmation.html'; // Arahkan
 
         // --- Inisialisasi Awal ---
         // renderOrderSummary() dan proteksi halaman akan dijalankan di auth.onAuthStateChanged
+
+  async function buatQRIS(totalAmount) {
+  const qrisBox = document.getElementById("qrisBox");
+  qrisBox.innerHTML = "⏳ Sedang memproses QRIS...";
+
+  try {
+    const response = await fetch("https://tokobuahkasir.cloudfunctions.net/buatQRIS", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        method: "QRIS",
+        merchant_ref: "INV-" + Date.now(),
+        amount: totalAmount,
+        customer_name: fullNameInput.value || "Pembeli"
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      qrisBox.innerHTML = `
+        <p>✅ QRIS berhasil dibuat:</p>
+        <img src="${data.data.qr_url}" width="220" />
+        <p style="font-weight:bold;">Kode Bayar: ${data.data.reference}</p>
+      `;
+    } else {
+      qrisBox.innerHTML = `<p>❌ Gagal: ${data.message}</p>`;
+    }
+  } catch (err) {
+    console.error(err);
+    qrisBox.innerHTML = `<p>⚠️ Gagal membuat QRIS. Cek koneksi atau CORS error.</p>`;
+  }
+}
     </script>
 </body>
 </html>
