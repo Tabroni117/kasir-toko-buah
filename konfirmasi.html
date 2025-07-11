@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konfirmasi Pembayaran</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      background: #fff;
+      margin: 30px auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    }
+    h2 {
+      text-align: center;
+      color: #00C853;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #00C853;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #00b34a;
+    }
+    #statusInfo {
+      text-align: center;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Konfirmasi Pembayaran</h2>
+
+    <div class="form-group">
+      <label for="orderId">Nomor Pesanan</label>
+      <select id="orderId" required></select>
+    </div>
+
+    <div class="form-group">
+      <label for="namaPengirim">Nama Pengirim</label>
+      <input type="text" id="namaPengirim" placeholder="Nama di rekening" required />
+    </div>
+
+    <div class="form-group">
+      <label for="bankTujuan">Transfer ke Bank</label>
+      <select id="bankTujuan" required>
+        <option value="">-- Pilih Bank Tujuan --</option>
+        <option value="BCA">BCA - 1234567890</option>
+        <option value="BRI">BRI - 0987654321</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="buktiTransfer">Upload Bukti Transfer</label>
+      <input type="file" id="buktiTransfer" accept="image/*" required />
+    </div>
+
+    <button id="kirimKonfirmasi">Kirim Konfirmasi</button>
+
+    <p id="statusInfo" style="margin-top: 10px;"></p>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+  <!-- Script Konfirmasi -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.appspot.com",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const orderIdSelect = document.getElementById('orderId');
+    const namaPengirimInput = document.getElementById('namaPengirim');
+    const bankTujuanSelect = document.getElementById('bankTujuan');
+    const buktiInput = document.getElementById('buktiTransfer');
+    const kirimBtn = document.getElementById('kirimKonfirmasi');
+    const statusInfo = document.getElementById('statusInfo');
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) return location.href = "index.html";
+      const snapshot = await db.collection('riwayat_customer').doc(user.uid).collection('pesanan').where("paymentMethod", "==", "Transfer Bank").get();
+      snapshot.forEach(doc => {
+        const opt = document.createElement("option");
+        opt.value = doc.id;
+        opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
+        orderIdSelect.appendChild(opt);
+      });
+    });
+
+    kirimBtn.addEventListener("click", async () => {
+      const orderId = orderIdSelect.value;
+      const namaPengirim = namaPengirimInput.value.trim();
+      const bankTujuan = bankTujuanSelect.value;
+      const file = buktiInput.files[0];
+
+      if (!orderId || !namaPengirim || !bankTujuan || !file) {
+        alert("Harap lengkapi semua data!");
+        return;
+      }
+
+      kirimBtn.disabled = true;
+      statusInfo.textContent = "⏳ Mengirim...";
+
+      const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
+      await storageRef.put(file);
+      const fileUrl = await storageRef.getDownloadURL();
+
+      await db.collection("konfirmasi_pembayaran").add({
+        orderId,
+        namaPengirim,
+        bankTujuan,
+        buktiTransferUrl: fileUrl,
+        waktu: firebase.firestore.FieldValue.serverTimestamp(),
+        status: "Menunggu Verifikasi"
+      });
+
+      statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
+      kirimBtn.disabled = false;
+      buktiInput.value = "";
+    });
+  </script>
+
+</body>
+</html>
