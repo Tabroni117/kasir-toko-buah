@@ -137,36 +137,46 @@
     });
 
     kirimBtn.addEventListener("click", async () => {
-      const orderId = orderIdSelect.value;
-      const namaPengirim = namaPengirimInput.value.trim();
-      const bankTujuan = bankTujuanSelect.value;
-      const file = buktiInput.files[0];
+  const orderId = orderIdSelect.value;
+  const namaPengirim = namaPengirimInput.value.trim();
+  const bankTujuan = bankTujuanSelect.value;
+  const file = buktiInput.files[0];
 
-      if (!orderId || !namaPengirim || !bankTujuan || !file) {
-        alert("Harap lengkapi semua data!");
-        return;
-      }
+  if (!orderId || !namaPengirim || !bankTujuan || !file) {
+    alert("Harap lengkapi semua data!");
+    return;
+  }
 
-      kirimBtn.disabled = true;
-      statusInfo.textContent = "⏳ Mengirim...";
+  kirimBtn.disabled = true;
+  statusInfo.textContent = "⏳ Mengirim...";
 
-      const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
-      await storageRef.put(file);
-      const fileUrl = await storageRef.getDownloadURL();
+  try {
+    const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
+    await storageRef.put(file);
+    const fileUrl = await storageRef.getDownloadURL();
 
-      await db.collection("konfirmasi_pembayaran").add({
-        orderId,
-        namaPengirim,
-        bankTujuan,
-        buktiTransferUrl: fileUrl,
-        waktu: firebase.firestore.FieldValue.serverTimestamp(),
-        status: "Menunggu Verifikasi"
-      });
-
-      statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
-      kirimBtn.disabled = false;
-      buktiInput.value = "";
+    await db.collection("konfirmasi_pembayaran").add({
+      orderId,
+      namaPengirim,
+      bankTujuan,
+      buktiTransferUrl: fileUrl,
+      waktu: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "Menunggu Verifikasi"
     });
+
+    statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
+    kirimBtn.disabled = false;
+    buktiInput.value = "";
+    namaPengirimInput.value = "";
+    bankTujuanSelect.value = "";
+    orderIdSelect.value = "";
+
+  } catch (error) {
+    console.error("❌ Gagal mengirim konfirmasi:", error);
+    statusInfo.textContent = "❌ Gagal mengirim. Silakan coba lagi.";
+    kirimBtn.disabled = false;
+  }
+});
   </script>
 
 </body>
