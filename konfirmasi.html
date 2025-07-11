@@ -142,54 +142,58 @@
     });
   });
 
-  kirimBtn.addEventListener("click", async () => {
-    const orderId = orderIdSelect.value;
-    const namaPengirim = namaPengirimInput.value.trim();
-    const bankTujuan = bankTujuanSelect.value;
-    const file = buktiInput.files[0];
+kirimBtn.addEventListener("click", async () => {
+  const orderId = orderIdSelect.value;
+  const namaPengirim = namaPengirimInput.value.trim();
+  const bankTujuan = bankTujuanSelect.value;
+  const file = buktiInput.files[0];
 
-    if (!orderId || !namaPengirim || !bankTujuan || !file) {
-      statusInfo.textContent = "❌ Harap lengkapi semua data!";
-      return;
-    }
+  if (!orderId || !namaPengirim || !bankTujuan || !file) {
+    statusInfo.textContent = "❌ Harap lengkapi semua data!";
+    return;
+  }
 
-    if (!file.type.startsWith("image/")) {
-      statusInfo.textContent = "❌ File harus berupa gambar!";
-      return;
-    }
+  if (!file.type.startsWith("image/")) {
+    statusInfo.textContent = "❌ File harus berupa gambar!";
+    return;
+  }
 
-    kirimBtn.disabled = true;
-    statusInfo.textContent = "⏳ Upload gambar...";
+  kirimBtn.disabled = true;
+  statusInfo.textContent = "⏳ Mulai upload...";
 
-    try {
-      const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
-      const snapshot = await storageRef.put(file);
+  try {
+    const fileName = `bukti_transfer/${orderId}_${Date.now()}.jpg`;
+    statusInfo.textContent = `⏳ Uploading file: ${fileName}`;
+    
+    const storageRef = storage.ref().child(fileName);
+    const snapshot = await storageRef.put(file);
 
-      statusInfo.textContent = "✅ Upload berhasil. Mengirim data ke database...";
+    statusInfo.textContent = "✅ Upload sukses. Mengambil link download...";
 
-      const fileUrl = await snapshot.ref.getDownloadURL();
+    const fileUrl = await snapshot.ref.getDownloadURL();
+    statusInfo.textContent = "✅ Link file dapat! Menyimpan ke Firestore...";
 
-      await db.collection("konfirmasi_pembayaran").add({
-        orderId,
-        namaPengirim,
-        bankTujuan,
-        buktiTransferUrl: fileUrl,
-        waktu: firebase.firestore.FieldValue.serverTimestamp(),
-        status: "Menunggu Verifikasi"
-      });
+    await db.collection("konfirmasi_pembayaran").add({
+      orderId,
+      namaPengirim,
+      bankTujuan,
+      buktiTransferUrl: fileUrl,
+      waktu: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "Menunggu Verifikasi"
+    });
 
-      statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
-      kirimBtn.disabled = false;
-      buktiInput.value = "";
-      namaPengirimInput.value = "";
-      bankTujuanSelect.value = "";
-      orderIdSelect.selectedIndex = 0;
+    statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
+    kirimBtn.disabled = false;
+    buktiInput.value = "";
+    namaPengirimInput.value = "";
+    bankTujuanSelect.value = "";
+    orderIdSelect.selectedIndex = 0;
 
-    } catch (error) {
-      statusInfo.textContent = "❌ ERROR: " + error.message;
-      kirimBtn.disabled = false;
-    }
-  });
+  } catch (error) {
+    statusInfo.textContent = "❌ Error: " + error.message;
+    kirimBtn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
