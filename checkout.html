@@ -250,7 +250,14 @@
         <label for="bankTransfer">Transfer Bank</label>
         <i class="fas fa-university"></i>
       </div>
-      <div class="payment-method">
+
+<div id="bankTransferInfo" style="display: none; margin-top: 10px; padding: 12px; background: #fffbe6; border: 2px solid #ffc107; border-radius: 8px; font-size: 14px;">
+  <strong>Transfer ke:</strong><br>
+  BCA - 1234567890 a.n. Rujak Buah Indonesia<br>
+  BRI - 0987654321 a.n. Rujak Buah Indonesia<br><br>
+  Setelah transfer, konfirmasi pembayaran Anda di halaman "Riwayat".
+</div>
+       <div class="payment-method">
         <input type="radio" id="ewallet" name="paymentMethod" value="E-Wallet">
         <label for="ewallet">E-Wallet (OVO, GoPay, DANA)</label>
         <i class="fas fa-wallet"></i>
@@ -507,22 +514,34 @@
     }
   });
 });
+const eWalletType = document.getElementById("eWalletType");
+const eWalletIcon = document.getElementById("eWalletIcon");
 
-  const eWalletType = document.getElementById("eWalletType");
-  const eWalletIcon = document.getElementById("eWalletIcon");
+const walletIcons = {
+  QRIS: '<i class="fas fa-qrcode"></i>',
+  OVO: '<i class="fas fa-gem"></i>',
+  DANA: '<i class="fas fa-wallet"></i>',
+  GoPay: '<i class="fas fa-mobile-alt"></i>'
+};
 
-  const walletIcons = {
-    QRIS: '<i class="fas fa-qrcode"></i>',
-    OVO: '<i class="fas fa-gem"></i>', // atau gunakan gambar SVG jika ingin
-    DANA: '<i class="fas fa-wallet"></i>',
-    GoPay: '<i class="fas fa-mobile-alt"></i>'
-  };
+eWalletType.addEventListener("change", () => {
+  const selected = eWalletType.value;
+  eWalletIcon.innerHTML = walletIcons[selected] || '<i class="fas fa-wallet"></i>';
+});
 
-  eWalletType.addEventListener("change", () => {
-    const selected = eWalletType.value;
-    eWalletIcon.innerHTML = walletIcons[selected] || '<i class="fas fa-wallet"></i>';
+// ⬇️ TARO DI SINI
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const method = radio.value;
+    document.getElementById("eWalletTypeWrapper").style.display = method === "E-Wallet" ? 'block' : 'none';
+    document.getElementById("bankTransferInfo").style.display = method === "Transfer Bank" ? 'block' : 'none';
+
+    if (method === "E-Wallet" && eWalletIcon && eWalletType) {
+      const selected = eWalletType.value;
+      eWalletIcon.innerHTML = walletIcons[selected] || '<i class="fas fa-wallet"></i>';
+    }
   });
-      
+});
   </script>
 </body>
 </html>
