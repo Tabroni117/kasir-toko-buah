@@ -103,81 +103,115 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <!-- Script Konfirmasi -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.appspot.com",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+<!-- Script Konfirmasi -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.appspot.com",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
+  };
 
-    const orderIdSelect = document.getElementById('orderId');
-    const namaPengirimInput = document.getElementById('namaPengirim');
-    const bankTujuanSelect = document.getElementById('bankTujuan');
-    const buktiInput = document.getElementById('buktiTransfer');
-    const kirimBtn = document.getElementById('kirimKonfirmasi');
-    const statusInfo = document.getElementById('statusInfo');
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) return location.href = "index.html";
-      const snapshot = await db.collection('riwayat_customer').doc(user.uid).collection('pesanan').where("paymentMethod", "==", "Transfer Bank").get();
-      snapshot.forEach(doc => {
-        const opt = document.createElement("option");
-        opt.value = doc.id;
-        opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
-        orderIdSelect.appendChild(opt);
+  const orderIdSelect = document.getElementById('orderId');
+  const namaPengirimInput = document.getElementById('namaPengirim');
+  const bankTujuanSelect = document.getElementById('bankTujuan');
+  const buktiInput = document.getElementById('buktiTransfer');
+  const kirimBtn = document.getElementById('kirimKonfirmasi');
+  const statusInfo = document.getElementById('statusInfo');
+
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      location.href = "index.html";
+      return;
+    }
+
+    console.log("✅ Login sebagai UID:", user.uid);
+
+    try {
+      const snapshot = await db.collection('riwayat_customer')
+        .doc(user.uid)
+        .collection('pesanan')
+        .where("paymentMethod", "==", "Transfer Bank")
+        .get();
+
+      if (snapshot.empty) {
+        orderIdSelect.innerHTML = `<option disabled selected>Tidak ada pesanan via Transfer Bank</option>`;
+      } else {
+        snapshot.forEach(doc => {
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
+          orderIdSelect.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error("❌ Gagal memuat daftar pesanan:", err);
+    }
+  });
+
+  kirimBtn.addEventListener("click", async () => {
+    const orderId = orderIdSelect.value;
+    const namaPengirim = namaPengirimInput.value.trim();
+    const bankTujuan = bankTujuanSelect.value;
+    const file = buktiInput.files[0];
+
+    if (!orderId || !namaPengirim || !bankTujuan || !file) {
+      alert("Harap lengkapi semua data!");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("File harus berupa gambar!");
+      return;
+    }
+
+    kirimBtn.disabled = true;
+    statusInfo.textContent = "⏳ Mengirim...";
+    console.log("📤 Mulai proses kirim konfirmasi...");
+
+    try {
+      const fileName = `${orderId}_${Date.now()}.jpg`;
+      const storageRef = storage.ref().child(`bukti_transfer/${fileName}`);
+
+      console.log("📸 Uploading file ke:", storageRef.fullPath);
+      const uploadTask = await storageRef.put(file);
+
+      console.log("✅ Upload berhasil:", uploadTask.metadata);
+      const fileUrl = await storageRef.getDownloadURL();
+      console.log("🔗 URL bukti transfer:", fileUrl);
+
+      await db.collection("konfirmasi_pembayaran").add({
+        orderId,
+        namaPengirim,
+        bankTujuan,
+        buktiTransferUrl: fileUrl,
+        waktu: firebase.firestore.FieldValue.serverTimestamp(),
+        status: "Menunggu Verifikasi"
       });
-    });
 
-    kirimBtn.addEventListener("click", async () => {
-  const orderId = orderIdSelect.value;
-  const namaPengirim = namaPengirimInput.value.trim();
-  const bankTujuan = bankTujuanSelect.value;
-  const file = buktiInput.files[0];
+      console.log("✅ Data berhasil ditulis ke Firestore!");
+      statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
+      
+      // Reset form
+      kirimBtn.disabled = false;
+      buktiInput.value = "";
+      namaPengirimInput.value = "";
+      bankTujuanSelect.value = "";
+      orderIdSelect.selectedIndex = 0;
 
-  if (!orderId || !namaPengirim || !bankTujuan || !file) {
-    alert("Harap lengkapi semua data!");
-    return;
-  }
-
-  kirimBtn.disabled = true;
-  statusInfo.textContent = "⏳ Mengirim...";
-
-  try {
-    const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
-    await storageRef.put(file);
-    const fileUrl = await storageRef.getDownloadURL();
-
-    await db.collection("konfirmasi_pembayaran").add({
-      orderId,
-      namaPengirim,
-      bankTujuan,
-      buktiTransferUrl: fileUrl,
-      waktu: firebase.firestore.FieldValue.serverTimestamp(),
-      status: "Menunggu Verifikasi"
-    });
-
-    statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
-    kirimBtn.disabled = false;
-    buktiInput.value = "";
-    namaPengirimInput.value = "";
-    bankTujuanSelect.value = "";
-    orderIdSelect.value = "";
-
-  } catch (error) {
-    console.error("❌ Gagal mengirim konfirmasi:", error);
-    statusInfo.textContent = "❌ Gagal mengirim. Silakan coba lagi.";
-    kirimBtn.disabled = false;
-  }
-});
-  </script>
-
+    } catch (error) {
+      console.error("❌ Gagal mengirim konfirmasi:", error);
+      statusInfo.textContent = "❌ Gagal mengirim. Silakan coba lagi.";
+      kirimBtn.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>
