@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo Tombol QRIS Dinamis</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    h2 {
+      color: #4CAF50;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    button span {
+      margin-right: 8px;
+    }
+
+    #qrisBox {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #qrisBox img {
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🔁 Demo Tombol QRIS Dinamis Tripay</h2>
+  <p>Total Bayar: <strong>Rp18.000</strong></p>
+
+  <button onclick="buatQRIS()">
+    <span>📱</span> Bayar via QRIS
+  </button>
+
+  <div id="qrisBox">QRIS belum dibuat</div>
+
+  <script>
+    async function buatQRIS() {
+      const qrisBox = document.getElementById("qrisBox");
+      qrisBox.innerHTML = "⏳ Sedang memproses QRIS...";
+
+      try {
+        const response = await fetch("https://demo-qris-chatgpt.vercel.app/buatQRIS");
+        const data = await response.json();
+
+        if (data.success) {
+          qrisBox.innerHTML = `
+            <p>✅ QRIS berhasil dibuat:</p>
+            <img src="${data.data.qr_url}" width="250" alt="QRIS Dinamis" />
+            <p><strong>Kode Bayar:</strong> ${data.data.reference}</p>
+          `;
+        } else {
+          qrisBox.innerHTML = `<p>❌ Gagal: ${data.message}</p>`;
+        }
+      } catch (err) {
+        console.error(err);
+        qrisBox.innerHTML = `<p>⚠️ Gagal membuat QRIS (CORS atau jaringan error)</p>`;
+      }
+    }
+  </script>
+
+</body>
+</html>
