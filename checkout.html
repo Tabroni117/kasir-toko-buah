@@ -254,6 +254,27 @@
                 <label for="ewallet">E-Wallet (OVO, GoPay, DANA)</label>
                 <i class="fas fa-wallet"></i>
             </div>
+            <div id="eWalletTypeWrapper" style="display: none; margin: 10px 0;">
+  <label for="eWalletType" style="font-weight: 500;">Pilih Jenis E-Wallet:</label>
+  <select id="eWalletType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+    <option value="QRIS" selected>QRIS (Scan Semua E-Wallet)</option>
+    <option value="OVO">OVO</option>
+    <option value="DANA">DANA</option>
+    <option value="GoPay">GoPay</option>
+  </select>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+            
 
             <div class="order-summary-checkout">
                 <h3 class="section-title-checkout">Ringkasan Pesanan</h3>
@@ -437,109 +458,164 @@
         });
 
         // --- Logika Pembuatan Pesanan ---
-        placeOrderButton.addEventListener('click', async function() {
-            const fullName = fullNameInput.value.trim();
-            const phoneNumber = phoneNumberInput.value.trim();
-            const deliveryAddress = deliveryAddressInput.value.trim();
-            const notes = notesInput.value.trim();
-            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+  placeOrderButton.addEventListener('click', async function () {
+  const fullName = fullNameInput.value.trim();
+  const phoneNumber = phoneNumberInput.value.trim();
+  const deliveryAddress = deliveryAddressInput.value.trim();
+  const notes = notesInput.value.trim();
+  const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+  const selectedEWalletType = selectedPaymentMethod === "E-Wallet"
+    ? document.getElementById("eWalletType").value
+    : null;
 
-            if (!fullName || !phoneNumber || !deliveryAddress) {
-                alert('Harap lengkapi semua informasi pengiriman: Nama, Nomor Telepon, dan Alamat.');
-                return;
-            }
+  if (!fullName || !phoneNumber || !deliveryAddress) {
+    alert('Harap lengkapi semua informasi pengiriman: Nama, Nomor Telepon, dan Alamat.');
+    return;
+  }
 
-            if (cart.length === 0) {
-                alert('Keranjang Anda kosong. Tidak ada yang bisa dipesan.');
-                window.location.href = 'apl05.html'; // Kembali ke menu utama
-                return;
-            }
+  if (cart.length === 0) {
+    alert('Keranjang Anda kosong. Tidak ada yang bisa dipesan.');
+    window.location.href = 'apl05.html';
+    return;
+  }
 
-            // Dapatkan subtotal dan total terakhir
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const total = subtotal + (subtotal > 0 ? DELIVERY_FEE : 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = subtotal + (subtotal > 0 ? DELIVERY_FEE : 0);
 
-            // Data pesanan untuk dikirim ke koleksi 'pesanan' di Firebase Firestore
-            const orderData = {
-                userId: currentUserId, // Simpan UID pengguna yang memesan
-                // displayOrderId: generateDisplayOrderId(), // Baris ini akan dihapus/tidak digunakan
-                customer: {
-                    fullName: fullName,
-                    phoneNumber: phoneNumber,
-                    address: deliveryAddress,
-                    notes: notes
-                },
-                items: cart.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity,
-                    image: item.image // Sertakan juga gambar jika diperlukan di kasir
-                })),
-                subtotal: subtotal,
-                deliveryFee: (subtotal > 0 ? DELIVERY_FEE : 0),
-                totalAmount: total,
-                paymentMethod: selectedPaymentMethod,
-                status: 'Pending', // Status awal pesanan
-                waktu: firebase.firestore.FieldValue.serverTimestamp() // Timestamp dari server Firebase
-            };
+  const orderData = {
+    userId: currentUserId,
+    customer: {
+      fullName,
+      phoneNumber,
+      address: deliveryAddress,
+      notes
+    },
+    items: cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image
+    })),
+    subtotal,
+    deliveryFee: (subtotal > 0 ? DELIVERY_FEE : 0),
+    totalAmount: total,
+    paymentMethod: selectedPaymentMethod,
+    eWalletType: selectedEWalletType,
+    status: 'Pending',
+    waktu: firebase.firestore.FieldValue.serverTimestamp()
+  };
+// --- Logika Pembuatan Pesanan ---
+placeOrderButton.addEventListener('click', async () => {
+  const fullName = fullNameInput?.value.trim();
+  const phoneNumber = phoneNumberInput?.value.trim();
+  const deliveryAddress = deliveryAddressInput?.value.trim();
+  const notes = notesInput?.value.trim();
 
-            placeOrderButton.disabled = true; // Nonaktifkan tombol untuk mencegah double click
-            placeOrderButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Membuat Pesanan...';
+  const selectedPaymentRadio = document.querySelector('input[name="paymentMethod"]:checked');
+  const selectedPaymentMethod = selectedPaymentRadio?.value || null;
 
+  const selectedEWalletType = selectedPaymentMethod === "E-Wallet"
+    ? document.getElementById("eWalletType")?.value
+    : null;
 
+  // Validasi input wajib
+  if (!fullName || !phoneNumber || !deliveryAddress) {
+    alert('⚠️ Harap lengkapi Nama, Nomor Telepon, dan Alamat.');
+    return;
+  }
 
-try {
-    // 1. Simpan ke koleksi 'pesanan' untuk PENJUAL
+  if (!selectedPaymentMethod) {
+    alert('⚠️ Silakan pilih metode pembayaran terlebih dahulu.');
+    return;
+  }
+
+  if (selectedPaymentMethod === "E-Wallet" && !selectedEWalletType) {
+    alert('⚠️ Silakan pilih jenis E-Wallet.');
+    return;
+  }
+
+  if (cart.length === 0) {
+    alert('🛒 Keranjang kosong. Kembali ke menu.');
+    window.location.href = 'apl05.html';
+    return;
+  }
+
+  // Hitung total
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = subtotal + (subtotal > 0 ? DELIVERY_FEE : 0);
+
+  // Struktur data pesanan
+  const orderData = {
+    userId: currentUserId,
+    customer: {
+      fullName,
+      phoneNumber,
+      address: deliveryAddress,
+      notes
+    },
+    items: cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image
+    })),
+    subtotal,
+    deliveryFee: (subtotal > 0 ? DELIVERY_FEE : 0),
+    totalAmount: total,
+    paymentMethod: selectedPaymentMethod,
+    ...(selectedEWalletType && { eWalletType: selectedEWalletType }),
+    status: 'Pending',
+    waktu: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  // Nonaktifkan tombol sementara
+  placeOrderButton.disabled = true;
+  placeOrderButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Membuat Pesanan...';
+
+  try {
+    // Simpan ke Firestore
     const docRef = await pesananCollection.add(orderData);
     const orderId = docRef.id;
     const shortOrderId = '#' + orderId.substring(0, 6).toUpperCase();
 
-    // Tambahkan ID pendek ke dokumen pesanan
-    await pesananCollection.doc(orderId).update({
-        displayOrderId: shortOrderId
-    });
+    await pesananCollection.doc(orderId).update({ displayOrderId: shortOrderId });
 
-    // 2. Salin juga ke koleksi 'riwayat_customer/{uid}/pesanan/{orderId}'
-    const customerRef = db.collection('riwayat_customer').doc(currentUserId).collection('pesanan').doc(orderId);
-    await customerRef.set({
-        ...orderData,
-        displayOrderId: shortOrderId
-    });
+    const customerRef = db
+      .collection('riwayat_customer')
+      .doc(currentUserId)
+      .collection('pesanan')
+      .doc(orderId);
+    await customerRef.set({ ...orderData, displayOrderId: shortOrderId });
 
-    // Simpan ID pesanan ke sessionStorage
     sessionStorage.setItem('lastOrderId', shortOrderId);
-    localStorage.removeItem('cart'); // Kosongkan keranjang
+    localStorage.removeItem('cart');
 
-    if (selectedPaymentMethod === "E-Wallet") {
-        // Jika QRIS, tampilkan QR
-        await buatQRIS(total);
-        alert(`✅ Pesanan berhasil dibuat!\n\nSilakan lakukan pembayaran menggunakan QRIS di bawah ini.\n\nNomor Pesanan: ${shortOrderId}`);
-        placeOrderButton.disabled = false;
-        placeOrderButton.innerHTML = 'Buat Pesanan'; // Kembalikan tombol
+    // QRIS
+    if (selectedPaymentMethod === "E-Wallet" && selectedEWalletType === "QRIS") {
+      await buatQRIS(total, fullName);
+      alert(`✅ Pesanan berhasil dibuat!\n\nSilakan bayar via QRIS di bawah.\n\nNomor Pesanan: ${shortOrderId}`);
     } else {
-        // Jika COD / Transfer, langsung arahkan
-        alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode Pembayaran: ${selectedPaymentMethod}\nTotal: ${formatRupiah(total)}\n\nNomor Pesanan Anda: ${shortOrderId}`);
-        window.location.href = 'payment-confirmation.html';
+      alert(`Pesanan Berhasil!\n\nNama: ${fullName}\nAlamat: ${deliveryAddress}\nMetode: ${selectedPaymentMethod}${selectedEWalletType ? ' - ' + selectedEWalletType : ''}\nTotal: ${formatRupiah(total)}\n\nNomor Pesanan Anda: ${shortOrderId}`);
+      window.location.href = 'payment-confirmation.html';
     }
 
-} catch (error) {
-    console.error("Gagal menyimpan pesanan: ", error);
-    alert("❌ Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.");
-    placeOrderButton.disabled = false;
-    placeOrderButton.innerHTML = 'Buat Pesanan';
-}
+  } catch (error) {
+    console.error("❌ Gagal menyimpan pesanan: ", error);
+    alert("❌ Terjadi kesalahan. Silakan coba lagi.");
+  }
 
+  // Aktifkan kembali tombol
+  placeOrderButton.disabled = false;
+  placeOrderButton.innerHTML = 'Buat Pesanan';
+});
 
-
-            
-        });
-
-        // --- Inisialisasi Awal ---
-        // renderOrderSummary() dan proteksi halaman akan dijalankan di auth.onAuthStateChanged
-
-  async function buatQRIS(totalAmount) {
+// --- Fungsi Buat QRIS Dinamis ---
+async function buatQRIS(totalAmount, customerName) {
   const qrisBox = document.getElementById("qrisBox");
+  if (!qrisBox) return;
+
   qrisBox.innerHTML = "⏳ Sedang memproses QRIS...";
 
   try {
@@ -550,7 +626,7 @@ try {
         method: "QRIS",
         merchant_ref: "INV-" + Date.now(),
         amount: totalAmount,
-        customer_name: fullNameInput.value || "Pembeli"
+        customer_name: customerName || "Pembeli"
       })
     });
 
@@ -559,16 +635,27 @@ try {
       qrisBox.innerHTML = `
         <p>✅ QRIS berhasil dibuat:</p>
         <img src="${data.data.qr_url}" width="220" />
-        <p style="font-weight:bold;">Kode Bayar: ${data.data.reference}</p>
+        <p style="font-weight: bold;">Kode Bayar: ${data.data.reference}</p>
       `;
     } else {
       qrisBox.innerHTML = `<p>❌ Gagal: ${data.message}</p>`;
     }
   } catch (err) {
-    console.error(err);
-    qrisBox.innerHTML = `<p>⚠️ Gagal membuat QRIS. Cek koneksi atau CORS error.</p>`;
+    console.error("QRIS Error:", err);
+    qrisBox.innerHTML = `<p>⚠️ Gagal membuat QRIS. Periksa koneksi atau CORS error.</p>`;
   }
 }
+
+// --- Tampilkan Dropdown Jenis E-Wallet ---
+const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+const eWalletTypeWrapper = document.getElementById('eWalletTypeWrapper');
+
+paymentRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    eWalletTypeWrapper.style.display = (radio.value === "E-Wallet" && radio.checked) ? 'block' : 'none';
+  });
+});
+   
     </script>
 </body>
 </html>
