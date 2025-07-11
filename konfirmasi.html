@@ -113,7 +113,6 @@
     messagingSenderId: "731011133713",
     appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
   };
-
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
@@ -127,33 +126,20 @@
   const statusInfo = document.getElementById('statusInfo');
 
   auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      location.href = "index.html";
+    if (!user) return location.href = "index.html";
+    const snapshot = await db.collection('riwayat_customer').doc(user.uid).collection('pesanan').where("paymentMethod", "==", "Transfer Bank").get();
+    
+    if (snapshot.empty) {
+      statusInfo.textContent = "❌ Tidak ada pesanan transfer bank ditemukan.";
       return;
     }
 
-    console.log("✅ Login sebagai UID:", user.uid);
-
-    try {
-      const snapshot = await db.collection('riwayat_customer')
-        .doc(user.uid)
-        .collection('pesanan')
-        .where("paymentMethod", "==", "Transfer Bank")
-        .get();
-
-      if (snapshot.empty) {
-        orderIdSelect.innerHTML = `<option disabled selected>Tidak ada pesanan via Transfer Bank</option>`;
-      } else {
-        snapshot.forEach(doc => {
-          const opt = document.createElement("option");
-          opt.value = doc.id;
-          opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
-          orderIdSelect.appendChild(opt);
-        });
-      }
-    } catch (err) {
-      console.error("❌ Gagal memuat daftar pesanan:", err);
-    }
+    snapshot.forEach(doc => {
+      const opt = document.createElement("option");
+      opt.value = doc.id;
+      opt.textContent = doc.data().displayOrderId || ("#" + doc.id.substring(0, 6).toUpperCase());
+      orderIdSelect.appendChild(opt);
+    });
   });
 
   kirimBtn.addEventListener("click", async () => {
@@ -163,29 +149,25 @@
     const file = buktiInput.files[0];
 
     if (!orderId || !namaPengirim || !bankTujuan || !file) {
-      alert("Harap lengkapi semua data!");
+      statusInfo.textContent = "❌ Harap lengkapi semua data!";
       return;
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("File harus berupa gambar!");
+      statusInfo.textContent = "❌ File harus berupa gambar!";
       return;
     }
 
     kirimBtn.disabled = true;
-    statusInfo.textContent = "⏳ Mengirim...";
-    console.log("📤 Mulai proses kirim konfirmasi...");
+    statusInfo.textContent = "⏳ Upload gambar...";
 
     try {
-      const fileName = `${orderId}_${Date.now()}.jpg`;
-      const storageRef = storage.ref().child(`bukti_transfer/${fileName}`);
+      const storageRef = storage.ref().child(`bukti_transfer/${orderId}_${Date.now()}.jpg`);
+      const snapshot = await storageRef.put(file);
 
-      console.log("📸 Uploading file ke:", storageRef.fullPath);
-      const uploadTask = await storageRef.put(file);
+      statusInfo.textContent = "✅ Upload berhasil. Mengirim data ke database...";
 
-      console.log("✅ Upload berhasil:", uploadTask.metadata);
-      const fileUrl = await storageRef.getDownloadURL();
-      console.log("🔗 URL bukti transfer:", fileUrl);
+      const fileUrl = await snapshot.ref.getDownloadURL();
 
       await db.collection("konfirmasi_pembayaran").add({
         orderId,
@@ -196,10 +178,7 @@
         status: "Menunggu Verifikasi"
       });
 
-      console.log("✅ Data berhasil ditulis ke Firestore!");
       statusInfo.textContent = "✅ Konfirmasi berhasil dikirim!";
-      
-      // Reset form
       kirimBtn.disabled = false;
       buktiInput.value = "";
       namaPengirimInput.value = "";
@@ -207,8 +186,7 @@
       orderIdSelect.selectedIndex = 0;
 
     } catch (error) {
-      console.error("❌ Gagal mengirim konfirmasi:", error);
-      statusInfo.textContent = "❌ Gagal mengirim. Silakan coba lagi.";
+      statusInfo.textContent = "❌ ERROR: " + error.message;
       kirimBtn.disabled = false;
     }
   });
