@@ -1,585 +1,1139 @@
-<!DOCTYPE html>
 <html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
+    <meta charset="UTF-8">
 
-        body {
-            background-color: #f9f9f9;
-            color: #333;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
-            min-height: 100vh;
-            position: relative;
-            padding-bottom: 50px; /* Space for bottom nav */
-            /* PENTING: Hitung ulang padding-top untuk mengompensasi header & promo banner */
-            /* Tinggi header (12px + 20px padding + perkiraan tinggi title/tagline/margin ~40px + address bar 40px) = ~120px */
-            /* Tinggi promo banner (100px slide + 0 padding di banner itu sendiri) = 100px */
-            /* Total sekitar 120px + 100px = 220px. Beri sedikit lebih untuk jaga-jaga. */
-            padding-top: 230px; /* Nilai yang disesuaikan */
-        }
+    <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
 
-        /* Header Asli yang Dipertahankan dan Dibuat Fixed */
-        .header {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 12px 16px 20px;
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px; /* PENTING: Tetapkan max-width agar tidak melebihi container */
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-        .header-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 8px;
-        }
+    
 
-        .app-header {
-            margin-bottom: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 
-        .app-title {
-            font-weight: bold;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            margin-bottom: 4px;
-        }
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-        .leaf-icon {
-            margin-right: 10px;
-            font-size: 24px;
-        }
-        
-        .app-tagline {
-            font-size: 12px;
-            font-style: italic;
-            margin-bottom: 0;
-            color: rgba(255,255,255,0.9);
-        }
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-        /* Logout Button Style */
-        .logout-btn {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s, border-color 0.3s;
-            margin-left: auto;
-            white-space: nowrap;
-        }
-        .logout-btn:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
 
-        .address-bar {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            position: relative;
-            width: 100%;
-            color: #333;
-        }
 
-        .gps-icon {
-            color: #00C853;
-            margin-right: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-        .gps-icon.loading {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
+    <style>
 
-        .delivery-input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            color: #333;
-        }
+        * {
 
-        .location-placeholder {
-            color: #999;
-        }
+            margin: 0;
 
-        /* Promo Banner (DIUBAH MENJADI FIXED) */
-        .promo-banner {
-            position: fixed;
-            /* Pastikan top setelah header. Header sekitar 120px tingginya */
-            top: 135px; 
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 480px; /* PENTING: Tambahkan kembali max-width ini */
-            /* Hapus padding dari .promo-banner, pindahkan ke promo-slides-container */
-            /* padding: 0; */ 
-            overflow: visible; /* Penting agar konten di dalam bisa discroll dan tidak terpotong */
-            background: white;
-            z-index: 900;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-        
-        .promo-slides-container {
-            display: flex;
-            gap: 12px;
-            /* transform tidak lagi digunakan untuk scrolling otomatis */
-            /* transition: transform 0.5s ease; */ 
-            white-space: nowrap;
-            overflow-x: auto; /* Ini yang akan membuat gulir horizontal */
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x mandatory;
-            padding: 0 16px; /* Padding di sini untuk jarak dari tepi max-width */
-        }
+            padding: 0;
 
-        /* Sembunyikan scrollbar untuk promo slides */
-        .promo-slides-container::-webkit-scrollbar { 
-            display: none;
-        }
-        .promo-slides-container {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
+            box-sizing: border-box;
 
-        .promo-slide {
-            min-width: 210px; /* Pertahankan ini, atau sesuaikan jika terlalu lebar */
-            height: 135px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            scroll-snap-align: start;
-            box-shadow:
-                2px 2px 3px rgba(22, 163, 74, 0.5),
-                4px 4px 4px rgba(22, 163, 74, 0.6),
-                6px 6px 5px rgba(22, 163, 74, 0.7);
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-        }
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
-        .promo-slide:hover {
-            box-shadow:
-                2px 2px 4px rgba(22, 163, 74, 0.6),
-                4px 4px 6px rgba(22, 163, 74, 0.7),
-                6px 6px 8px rgba(22, 163, 74, 0.8);
-            transform: translateY(-3px);
-        }
+        }
 
-        .promo-title {
-            font-size: 14px;
-            font-weight: bold;
-        }
 
-        .promo-desc {
-            font-size: 12px;
-        }
 
-        /* Categories */
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            padding: 16px;
-            background: white;
-            margin-bottom: 8px;
-        }
+        body {
 
-        .category {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px;
-            background:#ffffff;
-            border-radius: 12px;
-            transition: transform 0.2s ease;
-            cursor: pointer;
-        }
+            background-color: #f9f9f9;
 
-        .category:hover {
-            transform: translateY(-2px);
-        }
+            color: #333;
 
-        .category-icon {
-            background: #3ee36f;
-            color: #ffffff;
-            border-radius: 10px;
-            border-bottom: 2px solid #15803d;
-            border-right: 2px solid #15803d;
-            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            margin-bottom: 6px;
-        }
+        }
 
-        .category:hover .category-icon,
-        .category.active .category-icon {
-            background: #3ee36f;
-            color: #ffffff;
-            transform: scale(1.1);
-            box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
-            animation: softGlow 1.8s ease-in-out infinite alternate;
-        }
 
-        @keyframes softGlow {
-            from {
-                box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
-            }
-            to {
-                box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
-            }
-        }
 
-        .category-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #22c55e;
-            text-align: center;
-            line-height: 1.2;
-        }
+        .container {
 
-        @keyframes spinIcon {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+            max-width: 480px;
 
-        .category-icon i.rotating {
-            animation: spinIcon 2s linear infinite;
-        }
+            margin: 0 auto;
 
-        /* Menu Terlaris */
-        .section-title {
-            padding: 16px 16px 8px;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+            background: white;
 
-        .see-all {
-            font-size: 12px;
-            color: #00C853;
-            font-weight: normal;
-        }
+            min-height: 100vh;
 
-        .restaurants {
-            padding: 0 16px 16px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
+            position: relative;
 
-        .restaurant-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
+            padding-bottom: 50px; /* Space for bottom nav */
 
-        .restaurant-card:hover {
-            transform: translateY(-3px);
-        }
+        }
 
-        .restaurant-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            object-position: center 70%;
-            border-radius: 8px 8px 0 0;
-        }
 
-        .restaurant-info {
-            padding: 10px;
-        }
 
-        .restaurant-name {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        /* Header Asli yang Dipertahankan */
 
-        .restaurant-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #757575;
-        }
+        .header {
 
-        .rating {
-            color: #FFD700;
-        }
+            background: linear-gradient(135deg, #00C853, #64DD17);
 
-        .delivery-time {
-            color: #00C853;
-        }
+            color: white;
 
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            justify-content: space-around;
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            padding: 6px 0;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            z-index: 1000;
-            left: 50%;
-            transform: translateX(-50%);
-        }
+            padding: 12px 16px 20px;
 
-        .nav-item {
-            text-align: center;
-            color: rgba(255,255,255,0.7);
-            font-size: 10px;
-            padding: 4px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
+            position: sticky;
 
-        .nav-item.active {
-            color: white;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
+            top: 0;
 
-        .nav-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-            color: white;
-        }
+            z-index: 100;
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
-        .fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+            border-bottom-left-radius: 20px;
 
-        /* Loading message for menu list */
-        .menu-loading-message {
-            text-align: center;
-            padding: 20px;
-            color: #757575;
-            font-size: 1.1em;
-        }
-    </style>
+            border-bottom-right-radius: 20px;
+
+            display: flex; /* Make header a flex container */
+
+            flex-direction: column; /* Menjaga app-header dan address-bar bertumpuk */
+
+            align-items: flex-start; /* Mengatur alignment ke kiri */
+
+        }
+
+
+
+        .header-top-row { /* Kontainer untuk judul & logout button */
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%; /* Agar memenuhi lebar header */
+
+            margin-bottom: 8px; /* Jarak ke address-bar */
+
+        }
+
+
+
+        .app-header {
+
+            margin-bottom: 0; /* Tidak perlu margin-bottom di sini */
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: flex-start; /* Default alignment */
+
+        }
+
+
+
+        .app-title {
+
+            font-weight: bold;
+
+            font-size: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            margin-bottom: 4px;
+
+        }
+
+
+
+        .leaf-icon {
+
+            margin-right: 10px;
+
+            font-size: 24px;
+
+        }
+
+        
+
+        .app-tagline {
+
+            font-size: 12px;
+
+            font-style: italic;
+
+            margin-bottom: 0;
+
+            color: rgba(255,255,255,0.9);
+
+        }
+
+
+
+        /* Logout Button Style */
+
+        .logout-btn {
+
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+
+            color: white;
+
+            border: 1px solid rgba(255, 255, 255, 0.4);
+
+            padding: 8px 15px;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            font-size: 0.9em;
+
+            transition: background-color 0.3s, border-color 0.3s;
+
+            margin-left: auto; /* Push button to the right */
+
+            white-space: nowrap; /* Prevent text from wrapping */
+
+        }
+
+        .logout-btn:hover {
+
+            background-color: rgba(255, 255, 255, 0.3);
+
+            border-color: rgba(255, 255, 255, 0.6);
+
+        }
+
+
+
+        .address-bar {
+
+            display: flex;
+
+            align-items: center;
+
+            background: white;
+
+            border-radius: 8px;
+
+            padding: 10px;
+
+            position: relative;
+
+            width: 100%; /* Make it full width again below the header info */
+
+        }
+
+
+
+        .gps-icon {
+
+            color: #00C853;
+
+            margin-right: 8px;
+
+            font-size: 18px;
+
+            cursor: pointer;
+
+            transition: transform 0.3s;
+
+        }
+
+        .gps-icon.loading {
+
+            animation: spin 1s linear infinite;
+
+        }
+
+        @keyframes spin {
+
+            100% { transform: rotate(360deg); }
+
+        }
+
+
+
+        .delivery-input {
+
+            flex-grow: 1;
+
+            border: none;
+
+            outline: none;
+
+            font-size: 14px;
+
+            color: #333;
+
+        }
+
+
+
+        .location-placeholder {
+
+            color: #999;
+
+        }
+
+
+
+        /* Promo Banner */
+
+        .promo-banner {
+
+            padding: 16px;
+
+            overflow: hidden;
+
+            position: relative;
+
+            background: white;
+
+            margin-bottom: 8px;
+
+        }
+
+        
+
+        .promo-slides-container {
+
+            display: flex;
+
+            gap: 12px;
+
+            transition: transform 0.5s ease;
+
+            white-space: nowrap;
+
+        }
+
+
+
+        .promo-banner::-webkit-scrollbar {
+
+            display: none;
+
+        }
+
+
+
+        .promo-slide {
+
+            min-width: 200px;
+
+            height: 100px;
+
+            border-radius: 8px;
+
+            background: linear-gradient(135deg, #00C853, #64DD17);
+
+            color: white;
+
+            padding: 12px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: space-between;
+
+            scroll-snap-align: start;
+
+        }
+
+
+
+        .promo-title {
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+        }
+
+
+
+        .promo-desc {
+
+            font-size: 12px;
+
+        }
+
+
+
+        /* Categories */
+
+        .categories {
+
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 8px;
+
+            padding: 16px;
+
+            background: white;
+
+            margin-bottom: 8px;
+
+        }
+
+
+
+        .category {
+
+            text-align: center;
+
+            padding: 8px 0;
+
+            border-radius: 8px;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .category:hover {
+
+            background: #f0f0f0;
+
+        }
+
+
+
+        .category-icon {
+
+            width: 40px;
+
+            height: 40px;
+
+            margin: 0 auto 6px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #f5f5f5;
+
+            border-radius: 50%;
+
+            color: #00C853;
+
+        }
+
+
+
+        .category-name {
+
+            font-size: 11px;
+
+            font-weight: 500;
+
+        }
+
+
+
+        /* Menu Terlaris */
+
+        .section-title {
+
+            padding: 16px 16px 8px;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+        }
+
+
+
+        .see-all {
+
+            font-size: 12px;
+
+            color: #00C853;
+
+            font-weight: normal;
+
+        }
+
+
+
+        .restaurants {
+
+            padding: 0 16px 16px;
+
+            display: grid;
+
+            grid-template-columns: repeat(2, 1fr);
+
+            gap: 12px;
+
+        }
+
+
+
+        .restaurant-card {
+
+            background: white;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+            cursor: pointer;
+
+            transition: transform 0.2s;
+
+        }
+
+
+
+        .restaurant-card:hover {
+
+            transform: translateY(-3px);
+
+        }
+
+
+
+        .restaurant-image {
+
+            width: 100%;
+
+            height: 120px;
+
+            object-fit: cover;
+
+            object-position: center 70%;
+
+            border-radius: 8px 8px 0 0;
+
+        }
+
+
+
+        .restaurant-info {
+
+            padding: 10px;
+
+        }
+
+
+
+        .restaurant-name {
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            margin-bottom: 4px;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+        }
+
+
+
+        .restaurant-meta {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            font-size: 10px;
+
+            color: #757575;
+
+        }
+
+
+
+        .rating {
+
+            color: #FFD700;
+
+        }
+
+
+
+        .delivery-time {
+
+            color: #00C853;
+
+        }
+
+
+
+        /* Bottom Navigation */
+
+        .bottom-nav {
+
+            position: fixed;
+
+            bottom: 0;
+
+            width: 100%;
+
+            max-width: 480px;
+
+            display: flex;
+
+            justify-content: space-around;
+
+            background: linear-gradient(135deg, #00C853, #64DD17);
+
+            padding: 6px 0;
+
+            border-top: 1px solid rgba(255,255,255,0.2);
+
+            z-index: 1000;
+
+        }
+
+
+
+        .nav-item {
+
+            text-align: center;
+
+            color: rgba(255,255,255,0.7);
+
+            font-size: 10px;
+
+            padding: 4px;
+
+            transition: all 0.3s ease;
+
+            text-decoration: none;
+
+        }
+
+
+
+        .nav-item.active {
+
+            color: white;
+
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+
+        }
+
+
+
+        .nav-icon {
+
+            font-size: 20px;
+
+            margin-bottom: 4px;
+
+            color: white;
+
+        }
+
+
+
+        @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        .fade-in {
+
+            animation: fadeIn 0.3s ease-out forwards;
+
+        }
+
+
+
+        /* Loading message for menu list */
+
+        .menu-loading-message {
+
+            text-align: center;
+
+            padding: 20px;
+
+            color: #757575;
+
+            font-size: 1.1em;
+
+        }
+
+
+
+.promo-slide {
+
+  box-shadow:
+
+    2px 2px 3px rgba(22, 163, 74, 0.5),
+
+    4px 4px 4px rgba(22, 163, 74, 0.6),
+
+    6px 6px 5px rgba(22, 163, 74, 0.7);
+
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+}
+
+
+
+.promo-slide:hover {
+
+  box-shadow:
+
+    2px 2px 4px rgba(22, 163, 74, 0.6),
+
+    4px 4px 6px rgba(22, 163, 74, 0.7),
+
+    6px 6px 8px rgba(22, 163, 74, 0.8);
+
+  transform: translateY(-3px);
+
+}
+
+
+
+
+
+
+
+.categories {
+
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 12px;
+
+  margin: 20px 0;
+
+}
+
+
+
+.category {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  padding: 12px;
+
+  background:#ffffff;
+
+  border-radius: 12px;
+
+  transition: transform 0.2s ease;
+
+  cursor: pointer;
+
+}
+
+
+
+.category:hover {
+
+  transform: translateY(-2px);
+
+}
+
+.category-icon {
+
+  background: #3ee36f; /* Hijau neon kinclong */
+
+  color: #ffffff;!important;
+
+  font-size: 18px;
+
+  padding: 14px;
+
+  border-radius: 50%;
+
+  margin-bottom: 6px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition: all 0.35s ease;
+
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+}
+
+        .category-icon {
+
+  background: #3ee36f; /* Hijau cerah elegan */
+
+  color: #ffffff;
+
+  border-radius: 10px;
+
+  border-bottom: 2px solid #15803d; /* Hijau gelap untuk bawah */
+
+  border-right: 2px solid #15803d;  /* Hijau gelap untuk kanan */
+
+  box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3); /* Bayangan arah kanan bawah */
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+}
+
+
+
+.category:hover .category-icon,
+
+.category.active .category-icon {
+
+  background: #3ee36f
+
+  color: #ffffff;
+
+  transform: scale(1.1);
+
+  box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
+
+  animation: softGlow 1.8s ease-in-out infinite alternate;
+
+}
+
+
+
+@keyframes softGlow {
+
+  from {
+
+    box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
+
+  }
+
+  to {
+
+    box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
+
+  }
+
+}
+
+
+
+.category-name {
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  color: #22c55e;
+
+  text-align: center;
+
+  line-height: 1.2;
+
+}
+
+
+
+@keyframes spinIcon {
+
+  0% { transform: rotate(0deg); }
+
+  100% { transform: rotate(360deg); }
+
+}
+
+
+
+.category-icon i.rotating {
+
+  animation: spinIcon 2s linear infinite;
+
+}
+
+.promo-banner {
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 50;
+
+  background: white; /* atau #f0fdf4 agar tidak transparan saat scroll */
+
+  padding: 10px 16px;
+
+}
+
+
+
+
+
+        
+
+        
+
+    </style>
+
 </head>
+
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="header-top-row">
-                <div class="app-header">
-                    <div class="app-title">
-                        <i class="fas fa-leaf leaf-icon"></i>
-                        RUJAK BUAH INDONESIA
-                    </div>
-                    <div class="app-tagline">Aplikasi Pelanggan</div>
-                </div>
-                <button onclick="logout()" class="logout-btn">
-                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                </button>
-            </div>
-            <div class="address-bar">
-                <i class="fas fa-map-marker-alt gps-icon"></i>
-                <input type="text" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
-            </div>
-        </header>
 
-        <div class="promo-banner">
-            <div class="promo-slides-container" id="promoSlides">
-                <div class="promo-slide">
-                    <span class="promo-title">DISKON 20%</span>
-                    <span class="promo-desc">Min. order Rp 50.000</span>
-                </div>
-                <div class="promo-slide">
-                    <span class="promo-title">GRATIS ONGKIR</span>
-                    <span class="promo-desc">Syarat & ketentuan berlaku</span>
-                </div>
-                <div class="promo-slide">
-                    <span class="promo-title">NEW USER</span>
-                    <span class="promo-desc">Diskon hingga Rp 30.000</span>
-                </div>
-            </div>
-        </div>
-        
+    <div class="container">
+
+        <header class="header">
+
+            <div class="header-top-row">
+
+                <div class="app-header">
+
+                    <div class="app-title">
+
+                        <i class="fas fa-leaf leaf-icon"></i>
+
+                        RUJAK BUAH INDONESIA
+
+                    </div>
+
+                    <div class="app-tagline">Aplikasi Pelanggan</div>
+
+                </div>
+
+                <button onclick="logout()" class="logout-btn">
+
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+
+                </button>
+
+            </div>
+
+            <div class="address-bar">
+
+                <i class="fas fa-map-marker-alt gps-icon"></i>
+
+                <input type="text" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
+
+            </div>
+
+        </header>
 
 
-        <div class="categories">
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-hamburger"></i>
-                </div>
-                <div class="category-name">Cepat Saji</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-utensils"></i>
-                </div>
-                <div class="category-name">Makanan</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-coffee"></i>
-                </div>
-                <div class="category-name">Minuman</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-birthday-cake"></i>
-                </div>
-                <div class="category-name">Kue</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-fish"></i>
-                </div>
-                <div class="category-name">Seafood</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-pepper-hot"></i>
-                </div>
-                <div class="category-name">Pedas</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-leaf"></i>
-                </div>
-                <div class="category-name">Vegetarian</div>
-            </div>
-            <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-ellipsis-h"></i>
-                </div>
-                <div class="category-name">Lainnya</div>
-            </div>
-        </div>
 
-        <div class="section-title">
-            Menu Terlaris
-            <span class="see-all">Lihat Semua</span>
-        </div>
-        <div class="restaurants" id="menuList">
-            <p class="menu-loading-message">Memuat menu...</p>
-            <div class="restaurant-card">
-                <img src="https://via.placeholder.com/150x120/90EE90/008000?text=Rujak+Manis" alt="Rujak Buah Manis" class="restaurant-image">
-                <div class="restaurant-info">
-                    <div class="restaurant-name">Rujak Buah Manis</div>
-                    <div class="restaurant-meta">
-                        <span class="rating"><i class="fas fa-star"></i> 4.8</span>
-                        <span class="delivery-time">15-20 min</span>
-                    </div>
-                </div>
-            </div>
-             <div class="restaurant-card">
-                <img src="https://via.placeholder.com/150x120/FFC0CB/C71585?text=Es+Campur" alt="Es Campur Segar" class="restaurant-image">
-                <div class="restaurant-info">
-                    <div class="restaurant-name">Es Campur Segar</div>
-                    <div class="restaurant-meta">
-                        <span class="rating"><i class="fas fa-star"></i> 4.5</span>
-                        <span class="delivery-time">10-15 min</span>
-                    </div>
-                </div>
-            </div>
-             <div class="restaurant-card">
-                <img src="https://via.placeholder.com/150x120/ADD8E6/4682B4?text=Jus+Buah" alt="Jus Buah Mix" class="restaurant-image">
-                <div class="restaurant-info">
-                    <div class="restaurant-name">Jus Buah Mix</div>
-                    <div class="restaurant-meta">
-                        <span class="rating"><i class="fas fa-star"></i> 4.7</span>
-                        <span class="delivery-time">5-10 min</span>
-                    </div>
-                </div>
-            </div>
-             <div class="restaurant-card">
-                <img src="https://via.placeholder.com/150x120/FFDAB9/FF4500?text=Salad+Buah" alt="Salad Buah Creamy" class="restaurant-image">
-                <div class="restaurant-info">
-                    <div class="restaurant-name">Salad Buah Creamy</div>
-                    <div class="restaurant-meta">
-                        <span class="rating"><i class="fas fa-star"></i> 4.9</span>
-                        <span class="delivery-time">20-25 min</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="promo-banner">
 
-        <div class="bottom-nav">
-            <a href="apl05.html" class="nav-item active">
-                <i class="fas fa-home nav-icon"></i>
-                <div>Beranda</div>
-            </a>
-            <a href="order-history.html" class="nav-item">
-                <i class="fas fa-search nav-icon"></i>
-                <div>Cari</div>
-            </a>
-            <a href="cart.html" class="nav-item"> <i class="fas fa-shopping-bag nav-icon"></i>
-                <div>Pesanan</div>
-            </a>
-            <a href="profile.html" class="nav-item">
-                <i class="fas fa-user nav-icon"></i>
-                <div>Profile</div>
-            </a>
-        </div>
-    </div>
+            <div class="promo-slides-container" id="promoSlides">
+
+                <div class="promo-slide">
+
+                    <span class="promo-title">DISKON 20%</span>
+
+                    <span class="promo-desc">Min. order Rp 50.000</span>
+
+                </div>
+
+                <div class="promo-slide">
+
+                    <span class="promo-title">GRATIS ONGKIR</span>
+
+                    <span class="promo-desc">Syarat & ketentuan berlaku</span>
+
+                </div>
+
+                <div class="promo-slide">
+
+                    <span class="promo-title">NEW USER</span>
+
+                    <span class="promo-desc">Diskon hingga Rp 30.000</span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="categories">
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-hamburger"></i>
+
+                </div>
+
+                <div class="category-name">Cepat Saji</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-utensils"></i>
+
+                </div>
+
+                <div class="category-name">Makanan</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-coffee"></i>
+
+                </div>
+
+                <div class="category-name">Minuman</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-birthday-cake"></i>
+
+                </div>
+
+                <div class="category-name">Kue</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-fish"></i>
+
+                </div>
+
+                <div class="category-name">Seafood</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-pepper-hot"></i>
+
+                </div>
+
+                <div class="category-name">Pedas</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-leaf"></i>
+
+                </div>
+
+                <div class="category-name">Vegetarian</div>
+
+            </div>
+
+            <div class="category">
+
+                <div class="category-icon">
+
+                    <i class="fas fa-ellipsis-h"></i>
+
+                </div>
+
+                <div class="category-name">Lainnya</div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="section-title">
+
+            Menu Terlaris
+
+            <span class="see-all">Lihat Semua</span>
+
+        </div>
+
+        <div class="restaurants" id="menuList">
+
+            <p class="menu-loading-message">Memuat menu...</p>
+
+        </div>
+
+
+
+        <div class="bottom-nav">
+
+            <a href="apl05.html" class="nav-item active">
+
+                <i class="fas fa-home nav-icon"></i>
+
+                <div>Beranda</div>
+
+            </a>
+
+            <a href="order-history.html" class="nav-item">
+
+                <i class="fas fa-search nav-icon"></i>
+
+                <div>Cari</div>
+
+            </a>
+
+            <a href="cart.html" class="nav-item"> <i class="fas fa-shopping-bag nav-icon"></i>
+
+                <div>Pesanan</div>
+
+            </a>
+
+            <a href="profile.html" class="nav-item">
+
+                <i class="fas fa-user nav-icon"></i>
+
+                <div>Profile</div>
+
+            </a>
+
+        </div>
+
+
+
+
+
+
+
+
+
 
     <script>
         // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
