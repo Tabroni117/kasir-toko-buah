@@ -30,10 +30,16 @@
             min-height: 100vh;
             position: relative;
             padding-bottom: 50px; /* Space for bottom nav */
-            /* >>> PERUBAHAN UTAMA UNTUK MENGATASI SHADOW BANNER DAN JARAK DARI ATAS <<< */
-            /* Perlu padding-top yang cukup untuk header (sekitar 120-130px) + banner (100px) + shadow (~20px) */
-            padding-top: 250px; /* Nilai awal, mungkin perlu disesuaikan lagi */
-            /* Pastikan tidak ada overflow: hidden; di sini jika ingin shadow terlihat */
+            /*
+             * PERBAIKAN UTAMA:
+             * Padding top harus mengakomodasi tinggi total dari elemen fixed di atasnya.
+             * Perkiraan tinggi Header: 120px (dengan address bar).
+             * Perkiraan tinggi Promo Banner: 100px.
+             * Total perkiraan ruang yang dibutuhkan: 120px + 100px + (sekitar 20px untuk jarak/shadow) = 240px.
+             * SESUAIKAN NILAI INI jika tata letak masih tumpang tindih atau ada celah besar.
+             * Gunakan Developer Tools untuk mengukur tinggi pasti dari Header dan Promo Banner.
+             */
+            padding-top: 240px; 
             overflow-x: hidden; /* Hanya sembunyikan overflow horizontal jika ada */
         }
 
@@ -42,7 +48,6 @@
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
             padding: 12px 16px 20px;
-            /* >>> PERUBAHAN: Ubah position ke fixed agar selalu di atas <<< */
             position: fixed; /* Header akan selalu di atas */
             top: 0;
             left: 50%; /* Untuk centering */
@@ -118,6 +123,7 @@
             padding: 10px;
             position: relative;
             width: 100%;
+            margin-top: 10px; /* Memberi sedikit jarak dari elemen di atasnya dalam header */
         }
 
         .gps-icon {
@@ -148,9 +154,15 @@
 
         /* Promo Banner */
         .promo-banner {
-            /* >>> PERUBAHAN UTAMA: Ubah position ke fixed agar selalu di bawah header <<< */
-            position: fixed;
-            top: 135px; /* Sesuaikan ini. Ini adalah tinggi header + margin yang dibutuhkan */
+            position: fixed; /* Tetap fixed */
+            /*
+             * PERBAIKAN KRUSIAL:
+             * `top` promo banner harus sama dengan tinggi total `header`.
+             * Berdasarkan struktur HTML Anda, header terdiri dari `.header-top-row` dan `.address-bar`.
+             * Ukur tinggi `.header` (bukan hanya `.header-top-row`) di browser dengan inspect element.
+             * Jika perkiraan saya 120px tidak tepat, sesuaikan di sini.
+             */
+            top: 120px; /* <--- SESUAIKAN: Ini adalah tinggi `header` yang telah Anda ukur. */
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
@@ -158,12 +170,10 @@
             background: white;
             padding: 10px 16px;
             z-index: 999; /* Di bawah header, di atas konten */
-            /* >>> PERUBAHAN: Hapus overflow: hidden; di sini <<< */
             overflow: visible; /* Penting agar shadow tidak terpotong */
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Tambahkan shadow langsung di sini */
-            border-bottom-left-radius: 8px; /* Jika ingin radius di banner juga */
-            border-bottom-right-radius: 8px; /* Jika ingin radius di banner juga */
-            margin-bottom: 0; /* Tidak perlu margin-bottom di fixed element */
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
         }
         
         .promo-slides-container {
@@ -171,8 +181,7 @@
             gap: 12px;
             transition: transform 0.5s ease;
             white-space: nowrap;
-            /* Untuk membuat container bisa discroll manual jika diperlukan, tanpa scrollbar */
-            overflow-x: auto;
+            overflow-x: auto; /* Untuk membuat container bisa discroll manual jika diperlukan, tanpa scrollbar */
             -ms-overflow-style: none; /* IE and Edge */
             scrollbar-width: none; /* Firefox */
             padding-bottom: 5px; /* Beri sedikit padding agar scrollbar tidak menempel jika muncul */
@@ -193,10 +202,7 @@
             flex-direction: column;
             justify-content: space-between;
             scroll-snap-align: start;
-            /* >>> PERUBAHAN: Box-shadow dipindahkan ke .promo-banner untuk mencegah clipping <<< */
-            /* Jika Anda ingin setiap slide memiliki shadow sendiri dan tidak terpotong,
-               maka .promo-banner tidak boleh punya overflow: hidden, dan padding-top .container harus lebih besar */
-            /* Untuk sementara, kita pakai shadow di promo-banner utama */
+            /* Box-shadow dipindahkan ke .promo-banner untuk mencegah clipping */
         }
 
         .promo-title {
@@ -212,10 +218,11 @@
         .categories {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px; /* Dulu 12px, jadi 8px untuk kerapihan dengan padding grid */
-            padding: 16px; /* Padding di dalam kategori */
+            gap: 8px;
+            padding: 16px;
             background: white;
-            margin-top: 10px; /* Jarak dari promo banner */
+            /* Hapus margin-top, karena .container padding-top sudah mengaturnya */
+            /* margin-top: 10px; */
             margin-bottom: 8px;
         }
 
@@ -224,7 +231,6 @@
             padding: 8px 0;
             border-radius: 8px;
             transition: all 0.2s;
-            /* >>> CSS Category lainnya yang Anda berikan <<< */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -241,9 +247,8 @@
         }
 
         .category-icon {
-            /* >>> Menggabungkan dan mengoptimalkan CSS category-icon <<< */
-            width: 40px; /* Tetap pertahankan ukuran */
-            height: 40px; /* Tetap pertahankan ukuran */
+            width: 40px;
+            height: 40px;
             margin: 0 auto 6px;
             display: flex;
             align-items: center;
@@ -587,7 +592,9 @@
             <p class="menu-loading-message">Memuat menu...</p>
         </div>
 
-    </div> <div class="checkout-summary-bar" id="checkoutSummaryBar">
+    </div>
+    
+    <div class="checkout-summary-bar" id="checkoutSummaryBar">
         <div class="cart-info">
             <span id="cartItemCount">0</span> Item dipilih
         </div>
@@ -692,9 +699,9 @@
 
             try {
                 const snapshot = await menuCollection
-                                            .where('isAvailable', '==', true)
-                                            .orderBy('nama')
-                                            .get();
+                                             .where('isAvailable', '==', true)
+                                             .orderBy('nama')
+                                             .get();
 
                 menuList.innerHTML = '';
 
@@ -794,13 +801,9 @@
         function startAutoScroll() {
             if (promoSlides.length <= 1) return;
 
-            // Mengambil lebar elemen pertama (promoSlides[0]) dan menambahkan gap (12px)
-            // Pastikan offsetWidth dihitung setelah elemen dirender dan terlihat.
-            // Mungkin ada baiknya menggunakan setTimeout atau observer jika lebar tidak langsung benar.
-            const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12; 
+            const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12; // 12px for gap
             let slideWidth = calculateSlideWidth();
 
-            // Memperbarui lebar slide jika ukuran layar berubah (misal orientasi HP)
             window.addEventListener('resize', () => {
                 slideWidth = calculateSlideWidth();
             });
@@ -862,42 +865,32 @@
                 cartBadge.textContent = totalItem;
                 cartBadge.style.display = "inline-block";
             } else {
-                cartBadge.style.display = "none";
+                cartBadge.style.display = "none"; // Sembunyikan badge jika 0 item
             }
 
             // Update checkout summary bar
             updateCartSummary(totalItem, totalPrice);
         }
 
-        function goToCheckoutPage() {
-            window.location.href = 'cart.html'; // Mengarahkan ke halaman keranjang (cart.html)
-        }
-
-        // Listener untuk storage (agar checkout bar update jika cart berubah di tab lain)
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'cart') {
-                updateCartSummaryFromLocalStorage();
-            }
-        });
-
-        // Contoh bagaimana Anda akan memanggil updateCartSummary:
-        // Setiap kali ada penambahan/pengurangan item ke keranjang (misal di halaman product-detail atau lainnya),
-        // pastikan Anda memanggil fungsi updateCartSummaryFromLocalStorage()
-        // Contoh:
+        // Contoh: Fungsi ini mungkin dipanggil dari product-detail.html saat item ditambahkan ke keranjang
+        // atau dari halaman keranjang saat kuantitas berubah.
+        // Anda mungkin sudah memiliki ini di file JS terpisah, pastikan ini terintegrasi.
         // function addItemToCart(product, quantity) {
         //     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-        //     // ... logika tambah item ke cart ...
-        //     localStorage.setItem("cart", JSON.stringify(cart));
-        //     updateCartSummaryFromLocalStorage(); // Panggil ini setelah cart diupdate
-        // }
-        // document.addEventListener("DOMContentLoaded", updateCartSummaryFromLocalStorage); // Ini sudah ada
+        //     const existingItemIndex = cart.findIndex(item => item.id === product.id);
 
-        // Panggil fungsi saat DOMContentLoaded atau setelah login Firebase dikonfirmasi
-        // (sudah dipindahkan ke dalam onAuthStateChanged)
-        // document.addEventListener("DOMContentLoaded", function () {
-        //     // Initial update saat halaman dimuat
-        //     updateCartSummaryFromLocalStorage();
-        // });
+        //     if (existingItemIndex > -1) {
+        //         cart[existingItemIndex].quantity += quantity;
+        //     } else {
+        //         cart.push({ ...product, quantity });
+        //     }
+        //     localStorage.setItem("cart", JSON.stringify(cart));
+        //     updateCartSummaryFromLocalStorage(); // Panggil ini setelah update keranjang
+        // }
+
+        function goToCheckoutPage() {
+            window.location.href = 'cart.html'; // Atau halaman checkout Anda
+        }
     </script>
 </body>
 </html>
