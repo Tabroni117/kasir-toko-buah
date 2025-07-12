@@ -252,21 +252,42 @@
                 const itemTotal = item.price * item.quantity;
                 subtotal += itemTotal; // Tambahkan ke subtotal
 
-                const cartItemDiv = document.createElement('div');
-                cartItemDiv.classList.add('cart-item');
-                cartItemDiv.innerHTML = `
-                    <img src="${item.image}" alt="${item.name}" class="cart-item-image">
-                    <div class="cart-item-details">
-                        <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">Rp ${itemTotal.toLocaleString('id-ID')}</div>
-                        <div class="cart-item-quantity-controls">
-                            <button class="quantity-button" data-id="${item.id}" data-action="decrease">-</button>
-                            <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
-                            <button class="quantity-button" data-id="${item.id}" data-action="increase">+</button>
-                            <button class="remove-item-button" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                `;
+
+
+
+
+                
+const cartItemDiv = document.createElement('div');
+cartItemDiv.classList.add('cart-item');
+
+let customDisplay = '';
+if (item.custom) {
+    const customList = Object.entries(item.custom).map(([key, value]) => {
+        return `<span style="background-color:#e8f5e9; color:#00C853; padding:4px 10px; border-radius:999px; font-size:12px; margin-right:6px; display:inline-block;">${value}</span>`;
+    });
+    customDisplay = `<div style="margin-bottom:6px;">${customList.join(' ')}</div>`;
+}
+
+cartItemDiv.innerHTML = `
+    <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+    <div class="cart-item-details">
+        <div class="cart-item-name">${item.name}</div>
+        ${customDisplay}
+        <div class="cart-item-price">Rp ${itemTotal.toLocaleString('id-ID')}</div>
+        <div class="cart-item-quantity-controls">
+            <button class="quantity-button" data-id="${item.id}" data-action="decrease">-</button>
+            <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
+            <button class="quantity-button" data-id="${item.id}" data-action="increase">+</button>
+            <button class="remove-item-button" data-id="${item.id}"><i class="fas fa-trash-alt"></i></button>
+        </div>
+    </div>
+`;
+
+
+
+
+
+                
                 cartItemsContainer.appendChild(cartItemDiv);
             });
 
