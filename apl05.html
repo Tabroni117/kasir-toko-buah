@@ -30,9 +30,11 @@
             min-height: 100vh;
             position: relative;
             padding-bottom: 50px; /* Space for bottom nav */
-            /* PENTING: Tambahkan padding-top untuk mengompensasi header & promo banner */
-            padding-top: calc(12px + 20px + 8px + 40px + 10px + 16px + 100px); /* Padding header + tinggi address bar + padding promo + tinggi promo slide */
-            /* Perkiraan: header ~120px, promo banner ~132px. Total ~252px. Sesuaikan jika perlu */
+            /* PENTING: Hitung ulang padding-top untuk mengompensasi header & promo banner */
+            /* Tinggi header (12px + 20px padding + perkiraan tinggi title/tagline/margin ~40px + address bar 40px) = ~120px */
+            /* Tinggi promo banner (100px slide + 0 padding di banner itu sendiri) = 100px */
+            /* Total sekitar 120px + 100px = 220px. Beri sedikit lebih untuk jaga-jaga. */
+            padding-top: 230px; /* Nilai yang disesuaikan */
         }
 
         /* Header Asli yang Dipertahankan dan Dibuat Fixed */
@@ -40,13 +42,13 @@
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
             padding: 12px 16px 20px;
-            position: fixed; /* DIUBAH DARI STICKY MENJADI FIXED */
+            position: fixed;
             top: 0;
-            left: 50%; /* Pusatkan */
-            transform: translateX(-50%); /* Pusatkan */
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
-            max-width: 480px; /* Sesuaikan dengan container */
-            z-index: 1000; /* Lebih tinggi dari promo banner */
+            max-width: 480px; /* PENTING: Tetapkan max-width agar tidak melebihi container */
+            z-index: 1000;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
@@ -116,7 +118,7 @@
             padding: 10px;
             position: relative;
             width: 100%;
-            color: #333; /* Pastikan teks di address bar terlihat */
+            color: #333;
         }
 
         .gps-icon {
@@ -145,14 +147,18 @@
             color: #999;
         }
 
-      /* Promo Banner (DIUBAH MENJADI FIXED) */
+        /* Promo Banner (DIUBAH MENJADI FIXED) */
         .promo-banner {
             position: fixed;
-            top: 120px; /* Sesuaikan dengan tinggi header. Perlu diperkirakan */
+            /* Pastikan top setelah header. Header sekitar 120px tingginya */
+            top: 120px; 
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            
+            max-width: 480px; /* PENTING: Tambahkan kembali max-width ini */
+            /* Hapus padding dari .promo-banner, pindahkan ke promo-slides-container */
+            /* padding: 0; */ 
+            overflow: visible; /* Penting agar konten di dalam bisa discroll dan tidak terpotong */
             background: white;
             z-index: 900;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
@@ -161,17 +167,22 @@
         .promo-slides-container {
             display: flex;
             gap: 12px;
-            transition: transform 0.5s ease;
+            /* transform tidak lagi digunakan untuk scrolling otomatis */
+            /* transition: transform 0.5s ease; */ 
             white-space: nowrap;
-            overflow-x: auto; /* Pastikan ini ada agar bisa digulir horizontal */
+            overflow-x: auto; /* Ini yang akan membuat gulir horizontal */
             -webkit-overflow-scrolling: touch;
             scroll-snap-type: x mandatory;
-            padding: 0 16px; /* Pindahkan padding dari .promo-banner ke sini */
-                               /* Ini akan memberikan ruang di kiri/kanan slide */
+            padding: 0 16px; /* Padding di sini untuk jarak dari tepi max-width */
         }
 
-        .promo-banner::-webkit-scrollbar {
-            display: none; /* Sembunyikan scrollbar */
+        /* Sembunyikan scrollbar untuk promo slides */
+        .promo-slides-container::-webkit-scrollbar { 
+            display: none;
+        }
+        .promo-slides-container {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
 
         .promo-slide {
@@ -214,8 +225,6 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
-            /* Margin top DIBUANG karena sudah ada padding-top di .container */
-            /* padding tetap 16px */
             padding: 16px;
             background: white;
             margin-bottom: 8px;
@@ -237,19 +246,19 @@
         }
 
         .category-icon {
-            background: #3ee36f; /* Hijau cerah elegan */
+            background: #3ee36f;
             color: #ffffff;
             border-radius: 10px;
-            border-bottom: 2px solid #15803d; /* Hijau gelap untuk bawah */
-            border-right: 2px solid #15803d;  /* Hijau gelap untuk kanan */
-            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3); /* Bayangan arah kanan bawah */
+            border-bottom: 2px solid #15803d;
+            border-right: 2px solid #15803d;
+            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            width: 40px; /* Ukuran icon box */
-            height: 40px; /* Ukuran icon box */
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px; /* Ukuran icon Font Awesome */
+            font-size: 18px;
             margin-bottom: 6px;
         }
 
@@ -403,17 +412,6 @@
 
         .fade-in {
             animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
-            min-height: 100vh;
-            position: relative;
-            padding-bottom: 50px; /* Space for bottom nav */
-            /* SESUAIKAN NILAI PADDING-TOP INI */
-            padding-top: 270px; /* Nilai yang diperbesar untuk menampung header dan promo banner */
         }
 
         /* Loading message for menu list */
@@ -580,6 +578,7 @@
             </a>
         </div>
     </div>
+
     <script>
         // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
         const firebaseConfig = {
@@ -596,18 +595,13 @@
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        const auth = firebase.auth(); // NEW: Inisialisasi Firebase Auth
-        const db = firebase.firestore(); // NEW: Inisialisasi Firestore
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         const menuCollection = db.collection('buah');
 
         // --- Proteksi Halaman: Cek Status Login ---
-        // auth.onAuthStateChanged akan dipanggil saat ada perubahan status login
-        // Ini adalah listener utama yang memastikan user diotorisasi
         auth.onAuthStateChanged(user => {
-            // Ambil flag `isLoggingOut` dari localStorage
             const isLoggingOut = localStorage.getItem('isLoggingOut');
-
-            // Hapus flag isLoggingOut agar tidak terus-terusan aktif setelah refresh/navigasi
             if (isLoggingOut) {
                 localStorage.removeItem('isLoggingOut');
             }
@@ -615,18 +609,13 @@
             const storedRole = localStorage.getItem('userRole');
 
             if (!user || storedRole !== 'pembeli') {
-                // Jika tidak ada user login di Firebase Auth,
-                // ATAU role di localStorage bukan 'pembeli'
-                
-                // Hanya tampilkan alert jika bukan karena proses logout yang disengaja
-                if (!isLoggingOut) { 
+                if (!isLoggingOut) {
                     alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
                 }
-                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+                window.location.href = 'index.html';
             } else {
-                // User sudah login dan role cocok ('pembeli'), lanjutkan memuat konten
                 renderMenuItems();
-                startAutoScroll();
+                startAutoScroll(); // Panggil fungsi auto-scroll hanya jika user login
             }
         });
 
@@ -636,61 +625,51 @@
         // --- Fungsi untuk Logout ---
         async function logout() {
             try {
-                // Set flag di localStorage bahwa logout disengaja
-                localStorage.setItem('isLoggingOut', 'true'); 
-
-                await auth.signOut(); // Logout dari Firebase Auth
-                // auth.onAuthStateChanged akan otomatis terpicu setelah ini
-                // dan akan mengarahkan ke index.html tanpa alert karena flag isLoggingOut
-                
-                // Opsional: Langsung bersihkan localStorage di sini juga jika ingin lebih cepat responsif
-                localStorage.removeItem('isLoggedIn'); 
+                localStorage.setItem('isLoggingOut', 'true');
+                await auth.signOut();
+                localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userRole');
                 localStorage.removeItem('userEmail');
                 localStorage.removeItem('userUid');
-                
-                alert('Anda telah berhasil logout.'); // Notifikasi logout berhasil
-                window.location.href = 'index.html'; // Redirect
+                alert('Anda telah berhasil logout.');
+                window.location.href = 'index.html';
             } catch (error) {
                 console.error("Error saat logout:", error);
                 alert('Gagal logout. Coba lagi.');
-                // Hapus flag jika logout gagal agar proteksi tetap aktif
-                localStorage.removeItem('isLoggingOut'); 
+                localStorage.removeItem('isLoggingOut');
             }
         }
 
         // --- Fungsi untuk Memuat dan Menampilkan Menu dari Firebase ---
         async function renderMenuItems() {
-            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>'; 
+            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
 
             try {
                 const snapshot = await menuCollection
-                                        .where('isAvailable', '==', true) 
-                                        .orderBy('nama')
-                                        .get();
+                                            .where('isAvailable', '==', true)
+                                            .orderBy('nama')
+                                            .get();
 
-                menuList.innerHTML = ''; 
+                menuList.innerHTML = '';
 
                 if (snapshot.empty) {
                     menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
                 } else {
                     snapshot.forEach(doc => {
-                        const productFromFirebase = { id: doc.id, ...doc.data() }; 
+                        const productFromFirebase = { id: doc.id, ...doc.data() };
 
-                        // --- PEMETAAN FIELD UNTUK product-detail.html ---
                         const productForDetail = {
                             id: productFromFirebase.id,
-                            name: productFromFirebase.nama, // 'nama' dari Firebase -> 'name'
-                            description: productFromFirebase.deskripsi, // 'deskripsi' dari Firebase
-                            price: productFromFirebase.harga, // 'harga' dari Firebase
-                            image: productFromFirebase.imageUrl, // 'imageUrl' dari Firebase -> 'image'
+                            name: productFromFirebase.nama,
+                            description: productFromFirebase.deskripsi,
+                            price: productFromFirebase.harga,
+                            image: productFromFirebase.imageUrl,
                             rating: productFromFirebase.rating,
                             deliveryTime: productFromFirebase.deliveryTime,
                         };
-                        // --- AKHIR PEMETAAN FIELD ---
                         
                         const card = document.createElement('div');
-                        card.classList.add('restaurant-card', 'fade-in'); 
+                        card.classList.add('restaurant-card', 'fade-in');
 
                         card.innerHTML = `
                             <img src="${productForDetail.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
@@ -705,7 +684,7 @@
                         
                         card.addEventListener('click', () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                            window.location.href = 'product-detail.html'; 
+                            window.location.href = 'product-detail.html';
                         });
                         menuList.appendChild(card);
                     });
@@ -769,10 +748,24 @@
         function startAutoScroll() {
             if (promoSlides.length <= 1) return;
 
-            const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
+            // Pastikan kita mendapatkan lebar slide yang benar setelah dirender
+            const singleSlideWidth = promoSlides[0].offsetWidth; 
+            const gapWidth = 12; // Sesuai dengan CSS gap
+            const totalSlideMovement = singleSlideWidth + gapWidth;
+
             slideInterval = setInterval(() => {
-                currentIndex = (currentIndex + 1) % promoSlides.length;
-                promoContainer.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
+                currentIndex++;
+                if (currentIndex >= promoSlides.length) {
+                    currentIndex = 0; // Kembali ke awal
+                    // Atur scrollLeft ke 0 secara instan untuk menciptakan efek loop
+                    promoContainer.style.scrollBehavior = 'auto'; // Matikan smooth scroll sementara
+                    promoContainer.scrollLeft = 0;
+                    // Paksa reflow untuk memastikan perubahan diterapkan sebelum kembali ke smooth scroll
+                    void promoContainer.offsetWidth; 
+                    promoContainer.style.scrollBehavior = 'smooth'; // Aktifkan smooth scroll lagi
+                }
+                // Gulir kontainer ke posisi slide berikutnya
+                promoContainer.scrollLeft = currentIndex * totalSlideMovement;
             }, 3000);
         }
 
@@ -785,29 +778,19 @@
             });
         });
 
-        // --- Inisialisasi Halaman (Dipindahkan ke dalam onAuthStateChanged) ---
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     renderMenuItems();
-        //     startAutoScroll();
-        // });
+        // --- Animasi ikon kategori ---
+        const icons = document.querySelectorAll('.category-icon i');
+        let currentIconIndex = 0;
 
-
-
-
-        
-  const icons = document.querySelectorAll('.category-icon i');
-  let current = 0;
-
-  setInterval(() => {
-    icons.forEach((icon, index) => {
-      icon.classList.remove('rotating');
-      if (index === current) {
-        icon.classList.add('rotating');
-      }
-    });
-    current = (current + 1) % icons.length;
-  }, 2000); // Ganti icon setiap 2 detik
-
+        setInterval(() => {
+            icons.forEach((icon, index) => {
+                icon.classList.remove('rotating');
+                if (index === currentIconIndex) {
+                    icon.classList.add('rotating');
+                }
+            });
+            currentIconIndex = (currentIconIndex + 1) % icons.length;
+        }, 2000);
     </script>
 </body>
 </html>
