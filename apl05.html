@@ -30,37 +30,44 @@
             min-height: 100vh;
             position: relative;
             padding-bottom: 50px; /* Space for bottom nav */
+            /* PENTING: Tambahkan padding-top untuk mengompensasi header & promo banner */
+            padding-top: calc(12px + 20px + 8px + 40px + 10px + 16px + 100px); /* Padding header + tinggi address bar + padding promo + tinggi promo slide */
+            /* Perkiraan: header ~120px, promo banner ~132px. Total ~252px. Sesuaikan jika perlu */
         }
 
-        /* Header Asli yang Dipertahankan */
+        /* Header Asli yang Dipertahankan dan Dibuat Fixed */
         .header {
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
             padding: 12px 16px 20px;
-            position: sticky;
+            position: fixed; /* DIUBAH DARI STICKY MENJADI FIXED */
             top: 0;
-            z-index: 100;
+            left: 50%; /* Pusatkan */
+            transform: translateX(-50%); /* Pusatkan */
+            width: 100%;
+            max-width: 480px; /* Sesuaikan dengan container */
+            z-index: 1000; /* Lebih tinggi dari promo banner */
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
-            display: flex; /* Make header a flex container */
-            flex-direction: column; /* Menjaga app-header dan address-bar bertumpuk */
-            align-items: flex-start; /* Mengatur alignment ke kiri */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .header-top-row { /* Kontainer untuk judul & logout button */
+        .header-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%; /* Agar memenuhi lebar header */
-            margin-bottom: 8px; /* Jarak ke address-bar */
+            width: 100%;
+            margin-bottom: 8px;
         }
 
         .app-header {
-            margin-bottom: 0; /* Tidak perlu margin-bottom di sini */
+            margin-bottom: 0;
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Default alignment */
+            align-items: flex-start;
         }
 
         .app-title {
@@ -85,7 +92,7 @@
 
         /* Logout Button Style */
         .logout-btn {
-            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            background-color: rgba(255, 255, 255, 0.2);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.4);
             padding: 8px 15px;
@@ -93,8 +100,8 @@
             cursor: pointer;
             font-size: 0.9em;
             transition: background-color 0.3s, border-color 0.3s;
-            margin-left: auto; /* Push button to the right */
-            white-space: nowrap; /* Prevent text from wrapping */
+            margin-left: auto;
+            white-space: nowrap;
         }
         .logout-btn:hover {
             background-color: rgba(255, 255, 255, 0.3);
@@ -108,7 +115,8 @@
             border-radius: 8px;
             padding: 10px;
             position: relative;
-            width: 100%; /* Make it full width again below the header info */
+            width: 100%;
+            color: #333; /* Pastikan teks di address bar terlihat */
         }
 
         .gps-icon {
@@ -137,13 +145,19 @@
             color: #999;
         }
 
-        /* Promo Banner */
+        /* Promo Banner (DIUBAH MENJADI FIXED) */
         .promo-banner {
+            position: fixed; /* DIUBAH DARI STICKY MENJADI FIXED */
+            top: 120px; /* Sesuaikan dengan tinggi header. Perlu diperkirakan */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px; /* Sesuaikan dengan container */
             padding: 16px;
             overflow: hidden;
-            position: relative;
             background: white;
-            margin-bottom: 8px;
+            z-index: 900; /* Di bawah header, di atas konten */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Bayangan sedikit agar terangkat */
         }
         
         .promo-slides-container {
@@ -151,15 +165,19 @@
             gap: 12px;
             transition: transform 0.5s ease;
             white-space: nowrap;
+            /* Tambahkan overflow-x agar bisa digulir horizontal */
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* untuk smooth scrolling di iOS */
+            scroll-snap-type: x mandatory; /* untuk snapping slide */
         }
 
         .promo-banner::-webkit-scrollbar {
-            display: none;
+            display: none; /* Sembunyikan scrollbar */
         }
 
         .promo-slide {
             min-width: 200px;
-            height: 100px;
+            height: 100px; /* Tinggi slide promo */
             border-radius: 8px;
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
@@ -168,6 +186,20 @@
             flex-direction: column;
             justify-content: space-between;
             scroll-snap-align: start;
+            /* Gaya bayangan yang Anda berikan */
+            box-shadow:
+                2px 2px 3px rgba(22, 163, 74, 0.5),
+                4px 4px 4px rgba(22, 163, 74, 0.6),
+                6px 6px 5px rgba(22, 163, 74, 0.7);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .promo-slide:hover {
+            box-shadow:
+                2px 2px 4px rgba(22, 163, 74, 0.6),
+                4px 4px 6px rgba(22, 163, 74, 0.7),
+                6px 6px 8px rgba(22, 163, 74, 0.8);
+            transform: translateY(-3px);
         }
 
         .promo-title {
@@ -183,38 +215,79 @@
         .categories {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 12px;
+            /* Margin top DIBUANG karena sudah ada padding-top di .container */
+            /* padding tetap 16px */
             padding: 16px;
             background: white;
             margin-bottom: 8px;
         }
 
         .category {
-            text-align: center;
-            padding: 8px 0;
-            border-radius: 8px;
-            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            background:#ffffff;
+            border-radius: 12px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
         }
 
         .category:hover {
-            background: #f0f0f0;
+            transform: translateY(-2px);
         }
 
         .category-icon {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 6px;
+            background: #3ee36f; /* Hijau cerah elegan */
+            color: #ffffff;
+            border-radius: 10px;
+            border-bottom: 2px solid #15803d; /* Hijau gelap untuk bawah */
+            border-right: 2px solid #15803d;  /* Hijau gelap untuk kanan */
+            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3); /* Bayangan arah kanan bawah */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 40px; /* Ukuran icon box */
+            height: 40px; /* Ukuran icon box */
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f5f5f5;
-            border-radius: 50%;
-            color: #00C853;
+            font-size: 18px; /* Ukuran icon Font Awesome */
+            margin-bottom: 6px;
+        }
+
+        .category:hover .category-icon,
+        .category.active .category-icon {
+            background: #3ee36f;
+            color: #ffffff;
+            transform: scale(1.1);
+            box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
+            animation: softGlow 1.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes softGlow {
+            from {
+                box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
+            }
+            to {
+                box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
+            }
         }
 
         .category-name {
-            font-size: 11px;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        @keyframes spinIcon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .category-icon i.rotating {
+            animation: spinIcon 2s linear infinite;
         }
 
         /* Menu Terlaris */
@@ -301,6 +374,8 @@
             padding: 6px 0;
             border-top: 1px solid rgba(255,255,255,0.2);
             z-index: 1000;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .nav-item {
@@ -339,114 +414,6 @@
             color: #757575;
             font-size: 1.1em;
         }
-
-.promo-slide {
-  box-shadow:
-    2px 2px 3px rgba(22, 163, 74, 0.5),
-    4px 4px 4px rgba(22, 163, 74, 0.6),
-    6px 6px 5px rgba(22, 163, 74, 0.7);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.promo-slide:hover {
-  box-shadow:
-    2px 2px 4px rgba(22, 163, 74, 0.6),
-    4px 4px 6px rgba(22, 163, 74, 0.7),
-    6px 6px 8px rgba(22, 163, 74, 0.8);
-  transform: translateY(-3px);
-}
-
-
-
-.categories {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.category {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  background:#ffffff;
-  border-radius: 12px;
-  transition: transform 0.2s ease;
-  cursor: pointer;
-}
-
-.category:hover {
-  transform: translateY(-2px);
-}
-.category-icon {
-  background: #3ee36f; /* Hijau neon kinclong */
-  color: #ffffff;!important;
-  font-size: 18px;
-  padding: 14px;
-  border-radius: 50%;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.35s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-        .category-icon {
-  background: #3ee36f; /* Hijau cerah elegan */
-  color: #ffffff;
-  border-radius: 10px;
-  border-bottom: 2px solid #15803d; /* Hijau gelap untuk bawah */
-  border-right: 2px solid #15803d;  /* Hijau gelap untuk kanan */
-  box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3); /* Bayangan arah kanan bawah */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.category:hover .category-icon,
-.category.active .category-icon {
-  background: #3ee36f
-  color: #ffffff;
-  transform: scale(1.1);
-  box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
-  animation: softGlow 1.8s ease-in-out infinite alternate;
-}
-
-@keyframes softGlow {
-  from {
-    box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
-  }
-  to {
-    box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
-  }
-}
-
-.category-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #22c55e;
-  text-align: center;
-  line-height: 1.2;
-}
-
-@keyframes spinIcon {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.category-icon i.rotating {
-  animation: spinIcon 2s linear infinite;
-}
-.promo-banner {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: white; /* atau #f0fdf4 agar tidak transparan saat scroll */
-  padding: 10px 16px;
-}
-
-
-        
-        
     </style>
 </head>
 <body>
@@ -544,6 +511,46 @@
         </div>
         <div class="restaurants" id="menuList">
             <p class="menu-loading-message">Memuat menu...</p>
+            <div class="restaurant-card">
+                <img src="https://via.placeholder.com/150x120/90EE90/008000?text=Rujak+Manis" alt="Rujak Buah Manis" class="restaurant-image">
+                <div class="restaurant-info">
+                    <div class="restaurant-name">Rujak Buah Manis</div>
+                    <div class="restaurant-meta">
+                        <span class="rating"><i class="fas fa-star"></i> 4.8</span>
+                        <span class="delivery-time">15-20 min</span>
+                    </div>
+                </div>
+            </div>
+             <div class="restaurant-card">
+                <img src="https://via.placeholder.com/150x120/FFC0CB/C71585?text=Es+Campur" alt="Es Campur Segar" class="restaurant-image">
+                <div class="restaurant-info">
+                    <div class="restaurant-name">Es Campur Segar</div>
+                    <div class="restaurant-meta">
+                        <span class="rating"><i class="fas fa-star"></i> 4.5</span>
+                        <span class="delivery-time">10-15 min</span>
+                    </div>
+                </div>
+            </div>
+             <div class="restaurant-card">
+                <img src="https://via.placeholder.com/150x120/ADD8E6/4682B4?text=Jus+Buah" alt="Jus Buah Mix" class="restaurant-image">
+                <div class="restaurant-info">
+                    <div class="restaurant-name">Jus Buah Mix</div>
+                    <div class="restaurant-meta">
+                        <span class="rating"><i class="fas fa-star"></i> 4.7</span>
+                        <span class="delivery-time">5-10 min</span>
+                    </div>
+                </div>
+            </div>
+             <div class="restaurant-card">
+                <img src="https://via.placeholder.com/150x120/FFDAB9/FF4500?text=Salad+Buah" alt="Salad Buah Creamy" class="restaurant-image">
+                <div class="restaurant-info">
+                    <div class="restaurant-name">Salad Buah Creamy</div>
+                    <div class="restaurant-meta">
+                        <span class="rating"><i class="fas fa-star"></i> 4.9</span>
+                        <span class="delivery-time">20-25 min</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="bottom-nav">
@@ -563,7 +570,7 @@
                 <div>Profile</div>
             </a>
         </div>
-
+    </div>
     <script>
         // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
         const firebaseConfig = {
