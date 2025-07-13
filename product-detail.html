@@ -256,108 +256,102 @@
   
 
    <script>
+// Tangani klik pada varian (didefinisikan dulu sebelum digunakan)
+const selectedVariants = {
+    bumbu: "Pedas",
+    kacang: "Dengan Kacang"
+};
 
-  const selectedVariants = {
-      bumbu: "Pedas",
-      kacang: "Dengan Kacang"
-  };
+document.addEventListener('DOMContentLoaded', function() {
+    // Tambahkan event listener untuk pilihan varian
+    document.querySelectorAll('.variant-options').forEach(group => {
+        const variantType = group.dataset.variant;
 
-  document.addEventListener('DOMContentLoaded', function() {
-      // Tangani klik pada pilihan varian
-      document.querySelectorAll('.variant-options').forEach(group => {
-          const variantType = group.dataset.variant;
-
-          group.querySelectorAll('.variant-option').forEach(option => {
-              option.addEventListener('click', () => {
-                  group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                  option.classList.add('active');
-                  selectedVariants[variantType] = option.dataset.value;
-              });
-          });
-      });
-
-      // Ambil data produk dari sessionStorage
-      const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
-
-      if (selectedProduct) {
-          document.getElementById('productImage').src = selectedProduct.image;
-          document.getElementById('productName').textContent = selectedProduct.name;
-          document.getElementById('productDescription').textContent = selectedProduct.description;
-          document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
-
-          const productQuantityInput = document.getElementById('productQuantity');
-          const decreaseButton = document.getElementById('decreaseQuantity');
-          const increaseButton = document.getElementById('increaseQuantity');
-
-          // Tombol - untuk tampilan jumlah (tidak update keranjang)
-          decreaseButton.addEventListener('click', () => {
-              let current = parseInt(productQuantityInput.value);
-              if (current > 1) productQuantityInput.value = current - 1;
-          });
-
-          // Tombol + sekaligus TAMBAH ke keranjang
-    increaseButton.addEventListener('click', () => {
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const quantity = 1;
-
-    const existingItemIndex = cart.findIndex(item =>
-        item.id === selectedProduct.id &&
-        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-    );
-
-    if (existingItemIndex > -1) {
-        cart[existingItemIndex].quantity += quantity;
-    } else {
-        cart.push({
-            id: selectedProduct.id,
-            name: selectedProduct.name,
-            price: selectedProduct.price,
-            image: selectedProduct.image,
-            quantity: quantity,
-            custom: { ...selectedVariants }
+        group.querySelectorAll('.variant-option').forEach(option => {
+            option.addEventListener('click', () => {
+                // Hapus semua "active" pada grup yang sama
+                group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedVariants[variantType] = option.dataset.value;
+            });
         });
+    });
+
+    // Ambil data produk yang dipilih dari sessionStorage
+    const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
+
+    if (selectedProduct) {
+        // Tampilkan detail produk
+        document.getElementById('productImage').src = selectedProduct.image;
+        document.getElementById('productName').textContent = selectedProduct.name;
+        document.getElementById('productDescription').textContent = selectedProduct.description;
+        document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+
+        const productQuantityInput = document.getElementById('productQuantity');
+        const decreaseButton = document.getElementById('decreaseQuantity');
+        const increaseButton = document.getElementById('increaseQuantity');
+       
+
+        // Logic untuk mengurangi kuantitas
+        decreaseButton.addEventListener('click', () => {
+            let currentQuantity = parseInt(productQuantityInput.value);
+            if (currentQuantity > 1) {
+                productQuantityInput.value = currentQuantity - 1;
+            }
+        });
+
+        // Logic untuk menambah kuantitas
+        increaseButton.addEventListener('click', () => {
+            let currentQuantity = parseInt(productQuantityInput.value);
+            productQuantityInput.value = currentQuantity + 1;
+        });
+
+        // Logic untuk menambahkan produk ke keranjang (localStorage)
+        addToCartButton.addEventListener('click', () => {
+            const quantity = parseInt(productQuantityInput.value);
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            // Cek apakah produk sudah ada di keranjang (dengan varian yang sama)
+            const existingItemIndex = cart.findIndex(item =>
+                item.id === selectedProduct.id &&
+                JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+            );
+
+            if (existingItemIndex > -1) {
+                // Jika sudah ada, update kuantitasnya
+                cart[existingItemIndex].quantity += quantity;
+            } else {
+                // Jika belum ada, tambahkan sebagai item baru
+                cart.push({
+                    id: selectedProduct.id,
+                    name: selectedProduct.name,
+                    price: selectedProduct.price,
+                    image: selectedProduct.image,
+                    quantity: quantity,
+                    custom: { ...selectedVariants }
+                });
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert(`${quantity} ${selectedProduct.name} telah ditambahkan ke keranjang!`);
+            window.location.href = 'cart.html';
+        });
+    } else {
+        alert('Produk tidak ditemukan. Kembali ke halaman utama.');
+        window.location.href = 'apl05.html';
     }
-
-    localStorage.setItem('cart', JSON.stringify(cart)); // ✅ simpan keranjang
-
-    productQuantityInput.value = parseInt(productQuantityInput.value) + 1; // update tampilan jumlah
-
-    lemparKeKeranjang(); // ✅ animasi terbang ke keranjang
-
-    window.parent.postMessage({ action: 'keranjangBerhasil' }, '*'); // respons balik ke apl05
 });
 
-// ⛔ Jangan kirim tutup popup dulu
-// window.parent.postMessage({ action: 'tutupPopup' }, '*');
-          });
 
-      } else {
-          alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-          window.location.href = 'apl05.html';
-      }
-  });
 
   function kirimPermintaanTutup() {
-      window.parent.postMessage({ action: 'tutupPopup' }, '*');
+    window.parent.postMessage({ action: 'tutupPopup' }, '*');
   }
 
-function lemparKeKeranjang() {
-    const productImage = document.getElementById('productImage');
-    const imageRect = productImage.getBoundingClientRect();
 
-    // Kirim data posisi gambar ke halaman apl05 (parent)
-    window.parent.postMessage({
-        action: 'lemparKeKeranjang',
-        imageSrc: productImage.src,
-        imageRect: {
-            top: imageRect.top,
-            left: imageRect.left,
-            width: imageRect.width,
-            height: imageRect.height
-        }
-    }, '*');
-}
 
+
+       
 </script>
 </body>
 </html>
