@@ -35,7 +35,7 @@
             position: relative;
             padding-top: 250px; 
             padding-bottom: 115px; 
-            overflow-x: hidden; /* Tambahkan ini juga di container untuk jaga-jaga */
+            overflow-x: hidden; 
             flex-grow: 1; 
         }
 
@@ -151,7 +151,7 @@
         /* Promo Banner */
         .promo-banner {
             position: fixed; 
-            top: 125px; /* Sesuaikan ini berdasarkan tinggi header yang aktual */
+            top: 125px; 
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
@@ -159,9 +159,7 @@
             background: white;
             padding: 10px 16px;
             z-index: 999; 
-            /* PERBAIKAN KRUSIAL: overflow-x: hidden */
-            overflow-x: hidden; /* <--- PASTIKAN INI */
-            /* overflow: visible; <--- HAPUS ATAU GANTI INI */
+            overflow-x: hidden; 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
@@ -172,12 +170,9 @@
             gap: 12px;
             transition: transform 0.5s ease;
             white-space: nowrap;
-            /* overflow-x: auto; <--- BIARKAN INI UNTUK SCROLL MANUAL */
             -ms-overflow-style: none; 
             scrollbar-width: none; 
             padding-bottom: 5px; 
-            /* Pastikan tidak ada overflow di sini juga jika promo-banner belum cukup */
-            /* overflow-x: hidden; */ /* <--- JIKA MASIH MASALAH, Coba tambahkan ini, tapi biasanya di parentnya lebih efektif */
         }
 
         .promo-slides-container::-webkit-scrollbar {
@@ -440,7 +435,8 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 999; 
+            /* PERBAIKAN Z-INDEX: HARUS LEBIH TINGGI DARI POPUP */
+            z-index: 99999; /* <--- PENTING: Ubah nilai z-index ini */
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
             transition: transform 0.3s ease-out; 
@@ -504,7 +500,7 @@
             display: none; 
             justify-content: center;
             align-items: flex-end; 
-            z-index: 9999; 
+            z-index: 9999; /* Z-index ini sekarang lebih rendah dari checkout-summary-bar */
         }
 
         #popupPanel.show {
@@ -926,6 +922,9 @@
             if (event.data && event.data.type === 'cartUpdate') {
                 updateCartSummary(event.data.itemCount, event.data.totalPrice);
             }
+            // Tidak perlu goToCart di sini jika halaman detail produk tidak memiliki tombol checkout sendiri
+            // yang memicu navigasi ke cart.html secara independen.
+            // Biarkan tombol Checkout di summary bar yang menanganinya.
         }
 
         // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR ---
