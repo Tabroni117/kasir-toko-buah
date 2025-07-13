@@ -296,36 +296,39 @@
           });
 
           // Tombol + sekaligus TAMBAH ke keranjang
-          increaseButton.addEventListener('click', () => {
-              let cart = JSON.parse(localStorage.getItem('cart')) || [];
-              const quantity = 1;
+         increaseButton.addEventListener('click', () => {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const quantity = 1;
 
-              const existingItemIndex = cart.findIndex(item =>
-                  item.id === selectedProduct.id &&
-                  JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-              );
+    const existingItemIndex = cart.findIndex(item =>
+        item.id === selectedProduct.id &&
+        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+    );
 
-              if (existingItemIndex > -1) {
-                  cart[existingItemIndex].quantity += quantity;
-              } else {
-                  cart.push({
-                      id: selectedProduct.id,
-                      name: selectedProduct.name,
-                      price: selectedProduct.price,
-                      image: selectedProduct.image,
-                      quantity: quantity,
-                      custom: { ...selectedVariants }
-                  });
-              }
+    if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity += quantity;
+    } else {
+        cart.push({
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            quantity: quantity,
+            custom: { ...selectedVariants }
+        });
+    }
 
-              localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart));
+    productQuantityInput.value = parseInt(productQuantityInput.value) + 1;
 
-              // Tambahkan angka tampilannya
-              productQuantityInput.value = parseInt(productQuantityInput.value) + 1;
+    alert(`${selectedProduct.name} berhasil ditambahkan ke keranjang!`);
 
-              // Kirim ke halaman utama
-              window.parent.postMessage({ action: 'keranjangBerhasil' }, '*');
-              window.parent.postMessage({ action: 'tutupPopup' }, '*');
+    // Kirim ke halaman utama tapi TIDAK menutup popup
+    window.parent.postMessage({ action: 'keranjangBerhasil' }, '*');
+
+    // ⛔ Jangan tutup popup dulu!
+    // window.parent.postMessage({ action: 'tutupPopup' }, '*');
+});
           });
 
       } else {
