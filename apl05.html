@@ -496,6 +496,22 @@
     font-weight: bold;
     cursor: pointer;
   }
+        .btn-keranjang {
+  margin: 10px auto;
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  width: 90%;
+  font-size: 16px;
+  cursor: pointer;
+  display: block;
+}
+
+.btn-keranjang:hover {
+  background-color: #e64a19;
+}
 </style>
 
 
@@ -633,11 +649,14 @@
 <div id="popupPanel" class="popup-panel">
   <div class="popup-content">
     <iframe id="popupFrame" src="" frameborder="0"></iframe>
+
+    <!-- 🛒 Tombol Tambahkan ke Keranjang -->
+    <button onclick="tambahKeKeranjangDariIframe()" class="btn-keranjang">Tambahkan ke Keranjang</button>
+
+    <!-- Tombol Tutup -->
     <button onclick="tutupPopup()" class="btn-tutup">Tutup</button>
   </div>
 </div>
-
-
 
 
 
@@ -903,7 +922,10 @@
     frame.src = htmlFile; // contoh: 'cart.html' atau 'product-detail.html'
     panel.classList.add('show');
   }
-
+function tambahKeKeranjangDariIframe() {
+  const iframe = document.getElementById('popupFrame');
+  iframe.contentWindow.postMessage({ action: 'mintaTambahKeranjang' }, '*');
+}
   function tutupPopup() {
     const panel = document.getElementById('popupPanel');
     const frame = document.getElementById('popupFrame');
@@ -912,12 +934,18 @@
     frame.src = ''; // kosongkan iframe agar hemat memori
   }
         
- window.addEventListener('message', function(event) {
+window.addEventListener('message', function(event) {
   if (event.data.action === 'tutupPopup') {
     tutupPopup();
-   }
- });
+  }
 
+  // Tambahan untuk aksi tombol luar: "Tambahkan ke Keranjang"
+  if (event.data.action === 'keranjangBerhasil') {
+    // Misalnya kasih notifikasi atau tutup popup
+    alert('Produk berhasil ditambahkan ke keranjang!');
+    tutupPopup();
+  }
+});
     </script>
 </body>
 </html>
