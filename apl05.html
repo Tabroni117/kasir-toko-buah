@@ -512,6 +512,43 @@
 .btn-keranjang:hover {
   background-color: #e64a19;
 }
+
+
+
+
+
+
+
+
+        <style>
+  .floating-cart {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #ff5c5c;
+    color: white;
+    border-radius: 50%;
+    padding: 14px;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 999;
+    cursor: pointer;
+  }
+
+  .cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #fff;
+    color: #ff5c5c;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 3px 6px;
+    min-width: 20px;
+    text-align: center;
+  }
+
 </style>
 
 
@@ -656,8 +693,13 @@
     <!-- Tombol Tutup -->
     <button onclick="tutupPopup()" class="btn-tutup">Tutup</button>
   </div>
+    
 </div>
-
+<!-- === ICON KERANJANG FLOATING === -->
+<div id="floatingCart" class="floating-cart" onclick="bukaPopup('cart.html')">
+  <i class="fas fa-shopping-cart"></i>
+  <span id="cartCount" class="cart-badge">0</span>
+</div>
 
 
 
@@ -946,6 +988,30 @@ window.addEventListener('message', function(event) {
     tutupPopup();
   }
 });
+
+
+
+
+
+
+
+        <script>
+  function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartCount').textContent = totalItems;
+  }
+
+  // Jalankan saat halaman dimuat
+  document.addEventListener('DOMContentLoaded', updateCartCount);
+
+  // Dengarkan sinyal dari iframe ketika item ditambahkan
+  window.addEventListener('message', function(event) {
+    if (event.data.action === 'keranjangBerhasil') {
+      updateCartCount();
+    }
+  });
+</script>
     </script>
 </body>
 </html>
