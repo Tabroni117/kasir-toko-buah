@@ -257,13 +257,12 @@
 
    <script>
 
- 
   const selectedVariants = {
       bumbu: "Pedas",
       kacang: "Dengan Kacang"
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function() {
       // Tangani klik pada pilihan varian
       document.querySelectorAll('.variant-options').forEach(group => {
           const variantType = group.dataset.variant;
@@ -290,44 +289,48 @@
           const decreaseButton = document.getElementById('decreaseQuantity');
           const increaseButton = document.getElementById('increaseQuantity');
 
-          // Tombol - hanya kurangi tampilan angka
+          // Tombol - untuk tampilan jumlah (tidak update keranjang)
           decreaseButton.addEventListener('click', () => {
               let current = parseInt(productQuantityInput.value);
               if (current > 1) productQuantityInput.value = current - 1;
           });
 
-          // Tombol + → tambah ke keranjang
-          increaseButton.addEventListener('click', () => {
-              let cart = JSON.parse(localStorage.getItem('cart')) || [];
-              const quantity = 1;
+          // Tombol + sekaligus TAMBAH ke keranjang
+    increaseButton.addEventListener('click', () => {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const quantity = 1;
 
-              const existingItemIndex = cart.findIndex(item =>
-                  item.id === selectedProduct.id &&
-                  JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-              );
+    const existingItemIndex = cart.findIndex(item =>
+        item.id === selectedProduct.id &&
+        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+    );
 
-              if (existingItemIndex > -1) {
-                  cart[existingItemIndex].quantity += quantity;
-              } else {
-                  cart.push({
-                      id: selectedProduct.id,
-                      name: selectedProduct.name,
-                      price: selectedProduct.price,
-                      image: selectedProduct.image,
-                      quantity: quantity,
-                      custom: { ...selectedVariants }
-                  });
-              }
+    if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity += quantity;
+    } else {
+        cart.push({
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            quantity: quantity,
+            custom: { ...selectedVariants }
+        });
+    }
 
-              localStorage.setItem('cart', JSON.stringify(cart)); // ✅ simpan keranjang
+    localStorage.setItem('cart', JSON.stringify(cart)); // ✅ simpan keranjang
 
-              productQuantityInput.value = parseInt(productQuantityInput.value) + 1; // update angka
+    productQuantityInput.value = parseInt(productQuantityInput.value) + 1; // update tampilan jumlah
 
-              lemparKeKeranjang(); // ✅ animasi terbang
+    lemparKeKeranjang(); // ✅ animasi terbang ke keranjang
 
-              window.parent.postMessage({ action: 'keranjangBerhasil' }, '*'); // kirim notifikasi ke apl05
-              // ⛔ Tidak perlu tutup popup langsung
+    window.parent.postMessage({ action: 'keranjangBerhasil' }, '*'); // respons balik ke apl05
+});
+
+// ⛔ Jangan kirim tutup popup dulu
+// window.parent.postMessage({ action: 'tutupPopup' }, '*');
           });
+
       } else {
           alert('Produk tidak ditemukan. Kembali ke halaman utama.');
           window.location.href = 'apl05.html';
@@ -338,22 +341,22 @@
       window.parent.postMessage({ action: 'tutupPopup' }, '*');
   }
 
-  function lemparKeKeranjang() {
-      const productImage = document.getElementById('productImage');
-      const imageRect = productImage.getBoundingClientRect();
+function lemparKeKeranjang() {
+    const productImage = document.getElementById('productImage');
+    const imageRect = productImage.getBoundingClientRect();
 
-      // Kirim posisi gambar ke halaman apl05.html
-      window.parent.postMessage({
-          action: 'lemparKeKeranjang',
-          imageSrc: productImage.src,
-          imageRect: {
-              top: imageRect.top,
-              left: imageRect.left,
-              width: imageRect.width,
-              height: imageRect.height
-          }
-      }, '*');
-  }
+    // Kirim data posisi gambar ke halaman apl05 (parent)
+    window.parent.postMessage({
+        action: 'lemparKeKeranjang',
+        imageSrc: productImage.src,
+        imageRect: {
+            top: imageRect.top,
+            left: imageRect.left,
+            width: imageRect.width,
+            height: imageRect.height
+        }
+    }, '*');
+}
 
 </script>
 </body>
