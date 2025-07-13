@@ -16,15 +16,18 @@
         body {
             background-color: #f9f9f9;
             color: #333;
+            /* Pastikan body di iframe tidak ada margin/padding berlebih */
+            overflow-x: hidden; /* Hindari scroll horizontal */
         }
 
         .container {
-            max-width: 480px;
+            max-width: 480px; /* Lebar container disesuaikan dengan parent iframe */
             margin: 0 auto;
             background: white;
-            min-height: 100vh;
+            min-height: 100vh; /* Agar bisa scroll jika konten panjang */
             position: relative;
-            padding-bottom: 70px; /* Space for the add to cart button */
+            /* Padding bottom ini untuk memberi ruang bagi add-to-cart button di dalam iframe */
+            padding-bottom: 70px; /* Space for the fixed add to cart button inside iframe */
         }
 
         .header-detail {
@@ -33,7 +36,7 @@
             padding: 12px 16px;
             display: flex;
             align-items: center;
-            position: sticky;
+            position: sticky; /* Sticky header di dalam iframe */
             top: 0;
             z-index: 100;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -60,12 +63,24 @@
 
         .product-info-detail {
             padding: 16px;
+            flex-grow: 1; /* Biarkan konten ini mengisi ruang sisa */
+        }
+
+        .product-header-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding: 0 0; /* Hapus padding yang tumpang tindih dengan .product-info-detail */
         }
 
         .product-name-detail {
-            font-size: 24px;
+            font-size: 24px; /* Disesuaikan agar lebih menonjol */
             font-weight: bold;
-            margin-bottom: 8px;
+            color: #333;
+            margin: 0;
+            max-width: 65%; /* Beri sedikit lebih banyak ruang */
+            word-break: break-word;
         }
 
         .product-description-detail {
@@ -85,33 +100,41 @@
         .quantity-selector {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            gap: 6px;
+            /* Pastikan ini tidak menyebabkan overflow di product-header-detail */
         }
 
         .quantity-button {
-            background-color: #e0e0e0;
+            background-color: #00c853;
+            color: white;
             border: none;
-            padding: 8px 12px;
-            font-size: 18px;
+            padding: 6px 10px;
+            font-size: 16px;
+            border-radius: 6px;
             cursor: pointer;
-            border-radius: 5px;
-            color: #333;
             transition: background-color 0.2s;
         }
 
         .quantity-button:hover {
-            background-color: #d0d0d0;
+            background-color: #00A646;
         }
 
         .quantity-input {
-            width: 40px;
+            width: 35px; /* Sedikit lebih lebar untuk angka 2 digit */
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid #ccc; /* Tambahkan border agar lebih jelas */
             border-radius: 5px;
-            margin: 0 10px;
-            padding: 8px 0;
+            padding: 6px 0;
             font-size: 16px;
+            -moz-appearance: textfield; /* Sembunyikan panah di Firefox */
         }
+        /* Sembunyikan panah spinner di Chrome, Safari, Edge */
+        .quantity-input::-webkit-outer-spin-button,
+        .quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
 
         .add-to-cart-button {
             background: linear-gradient(135deg, #00C853, #64DD17);
@@ -123,258 +146,291 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            width: calc(100% - 32px); /* Full width minus padding */
-            position: fixed;
+            width: calc(100% - 32px); /* Full width minus 16px padding on each side */
+            position: fixed; /* Fixed di dalam iframe */
             bottom: 10px;
-            max-width: 448px; /* Max width 480px - 16px padding on each side */
+            max-width: 448px; /* Max width 480px - (2 * 16px padding) */
             left: 50%;
             transform: translateX(-50%);
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
             transition: background 0.3s ease;
+            z-index: 100; /* Pastikan tombol ini di atas konten iframe lainnya */
         }
 
         .add-to-cart-button:hover {
             background: linear-gradient(135deg, #00B04C, #5BB914);
         }
 
-.variant-group {
-    margin-bottom: 20px;
-}
+        .variant-group {
+            margin-bottom: 20px;
+        }
 
-.variant-label {
-    font-weight: 600;
-    margin-bottom: 6px;
-    font-size: 14px;
-    display: block;
-}
+        .variant-label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+            display: block;
+        }
 
-.variant-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
+        .variant-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-.variant-option {
-    padding: 8px 14px;
-    border: 2px solid #00C853;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #00C853;
-    background-color: #f0fdf4;
-    transition: all 0.2s;
-}
+        .variant-option {
+            padding: 8px 14px;
+            border: 2px solid #00C853;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #00C853;
+            background-color: #f0fdf4;
+            transition: all 0.2s;
+        }
 
-.variant-option.active {
-    background-color: #00C853;
-    color: white;
-    font-weight: bold;
-}
-        .product-header-detail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  padding: 0 16px;
-}
+        .variant-option.active {
+            background-color: #00C853;
+            color: white;
+            font-weight: bold;
+        }
 
-.product-name-detail {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin: 0;
-  max-width: 60%;
-  word-break: break-word;
-}
-
-.quantity-selector {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.quantity-button {
-  background-color: #00c853;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.quantity-input {
-  width: 30px;
-  text-align: center;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-}
-
-       
-.fly-to-cart {
-  position: fixed;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  z-index: 9999;
-  transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
-  pointer-events: none;
-}
-</style> 
-  
+        .fly-to-cart {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            z-index: 9999; /* Z-index tinggi agar terlihat saat animasi */
+            transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+            pointer-events: none; /* Tidak bisa diklik saat animasi */
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
         <header class="header-detail">
-         <i class="fas fa-arrow-left back-button" onclick="kirimPermintaanTutup()"></i>
-            
+            <i class="fas fa-arrow-left back-button" onclick="kirimPermintaanTutup()"></i>
             <div class="header-title">Detail Produk</div>
         </header>
         
         <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
         <div class="product-info-detail">
-           <div class="product-header-detail">
-  <h1 class="product-name-detail" id="productName"></h1>
-
-  <div class="quantity-selector">
-    <button class="quantity-button" id="decreaseQuantity">-</button>
-    <input type="number" class="quantity-input" id="productQuantity" value="0" min="0" readonly>
-    <button class="quantity-button" id="increaseQuantity">+</button>
-  </div>
-</div>
+            <div class="product-header-detail">
+                <h1 class="product-name-detail" id="productName"></h1>
+                <div class="quantity-selector">
+                    <button class="quantity-button" id="decreaseQuantity">-</button>
+                    <input type="number" class="quantity-input" id="productQuantity" value="0" min="0" readonly>
+                    <button class="quantity-button" id="increaseQuantity">+</button>
+                </div>
+            </div>
             <p class="product-description-detail" id="productDescription"></p>
             <p class="product-price-detail" id="productPrice"></p>
 
-<!-- VARIAN SECTION -->
-<div class="variant-group">
-    <label class="variant-label">Pilih Bumbu:</label>
-    <div class="variant-options" data-variant="bumbu">
-        <div class="variant-option active" data-value="Pedas">Pedas</div>
-        <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
-        <div class="variant-option" data-value="Manis">Manis</div>
-    </div>
-</div>
+            <div class="variant-group">
+                <label class="variant-label">Pilih Bumbu:</label>
+                <div class="variant-options" data-variant="bumbu">
+                    <div class="variant-option active" data-value="Pedas">Pedas</div>
+                    <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
+                    <div class="variant-option" data-value="Manis">Manis</div>
+                </div>
+            </div>
 
-<div class="variant-group">
-    <label class="variant-label">Pilih Kacang:</label>
-    <div class="variant-options" data-variant="kacang">
-        <div class="variant-option active" data-value="Dengan Kacang">Dengan Kacang</div>
-        <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
-    </div>
-</div>
+            <div class="variant-group">
+                <label class="variant-label">Pilih Kacang:</label>
+                <div class="variant-options" data-variant="kacang">
+                    <div class="variant-option active" data-value="Dengan Kacang">Dengan Kacang</div>
+                    <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
+                </div>
+            </div>
             
-   <script>
-// Tangani klik pada varian (didefinisikan dulu sebelum digunakan)
-const selectedVariants = {
-    bumbu: "Pedas",
-    kacang: "Dengan Kacang"
-};
+        </div>
+        
+        <button class="add-to-cart-button" id="addToCartButton">Tambah ke Keranjang</button>
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.variant-options').forEach(group => {
-        const variantType = group.dataset.variant;
+    </div>
 
-        group.querySelectorAll('.variant-option').forEach(option => {
-            option.addEventListener('click', () => {
-                group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                option.classList.add('active');
-                selectedVariants[variantType] = option.dataset.value;
+    <script>
+        let selectedProduct = null;
+        // Inisialisasi selectedVariants dari awal
+        const selectedVariants = {
+            bumbu: "Pedas", // Default value
+            kacang: "Dengan Kacang" // Default value
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inisialisasi pilihan varian dari data atribut
+            document.querySelectorAll('.variant-options').forEach(group => {
+                const variantType = group.dataset.variant;
+                const activeOption = group.querySelector('.variant-option.active');
+                if (activeOption) {
+                    selectedVariants[variantType] = activeOption.dataset.value;
+                }
+
+                group.querySelectorAll('.variant-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        selectedVariants[variantType] = option.dataset.value;
+                        updateProductQuantityFromCart(); // Update quantity based on new variant selection
+                    });
+                });
+            });
+
+            const productQuantityInput = document.getElementById('productQuantity');
+            const decreaseButton = document.getElementById('decreaseQuantity');
+            const increaseButton = document.getElementById('increaseQuantity');
+            const addToCartButton = document.getElementById('addToCartButton');
+
+            const productData = sessionStorage.getItem('selectedProduct');
+            if (productData) {
+                selectedProduct = JSON.parse(productData);
+                document.getElementById('productImage').src = selectedProduct.image || 'https://via.placeholder.com/480x250?text=Produk+Rujak';
+                document.getElementById('productName').textContent = selectedProduct.name;
+                document.getElementById('productDescription').textContent = selectedProduct.description;
+                document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+                
+                updateProductQuantityFromCart(); // Load existing quantity from cart for this product/variant
+            } else {
+                alert('Produk tidak ditemukan. Kembali ke halaman utama.');
+                window.parent.postMessage({ type: 'closePopup' }, '*'); // Minta parent untuk menutup popup
+            }
+
+            decreaseButton.addEventListener('click', () => {
+                let qty = parseInt(productQuantityInput.value);
+                if (qty > 0) { // Izinkan sampai 0 untuk menghapus dari keranjang
+                    qty--;
+                    productQuantityInput.value = qty;
+                    updateCartAndNotifyParent(qty);
+                }
+            });
+
+            increaseButton.addEventListener('click', () => {
+                let qty = parseInt(productQuantityInput.value);
+                qty++;
+                productQuantityInput.value = qty;
+                updateCartAndNotifyParent(qty);
+                if (selectedProduct && selectedProduct.image) {
+                     lemparKeKeranjang(selectedProduct.image); // Animasi saat tambah
+                }
+            });
+
+            addToCartButton.addEventListener('click', () => {
+                // Saat tombol 'Tambah ke Keranjang' diklik, ambil kuantitas dari input
+                const qtyToAdd = parseInt(productQuantityInput.value);
+                if (qtyToAdd > 0) {
+                    updateCartAndNotifyParent(qtyToAdd); // Simpan ke keranjang dengan kuantitas saat ini
+                    alert(`${selectedProduct.name} (${qtyToAdd}x) telah ditambahkan/diperbarui di keranjang!`);
+                    // Opsional: Langsung tutup popup setelah menambah
+                    // kirimPermintaanTutup();
+                } else {
+                    alert('Jumlah produk harus lebih dari 0 untuk ditambahkan ke keranjang.');
+                }
             });
         });
-    });
 
-    const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
+        // Function to update the quantity input based on what's in the cart
+        function updateProductQuantityFromCart() {
+            if (!selectedProduct) return;
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItem = cart.find(item =>
+                item.id === selectedProduct.id &&
+                JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+            );
+            document.getElementById('productQuantity').value = existingItem ? existingItem.quantity : 0;
+        }
 
-    if (selectedProduct) {
-        document.getElementById('productImage').src = selectedProduct.image;
-        document.getElementById('productName').textContent = selectedProduct.name;
-        document.getElementById('productDescription').textContent = selectedProduct.description;
-        document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
-
-        const productQuantityInput = document.getElementById('productQuantity');
-        const decreaseButton = document.getElementById('decreaseQuantity');
-        const increaseButton = document.getElementById('increaseQuantity');
-
-        function updateCart(quantity) {
+        // Function to update cart in LocalStorage and notify parent
+        function updateCartAndNotifyParent(quantity) {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const index = cart.findIndex(item =>
+            const existingItemIndex = cart.findIndex(item =>
                 item.id === selectedProduct.id &&
                 JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
             );
 
-            if (index > -1) {
-                cart[index].quantity = quantity;
+            if (quantity > 0) {
+                if (existingItemIndex > -1) {
+                    cart[existingItemIndex].quantity = quantity;
+                } else {
+                    cart.push({
+                        id: selectedProduct.id,
+                        name: selectedProduct.name,
+                        price: selectedProduct.price,
+                        image: selectedProduct.image,
+                        quantity: quantity,
+                        custom: { ...selectedVariants }
+                    });
+                }
             } else {
-                cart.push({
-                    id: selectedProduct.id,
-                    name: selectedProduct.name,
-                    price: selectedProduct.price,
-                    image: selectedProduct.image,
-                    quantity: quantity,
-                    custom: { ...selectedVariants }
-                });
+                // If quantity is 0, remove item from cart
+                if (existingItemIndex > -1) {
+                    cart.splice(existingItemIndex, 1);
+                }
             }
             localStorage.setItem('cart', JSON.stringify(cart));
-            window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
+            sendCartUpdateToParent(); // Notify parent window
         }
 
-        decreaseButton.addEventListener('click', () => {
-            let qty = parseInt(productQuantityInput.value);
-            if (qty > 1) {
-                qty--;
-                productQuantityInput.value = qty;
-                updateCart(qty);
+        function sendCartUpdateToParent() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItem = 0;
+            let totalPrice = 0;
+
+            cart.forEach(item => {
+                totalItem += item.quantity || 0;
+                totalPrice += (item.price || 0) * (item.quantity || 0);
+            });
+
+            window.parent.postMessage({
+                type: 'cartUpdate', // Menggunakan 'type' seperti yang diharapkan apl05.html
+                itemCount: totalItem,
+                totalPrice: totalPrice
+            }, '*'); // Pastikan origin match di produksi
+        }
+
+        function kirimPermintaanTutup() {
+            window.parent.postMessage({ type: 'closePopup' }, '*'); // Menggunakan 'type'
+        }
+
+        function lemparKeKeranjang(imgSrc) {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.classList.add('fly-to-cart');
+
+            const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+            // Ambil posisi elemen summary bar dari parent
+            const parentSummaryBar = window.parent.document.getElementById('checkoutSummaryBar');
+            if (!parentSummaryBar) {
+                console.warn("Parent summary bar not found for animation target.");
+                return;
             }
-        });
+            const endRect = parentSummaryBar.getBoundingClientRect();
 
-       increaseButton.addEventListener('click', () => {
-    let qty = parseInt(productQuantityInput.value);
-    qty++;
-    productQuantityInput.value = qty;
-    updateCart(qty);
-    lemparKeKeranjang(selectedProduct.image); // ✅ animasi hanya saat tambah
-});
-    } else {
-        alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-        window.location.href = 'apl05.html';
-    }
-});
+            // Offset gambar awal relatif terhadap viewport iframe
+            img.style.left = `${startRect.left}px`;
+            img.style.top = `${startRect.top}px`;
+            img.style.opacity = 1;
 
-function kirimPermintaanTutup() {
-    window.parent.postMessage({ action: 'tutupPopup' }, '*');
-}
-       function lemparKeKeranjang(imgSrc) {
-  const img = document.createElement('img');
-  img.src = imgSrc;
-  img.classList.add('fly-to-cart');
+            document.body.appendChild(img);
 
-  // Awal: posisi tombol + (ambil posisi tombol atau produk)
-  const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+            // Perhitungan posisi target relatif terhadap iframe viewport
+            // Ini adalah bagian kritis: kita harus mengkompensasi posisi iframe itu sendiri.
+            // Mendapatkan posisi iframe relatif terhadap viewport parent
+            const iframeRect = window.frameElement.getBoundingClientRect();
 
-  // Target: posisi bridge keranjang
-  const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
+            const targetX = (endRect.left - iframeRect.left) + (endRect.width / 2) - (img.offsetWidth / 2);
+            const targetY = (endRect.top - iframeRect.top) + (endRect.height / 2) - (img.offsetHeight / 2);
 
-  // Posisi awal
-  img.style.left = `${startRect.left}px`;
-  img.style.top = `${startRect.top}px`;
-  img.style.opacity = 1;
 
-  document.body.appendChild(img);
+            requestAnimationFrame(() => {
+                img.style.transform = `translate(${targetX - startRect.left}px, ${targetY - startRect.top}px) scale(0.2)`;
+                img.style.opacity = 0;
+            });
 
-  // Trigger animasi
-  requestAnimationFrame(() => {
-    img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
-    img.style.opacity = 0;
-  });
-
-  // Hapus elemen setelah animasi selesai
-  setTimeout(() => {
-    document.body.removeChild(img);
-  }, 700);
-}
-       
-</script>
+            setTimeout(() => {
+                img.remove(); // Gunakan .remove() lebih modern dari .removeChild()
+            }, 700);
+        }
+    </script>
 </body>
 </html>
