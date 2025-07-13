@@ -14,7 +14,7 @@
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box; /* Pastikan box-sizing border-box di seluruh elemen */
             font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
@@ -25,23 +25,23 @@
             display: flex; 
             flex-direction: column; 
             justify-content: flex-start; 
+            overflow-x: hidden; /* Tambahkan ini agar tidak ada scroll horizontal di body */
         }
 
         .container {
-            max-width: 480px; /* Batasi lebar container utama */
+            max-width: 480px; 
             margin: 0 auto;
             background: white;
             min-height: 100vh; 
             position: relative;
-            /* Padding top disesuaikan dengan tinggi total header dan promo banner yang fixed */
-            padding-top: 250px; /* Header sekitar 125px + Promo Banner sekitar 115px + sedikit ruang */
-            /* Padding bottom yang cukup untuk bottom-nav (~60px) + summary-bar (~50px) */
-            padding-bottom: 115px; /* Total sekitar 110-120px */
+            /* Pastikan padding-top cukup untuk fixed header + promo banner */
+            padding-top: 250px; 
+            /* Pastikan padding-bottom cukup untuk fixed bottom-nav + checkout-summary-bar */
+            padding-bottom: 115px; 
             overflow-x: hidden; 
-            flex-grow: 1; /* Memastikan container mengisi sisa ruang vertikal */
+            flex-grow: 1; 
         }
 
-        /* Header Asli yang Dipertahankan */
         .header {
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
@@ -51,7 +51,7 @@
             left: 50%; 
             transform: translateX(-50%); 
             width: 100%;
-            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
+            max-width: 480px; 
             z-index: 1000; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
@@ -153,14 +153,13 @@
         /* Promo Banner */
         .promo-banner {
             position: fixed; 
-            /* Top disesuaikan, sekitar tinggi header (125px) */
             top: 125px; 
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
+            max-width: 480px; 
             background: white;
-            padding: 10px 16px;
+            padding: 10px 16px; /* Padding ini yang mungkin membuat sempit jika dihitung dengan width 100% */
             z-index: 999; 
             overflow-x: hidden; 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
@@ -176,6 +175,8 @@
             -ms-overflow-style: none; 
             scrollbar-width: none; 
             padding-bottom: 5px; 
+            /* Tambahkan padding-right agar slide terakhir tidak terpotong jika ada scrollbar */
+            padding-right: 16px; 
         }
 
         .promo-slides-container::-webkit-scrollbar {
@@ -217,22 +218,34 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px; 
-            padding: 16px; /* Padding ini yang penting untuk lebar konten */
+            padding: 16px; /* Padding ini adalah masalah yang mungkin */
             background: white;
             margin-bottom: 8px;
-            /* Pastikan lebar kategori tidak terganggu oleh fixed element */
-            width: 100%; /* Agar mengisi lebar container */
+            width: calc(100% - 32px); /* Atur lebar menjadi 100% dikurangi padding total */
+            margin-left: 16px; /* Geser ke kanan sesuai padding kiri */
+            margin-right: 16px; /* Geser ke kiri sesuai padding kanan */
         }
+        /* Atau alternatif lebih baik jika tetap menggunakan padding di categories */
+        /* .categories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 16px;
+            background: white;
+            margin-bottom: 8px;
+            width: 100%; 
+        } */
+
 
         .category {
             text-align: center;
-            padding: 8px 0; 
+            /* padding: 8px 0; <-- Hapus ini jika tumpang tindih */
             border-radius: 8px; 
             transition: all 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 12px;
+            padding: 12px; /* Ini padding internal kategori */
             background:#ffffff;
             border-radius: 12px;
             transition: transform 0.2s ease;
@@ -300,7 +313,7 @@
         
         /* Menu Terlaris */
         .section-title {
-            padding: 16px 16px 8px; /* Padding yang sama dengan kategori untuk konsistensi */
+            padding: 16px 16px 8px; 
             font-size: 16px;
             font-weight: bold;
             display: flex;
@@ -319,9 +332,19 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            /* Pastikan lebar restoran tidak terganggu oleh fixed element */
-            width: 100%; /* Agar mengisi lebar container */
+            width: calc(100% - 32px); /* Atur lebar menjadi 100% dikurangi padding total */
+            margin-left: 16px; /* Geser ke kanan sesuai padding kiri */
+            margin-right: 16px; /* Geser ke kiri sesuai padding kanan */
         }
+        /* Atau alternatif lebih baik jika tetap menggunakan padding di restaurants */
+        /* .restaurants {
+            padding: 0 16px 16px; 
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+        } */
+
 
         .restaurant-card {
             background: white;
@@ -430,11 +453,11 @@
         /* CHECKOUT SUMMARY BAR */
         .checkout-summary-bar {
             position: fixed;
-            bottom: 60px; /* Di atas bottom-nav */
+            bottom: 60px; 
             left: 50%;
-            transform: translateX(-50%) translateY(100%); /* Awalnya tersembunyi di bawah */
+            transform: translateX(-50%) translateY(100%); 
             width: 100%;
-            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
+            max-width: 480px; 
             background-color: #00C853; 
             color: white;
             padding: 10px 15px;
@@ -442,14 +465,14 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 99999; /* Z-index tertinggi agar selalu di atas popup */
+            z-index: 99999; 
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
-            transition: transform 0.3s ease-out; /* Animasi muncul */
+            transition: transform 0.3s ease-out; 
         }
 
         .checkout-summary-bar.show {
-            transform: translateX(-50%) translateY(0); /* Muncul ke atas */
+            transform: translateX(-50%) translateY(0); 
         }
 
         .checkout-summary-bar .cart-info {
@@ -490,7 +513,6 @@
             animation: fadeIn 0.3s ease-out forwards;
         }
 
-        /* Loading message for menu list */
         .menu-loading-message {
             text-align: center;
             padding: 20px;
@@ -501,22 +523,22 @@
         /* Styling for the popup panel */
         #popupPanel {
             position: fixed;
-            inset: 0; /* Mengisi seluruh viewport */
-            background: rgba(0, 0, 0, 0.3); /* Overlay gelap */
-            display: none; /* Sembunyikan secara default */
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.3); 
+            display: none; 
             justify-content: center;
-            align-items: flex-end; /* Muncul dari bawah */
-            z-index: 9999; /* Z-index ini harus lebih rendah dari checkout-summary-bar */
+            align-items: flex-end; 
+            z-index: 9999; 
         }
 
         #popupPanel.show {
-            display: flex; /* Tampilkan saat aktif */
+            display: flex; 
         }
 
         .popup-content {
             width: 100%;
-            max-width: 480px; /* Popup juga mengikuti max-width container utama */
-            height: 85vh; /* Tinggi popup, bisa disesuaikan */
+            max-width: 480px; 
+            height: 85vh; 
             background-color: white;
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
@@ -524,13 +546,10 @@
             box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
-
-            /* Efek muncul dari bawah */
             transform: translateY(100%);
             animation: slideUp 0.35s ease-out forwards;
         }
 
-        /* Animasi popup muncul */
         @keyframes slideUp {
             from {
                 transform: translateY(100%);
@@ -541,7 +560,7 @@
         }
 
         #popupFrame {
-            flex: 1; /* Mengisi sisa ruang di popup-content */
+            flex: 1; 
             width: 100%;
             border: none;
         }
@@ -553,8 +572,7 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
-            width: 100%; /* Tombol tutup mengisi lebar popup */
-            /* Pastikan tombol ini tidak terlalu dekat dengan tepi bawah popup-content */
+            width: 100%; 
         }
     </style>
 </head>
@@ -738,7 +756,7 @@
 
         // --- Elemen Utama ---
         const menuList = document.getElementById('menuList');
-        const checkoutSummaryBar = document.getElementById('popupCheckoutBar'); // Menggunakan ID baru
+        const checkoutSummaryBar = document.getElementById('popupCheckoutBar'); 
         const cartItemCountSpan = document.getElementById('cartItemCount');
         const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
 
@@ -805,7 +823,7 @@
                         
                         card.addEventListener('click', () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                            bukaPopup('product-detail.html'); // Menggunakan popup
+                            bukaPopup('product-detail.html'); 
                         });
                         menuList.appendChild(card);
                     });
@@ -902,7 +920,7 @@
                 }
             });
             current = (current + 1) % icons.length;
-        }, 2000); // Ganti icon setiap 2 detik
+        }, 2000); 
 
         // --- FUNGSI UNTUK POPUP PANEL ---
         const popupPanel = document.getElementById('popupPanel');
@@ -911,47 +929,41 @@
         function bukaPopup(htmlFile) {
             popupFrame.src = htmlFile;
             popupPanel.classList.add('show');
-            // Menambahkan event listener untuk memantau pesan dari iframe
             window.addEventListener('message', handleIframeMessage);
         }
 
         function tutupPopup() {
             popupPanel.classList.remove('show');
-            popupFrame.src = ""; // Bersihkan src iframe
+            popupFrame.src = ""; 
             window.removeEventListener('message', handleIframeMessage);
-            // Pastikan summary bar diperbarui setelah menutup popup (mungkin ada perubahan keranjang)
             updateCartSummaryFromLocalStorage(); 
         }
 
         function handleIframeMessage(event) {
-            // Penting: Anda harus memverifikasi event.origin untuk keamanan di aplikasi produksi.
-            // Contoh: if (event.origin !== "http://localhost:8080" && event.origin !== "https://your-domain.com") return; 
-
             if (event.data) {
                 if (event.data.type === 'cartUpdate') {
                     updateCartSummary(event.data.itemCount, event.data.totalPrice);
                 } else if (event.data.type === 'closePopup') {
-                    tutupPopup(); // Pesan dari iframe untuk menutup diri
+                    tutupPopup(); 
                 } else if (event.data.type === 'goToCart') {
-                    tutupPopup(); // Tutup popup detail
-                    bukaPopup('cart.html'); // Buka popup keranjang
+                    tutupPopup(); 
+                    bukaPopup('cart.html'); 
                 }
             }
         }
 
         // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR ---
         function updateCartSummary(itemCount, totalPrice) {
-            const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID'); // Format mata uang IDR
+            const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID'); 
             cartItemCountSpan.textContent = itemCount;
             cartTotalPriceSpan.textContent = formattedPrice;
 
-            // Update badge di bottom nav "Pesanan"
             const cartBadge = document.getElementById("cartBadge");
             if (itemCount > 0) {
                 cartBadge.textContent = itemCount;
                 cartBadge.style.display = "inline-block";
             } else {
-                cartBadge.style.display = "none"; // Sembunyikan badge jika 0 item
+                cartBadge.style.display = "none"; 
             }
 
             if (itemCount > 0) {
