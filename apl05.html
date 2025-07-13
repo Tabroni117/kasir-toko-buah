@@ -540,6 +540,48 @@
     min-width: 20px;
     text-align: center;
   }
+        #floatingCartBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid #ccc;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+}
+
+.cart-button {
+  position: relative;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+.cart-count {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.checkout-button {
+  background-color: orange;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
 </style>
 
@@ -687,13 +729,22 @@
   </div>
     
 </div>
-<!-- === ICON KERANJANG FLOATING === -->
+
+
+<!-- Ikon Keranjang Mengambang -->
 <div id="floatingCart" class="floating-cart" onclick="bukaPopup('cart.html')">
   <i class="fas fa-shopping-cart"></i>
   <span id="cartCount" class="cart-badge">0</span>
 </div>
 
-
+<!-- Bar Bawah untuk Checkout -->
+<div id="floatingCartBar" style="display: none;">
+  <div class="cart-button" onclick="bukaPopup('cart.html')">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="cart-count" id="barCartCount">0</span>
+  </div>
+  <button class="checkout-button" onclick="window.location.href='checkout.html'">Checkout</button>
+</div>
 
         
 
@@ -981,26 +1032,22 @@ window.addEventListener('message', function(event) {
   }
 });
 
-
-
-
-
-
-
-        
+  
   function updateCartCount() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
     document.getElementById('cartCount').textContent = totalItems;
   }
 
-  // Jalankan saat halaman dimuat
   document.addEventListener('DOMContentLoaded', updateCartCount);
 
-  // Dengarkan sinyal dari iframe ketika item ditambahkan
   window.addEventListener('message', function(event) {
     if (event.data.action === 'keranjangBerhasil') {
       updateCartCount();
+      alert('✅ Produk ditambahkan ke keranjang!');
+    }
+    if (event.data.action === 'tutupPopup') {
+      tutupPopup();
     }
   });
 
