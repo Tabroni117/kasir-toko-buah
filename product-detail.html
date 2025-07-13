@@ -170,8 +170,38 @@
     color: white;
     font-weight: bold;
 }
+ .floating-cart-icon {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  background-color: #ff5c5c;
+  color: white;
+  border-radius: 50%;
+  padding: 14px;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
 
-        
+.floating-cart-icon:hover {
+  transform: scale(1.1);
+}
+
+.floating-cart-icon .cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: #fff;
+  color: #ff5c5c;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 3px 6px;
+  min-width: 20px;
+  text-align: center;
+}
     </style>
 </head>
 <body>
@@ -214,6 +244,12 @@
       </div>
     </div>
   </div>
+    
+    <!-- 🔘 FLOATING CART ICON ala Shopee -->
+<div id="floatingCartIcon" class="floating-cart-icon" onclick="bukaKeranjang()">
+  <i class="fas fa-shopping-cart"></i>
+  <span class="cart-badge" id="cartBadgeMini">0</span>
+</div>
 
   <script>
     const selectedVariants = {
@@ -312,6 +348,27 @@
     function kirimPermintaanTutup() {
       window.parent.postMessage({ action: 'tutupPopup' }, '*');
     }
+
+      
+  function updateMiniCartBadge() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    document.getElementById('cartBadgeMini').textContent = totalItems;
+  }
+
+  document.addEventListener('DOMContentLoaded', updateMiniCartBadge);
+
+  // Saat iframe menerima update keranjang dari tombol +
+  window.addEventListener('message', function (event) {
+    if (event.data.action === 'keranjangBerhasil') {
+      updateMiniCartBadge();
+    }
+  });
+
+  function bukaKeranjang() {
+    window.parent.postMessage({ action: 'bukaKeranjang' }, '*');
+  }
+
   </script>
 </body>
 </html>
