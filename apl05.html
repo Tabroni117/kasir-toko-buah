@@ -1121,25 +1121,38 @@ function updatePopupCheckoutBar() {
   document.getElementById('bridgeTotal').textContent = `Rp ${totalHarga.toLocaleString('id-ID')}`;
 }
 
-window.addEventListener('message', function(event) {
-  if (event.data.action === 'keranjangUpdate') {
-    updatePopupCheckoutBar(); // 🔄 Update bridge bar
-  }
 
-  if (event.data.action === 'keranjangBerhasil') {
-    updateCartCount();
-    updatePopupCheckoutBar();
-    alert('✅ Produk ditambahkan ke keranjang!');
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    // Aktifkan tombol Checkout
+    const checkoutBtn = document.getElementById('bridgeCheckoutBtn');
+    if (checkoutBtn) {
+      checkoutBtn.addEventListener('click', function () {
+        bukaPopup('cart.html');
+      });
+    }
+  });
 
-  if (event.data.action === 'tutupPopup') {
-    tutupPopup();
-  }
+  // Dengarkan semua pesan dari iframe
+  window.addEventListener('message', function (event) {
+    if (event.data.action === 'keranjangUpdate') {
+      updatePopupCheckoutBar(); // 🔄 Update isi bridge bar (dari + / -)
+    }
 
-  if (event.data.action === 'bukaKeranjang') {
-    bukaPopup('cart.html');
-  }
-});
+    if (event.data.action === 'keranjangBerhasil') {
+      updateCartCount();
+      updatePopupCheckoutBar(); // 🔄 Tambahan penting
+      alert('✅ Produk ditambahkan ke keranjang!');
+    }
+
+    if (event.data.action === 'tutupPopup') {
+      tutupPopup();
+    }
+
+    if (event.data.action === 'bukaKeranjang') {
+      bukaPopup('cart.html');
+    }
+  });
+
         
     </script>
 </body>
