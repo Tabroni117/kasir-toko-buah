@@ -21,36 +21,33 @@
         body {
             background-color: #f9f9f9;
             color: #333;
-            /* Tambahkan min-height agar body selalu setidaknya setinggi viewport */
             min-height: 100vh; 
-            display: flex; /* Menggunakan flexbox untuk memposisikan container */
-            flex-direction: column; /* Mengatur arah flex ke kolom */
-            justify-content: flex-start; /* Konten dimulai dari atas */
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start; 
         }
 
         .container {
             max-width: 480px;
             margin: 0 auto;
             background: white;
-            min-height: 100vh; /* Agar container bisa di-scroll dan terlihat penuh */
+            min-height: 100vh; 
             position: relative;
             /*
-             * PERBAIKAN UTAMA untuk Bottom Nav:
+             * PERBAIKAN UTAMA:
              * Padding top harus mengakomodasi tinggi total dari elemen fixed di atasnya.
-             * Perkiraan tinggi Header: 120px.
-             * Perkiraan tinggi Promo Banner: 120px.
-             * Total perkiraan ruang atas: 120px (header) + 120px (promo banner) = 240px.
-             *
-             * Padding bottom harus mengakomodasi tinggi total dari elemen fixed di bawahnya.
-             * Tinggi Bottom Nav: sekitar 50px-60px (termasuk padding).
-             * Tinggi Checkout Summary Bar: sekitar 45px.
-             * Total perkiraan ruang bawah: 60px (bottom nav) + 45px (checkout summary) = 105px.
-             * Jadi, gunakan nilai yang sedikit lebih besar, misalnya 110px atau 115px.
+             * Mari kita ukur ulang:
+             * Header tinggi sekitar 125px (termasuk padding dan address bar).
+             * Promo Banner tinggi (slide 100px + padding atas 10px + padding bawah 10px) = 120px.
+             * Total perkiraan ruang atas: 125px (header) + 120px (promo banner) = 245px.
+             * Gunakan nilai yang sedikit lebih besar (misal 250px) untuk amannya.
+             * SESUAIKAN NILAI INI jika tata letak masih tumpang tindih atau ada celah besar.
+             * Gunakan Developer Tools (F12) untuk mengukur tinggi pasti dari Header dan Promo Banner.
              */
-            padding-top: 240px; 
-            padding-bottom: 115px; /* <--- SESUAIKAN INI untuk memberi ruang bottom nav dan checkout bar */
+            padding-top: 250px; /* <--- SESUAIKAN INI */
+            padding-bottom: 115px; 
             overflow-x: hidden; 
-            flex-grow: 1; /* Biarkan container mengambil ruang sisa di antara header dan bottom nav */
+            flex-grow: 1; 
         }
 
         /* Header Asli yang Dipertahankan */
@@ -64,7 +61,7 @@
             transform: translateX(-50%); 
             width: 100%;
             max-width: 480px; 
-            z-index: 1000; /* Paling tinggi */
+            z-index: 1000; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
@@ -165,14 +162,19 @@
         /* Promo Banner */
         .promo-banner {
             position: fixed; 
-            top: 120px; 
+            /*
+             * PERBAIKAN KRUSIAL:
+             * `top` promo banner harus sama dengan tinggi total `header`.
+             * Mengasumsikan tinggi header sekitar 125px (silakan ukur di browser Anda).
+             */
+            top: 125px; /* <--- SESUAIKAN: Ini adalah tinggi `header` yang sudah Anda ukur. */
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
             max-width: 480px; 
             background: white;
             padding: 10px 16px;
-            z-index: 999; /* Di bawah header, di atas konten */
+            z-index: 999; 
             overflow: visible; 
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
             border-bottom-left-radius: 8px;
@@ -384,17 +386,17 @@
         .bottom-nav {
             position: fixed;
             bottom: 0;
-            left: 50%; /* Pusat secara horizontal */
-            transform: translateX(-50%); /* Penyesuaian untuk centering */
+            left: 50%; 
+            transform: translateX(-50%); 
             width: 100%;
-            max-width: 480px; /* Batasi lebar */
+            max-width: 480px; 
             display: flex;
             justify-content: space-around;
             background: linear-gradient(135deg, #00C853, #64DD17);
             padding: 6px 0;
             border-top: 1px solid rgba(255,255,255,0.2);
-            z-index: 1000; /* <--- Z-index harus tinggi agar selalu di atas */
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15); /* Tambahkan shadow ke atas */
+            z-index: 1000; 
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15); 
         }
 
         .nav-item {
@@ -404,7 +406,7 @@
             padding: 4px;
             transition: all 0.3s ease;
             text-decoration: none;
-            position: relative; /* Penting untuk posisi badge */
+            position: relative; 
         }
 
         .nav-item.active {
@@ -423,7 +425,7 @@
             top: 0;
             right: 0;
             transform: translate(30%, -30%);
-            background-color: #ef4444; /* merah terang */
+            background-color: #ef4444; 
             color: white;
             font-size: 10px;
             font-weight: bold;
@@ -435,29 +437,29 @@
             z-index: 10;
         }
 
-        /* >>> CSS CHECKOUT SUMMARY BAR <<< */
+        /* CHECKOUT SUMMARY BAR */
         .checkout-summary-bar {
             position: fixed;
-            bottom: 50px; /* <--- Posisi di atas bottom-nav. Sesuaikan ini jika tinggi bottom-nav berubah */
+            bottom: 50px; 
             left: 50%;
-            transform: translateX(-50%) translateY(100%); /* Sembunyikan secara default */
+            transform: translateX(-50%) translateY(100%); 
             width: 100%;
-            max-width: 480px; /* Sesuaikan dengan lebar container */
-            background-color: #00C853; /* Hijau utama */
+            max-width: 480px; 
+            background-color: #00C853; 
             color: white;
             padding: 10px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); /* Shadow ke atas */
-            z-index: 999; /* Di bawah bottom-nav, di atas konten dan promo banner */
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); 
+            z-index: 999; 
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
-            transition: transform 0.3s ease-out; /* Animasi muncul/hilang */
+            transition: transform 0.3s ease-out; 
         }
 
         .checkout-summary-bar.show {
-            transform: translateX(-50%) translateY(0); /* Tampilkan bar */
+            transform: translateX(-50%) translateY(0); 
         }
 
         .checkout-summary-bar .cart-info {
@@ -474,7 +476,7 @@
         }
 
         .checkout-summary-bar .checkout-button {
-            background-color: #FFD700; /* Kuning cerah */
+            background-color: #FFD700; 
             color: #333;
             border: none;
             padding: 8px 15px;
@@ -510,11 +512,11 @@
         #popupPanel {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.3); /* Latar belakang transparan */
-            display: none; /* Hidden by default */
+            background: rgba(0, 0, 0, 0.3); 
+            display: none; 
             justify-content: center;
-            align-items: flex-end; /* Muncul dari bawah */
-            z-index: 9999; /* Higher than everything else */
+            align-items: flex-end; 
+            z-index: 9999; 
         }
 
         #popupPanel.show {
@@ -524,7 +526,7 @@
         .popup-content {
             width: 100%;
             max-width: 460px;
-            height: 85vh; /* Cukup tinggi tapi tidak terlalu kelabasan */
+            height: 85vh; 
             background-color: white;
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
@@ -966,18 +968,17 @@
             let totalPrice = 0;
 
             cart.forEach(item => {
-                totalItem += item.quantity || 0; // Pastikan quantity ada atau 0
-                totalPrice += (item.price || 0) * (item.quantity || 0); // Hitung total harga
+                totalItem += item.quantity || 0; 
+                totalPrice += (item.price || 0) * (item.quantity || 0); 
             });
 
             updateCartSummary(totalItem, totalPrice);
         }
 
         function goToCheckoutPage() {
-            bukaPopup('cart.html'); // Membuka halaman keranjang di dalam popup
+            bukaPopup('cart.html'); 
         }
 
-        // Pastikan summary bar diperbarui saat halaman pertama kali dimuat
         document.addEventListener('DOMContentLoaded', updateCartSummaryFromLocalStorage);
     </script>
 </body>
