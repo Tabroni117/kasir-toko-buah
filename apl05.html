@@ -582,6 +582,41 @@
   cursor: pointer;
 }
 
+#popupCheckoutBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: #fff;
+  border-top: 1px solid #ddd;
+  font-size: 16px;
+  font-weight: 500;
+  position: relative;
+  z-index: 10;
+}
+
+#bridgeItemCount, #bridgeTotal {
+  margin-right: 10px;
+}
+
+#bridgeCheckoutBtn {
+  padding: 6px 12px;
+  background-color: #f55;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+
+
+
+
+
+
+
+
+        
 </style>
 
 
@@ -716,16 +751,18 @@
         </div>
 
 <!-- === PANEL POPUP DARI BAWAH === -->
-<div id="popupPanel" class="popup-panel">
+<div id="popupPanel">
   <div class="popup-content">
-    <iframe id="popupFrame" src="" frameborder="0"></iframe>
+    <iframe id="popupFrame"></iframe>
 
+    <div id="popupCheckoutBar"> <!-- ← Bridge checkout bar -->
+      🛒 <span id="bridgeItemCount">0 item</span>
+      Total: <span id="bridgeTotal">Rp 0</span>
+      <button id="bridgeCheckoutBtn">Checkout</button>
+    </div>
 
-
-    <!-- Tombol Tutup -->
     <button onclick="tutupPopup()" class="btn-tutup">Tutup</button>
   </div>
-    
 </div>
 
 
@@ -997,22 +1034,29 @@
 
 
 
+function bukaPopup(htmlFile) {
+  const panel = document.getElementById('popupPanel');
+  const frame = document.getElementById('popupFrame');
 
-  function bukaPopup(htmlFile) {
-    const panel = document.getElementById('popupPanel');
-    const frame = document.getElementById('popupFrame');
+  frame.src = htmlFile;
+  panel.classList.add('show');
 
-    frame.src = htmlFile; // contoh: 'cart.html' atau 'product-detail.html'
-    panel.classList.add('show');
-  }
+  // Tampilkan checkout bridge
+  document.getElementById('popupCheckoutBar').style.display = 'flex';
 
-  function tutupPopup() {
-    const panel = document.getElementById('popupPanel');
-    const frame = document.getElementById('popupFrame');
+  // 🔄 Perbarui isi checkout bar
+  updatePopupCheckoutBar();
+}
+function tutupPopup() {
+  const panel = document.getElementById('popupPanel');
+  const frame = document.getElementById('popupFrame');
+  
+  panel.classList.remove('show');
+  frame.src = '';
 
-    panel.classList.remove('show');
-    frame.src = ''; // kosongkan iframe agar hemat memori
-  }
+  // Sembunyikan checkout bar saat popup ditutup
+  document.getElementById('popupCheckoutBar').style.display = 'none';
+}
         
 window.addEventListener('message', function(event) {
   if (event.data.action === 'tutupPopup') {
@@ -1048,6 +1092,40 @@ window.addEventListener('message', function(event) {
     bukaPopup('cart.html');
   }
 });
+
+function updatePopupCheckoutBar() {
+  const cart = JSON.parse(localStorage.getItem('cart')) || [];
+  
+  let totalItem = 0;
+  let totalHarga = 0;
+
+  cart.forEach(item => {
+    const qty = item.quantity || 1;
+    totalItem += qty;
+    totalHarga += (item.price || 0) * qty;
+  });
+
+  document.getElementById('bridgeItemCount').textContent = `${totalItem} item`;
+  document.getElementById('bridgeTotal').textContent = `Rp ${totalHarga.toLocaleString('id-ID')}`;
+}
+
+window.addEventListener('message', function(event) {
+  if (event.data.action === 'keranjangBerhasil') {
+    updateCartCount();
+    updatePopupCheckoutBar(); // ← Tambahan penting
+    alert('✅ Produk ditambahkan ke keranjang!');
+  }
+
+  if (event.data.action === 'tutupPopup') {
+    tutupPopup();
+  }
+
+  if (event.data.action === 'bukaKeranjang') {
+    bukaPopup('cart.html');
+  }
+});
+
+        
     </script>
 </body>
 </html>
