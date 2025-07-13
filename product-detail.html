@@ -296,36 +296,39 @@
           });
 
           // Tombol + sekaligus TAMBAH ke keranjang
-          increaseButton.addEventListener('click', () => {
-              let cart = JSON.parse(localStorage.getItem('cart')) || [];
-              const quantity = 1;
+    increaseButton.addEventListener('click', () => {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const quantity = 1;
 
-              const existingItemIndex = cart.findIndex(item =>
-                  item.id === selectedProduct.id &&
-                  JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-              );
+    const existingItemIndex = cart.findIndex(item =>
+        item.id === selectedProduct.id &&
+        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+    );
 
-              if (existingItemIndex > -1) {
-                  cart[existingItemIndex].quantity += quantity;
-              } else {
-                  cart.push({
-                      id: selectedProduct.id,
-                      name: selectedProduct.name,
-                      price: selectedProduct.price,
-                      image: selectedProduct.image,
-                      quantity: quantity,
-                      custom: { ...selectedVariants }
-                  });
-              }
+    if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity += quantity;
+    } else {
+        cart.push({
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            quantity: quantity,
+            custom: { ...selectedVariants }
+        });
+    }
 
-              localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('cart', JSON.stringify(cart)); // ✅ simpan keranjang
 
-              // Tambahkan angka tampilannya
-              productQuantityInput.value = parseInt(productQuantityInput.value) + 1;
+    productQuantityInput.value = parseInt(productQuantityInput.value) + 1; // update tampilan jumlah
 
-              // Kirim ke halaman utama
-              window.parent.postMessage({ action: 'keranjangBerhasil' }, '*');
-              window.parent.postMessage({ action: 'tutupPopup' }, '*');
+    lemparKeKeranjang(); // ✅ animasi terbang ke keranjang
+
+    window.parent.postMessage({ action: 'keranjangBerhasil' }, '*'); // respons balik ke apl05
+});
+
+// ⛔ Jangan kirim tutup popup dulu
+// window.parent.postMessage({ action: 'tutupPopup' }, '*');
           });
 
       } else {
@@ -337,6 +340,23 @@
   function kirimPermintaanTutup() {
       window.parent.postMessage({ action: 'tutupPopup' }, '*');
   }
+
+function lemparKeKeranjang() {
+    const productImage = document.getElementById('productImage');
+    const imageRect = productImage.getBoundingClientRect();
+
+    // Kirim data posisi gambar ke halaman apl05 (parent)
+    window.parent.postMessage({
+        action: 'lemparKeKeranjang',
+        imageSrc: productImage.src,
+        imageRect: {
+            top: imageRect.top,
+            left: imageRect.left,
+            width: imageRect.width,
+            height: imageRect.height
+        }
+    }, '*');
+}
 
 </script>
 </body>
