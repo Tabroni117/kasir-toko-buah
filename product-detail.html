@@ -211,8 +211,18 @@
   font-size: 16px;
 }
 
-        
-    </style>
+       
+.fly-to-cart {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  z-index: 9999;
+  transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+  pointer-events: none;
+}
+</style> 
+  
 </head>
 
 <body>
@@ -319,12 +329,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        increaseButton.addEventListener('click', () => {
-            let qty = parseInt(productQuantityInput.value);
-            qty++;
-            productQuantityInput.value = qty;
-            updateCart(qty);
-        });
+       increaseButton.addEventListener('click', () => {
+    let qty = parseInt(productQuantityInput.value);
+    qty++;
+    productQuantityInput.value = qty;
+    updateCart(qty);
+    lemparKeKeranjang(selectedProduct.image); // ✅ animasi hanya saat tambah
+});
     } else {
         alert('Produk tidak ditemukan. Kembali ke halaman utama.');
         window.location.href = 'apl05.html';
@@ -334,6 +345,36 @@ document.addEventListener('DOMContentLoaded', function() {
 function kirimPermintaanTutup() {
     window.parent.postMessage({ action: 'tutupPopup' }, '*');
 }
+       function lemparKeKeranjang(imgSrc) {
+  const img = document.createElement('img');
+  img.src = imgSrc;
+  img.classList.add('fly-to-cart');
+
+  // Awal: posisi tombol + (ambil posisi tombol atau produk)
+  const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+
+  // Target: posisi bridge keranjang
+  const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
+
+  // Posisi awal
+  img.style.left = `${startRect.left}px`;
+  img.style.top = `${startRect.top}px`;
+  img.style.opacity = 1;
+
+  document.body.appendChild(img);
+
+  // Trigger animasi
+  requestAnimationFrame(() => {
+    img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
+    img.style.opacity = 0;
+  });
+
+  // Hapus elemen setelah animasi selesai
+  setTimeout(() => {
+    document.body.removeChild(img);
+  }, 700);
+}
+       
 </script>
 </body>
 </html>
