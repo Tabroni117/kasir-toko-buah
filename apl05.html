@@ -697,47 +697,41 @@
         </div>
     </div>
 
-    <script>
-        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelS2UwFD4k4Xqc", // Ganti dengan API Key Anda
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
+    
+       <script>
+  // --- Konfigurasi Firebase ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelS2UwFD4k4Xqc",
+    authDomain: "tokobuahkasir.firebaseapp.com",
+    projectId: "tokobuahkasir",
+    storageBucket: "tokobuahkasir.firebasestorage.app",
+    messagingSenderId: "731011133713",
+    appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+    measurementId: "G-7CPE2DB2BV"
+  };
 
-        // Inisialisasi Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const menuCollection = db.collection('buah');
+  // --- Inisialisasi Firebase ---
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
 
-        // --- Proteksi Halaman: Cek Status Login ---
-        auth.onAuthStateChanged(user => {
-            const isLoggingOut = localStorage.getItem('isLoggingOut');
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const menuCollection = db.collection('buah');
 
-            if (isLoggingOut) {
-                localStorage.removeItem('isLoggingOut');
-            }
+  // --- Siap Render, Login Optional ---
+  auth.onAuthStateChanged(user => {
+    // Jika sedang logout manual
+    const isLoggingOut = localStorage.getItem('isLoggingOut');
+    if (isLoggingOut) {
+      localStorage.removeItem('isLoggingOut');
+    }
 
-            const storedRole = localStorage.getItem('userRole');
-
-            if (!user || storedRole !== 'pembeli') {
-                if (!isLoggingOut) {
-                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
-                }
-                window.location.href = 'index.html';
-            } else {
-                renderMenuItems();
-                startAutoScroll();
-                updateCartSummaryFromLocalStorage(); 
-            }
-        });
+    // Tidak perlu cek role lagi
+    renderMenuItems(); // tampilkan produk
+    startAutoScroll(); // jalankan promo banner
+    updateCartSummaryFromLocalStorage(); // update icon keranjang
+  });
 
         // --- Elemen Utama DOM ---
         const menuList = document.getElementById('menuList');
