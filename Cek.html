@@ -34,8 +34,8 @@
             min-height: 100vh; 
             position: relative;
             padding-top: 250px; 
-            /* PERBAIKAN PADDING BOTTOM: Ruang untuk summary bar + bottom nav */
-            padding-bottom: 115px; /* Sesuaikan dengan tinggi bottom-nav (~65px) + summary-bar (~50px) */
+            /* Padding bottom yang cukup untuk bottom-nav (~60px) + summary-bar (~50px) */
+            padding-bottom: 115px; /* Total sekitar 110-120px */
             overflow-x: hidden; 
             flex-grow: 1; 
         }
@@ -424,10 +424,10 @@
         /* CHECKOUT SUMMARY BAR */
         .checkout-summary-bar {
             position: fixed;
-            /* Posisi bottom disesuaikan agar di atas bottom-nav */
-            bottom: 60px; /* Tinggi bottom-nav kurang lebih 60px */ 
+            /* bottom disesuaikan agar selalu di atas bottom-nav */
+            bottom: 60px; /* Perkirakan tinggi bottom-nav, misal 60px */ 
             left: 50%;
-            transform: translateX(-50%) translateY(100%); 
+            transform: translateX(-50%) translateY(100%); /* Awalnya tersembunyi di bawah */
             width: 100%;
             max-width: 480px; 
             background-color: #00C853; 
@@ -437,14 +437,14 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); 
-            z-index: 99999; 
+            z-index: 99999; /* Z-index tertinggi agar selalu di atas popup */
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
-            transition: transform 0.3s ease-out; 
+            transition: transform 0.3s ease-out; /* Animasi muncul */
         }
 
         .checkout-summary-bar.show {
-            transform: translateX(-50%) translateY(0); 
+            transform: translateX(-50%) translateY(0); /* Muncul ke atas */
         }
 
         .checkout-summary-bar .cart-info {
@@ -496,22 +496,22 @@
         /* Styling for the popup panel */
         #popupPanel {
             position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3); 
-            display: none; 
+            inset: 0; /* Mengisi seluruh viewport */
+            background: rgba(0, 0, 0, 0.3); /* Overlay gelap */
+            display: none; /* Sembunyikan secara default */
             justify-content: center;
-            align-items: flex-end; 
-            z-index: 9999; 
+            align-items: flex-end; /* Muncul dari bawah */
+            z-index: 9999; /* Z-index ini harus lebih rendah dari checkout-summary-bar */
         }
 
         #popupPanel.show {
-            display: flex;
+            display: flex; /* Tampilkan saat aktif */
         }
 
         .popup-content {
             width: 100%;
-            max-width: 460px;
-            height: 85vh; 
+            max-width: 460px; /* Sesuaikan dengan lebar container utama */
+            height: 85vh; /* Tinggi popup, bisa disesuaikan */
             background-color: white;
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
@@ -536,7 +536,7 @@
         }
 
         #popupFrame {
-            flex: 1;
+            flex: 1; /* Mengisi sisa ruang di popup-content */
             width: 100%;
             border: none;
         }
@@ -548,6 +548,7 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
+            width: 100%; /* Tombol tutup mengisi lebar popup */
         }
     </style>
 </head>
@@ -917,12 +918,15 @@
         }
 
         function handleIframeMessage(event) {
-            // Memastikan pesan berasal dari sumber yang diharapkan jika Anda mengimplementasikan keamanan lebih lanjut
-            // if (event.origin !== "http://your-domain.com") return; 
+            // Penting: Anda harus memverifikasi event.origin untuk keamanan di aplikasi produksi.
+            // Contoh: if (event.origin !== "http://localhost:8080" && event.origin !== "https://your-domain.com") return; 
 
             if (event.data && event.data.type === 'cartUpdate') {
                 updateCartSummary(event.data.itemCount, event.data.totalPrice);
             }
+            // Tidak perlu goToCart di sini jika halaman detail produk tidak memiliki tombol checkout sendiri
+            // yang memicu navigasi ke cart.html secara independen.
+            // Biarkan tombol Checkout di summary bar yang menanganinya.
         }
 
         // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR ---
