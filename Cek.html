@@ -28,16 +28,17 @@
         }
 
         .container {
-            max-width: 480px;
+            max-width: 480px; /* Batasi lebar container utama */
             margin: 0 auto;
             background: white;
             min-height: 100vh; 
             position: relative;
-            padding-top: 250px; 
+            /* Padding top disesuaikan dengan tinggi total header dan promo banner yang fixed */
+            padding-top: 250px; /* Header sekitar 125px + Promo Banner sekitar 115px + sedikit ruang */
             /* Padding bottom yang cukup untuk bottom-nav (~60px) + summary-bar (~50px) */
             padding-bottom: 115px; /* Total sekitar 110-120px */
             overflow-x: hidden; 
-            flex-grow: 1; 
+            flex-grow: 1; /* Memastikan container mengisi sisa ruang vertikal */
         }
 
         /* Header Asli yang Dipertahankan */
@@ -50,7 +51,7 @@
             left: 50%; 
             transform: translateX(-50%); 
             width: 100%;
-            max-width: 480px; 
+            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
             z-index: 1000; 
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
@@ -152,11 +153,12 @@
         /* Promo Banner */
         .promo-banner {
             position: fixed; 
+            /* Top disesuaikan, sekitar tinggi header (125px) */
             top: 125px; 
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
-            max-width: 480px; 
+            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
             background: white;
             padding: 10px 16px;
             z-index: 999; 
@@ -215,9 +217,11 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px; 
-            padding: 16px;
+            padding: 16px; /* Padding ini yang penting untuk lebar konten */
             background: white;
             margin-bottom: 8px;
+            /* Pastikan lebar kategori tidak terganggu oleh fixed element */
+            width: 100%; /* Agar mengisi lebar container */
         }
 
         .category {
@@ -296,7 +300,7 @@
         
         /* Menu Terlaris */
         .section-title {
-            padding: 16px 16px 8px;
+            padding: 16px 16px 8px; /* Padding yang sama dengan kategori untuk konsistensi */
             font-size: 16px;
             font-weight: bold;
             display: flex;
@@ -311,10 +315,12 @@
         }
 
         .restaurants {
-            padding: 0 16px 16px;
+            padding: 0 16px 16px; /* Padding yang sama untuk konsistensi */
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
+            /* Pastikan lebar restoran tidak terganggu oleh fixed element */
+            width: 100%; /* Agar mengisi lebar container */
         }
 
         .restaurant-card {
@@ -424,12 +430,11 @@
         /* CHECKOUT SUMMARY BAR */
         .checkout-summary-bar {
             position: fixed;
-            /* bottom disesuaikan agar selalu di atas bottom-nav */
-            bottom: 60px; /* Perkirakan tinggi bottom-nav, misal 60px */ 
+            bottom: 60px; /* Di atas bottom-nav */
             left: 50%;
             transform: translateX(-50%) translateY(100%); /* Awalnya tersembunyi di bawah */
             width: 100%;
-            max-width: 480px; 
+            max-width: 480px; /* Penting: lebar fixed harus sama dengan container */
             background-color: #00C853; 
             color: white;
             padding: 10px 15px;
@@ -510,7 +515,7 @@
 
         .popup-content {
             width: 100%;
-            max-width: 460px; /* Sesuaikan dengan lebar container utama */
+            max-width: 480px; /* Popup juga mengikuti max-width container utama */
             height: 85vh; /* Tinggi popup, bisa disesuaikan */
             background-color: white;
             border-top-left-radius: 18px;
@@ -549,6 +554,7 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%; /* Tombol tutup mengisi lebar popup */
+            /* Pastikan tombol ini tidak terlalu dekat dengan tepi bawah popup-content */
         }
     </style>
 </head>
@@ -651,7 +657,7 @@
 
     </div>
     
-    <div class="checkout-summary-bar" id="checkoutSummaryBar">
+    <div class="checkout-summary-bar" id="popupCheckoutBar"> 
         <div class="cart-info">
             <span id="cartItemCount">0</span> Item dipilih
         </div>
@@ -732,7 +738,7 @@
 
         // --- Elemen Utama ---
         const menuList = document.getElementById('menuList');
-        const checkoutSummaryBar = document.getElementById('checkoutSummaryBar');
+        const checkoutSummaryBar = document.getElementById('popupCheckoutBar'); // Menggunakan ID baru
         const cartItemCountSpan = document.getElementById('cartItemCount');
         const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
 
@@ -921,12 +927,16 @@
             // Penting: Anda harus memverifikasi event.origin untuk keamanan di aplikasi produksi.
             // Contoh: if (event.origin !== "http://localhost:8080" && event.origin !== "https://your-domain.com") return; 
 
-            if (event.data && event.data.type === 'cartUpdate') {
-                updateCartSummary(event.data.itemCount, event.data.totalPrice);
+            if (event.data) {
+                if (event.data.type === 'cartUpdate') {
+                    updateCartSummary(event.data.itemCount, event.data.totalPrice);
+                } else if (event.data.type === 'closePopup') {
+                    tutupPopup(); // Pesan dari iframe untuk menutup diri
+                } else if (event.data.type === 'goToCart') {
+                    tutupPopup(); // Tutup popup detail
+                    bukaPopup('cart.html'); // Buka popup keranjang
+                }
             }
-            // Tidak perlu goToCart di sini jika halaman detail produk tidak memiliki tombol checkout sendiri
-            // yang memicu navigasi ke cart.html secara independen.
-            // Biarkan tombol Checkout di summary bar yang menanganinya.
         }
 
         // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR ---
