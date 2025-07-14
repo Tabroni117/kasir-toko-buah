@@ -776,11 +776,11 @@
         
    <!-- Versi BERSIH dari kode apl05.html dengan fungsi tidak duplikat -->
 
-
-   <script>
+        
+ <script>
     // --- Konfigurasi Firebase ---
     const firebaseConfig = {
-        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", 
+        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", // Pastikan ini API Key yang benar
         authDomain: "tokobuahkasir.firebaseapp.com",
         projectId: "tokobuahkasir",
         storageBucket: "tokobuahkasir.firebasestorage.app",
@@ -798,134 +798,38 @@
 
     // --- Elemen Utama DOM ---
     const menuList = document.getElementById('menuList');
-    const mainCheckoutSummaryBar = document.getElementById('mainCheckoutSummaryBar');
-    const bridgeItemCountSpan = document.getElementById('bridgeItemCountMain');
-    const bridgeTotalSpan = document.getElementById('bridgeTotalMain');
-    const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain');
+    // Summary Bar Utama (di apl05.html)
+    // Summary Bar Utama (di apl05.html)
+const mainCheckoutSummaryBar = document.getElementById('mainCheckoutSummaryBar'); 
+const bridgeItemCountSpan = document.getElementById('bridgeItemCountMain'); // ✅ Ganti ID
+const bridgeTotalSpan = document.getElementById('bridgeTotalMain');         // ✅ Ganti ID
+const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // ✅ Ganti ID
+    // Elemen terkait Popup
     const popupPanel = document.getElementById('popupPanel');
     const popupFrame = document.getElementById('popupFrame');
-    const popupCheckoutBar = document.getElementById('popupCheckoutBar');
-    const bridgeItemCountInternalSpan = document.getElementById('bridgeItemCountInternal');
-    const bridgeTotalInternalSpan = document.getElementById('bridgeTotalInternal');
-    const bridgeCheckoutBtnInternal = document.getElementById('bridgeCheckoutBtnInternal');
-    const cartBadge = document.getElementById("cartBadge");
-    const gpsIcon = document.querySelector('.gps-icon');
-    const deliveryInput = document.querySelector('.delivery-input');
-    const promoContainer = document.getElementById('promoSlides');
-    const promoSlides = document.querySelectorAll('.promo-slide');
-    const navItems = document.querySelectorAll('.nav-item');
-    const icons = document.querySelectorAll('.category-icon i');
+    
+    // Summary Bar INTERNAL Popup (di dalam popup)
+    const popupCheckoutBar = document.getElementById('popupCheckoutBar'); // KEMBALIKAN ID INI
+    const bridgeItemCountInternalSpan = document.getElementById('bridgeItemCountInternal'); // Span untuk item count bar internal
+    const bridgeTotalInternalSpan = document.getElementById('bridgeTotalInternal'); // Span untuk total price bar internal
+    const bridgeCheckoutBtnInternal = document.getElementById('bridgeCheckoutBtnInternal'); // Tombol checkout bar internal
+    
+    const cartBadge = document.getElementById("cartBadge"); 
 
-    // ✅ Cache data produk setelah diambil dari Firestore
-    let allProducts = [];
-
-    // --- Fungsi Utama yang Menjalankan Semua Logika Aplikasi ---
-    async function runApplication() {
-        // Cek otentikasi dan peran pengguna
-        const user = auth.currentUser;
+    auth.onAuthStateChanged(user => {
+        const isLoggingOut = localStorage.getItem('isLoggingOut');
+        if (isLoggingOut) localStorage.removeItem('isLoggingOut');
         const storedRole = localStorage.getItem('userRole');
 
         if (!user || storedRole !== 'pembeli') {
-            return;
+            if (!isLoggingOut) alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+            window.location.href = 'index.html';
+        } else {
+            renderMenuItems();
+            startAutoScroll();
+            updateCartSummaryFromLocalStorage(); 
         }
-
-        // Jalankan semua fungsi inisialisasi di sini
-        await renderMenuItems(); // ✅ Tambahkan 'await' di sini
-        startAutoScroll();
-        updateCartSummaryFromFirestore();
-
-        // Pasang semua event listener
-        if (bridgeCheckoutBtn) {
-            bridgeCheckoutBtn.addEventListener('click', goToCheckoutPage);
-        }
-        if (bridgeCheckoutBtnInternal) {
-            bridgeCheckoutBtnInternal.addEventListener('click', () => {
-                bukaPopup('cart.html');
-            });
-        }
-        if (gpsIcon) {
-            gpsIcon.addEventListener('click', function() {
-                this.classList.add('loading');
-                deliveryInput.placeholder = "Mendeteksi lokasi...";
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            const { latitude, longitude } = position.coords;
-                            try {
-                                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                                const data = await response.json();
-                                if (data.address) {
-                                    const address = [
-                                        data.address.road,
-                                        data.address.village || data.address.town,
-                                        data.address.city,
-                                        data.address.state
-                                    ].filter(Boolean).join(', ');
-                                    deliveryInput.value = address;
-                                } else {
-                                    deliveryInput.placeholder = "Alamat tidak ditemukan.";
-                                }
-                            } catch (error) {
-                                console.error("Error geocoding:", error);
-                                deliveryInput.placeholder = "Gagal mendapatkan alamat";
-                            }
-                            this.classList.remove('loading');
-                        },
-                        (error) => {
-                            console.error("Error getting geolocation:", error);
-                            deliveryInput.placeholder = "Lokasi tidak dapat diakses";
-                            this.classList.remove('loading');
-                        }
-                    );
-                } else {
-                    deliveryInput.placeholder = "GPS tidak didukung di browser ini";
-                    this.classList.remove('loading');
-                }
-            });
-        }
-
-        navItems.forEach(item => {
-            item.addEventListener('click', function() {
-                navItems.forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        let categoryIconIndex = 0;
-        setInterval(() => {
-            icons.forEach((icon, index) => {
-                icon.classList.remove('rotating');
-                if (index === categoryIconIndex) {
-                    icon.classList.add('rotating');
-                }
-            });
-            categoryIconIndex = (categoryIconIndex + 1) % icons.length;
-        }, 2000);
-
-        // Pasang event listener untuk pesan iframe
-        window.addEventListener('message', handleIframeMessage);
-    }
-
-    // --- Cek Status Autentikasi Saat Halaman Dimuat ---
-  auth.onAuthStateChanged(async (user) => {
-  console.log("🔑 Auth State Changed:", user); // ✅ Tambahkan ini
-
-  const storedRole = localStorage.getItem('userRole');
-
-  if (!user || storedRole !== 'pembeli') {
-      alert('Akses Ditolak: Anda harus login sebagai Pembeli.');
-      window.location.href = 'index.html';
-      return;
-  }
-
-  // Panggil fungsi utama
-  runApplication();
-});
-
-async function renderMenuItems() {
-  console.log("📥 Mulai ambil menu dari koleksi 'buah'...");
-  ...
-}
+    });
 
     async function logout() {
         try {
@@ -935,7 +839,7 @@ async function renderMenuItems() {
             localStorage.removeItem('userRole');
             localStorage.removeItem('userEmail');
             localStorage.removeItem('userUid');
-            localStorage.removeItem('cart');
+            localStorage.removeItem('cart'); 
             alert('Anda telah berhasil logout.');
             window.location.href = 'index.html';
         } catch (error) {
@@ -948,72 +852,139 @@ async function renderMenuItems() {
     async function renderMenuItems() {
         menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
         try {
-            const snapshot = await menuCollection.get();
-            allProducts = []; // ✅ Reset cache produk
+            const snapshot = await menuCollection.where('isAvailable', '==', true).orderBy('nama').get();
             menuList.innerHTML = '';
             if (snapshot.empty) {
                 menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
             } else {
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (!data.nama || !data.harga) return;
                     const product = {
                         id: doc.id,
                         name: data.nama,
-                        description: data.deskripsi || '',
+                        description: data.deskripsi,
                         price: data.harga,
-                        image: data.imageUrl || '',
-                        rating: data.rating || 0,
-                        deliveryTime: data.deliveryTime || ''
+                        image: data.imageUrl,
+                        rating: data.rating,
+                        deliveryTime: data.deliveryTime
                     };
-                    allProducts.push(product); // ✅ Simpan produk ke dalam cache
 
                     const card = document.createElement('div');
                     card.classList.add('restaurant-card', 'fade-in');
-                    // ✅ Tambahkan data-id ke elemen untuk identifikasi
-                    card.setAttribute('data-id', product.id); 
                     card.innerHTML = `
                         <img src="${product.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.name}" class="restaurant-image">
                         <div class="restaurant-info">
                             <div class="restaurant-name">${product.name}</div>
                             <div class="restaurant-meta">
-                                <span class="rating"><i class="fas fa-star"></i> ${parseFloat(product.rating).toFixed(1)}</span>
-                                <span class="delivery-time">${product.deliveryTime || 'Estimasi tidak tersedia'}</span>
+                                <span class="rating"><i class="fas fa-star"></i> ${product.rating?.toFixed(1) || 'N/A'}</span>
+                                <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
                             </div>
                         </div>`;
+                    card.addEventListener('click', () => {
+                        sessionStorage.setItem('selectedProduct', JSON.stringify(product));
+                        bukaPopup('product-detail.html');
+                    });
                     menuList.appendChild(card);
                 });
-
-               menuList.addEventListener('click', (event) => {
-    const cardElement = event.target.closest('.restaurant-card');
-    if (cardElement) {
-        const productId = cardElement.getAttribute('data-id');
-        const product = allProducts.find(p => p.id === productId);
-        if (product) {
-            sessionStorage.setItem('selectedProduct', JSON.stringify(product)); // ⬅️ Tambahkan ini
-            bukaPopup('product-detail.html'); // ⬅️ Langsung buka tanpa dataToSend
+            }
+        } catch (error) {
+            console.error("Error memuat menu:", error);
+            menuList.innerHTML = '<p class="menu-loading-message" style="color:red;">Gagal memuat menu.</p>';
         }
     }
-});
 
-    // --- FUNGSI-FUNGSI LAINNYA (TETAP SAMA) ---
+    // --- GPS functionality (tetap sama) ---
+    const gpsIcon = document.querySelector('.gps-icon');
+    const deliveryInput = document.querySelector('.delivery-input');
+    
+    gpsIcon.addEventListener('click', function() {
+        this.classList.add('loading');
+        deliveryInput.placeholder = "Mendeteksi lokasi...";
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const {latitude, longitude} = position.coords;
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await response.json();
+                        if (data.address) {
+                            const address = [
+                                data.address.road,
+                                data.address.village || data.address.town,
+                                data.address.city,
+                                data.address.state
+                            ].filter(Boolean).join(', ');
+                            deliveryInput.value = address;
+                        } else {
+                            deliveryInput.placeholder = "Alamat tidak ditemukan.";
+                        }
+                    } catch (error) {
+                        console.error("Error geocoding:", error);
+                        deliveryInput.placeholder = "Gagal mendapatkan alamat";
+                    }
+                    gpsIcon.classList.remove('loading');
+                },
+                (error) => {
+                    console.error("Error getting geolocation:", error);
+                    deliveryInput.placeholder = "Lokasi tidak dapat diakses";
+                    gpsIcon.classList.remove('loading');
+                }
+            );
+        } else {
+            deliveryInput.placeholder = "GPS tidak didukung di browser ini";
+            gpsIcon.classList.remove('loading');
+        }
+    });
+
+    // --- Promo Banner Auto-Scroll (tetap sama) ---
+    const promoContainer = document.getElementById('promoSlides');
+    const promoSlides = document.querySelectorAll('.promo-slide');
+    let promoCurrentIndex = 0; 
+    let slideInterval;
 
     function startAutoScroll() {
         if (promoSlides.length <= 1) return;
-        const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12;
+
+        const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12; 
         let slideWidth = calculateSlideWidth();
+
         window.addEventListener('resize', () => {
             slideWidth = calculateSlideWidth();
         });
-        let promoCurrentIndex = 0;
-        setInterval(() => {
-            promoCurrentIndex = (promoCurrentIndex + 1) % promoSlides.length;
+
+        slideInterval = setInterval(() => {
+            promoCurrentIndex = (promoCurrentIndex + 1) % promoSlides.length; 
             promoContainer.style.transform = `translateX(-${promoCurrentIndex * slideWidth}px)`;
         }, 3000);
     }
 
-  function bukaPopup(htmlFile) {
-    popupFrame.onload = null; // ⬅️ Tidak perlu lagi postMessage
+    // --- Navigasi Aktif (Bottom Nav) (tetap sama) ---
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // --- Category Icon Spin (tetap sama) ---
+    const icons = document.querySelectorAll('.category-icon i');
+    let categoryIconIndex = 0; 
+
+    setInterval(() => {
+        icons.forEach((icon, index) => {
+            icon.classList.remove('rotating');
+            if (index === categoryIconIndex) {
+                icon.classList.add('rotating');
+            }
+        });
+        categoryIconIndex = (categoryIconIndex + 1) % icons.length; 
+    }, 2000); 
+
+
+    // --- FUNGSI UNTUK POPUP PANEL (Membuka dan Menutup Iframe) ---
+   function bukaPopup(htmlFile) {
     popupFrame.src = htmlFile;
     popupPanel.classList.add('show');
 
@@ -1023,85 +994,133 @@ async function renderMenuItems() {
         mainCheckoutSummaryBar.classList.add('hidden');
     }
 
-    // Sembunyikan bar popup jika halaman khusus
+    // 🔻 Sembunyikan bar popup jika masuk ke cart.html atau checkout.html
     if (popupCheckoutBar) {
         if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
             popupCheckoutBar.style.display = 'none';
         } else {
-            popupCheckoutBar.style.display = 'flex';
+            popupCheckoutBar.style.display = 'flex'; // Atau 'block' sesuai tampilan sebelumnya
         }
     }
+
+    window.addEventListener('message', handleIframeMessage);
+}
+    function tutupPopup() {
+    // Aktifkan animasi keluar
+    popupPanel.classList.remove('show');
+    popupPanel.classList.add('hide-popup');
+
+    // Setelah animasi selesai (300ms), baru reset isi dan sembunyikan
+    setTimeout(() => {
+        popupPanel.classList.remove('hide-popup');
+        popupPanel.style.display = 'none'; // opsional: untuk menghilangkan total
+        popupFrame.src = ""; // kosongkan konten
+        updateCartSummaryFromLocalStorage();
+    }, 300); // Sesuai dengan durasi CSS transition
+
+    // Hentikan listener pesan iframe
+    window.removeEventListener('message', handleIframeMessage);
 }
 
-    function tutupPopup() {
-        popupPanel.classList.remove('show');
-        popupPanel.classList.add('hide-popup');
-        setTimeout(() => {
-            popupPanel.classList.remove('hide-popup');
-            popupPanel.style.display = 'none';
-            popupFrame.src = "";
-            updateCartSummaryFromFirestore();
-        }, 300);
-    }
-
+    // --- Handler Pesan dari Iframe (PENTING: Ini yang menerima data dari product-detail.html/cart.html) ---
     function handleIframeMessage(event) {
-        if (!event.data) return;
-        const { type } = event.data;
-        if (type === 'closePopup') {
-            tutupPopup();
-        } else if (type === 'goToCart') {
-            tutupPopup();
-            bukaPopup('cart.html');
-        } else if (type === 'itemAddedSuccess') {
-            alert('✅ Produk ditambahkan ke keranjang!');
-            updateCartSummaryFromFirestore();
+        if (event.data) {
+            if (event.data.type === 'cartUpdate') {
+                // Panggil updateCartSummary untuk memperbarui summary bar UTAMA
+                updateCartSummary(event.data.itemCount, event.data.totalPrice);
+
+                // DAN juga perbarui bar INTERNAL popup jika popup masih terlihat
+                if (popupPanel.classList.contains('show') && popupCheckoutBar) {
+                    const formattedPrice = 'Rp' + event.data.totalPrice.toLocaleString('id-ID'); 
+                    if (bridgeItemCountInternalSpan) bridgeItemCountInternalSpan.textContent = `${event.data.itemCount} item`;
+                    if (bridgeTotalInternalSpan) bridgeTotalInternalSpan.textContent = `${formattedPrice}`;
+                }
+
+            } else if (event.data.type === 'closePopup') {
+                tutupPopup(); 
+            } else if (event.data.type === 'goToCart') {
+                tutupPopup(); 
+                bukaPopup('cart.html'); 
+            }
+            if (event.data.type === 'itemAddedSuccess') {
+                alert('✅ Produk ditambahkan ke keranjang!');
+            }
         }
     }
 
+    // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR UTAMA (ini yang mengontrol visibilitas dan kontennya) ---
     function updateCartSummary(itemCount, totalPrice) {
-        const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID');
-        if (bridgeItemCountSpan) bridgeItemCountSpan.textContent = `${itemCount}`;
-        if (bridgeTotalSpan) bridgeTotalSpan.textContent = `${formattedPrice}`;
+        console.log("--- updateCartSummary Dipanggil (Bar Utama) ---");
+        console.log("Item Count:", itemCount);
+        console.log("Total Price:", totalPrice);
+        console.log("Popup Panel Show Status:", popupPanel.classList.contains('show'));
+
+        const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID'); 
+        
+        // Perbarui span di summary bar UTAMA
+        if (bridgeItemCountSpan) bridgeItemCountSpan.textContent = `${itemCount}`; 
+        if (bridgeTotalSpan) bridgeTotalSpan.textContent = `${formattedPrice}`; 
+
+        // Update badge keranjang di bottom nav
         if (cartBadge) {
             if (itemCount > 0) {
                 cartBadge.textContent = itemCount;
                 cartBadge.style.display = "inline-block";
             } else {
-                cartBadge.style.display = "none";
+                cartBadge.style.display = "none"; 
             }
         }
-        if (mainCheckoutSummaryBar) {
+
+        // Atur visibilitas summary bar UTAMA
+        if (mainCheckoutSummaryBar) { 
+            // Bar utama hanya muncul jika ada item DAN popup TIDAK aktif
             if (itemCount > 0 && !popupPanel.classList.contains('show')) {
-                mainCheckoutSummaryBar.classList.remove('hidden');
+                console.log("Menampilkan Summary Bar Utama");
+                mainCheckoutSummaryBar.classList.remove('hidden'); 
                 mainCheckoutSummaryBar.classList.add('show');
             } else {
-                mainCheckoutSummaryBar.classList.remove('show');
-                mainCheckoutSummaryBar.classList.add('hidden');
+                console.log("Menyembunyikan Summary Bar Utama");
+                mainCheckoutSummaryBar.classList.remove('show'); 
+                mainCheckoutSummaryBar.classList.add('hidden'); 
             }
+            console.log("Current Summary Bar Utama classes:", mainCheckoutSummaryBar.classList.value);
         }
     }
 
-    async function updateCartSummaryFromFirestore() {
-        const user = auth.currentUser;
-        if (!user) return;
-        try {
-            const itemsSnapshot = await db.collection('carts').doc(user.uid).collection('items').get();
-            let totalItem = 0;
-            let totalPrice = 0;
-            itemsSnapshot.forEach(doc => {
-                const item = doc.data();
-                totalItem += item.quantity || 0;
-                totalPrice += (item.quantity || 0) * (item.price || 0);
-            });
-            updateCartSummary(totalItem, totalPrice);
-        } catch (error) {
-            console.error("Gagal mengambil data keranjang dari Firestore:", error);
-        }
+    // --- Memuat Ulang Ringkasan Keranjang dari LocalStorage (Dipanggil saat halaman dimuat dan popup ditutup) ---
+    function updateCartSummaryFromLocalStorage() {
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        let totalItem = 0;
+        let totalPrice = 0;
+
+        cart.forEach(item => {
+            totalItem += item.quantity || 0; 
+            totalPrice += (item.price || 0) * (item.quantity || 0); 
+        });
+
+        updateCartSummary(totalItem, totalPrice); 
     }
 
+    // --- Navigasi ke Halaman Checkout (melalui popup) ---
     function goToCheckoutPage() {
-        bukaPopup('cart.html');
+        bukaPopup('cart.html'); 
     }
+
+    // --- Event Listener: Saat DOM Selesai Dimuat ---
+    document.addEventListener('DOMContentLoaded', function () {
+        // Event listener untuk tombol checkout di bar UTAMA
+        if (bridgeCheckoutBtn) { 
+            bridgeCheckoutBtn.addEventListener('click', goToCheckoutPage); 
+        }
+        // Event listener untuk tombol checkout di bar INTERNAL popup
+        if (bridgeCheckoutBtnInternal) {
+            bridgeCheckoutBtnInternal.addEventListener('click', () => {
+                bukaPopup('cart.html'); 
+            });
+        }
+        window.addEventListener('message', handleIframeMessage);
+    });
+
 </script>
 </body>
 </html>
