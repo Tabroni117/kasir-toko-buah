@@ -984,17 +984,27 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
 
 
     // --- FUNGSI UNTUK POPUP PANEL (Membuka dan Menutup Iframe) ---
-    function bukaPopup(htmlFile) {
-        popupFrame.src = htmlFile;
-        popupPanel.classList.add('show');
-        // Sembunyikan summary bar UTAMA saat popup muncul
-        if (mainCheckoutSummaryBar) { 
-            mainCheckoutSummaryBar.classList.remove('show'); 
-            mainCheckoutSummaryBar.classList.add('hidden'); 
-        }
-        window.addEventListener('message', handleIframeMessage);
+   function bukaPopup(htmlFile) {
+    popupFrame.src = htmlFile;
+    popupPanel.classList.add('show');
+
+    // Sembunyikan summary bar utama saat popup muncul
+    if (mainCheckoutSummaryBar) {
+        mainCheckoutSummaryBar.classList.remove('show');
+        mainCheckoutSummaryBar.classList.add('hidden');
     }
 
+    // ðŸ”» Sembunyikan bar popup jika masuk ke cart.html atau checkout.html
+    if (popupCheckoutBar) {
+        if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
+            popupCheckoutBar.style.display = 'none';
+        } else {
+            popupCheckoutBar.style.display = 'flex'; // Atau 'block' sesuai tampilan sebelumnya
+        }
+    }
+
+    window.addEventListener('message', handleIframeMessage);
+}
     function tutupPopup() {
         popupPanel.classList.remove('show');
         popupFrame.src = ""; 
