@@ -422,31 +422,55 @@ increaseButton.addEventListener('click', async () => {
 
 });
 
-// --- Fungsi Update ke Firestore --- async function updateCartFirestore(quantity) { const user = firebase.auth().currentUser; if (!user) return;
+// ✅ Fungsi Update ke Firestore yang BENAR & KOMPLIT
+async function updateCartInFirestore(quantity) {
+    const user = auth.currentUser;
+    if (!user) {
+        alert('Anda belum login.');
+        return;
+    }
 
-const cartRef = firebase.firestore()
-    .collection('carts')
-    .doc(user.uid)
-    .collection('items')
-    .doc(`${selectedProduct.id}_${selectedVariants.bumbu}_${selectedVariants.kacang}`);
+    const cartRef = db.collection('carts').doc(user.uid).collection('items');
+    const customKey = btoa(JSON.stringify(selectedVariants)); // encode kombinasi varian
+    const docId = `${selectedProduct.id}_${customKey}`;
 
-await cartRef.set({
-    id: selectedProduct.id,
-    name: selectedProduct.name,
-    image: selectedProduct.image,
-    price: selectedProduct.price,
-    quantity: quantity,
-    custom: { ...selectedVariants },
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-});
+    const cartItem = {
+        id: selectedProduct.id,
+        name: selectedProduct.name,
+        price: selectedProduct.price,
+        image: selectedProduct.image,
+        quantity: quantity,
+        custom: selectedVariants,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
-// Kirim update ke apl05.html
-window.parent.postMessage({
-    type: 'cartUpdate',
-    itemCount: 0, // Sementara kosong, nanti diupdate via summary refresher
-    totalPrice: 0
-}, '*');
+    try {
+        await cartRef.doc(docId).set(cartItem);
+        console.log('Cart updated in Firestore:', docId);
 
+        // 🎯 Hitung ulang total & kirim ke apl05.html untuk update summary bar
+        const snapshot = await cartRef.get();
+        let totalItem = 0;
+        let totalPrice = 0;
+
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            totalItem += item.quantity || 0;
+            totalPrice += (item.quantity || 0) * (item.price || 0);
+        });
+
+        window.parent.postMessage({
+            type: 'cartUpdate',
+            itemCount: totalItem,
+            totalPrice: totalPrice
+        }, '*');
+
+        window.parent.postMessage({ type: 'itemAddedSuccess' }, '*');
+    } catch (error) {
+        console.error('❌ Gagal memperbarui cart:', error);
+        alert('❌ Gagal menyimpan keranjang. Coba lagi.');
+    }
+}
 }
 
 // --- Animasi Lempar ke Keranjang --- function lemparKeKeranjang(imgSrc) { const img = document.createElement('img'); img.src = imgSrc; img.classList.add('fly-to-cart');
