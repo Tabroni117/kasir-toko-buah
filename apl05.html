@@ -1006,12 +1006,21 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
     window.addEventListener('message', handleIframeMessage);
 }
     function tutupPopup() {
-        popupPanel.classList.remove('show');
-        popupFrame.src = ""; 
-        window.removeEventListener('message', handleIframeMessage);
-        // Setelah popup ditutup, perbarui dan tampilkan kembali summary bar UTAMA jika ada item
-        updateCartSummaryFromLocalStorage(); 
-    }
+    // Aktifkan animasi keluar
+    popupPanel.classList.remove('show');
+    popupPanel.classList.add('hide-popup');
+
+    // Setelah animasi selesai (300ms), baru reset isi dan sembunyikan
+    setTimeout(() => {
+        popupPanel.classList.remove('hide-popup');
+        popupPanel.style.display = 'none'; // opsional: untuk menghilangkan total
+        popupFrame.src = ""; // kosongkan konten
+        updateCartSummaryFromLocalStorage();
+    }, 300); // Sesuai dengan durasi CSS transition
+
+    // Hentikan listener pesan iframe
+    window.removeEventListener('message', handleIframeMessage);
+}
 
     // --- Handler Pesan dari Iframe (PENTING: Ini yang menerima data dari product-detail.html/cart.html) ---
     function handleIframeMessage(event) {
