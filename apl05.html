@@ -816,20 +816,20 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
     
     const cartBadge = document.getElementById("cartBadge"); 
 
-    auth.onAuthStateChanged(user => {
-        const isLoggingOut = localStorage.getItem('isLoggingOut');
-        if (isLoggingOut) localStorage.removeItem('isLoggingOut');
-        const storedRole = localStorage.getItem('userRole');
+   auth.onAuthStateChanged(user => {
+    const isLoggingOut = localStorage.getItem('isLoggingOut');
+    if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+    const storedRole = localStorage.getItem('userRole');
 
-        if (!user || storedRole !== 'pembeli') {
-            if (!isLoggingOut) alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
-            window.location.href = 'index.html';
-        } else {
-            renderMenuItems();
-            startAutoScroll();
-            updateCartSummaryFromLocalStorage(); 
-        }
-    });
+    if (!user || storedRole !== 'pembeli') {
+        if (!isLoggingOut) alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+        window.location.href = 'index.html';
+    } else {
+        renderMenuItems();
+        startAutoScroll();
+        updateCartSummaryFromFirestore(); // âœ… DIGANTI
+    }
+});
 
     async function logout() {
         try {
@@ -1005,40 +1005,38 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
 
     window.addEventListener('message', handleIframeMessage);
 }
-    function tutupPopup() {
-        popupPanel.classList.remove('show');
-        popupFrame.src = ""; 
-        window.removeEventListener('message', handleIframeMessage);
-        // Setelah popup ditutup, perbarui dan tampilkan kembali summary bar UTAMA jika ada item
-        updateCartSummaryFromLocalStorage(); 
+   function tutupPopup() {
+    popupPanel.classList.remove('show');
+    popupPanel.classList.add('hide-popup');
+    setTimeout(() => {
+        popupPanel.classList.remove('hide-popup');
+        popupPanel.style.display = 'none';
+        popupFrame.src = "";
+        updateCartSummaryFromFirestore(); // âœ… Ganti di sini juga
+    }, 300);
+    window.removeEventListener('message', handleIframeMessage);
+}
+
+  // --- Handler Pesan dari Iframe (PENTING: Ini menerima perintah dari product-detail.html/cart.html) ---
+function handleIframeMessage(event) {
+    if (!event.data) return;
+
+    const { type } = event.data;
+
+    if (type === 'closePopup') {
+        tutupPopup(); 
+    } 
+    
+    else if (type === 'goToCart') {
+        tutupPopup(); 
+        bukaPopup('cart.html'); 
+    } 
+    
+    else if (type === 'itemAddedSuccess') {
+        alert('âœ… Produk ditambahkan ke keranjang!');
+        updateCartSummaryFromFirestore(); // âœ… Refresh ringkasan dari Firestore
     }
-
-    // --- Handler Pesan dari Iframe (PENTING: Ini yang menerima data dari product-detail.html/cart.html) ---
-    function handleIframeMessage(event) {
-        if (event.data) {
-            if (event.data.type === 'cartUpdate') {
-                // Panggil updateCartSummary untuk memperbarui summary bar UTAMA
-                updateCartSummary(event.data.itemCount, event.data.totalPrice);
-
-                // DAN juga perbarui bar INTERNAL popup jika popup masih terlihat
-                if (popupPanel.classList.contains('show') && popupCheckoutBar) {
-                    const formattedPrice = 'Rp' + event.data.totalPrice.toLocaleString('id-ID'); 
-                    if (bridgeItemCountInternalSpan) bridgeItemCountInternalSpan.textContent = `${event.data.itemCount} item`;
-                    if (bridgeTotalInternalSpan) bridgeTotalInternalSpan.textContent = `${formattedPrice}`;
-                }
-
-            } else if (event.data.type === 'closePopup') {
-                tutupPopup(); 
-            } else if (event.data.type === 'goToCart') {
-                tutupPopup(); 
-                bukaPopup('cart.html'); 
-            }
-            if (event.data.type === 'itemAddedSuccess') {
-                alert('âœ… Produk ditambahkan ke keranjang!');
-            }
-        }
-    }
-
+}
     // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR UTAMA (ini yang mengontrol visibilitas dan kontennya) ---
     function updateCartSummary(itemCount, totalPrice) {
         console.log("--- updateCartSummary Dipanggil (Bar Utama) ---");
@@ -1078,19 +1076,26 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
         }
     }
 
-    // --- Memuat Ulang Ringkasan Keranjang dari LocalStorage (Dipanggil saat halaman dimuat dan popup ditutup) ---
-    function updateCartSummaryFromLocalStorage() {
-        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  async function updateCartSummaryFromFirestore() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const itemsSnapshot = await db.collection('carts').doc(user.uid).collection('items').get();
         let totalItem = 0;
         let totalPrice = 0;
 
-        cart.forEach(item => {
-            totalItem += item.quantity || 0; 
-            totalPrice += (item.price || 0) * (item.quantity || 0); 
+        itemsSnapshot.forEach(doc => {
+            const item = doc.data();
+            totalItem += item.quantity || 0;
+            totalPrice += (item.quantity || 0) * (item.price || 0);
         });
 
-        updateCartSummary(totalItem, totalPrice); 
+        updateCartSummary(totalItem, totalPrice);
+    } catch (error) {
+        console.error("Gagal mengambil data keranjang dari Firestore:", error);
     }
+}
 
     // --- Navigasi ke Halaman Checkout (melalui popup) ---
     function goToCheckoutPage() {
