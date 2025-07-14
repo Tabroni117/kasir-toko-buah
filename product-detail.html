@@ -353,31 +353,29 @@
     </div>
 </div>
             
-   <script>
+<script>
 const selectedVariants = { bumbu: "Pedas", kacang: "Dengan Kacang" };
 let selectedProduct = null;
 
-// 🔁 Dengarkan data dari apl05.html via postMessage
+// 🔁 Dengarkan data dari apl05.html
 window.addEventListener("message", (event) => {
-    if (event.data && event.data.type === 'productData') {
-        selectedProduct = event.data.product;
+    if (event.data && event.data.type === 'loadProduct') {
+        selectedProduct = event.data.data;
         if (!selectedProduct) return;
 
-        // Tampilkan produk
-        document.getElementById('productImage').src = selectedProduct.image;
-        document.getElementById('productName').textContent = selectedProduct.name;
-        document.getElementById('productDescription').textContent = selectedProduct.description;
-        document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
-
-        initQuantityListener(); // aktifkan tombol plus/minus
+        initializeProductDetail();
     }
 });
 
-// 🔁 Saat halaman sudah siap, kirim sinyal "siap terima data"
+// ✅ Inisialisasi UI setelah halaman siap
 window.addEventListener("DOMContentLoaded", () => {
     window.parent.postMessage({ type: "popupReady" }, "*");
+    initUI();
+});
 
-    // Tombol back
+// ✅ Fungsi inisialisasi seluruh komponen UI
+function initUI() {
+    // Tombol kembali
     const btnBack = document.getElementById('btnBackDetail');
     if (btnBack) {
         btnBack.addEventListener('click', () => {
@@ -407,7 +405,18 @@ window.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
-});
+}
+
+// ✅ Fungsi untuk menampilkan produk dan aktifkan tombol
+function initializeProductDetail() {
+    document.getElementById('productImage').src = selectedProduct.image;
+    document.getElementById('productName').textContent = selectedProduct.name;
+    document.getElementById('productDescription').textContent = selectedProduct.description;
+    document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+    document.getElementById('productQuantity').value = 1;
+
+    initQuantityListener();
+}
 
 function initQuantityListener() {
     const input = document.getElementById('productQuantity');
