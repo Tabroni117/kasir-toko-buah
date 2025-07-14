@@ -676,7 +676,34 @@
   background-color: #facc15; /* Hover kuning sedikit lebih gelap */
 }
         
+        /* CHECKOUT SUMMARY BAR */
+        .checkout-summary-bar {
+            position: fixed; /* Membuat bar tetap di posisi tertentu */
+            bottom: 60px; /* Posisi di atas bottom-nav (tinggi bottom-nav sekitar 50-55px) */
+            left: 50%;
+            transform: translateX(-50%) translateY(100%); /* <-- PENTING: Default: tersembunyi di bawah */
+            width: 100%;
+            max-width: 480px; 
+            background-color: #00C853; 
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); 
+            z-index: 999; /* Di bawah popup, di atas konten utama */
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            transition: transform 0.3s ease-out; /* <-- PENTING: Animasi muncul/sembunyi */
+        }
+
+        .checkout-summary-bar.show {
+            transform: translateX(-50%) translateY(0); /* <-- PENTING: Muncul ke posisi default */
+        }
         
+        .checkout-summary-bar.hidden {
+            transform: translateX(-50%) translateY(100%); /* <-- PENTING: Tersembunyi sepenuhnya di bawah */
+        }
 </style>
 
 
@@ -837,6 +864,16 @@
   <button class="checkout-button" onclick="window.location.href='checkout.html'">Checkout</button>
 </div>
 
+
+     <div class="checkout-summary-bar" id="popupCheckoutBar"> 
+        <div class="cart-info">
+            <span id="cartItemCount">0</span> Item dipilih
+        </div>
+        <div class="total-price">
+            <span id="cartTotalPrice">Rp0</span>
+        </div>
+        <button class="checkout-button" onclick="goToCheckoutPage()">Checkout</button>
+    </div>
         
 
     <script>
@@ -1201,6 +1238,75 @@ function updatePopupCheckoutBar() {
       bukaPopup('cart.html');
     }
   });
+
+        // --- Elemen Utama DOM ---
+        // ... (bagian lain)
+        const checkoutSummaryBar = document.getElementById('popupCheckoutBar'); 
+        const cartItemCountSpan = document.getElementById('cartItemCount');
+        const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
+        // ... (bagian lain)
+
+        // --- Handler Pesan dari Iframe (digunakan oleh product-detail.html / cart.html) ---
+        function handleIframeMessage(event) {
+            // ... (bagian lain)
+            if (event.data) {
+                if (event.data.type === 'cartUpdate') {
+                    updateCartSummary(event.data.itemCount, event.data.totalPrice);
+                } else if (event.data.type === 'closePopup') {
+                    tutupPopup(); 
+                } else if (event.data.type === 'goToCart') {
+                    tutupPopup(); 
+                    bukaPopup('cart.html'); 
+                }
+            }
+        }
+
+        // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR ---
+        function updateCartSummary(itemCount, totalPrice) {
+            const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID'); 
+            cartItemCountSpan.textContent = itemCount;
+            cartTotalPriceSpan.textContent = formattedPrice;
+
+            const cartBadge = document.getElementById("cartBadge");
+            if (itemCount > 0) {
+                cartBadge.textContent = itemCount;
+                cartBadge.style.display = "inline-block";
+            } else {
+                cartBadge.style.display = "none"; 
+            }
+
+            // Atur visibilitas summary bar:
+            // Muncul jika ada item di keranjang DAN popup TIDAK aktif
+            if (itemCount > 0 && !popupPanel.classList.contains('show')) { // <-- Logika utama muncul/sembunyi
+                checkoutSummaryBar.classList.remove('hidden'); 
+                checkoutSummaryBar.classList.add('show');
+            } else {
+                checkoutSummaryBar.classList.remove('show'); 
+                checkoutSummaryBar.classList.add('hidden'); 
+            }
+        }
+
+        // --- Memuat Ulang Ringkasan Keranjang dari LocalStorage (misal saat halaman dimuat ulang) ---
+        function updateCartSummaryFromLocalStorage() {
+            const cart = JSON.parse(localStorage.getItem("cart")) || [];
+            let totalItem = 0;
+            let totalPrice = 0;
+
+            cart.forEach(item => {
+                totalItem += item.quantity || 0; 
+                totalPrice += (item.price || 0) * (item.quantity || 0); 
+            });
+
+            updateCartSummary(totalItem, totalPrice); // <-- Memanggil fungsi updateCartSummary
+        }
+
+        // --- Navigasi ke Halaman Checkout (melalui popup) ---
+        function goToCheckoutPage() {
+            bukaPopup('cart.html'); 
+        }
+
+        // --- Event Listener: Saat DOM Selesai Dimuat ---
+        document.addEventListener('DOMContentLoaded', updateCartSummaryFromLocalStorage); // <-- PENTING: Memuat data keranjang saat halaman dimuat
 
         
     </script>
