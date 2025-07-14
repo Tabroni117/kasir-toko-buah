@@ -870,21 +870,27 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
                     };
 
                     const card = document.createElement('div');
-                    card.classList.add('restaurant-card', 'fade-in');
-                    card.innerHTML = `
-                        <img src="${product.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.name}" class="restaurant-image">
-                        <div class="restaurant-info">
-                            <div class="restaurant-name">${product.name}</div>
-                            <div class="restaurant-meta">
-                                <span class="rating"><i class="fas fa-star"></i> ${product.rating?.toFixed(1) || 'N/A'}</span>
-                                <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
-                            </div>
-                        </div>`;
-                    card.addEventListener('click', () => {
-                        sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-                        bukaPopup('product-detail.html');
-                    });
-                    menuList.appendChild(card);
+card.classList.add('restaurant-card', 'fade-in');
+card.innerHTML = `
+    <img src="${product.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.name}" class="restaurant-image">
+    <div class="restaurant-info">
+        <div class="restaurant-name">${product.name}</div>
+        <div class="restaurant-meta">
+            <span class="rating"><i class="fas fa-star"></i> ${product.rating?.toFixed(1) || 'N/A'}</span>
+            <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+        </div>
+    </div>`;
+
+// ðŸ” GANTI INI:
+// sessionStorage.setItem('selectedProduct', JSON.stringify(product));
+// bukaPopup('product-detail.html');
+
+// âœ… JADI INI:
+card.addEventListener('click', () => {
+    bukaPopup('product-detail.html', product); // langsung kirim data
+});
+
+menuList.appendChild(card);
                 });
             }
         } catch (error) {
@@ -982,9 +988,8 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
         categoryIconIndex = (categoryIconIndex + 1) % icons.length; 
     }, 2000); 
 
-
-    // --- FUNGSI UNTUK POPUP PANEL (Membuka dan Menutup Iframe) ---
-   function bukaPopup(htmlFile) {
+// --- FUNGSI UNTUK POPUP PANEL (Membuka dan Menutup Iframe) ---
+function bukaPopup(htmlFile, dataToSend = null) {
     popupFrame.src = htmlFile;
     popupPanel.classList.add('show');
 
@@ -999,24 +1004,35 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
         if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
             popupCheckoutBar.style.display = 'none';
         } else {
-            popupCheckoutBar.style.display = 'flex'; // Atau 'block' sesuai tampilan sebelumnya
+            popupCheckoutBar.style.display = 'flex';
         }
+    }
+
+    // Jika ingin kirim data ke iframe (misalnya product), tunggu iframe selesai dimuat
+    if (dataToSend) {
+        popupFrame.onload = () => {
+            popupFrame.contentWindow.postMessage({
+                type: 'loadProduct',
+                data: dataToSend
+            }, '*');
+        };
     }
 
     window.addEventListener('message', handleIframeMessage);
 }
-   function tutupPopup() {
+
+function tutupPopup() {
     popupPanel.classList.remove('show');
     popupPanel.classList.add('hide-popup');
     setTimeout(() => {
         popupPanel.classList.remove('hide-popup');
         popupPanel.style.display = 'none';
         popupFrame.src = "";
-        updateCartSummaryFromFirestore(); // âœ… Ganti di sini juga
+        updateCartSummaryFromFirestore(); // âœ… Tetap update setelah popup ditutup
     }, 300);
     window.removeEventListener('message', handleIframeMessage);
-}
-
+} 
+     
   // --- Handler Pesan dari Iframe (PENTING: Ini menerima perintah dari product-detail.html/cart.html) ---
 function handleIframeMessage(event) {
     if (!event.data) return;
