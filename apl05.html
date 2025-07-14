@@ -991,6 +991,16 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // â
 
 // --- FUNGSI UNTUK POPUP PANEL (Membuka dan Menutup Iframe) ---
 function bukaPopup(htmlFile, dataToSend = null) {
+    // Set handler DULU sebelum atur src
+    popupFrame.onload = () => {
+        if (dataToSend) {
+            popupFrame.contentWindow.postMessage({
+                type: 'loadProduct',
+                data: dataToSend
+            }, '*');
+        }
+    };
+
     popupFrame.src = htmlFile;
     popupPanel.classList.add('show');
 
@@ -1000,23 +1010,13 @@ function bukaPopup(htmlFile, dataToSend = null) {
         mainCheckoutSummaryBar.classList.add('hidden');
     }
 
-    // ðŸ”» Sembunyikan bar popup jika masuk ke cart.html atau checkout.html
+    // Sembunyikan bar popup jika masuk ke cart.html atau checkout.html
     if (popupCheckoutBar) {
         if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
             popupCheckoutBar.style.display = 'none';
         } else {
             popupCheckoutBar.style.display = 'flex';
         }
-    }
-
-    // Jika ingin kirim data ke iframe (misalnya product), tunggu iframe selesai dimuat
-    if (dataToSend) {
-        popupFrame.onload = () => {
-            popupFrame.contentWindow.postMessage({
-                type: 'productData',
-                data: dataToSend
-            }, '*');
-        };
     }
 
     window.addEventListener('message', handleIframeMessage);
