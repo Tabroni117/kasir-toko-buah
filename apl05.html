@@ -1041,23 +1041,33 @@
         window.removeEventListener('message', handleIframeMessage);
     }
 
-    // --- Handler Pesan dari Iframe ---
     function handleIframeMessage(event) {
-        if (!event.data) return;
+    if (event.data) {
+        if (event.data.type === 'cartUpdate') {
+            updateCartSummary(event.data.itemCount, event.data.totalPrice);
 
-        const { type } = event.data;
+            if (popupPanel.classList.contains('show') && popupCheckoutBar) {
+                const formattedPrice = 'Rp' + event.data.totalPrice.toLocaleString('id-ID'); 
+                if (bridgeItemCountInternalSpan) bridgeItemCountInternalSpan.textContent = `${event.data.itemCount} item`;
+                if (bridgeTotalInternalSpan) bridgeTotalInternalSpan.textContent = `${formattedPrice}`;
+            }
 
-        if (type === 'closePopup') {
+        } else if (event.data.type === 'closePopup') {
             tutupPopup();
-        } else if (type === 'goToCart') {
+            setTimeout(() => {
+                location.reload(); // 🔁 reload setelah popup ditutup
+            }, 350); // sesuai durasi animasi tutup
+
+        } else if (event.data.type === 'goToCart') {
             tutupPopup();
             bukaPopup('cart.html');
-        } else if (type === 'itemAddedSuccess') {
+        }
+
+        if (event.data.type === 'itemAddedSuccess') {
             alert('✅ Produk ditambahkan ke keranjang!');
-            // Panggil updateCartSummaryFromLocalStorage() untuk refresh
-            updateCartSummaryFromLocalStorage();
         }
     }
+}
 
     // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR UTAMA ---
     function updateCartSummary(itemCount, totalPrice) {
