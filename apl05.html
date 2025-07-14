@@ -816,19 +816,28 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // �
     
     const cartBadge = document.getElementById("cartBadge"); 
 
-   auth.onAuthStateChanged(user => {
+ auth.onAuthStateChanged(async (user) => {
     const isLoggingOut = localStorage.getItem('isLoggingOut');
     if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+
     const storedRole = localStorage.getItem('userRole');
 
     if (!user || storedRole !== 'pembeli') {
         if (!isLoggingOut) alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
         window.location.href = 'index.html';
-    } else {
-        renderMenuItems();
-        startAutoScroll();
-        updateCartSummaryFromFirestore(); // ✅ DIGANTI
+        return;
     }
+
+    // ✅ Tunggu user benar-benar available
+    let tryCount = 0;
+    while (!auth.currentUser && tryCount < 10) {
+        await new Promise(res => setTimeout(res, 200));
+        tryCount++;
+    }
+
+    renderMenuItems();
+    startAutoScroll();
+    updateCartSummaryFromFirestore();
 });
 
     async function logout() {
