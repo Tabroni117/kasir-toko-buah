@@ -907,21 +907,25 @@
     }
 
     // --- Cek Status Autentikasi Saat Halaman Dimuat ---
-    auth.onAuthStateChanged(async (user) => {
-        const isLoggingOut = localStorage.getItem('isLoggingOut');
-        if (isLoggingOut) {
-            localStorage.removeItem('isLoggingOut');
-        }
-        const storedRole = localStorage.getItem('userRole');
+  auth.onAuthStateChanged(async (user) => {
+  console.log("🔑 Auth State Changed:", user); // ✅ Tambahkan ini
 
-        if (!user || storedRole !== 'pembeli') {
-            if (!isLoggingOut) alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
-            window.location.href = 'index.html';
-            return;
-        }
+  const storedRole = localStorage.getItem('userRole');
 
-        runApplication();
-    });
+  if (!user || storedRole !== 'pembeli') {
+      alert('Akses Ditolak: Anda harus login sebagai Pembeli.');
+      window.location.href = 'index.html';
+      return;
+  }
+
+  // Panggil fungsi utama
+  runApplication();
+});
+
+async function renderMenuItems() {
+  console.log("📥 Mulai ambil menu dari koleksi 'buah'...");
+  ...
+}
 
     async function logout() {
         try {
