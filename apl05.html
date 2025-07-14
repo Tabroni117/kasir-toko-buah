@@ -583,18 +583,69 @@
         .btn-tutup:hover {
             background-color: #16a34a; /* hijau lebih gelap saat hover */
         }
-       /* CHECKOUT SUMMARY BAR - Style untuk posisi dan animasi */
-        .checkout-summary-bar {
+   /* KUSTOMISASI STYLING SUMMARY BAR INTERNAL POPUP (jika memang Anda ingin ada bar di dalam popup) */
+        #popupCheckoutBarInternal { /* UBAH SELECTOR INI */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px; 
+            background-color: #22c55e; /* 💚 HIJAU CERAH */
+            border-top: 1px solid #ddd; 
+            font-size: 16px;
+            font-weight: 500;
+            color: white; 
+            /* Catatan: Bar ini akan muncul di dalam popupFrame, jadi posisi fix dll tidak berlaku di sini */
+            width: 100%; /* Pastikan lebarnya penuh dalam popup-content */
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1); /* Tambahkan shadow agar terlihat terangkat */
+            border-top-left-radius: 8px; /* Sudut membulat di bagian atas */
+            border-top-right-radius: 8px;
+            margin-top: auto; /* Dorong ke bawah di dalam flex column popup-content */
+        }
+        #bridgeItemCountInternal, /* UBAH SELECTOR INI */
+        #bridgeTotalInternal { /* UBAH SELECTOR INI */
+            color: white; 
+            margin-right: 10px;
+        }
+        #bridgeCheckoutBtnInternal { /* UBAH SELECTOR INI */
+            padding: 6px 12px;
+            background-color: #fde047;
+            color: black;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #bridgeCheckoutBtnInternal:hover { /* UBAH SELECTOR INI */
+            background-color: #facc15;
+        }
+
+        /* CHECKOUT SUMMARY BAR UTAMA (ini yang di apl05.html) */
+        .checkout-summary-bar { /* Kelas ini tetap sama untuk layout dasar */
             position: fixed;
-            bottom: 50px; 
+            bottom: 50px; /* Diatur menempel di atas bottom-nav */
             left: 50%;
             transform: translateX(-50%) translateY(100%); 
             width: 100%;
             max-width: 480px; 
-            z-index: 1001; /* <--- UBAH INI: Pastikan lebih tinggi dari header/bottom-nav */
+            z-index: 1001; /* PENTING: Pastikan ini lebih tinggi dari header dan bottom-nav */
             border-top-left-radius: 12px;
             border-top-right-radius: 12px;
             transition: transform 0.3s ease-out; 
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15); /* Tambah shadow agar terlihat menonjol */
+        }
+
+        /* Styling spesifik untuk ID Summary Bar Utama */
+        #mainCheckoutSummaryBar { /* UBAH SELECTOR INI */
+            display: flex; /* Tambahkan ini agar layout flexbox diterapkan */
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background-color: #22c55e; 
+            color: white; 
+            font-size: 16px;
+            font-weight: 500;
+            border-top: 1px solid #ddd;
         }
 </style>
 
@@ -603,7 +654,6 @@
 
 
 
-        
 </head>
 <body>
     <div class="container">
@@ -645,51 +695,43 @@
 
         <div class="categories">
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-hamburger"></i>
-                </div>
+                <div class="category-icon category-icon-cepat-saji"> <i class="fas fa-burger"></i> </div>
                 <div class="category-name">Cepat Saji</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-utensils"></i>
-                </div>
+                <div class="category-icon category-icon-makanan">
+                    <i class="fas fa-bowl-food"></i> </div>
                 <div class="category-name">Makanan</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-coffee"></i>
-                </div>
+                <div class="category-icon category-icon-minuman">
+                    <i class="fas fa-mug-hot"></i> </div>
                 <div class="category-name">Minuman</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-birthday-cake"></i>
-                </div>
+                <div class="category-icon category-icon-kue">
+                    <i class="fas fa-cake-candles"></i> </div>
                 <div class="category-name">Kue</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-fish"></i>
-                </div>
+                <div class="category-icon category-icon-seafood">
+                    <i class="fas fa-shrimp"></i> </div>
                 <div class="category-name">Seafood</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-pepper-hot"></i>
+                <div class="category-icon category-icon-pedas">
+                    <i class="fas fa-pepper-hot"></i> 
                 </div>
                 <div class="category-name">Pedas</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-leaf"></i>
-                </div>
+                <div class="category-icon category-icon-vegetarian">
+                    <i class="fas fa-seedling"></i> </div>
                 <div class="category-name">Vegetarian</div>
             </div>
             <div class="category">
-                <div class="category-icon">
-                    <i class="fas fa-ellipsis-h"></i>
-                </div>
+                <div class="category-icon category-icon-lainnya">
+                    <i class="fas fa-grip-lines"></i> </div>
                 <div class="category-name">Lainnya</div>
             </div>
         </div>
@@ -711,61 +753,35 @@
                 <i class="fas fa-search nav-icon"></i>
                 <div>Cari</div>
             </a>
-
-            
-       <a href="javascript:void(0);" class="nav-item" id="pesananBtn" style="position: relative;" onclick="bukaPopup('cart.html')">
-
-
-               
-  <i class="fas fa-shopping-bag nav-icon"></i>
-  <div>Pesanan</div>
-  <span id="cartBadge" class="cart-badge" style="display: none;">0</span>
-</a>
-           
-            
+            <a href="javascript:void(0);" class="nav-item" id="pesananBtn" style="position: relative;" onclick="bukaPopup('cart.html')">
+                <i class="fas fa-shopping-bag nav-icon"></i>
+                <div>Pesanan</div>
+                <span id="cartBadge" class="cart-badge" style="display: none;">0</span>
+            </a>
             <a href="profile.html" class="nav-item">
                 <i class="fas fa-user nav-icon"></i>
                 <div>Profile</div>
             </a>
         </div>
+    </div>
+    
+    <div id="popupPanel">
+        <div class="popup-content">
+            <iframe id="popupFrame"></iframe>
 
-<!-- === PANEL POPUP DARI BAWAH === -->
-<div id="popupPanel">
-  <div class="popup-content">
-    <iframe id="popupFrame"></iframe>
+            <div id="popupCheckoutBarInternal"> 🛒 <span id="bridgeItemCountInternal">0 item</span> Total: <span id="bridgeTotalInternal">Rp 0</span> <button id="bridgeCheckoutBtnInternal">Checkout</button> </div>
 
-    <div id="popupCheckoutBar"> <!-- ← Bridge checkout bar -->
-      🛒 <span id="bridgeItemCount">0 item</span>
-      Total: <span id="bridgeTotal">Rp 0</span>
-      <button id="bridgeCheckoutBtn">Checkout</button>
+            <button onclick="tutupPopup()" class="btn-tutup-hijau">Tutup</button>
+        </div>
     </div>
 
-   <button onclick="tutupPopup()" class="btn-tutup-hijau">Tutup</button>
-  </div>
-</div>
-
-
-
-
-<!-- Bar Bawah untuk Checkout -->
-<div id="floatingCartBar" style="display: none;">
-  <div class="cart-button" onclick="bukaPopup('cart.html')">
-    <i class="fas fa-shopping-cart"></i>
-    <span class="cart-count" id="barCartCount">0</span>
-  </div>
-  <button class="checkout-button" onclick="window.location.href='checkout.html'">Checkout</button>
-</div>
-
-
-     <div class="checkout-summary-bar" id="popupCheckoutBar"> 
-        <div class="cart-info">
-            <span id="cartItemCount">0</span> Item dipilih
+    <div class="checkout-summary-bar" id="mainCheckoutSummaryBar"> <div class="cart-info">
+            <span id="bridgeItemCount">0</span> Item dipilih 
         </div>
         <div class="total-price">
-            <span id="cartTotalPrice">Rp0</span>
+            <span id="bridgeTotal">Rp0</span>
         </div>
-        <button class="checkout-button" onclick="goToCheckoutPage()">Checkout</button>
-    </div>
+        <button id="bridgeCheckoutBtn" onclick="goToCheckoutPage()">Checkout</button> </div>
 
         
    <!-- Versi BERSIH dari kode apl05.html dengan fungsi tidak duplikat -->
