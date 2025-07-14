@@ -354,174 +354,161 @@
 </div>
             
    <script>
-// ✅ Asumsikan Firebase sudah diinisialisasi sebelumnya di halaman
+const selectedVariants = { bumbu: "Pedas", kacang: "Dengan Kacang" };
+let selectedProduct = null;
 
-// --- Tangani Pilihan Varian --- const selectedVariants = { bumbu: "Pedas", kacang: "Dengan Kacang" };
+// 🔁 Dengarkan data dari apl05.html via postMessage
+window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === 'productData') {
+        selectedProduct = event.data.product;
+        if (!selectedProduct) return;
 
-document.addEventListener('DOMContentLoaded', async function () { // --- Tangani Varian Aktif --- document.querySelectorAll('.variant-options').forEach(group => { const variantType = group.dataset.variant;
+        // Tampilkan produk
+        document.getElementById('productImage').src = selectedProduct.image;
+        document.getElementById('productName').textContent = selectedProduct.name;
+        document.getElementById('productDescription').textContent = selectedProduct.description;
+        document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
 
-group.querySelectorAll('.variant-option').forEach(option => {
-        option.addEventListener('click', () => {
-            group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-            option.classList.add('active');
-            selectedVariants[variantType] = option.dataset.value;
+        initQuantityListener(); // aktifkan tombol plus/minus
+    }
+});
+
+// 🔁 Saat halaman sudah siap, kirim sinyal "siap terima data"
+window.addEventListener("DOMContentLoaded", () => {
+    window.parent.postMessage({ type: "popupReady" }, "*");
+
+    // Tombol back
+    const btnBack = document.getElementById('btnBackDetail');
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            window.parent.postMessage({ type: 'closePopup' }, '*');
+        });
+    }
+
+    // Swipe bar
+    const swipeBar = document.getElementById('swipeBarClose');
+    if (swipeBar) {
+        swipeBar.addEventListener('click', () => {
+            document.getElementById('popupPanel').classList.add('hide-popup');
+            setTimeout(() => {
+                window.parent.postMessage({ type: 'closePopup' }, '*');
+            }, 300);
+        });
+    }
+
+    // Klik varian
+    document.querySelectorAll('.variant-options').forEach(group => {
+        const type = group.dataset.variant;
+        group.querySelectorAll('.variant-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                group.querySelectorAll('.variant-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedVariants[type] = opt.dataset.value;
+            });
         });
     });
 });
 
-const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
+function initQuantityListener() {
+    const input = document.getElementById('productQuantity');
+    const decBtn = document.getElementById('decreaseQuantity');
+    const incBtn = document.getElementById('increaseQuantity');
 
-if (!selectedProduct) {
-    alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-    window.location.href = 'apl05.html';
-    return;
-}
+    if (!input || !incBtn || !decBtn || !selectedProduct) return;
 
-// Tampilkan data produk
-document.getElementById('productImage').src = selectedProduct.image;
-document.getElementById('productName').textContent = selectedProduct.name;
-document.getElementById('productDescription').textContent = selectedProduct.description;
-document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+    incBtn.addEventListener('click', async () => {
+        let qty = parseInt(input.value);
+        qty++;
+        input.value = qty;
+        await updateCartInFirestore(qty);
+        lemparKeKeranjang(selectedProduct.image);
+    });
 
-const productQuantityInput = document.getElementById('productQuantity');
-const decreaseButton = document.getElementById('decreaseQuantity');
-const increaseButton = document.getElementById('increaseQuantity');
+    decBtn.addEventListener('click', async () => {
+        let qty = parseInt(input.value);
+        if (qty > 1) {
+            qty--;
+            input.value = qty;
+            await updateCartInFirestore(qty);
+        }
+    });
 
-// Ambil kuantitas awal dari Firestore
-const currentUser = firebase.auth().currentUser;
-if (currentUser) {
-    const itemRef = firebase.firestore()
-        .collection('carts')
-        .doc(currentUser.uid)
-        .collection('items')
-        .doc(`${selectedProduct.id}_${selectedVariants.bumbu}_${selectedVariants.kacang}`);
-
-    const doc = await itemRef.get();
-    if (doc.exists) {
-        const item = doc.data();
-        productQuantityInput.value = item.quantity;
+    // Ambil kuantitas awal dari Firestore
+    const user = firebase.auth().currentUser;
+    if (user) {
+        const customKey = btoa(JSON.stringify(selectedVariants));
+        const docId = `${selectedProduct.id}_${customKey}`;
+        const itemRef = firebase.firestore().collection('carts').doc(user.uid).collection('items').doc(docId);
+        itemRef.get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                input.value = data.quantity || 1;
+            }
+        });
     }
 }
 
-decreaseButton.addEventListener('click', async () => {
-    let qty = parseInt(productQuantityInput.value);
-    if (qty > 1) {
-        qty--;
-        productQuantityInput.value = qty;
-        await updateCartFirestore(qty);
-    }
-});
-
-increaseButton.addEventListener('click', async () => {
-    let qty = parseInt(productQuantityInput.value);
-    qty++;
-    productQuantityInput.value = qty;
-    await updateCartFirestore(qty);
-    lemparKeKeranjang(selectedProduct.image);
-});
-
-});
-
-// ✅ Fungsi Update ke Firestore yang BENAR & KOMPLIT
 async function updateCartInFirestore(quantity) {
-    const user = auth.currentUser;
-    if (!user) {
-        alert('Anda belum login.');
-        return;
-    }
+    const user = firebase.auth().currentUser;
+    if (!user || !selectedProduct) return;
 
-    const cartRef = db.collection('carts').doc(user.uid).collection('items');
-    const customKey = btoa(JSON.stringify(selectedVariants)); // encode kombinasi varian
+    const customKey = btoa(JSON.stringify(selectedVariants));
     const docId = `${selectedProduct.id}_${customKey}`;
 
     const cartItem = {
         id: selectedProduct.id,
         name: selectedProduct.name,
-        price: selectedProduct.price,
         image: selectedProduct.image,
-        quantity: quantity,
+        price: selectedProduct.price,
+        quantity,
         custom: selectedVariants,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    try {
-        await cartRef.doc(docId).set(cartItem);
-        console.log('Cart updated in Firestore:', docId);
+    const cartRef = firebase.firestore().collection('carts').doc(user.uid).collection('items').doc(docId);
+    await cartRef.set(cartItem);
 
-        // 🎯 Hitung ulang total & kirim ke apl05.html untuk update summary bar
-        const snapshot = await cartRef.get();
-        let totalItem = 0;
-        let totalPrice = 0;
-
-        snapshot.forEach(doc => {
-            const item = doc.data();
-            totalItem += item.quantity || 0;
-            totalPrice += (item.quantity || 0) * (item.price || 0);
-        });
-
-        window.parent.postMessage({
-            type: 'cartUpdate',
-            itemCount: totalItem,
-            totalPrice: totalPrice
-        }, '*');
-
-        window.parent.postMessage({ type: 'itemAddedSuccess' }, '*');
-    } catch (error) {
-        console.error('❌ Gagal memperbarui cart:', error);
-        alert('❌ Gagal menyimpan keranjang. Coba lagi.');
-    }
-}
-}
-
-// --- Animasi Lempar ke Keranjang --- function lemparKeKeranjang(imgSrc) { const img = document.createElement('img'); img.src = imgSrc; img.classList.add('fly-to-cart');
-
-const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
-const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
-
-img.style.left = `${startRect.left}px`;
-img.style.top = `${startRect.top}px`;
-img.style.opacity = 1;
-
-document.body.appendChild(img);
-
-requestAnimationFrame(() => {
-    img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
-    img.style.opacity = 0;
-});
-
-setTimeout(() => {
-    document.body.removeChild(img);
-}, 700);
-
-}
-
-// --- Tombol Kembali --- document.addEventListener('DOMContentLoaded', () => { const btnBackDetail = document.getElementById('btnBackDetail');
-
-if (btnBackDetail) {
-    btnBackDetail.addEventListener('click', () => {
-        window.parent.postMessage({ type: 'closePopup' }, '*');
+    // Hitung ulang total
+    const snapshot = await firebase.firestore().collection('carts').doc(user.uid).collection('items').get();
+    let totalItem = 0;
+    let totalPrice = 0;
+    snapshot.forEach(doc => {
+        const item = doc.data();
+        totalItem += item.quantity || 0;
+        totalPrice += (item.quantity || 0) * (item.price || 0);
     });
+
+    window.parent.postMessage({
+        type: 'cartUpdate',
+        itemCount: totalItem,
+        totalPrice: totalPrice
+    }, '*');
+
+    window.parent.postMessage({ type: 'itemAddedSuccess' }, '*');
 }
 
-});
+function lemparKeKeranjang(imgSrc) {
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.classList.add('fly-to-cart');
 
-// --- Swipe Bar Tutup --- document.addEventListener('DOMContentLoaded', () => { const swipeBar = document.getElementById('swipeBarClose'); const popupPanel = document.getElementById('popupPanel');
+    const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+    const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
 
-if (swipeBar && popupPanel) {
-    swipeBar.addEventListener('click', () => {
-        popupPanel.classList.add('hide-popup');
-        setTimeout(() => {
-            window.parent.postMessage({ type: 'closePopup' }, '*');
-        }, 300);
+    img.style.left = `${startRect.left}px`;
+    img.style.top = `${startRect.top}px`;
+    img.style.opacity = 1;
+    document.body.appendChild(img);
+
+    requestAnimationFrame(() => {
+        img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
+        img.style.opacity = 0;
     });
+
+    setTimeout(() => {
+        document.body.removeChild(img);
+    }, 700);
 }
-
-});
-
-
-
-       
-
 </script>
 </body>
 </html>
