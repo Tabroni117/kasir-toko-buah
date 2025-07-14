@@ -383,7 +383,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             localStorage.setItem('cart', JSON.stringify(cart));
+
+            // ✅ Kirim ke tombol pesan navigator
             window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
+
+            // ✅ Kirim ke summary bar utama (popupCheckoutBar)
+            const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+
+            window.parent.postMessage({
+                type: 'cartUpdate',
+                itemCount: totalItem,
+                totalPrice: totalPrice
+            }, '*');
         }
 
         decreaseButton.addEventListener('click', () => {
@@ -395,13 +407,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-       increaseButton.addEventListener('click', () => {
-    let qty = parseInt(productQuantityInput.value);
-    qty++;
-    productQuantityInput.value = qty;
-    updateCart(qty);
-    lemparKeKeranjang(selectedProduct.image); // ✅ animasi hanya saat tambah
-});
+        increaseButton.addEventListener('click', () => {
+            let qty = parseInt(productQuantityInput.value);
+            qty++;
+            productQuantityInput.value = qty;
+            updateCart(qty);
+            lemparKeKeranjang(selectedProduct.image); // ✅ animasi saat tambah
+        });
+
     } else {
         alert('Produk tidak ditemukan. Kembali ke halaman utama.');
         window.location.href = 'apl05.html';
@@ -411,36 +424,30 @@ document.addEventListener('DOMContentLoaded', function() {
 function kirimPermintaanTutup() {
     window.parent.postMessage({ action: 'tutupPopup' }, '*');
 }
-       function lemparKeKeranjang(imgSrc) {
-  const img = document.createElement('img');
-  img.src = imgSrc;
-  img.classList.add('fly-to-cart');
 
-  // Awal: posisi tombol + (ambil posisi tombol atau produk)
-  const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+function lemparKeKeranjang(imgSrc) {
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.classList.add('fly-to-cart');
 
-  // Target: posisi bridge keranjang
-  const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
+    const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+    const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
 
-  // Posisi awal
-  img.style.left = `${startRect.left}px`;
-  img.style.top = `${startRect.top}px`;
-  img.style.opacity = 1;
+    img.style.left = `${startRect.left}px`;
+    img.style.top = `${startRect.top}px`;
+    img.style.opacity = 1;
 
-  document.body.appendChild(img);
+    document.body.appendChild(img);
 
-  // Trigger animasi
-  requestAnimationFrame(() => {
-    img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
-    img.style.opacity = 0;
-  });
+    requestAnimationFrame(() => {
+        img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
+        img.style.opacity = 0;
+    });
 
-  // Hapus elemen setelah animasi selesai
-  setTimeout(() => {
-    document.body.removeChild(img);
-  }, 700);
+    setTimeout(() => {
+        document.body.removeChild(img);
+    }, 700);
 }
-       
 </script>
 </body>
 </html>
