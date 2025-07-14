@@ -799,12 +799,22 @@
 
     // --- Elemen Utama DOM ---
     const menuList = document.getElementById('menuList');
-    // Ini adalah Summary Bar yang ada di apl05.html (Halaman Utama)
-    const checkoutSummaryBar = document.getElementById('popupCheckoutBar'); 
-    const bridgeItemCountSpan = document.getElementById('bridgeItemCount');
-    const bridgeTotalSpan = document.getElementById('bridgeTotal'); 
+    // Summary Bar Utama (di apl05.html)
+    const mainCheckoutSummaryBar = document.getElementById('mainCheckoutSummaryBar'); 
+    const bridgeItemCountSpan = document.getElementById('bridgeItemCount'); // Span untuk item count bar utama
+    const bridgeTotalSpan = document.getElementById('bridgeTotal'); // Span untuk total price bar utama
+    const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn'); // Tombol checkout bar utama
+    
+    // Elemen terkait Popup
     const popupPanel = document.getElementById('popupPanel');
     const popupFrame = document.getElementById('popupFrame');
+    
+    // Summary Bar INTERNAL Popup (di dalam popup)
+    const popupCheckoutBar = document.getElementById('popupCheckoutBar'); // KEMBALIKAN ID INI
+    const bridgeItemCountInternalSpan = document.getElementById('bridgeItemCountInternal'); // Span untuk item count bar internal
+    const bridgeTotalInternalSpan = document.getElementById('bridgeTotalInternal'); // Span untuk total price bar internal
+    const bridgeCheckoutBtnInternal = document.getElementById('bridgeCheckoutBtnInternal'); // Tombol checkout bar internal
+    
     const cartBadge = document.getElementById("cartBadge"); 
 
     auth.onAuthStateChanged(user => {
@@ -818,7 +828,6 @@
         } else {
             renderMenuItems();
             startAutoScroll();
-            // PENTING: Panggil ini saat halaman dimuat/setelah login
             updateCartSummaryFromLocalStorage(); 
         }
     });
@@ -831,7 +840,7 @@
             localStorage.removeItem('userRole');
             localStorage.removeItem('userEmail');
             localStorage.removeItem('userUid');
-            localStorage.removeItem('cart'); // Bersihkan keranjang saat logout
+            localStorage.removeItem('cart'); 
             alert('Anda telah berhasil logout.');
             window.location.href = 'index.html';
         } catch (error) {
@@ -885,7 +894,7 @@
         }
     }
 
-    // --- GPS functionality ---
+    // --- GPS functionality (tetap sama) ---
     const gpsIcon = document.querySelector('.gps-icon');
     const deliveryInput = document.querySelector('.delivery-input');
     
@@ -929,16 +938,16 @@
         }
     });
 
-    // --- Promo Banner Auto-Scroll ---
+    // --- Promo Banner Auto-Scroll (tetap sama) ---
     const promoContainer = document.getElementById('promoSlides');
     const promoSlides = document.querySelectorAll('.promo-slide');
-    let promoCurrentIndex = 0; // Ganti nama variabel agar tidak konflik
+    let promoCurrentIndex = 0; 
     let slideInterval;
 
     function startAutoScroll() {
         if (promoSlides.length <= 1) return;
 
-        const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12; // 12px for gap
+        const calculateSlideWidth = () => promoSlides[0].offsetWidth + 12; 
         let slideWidth = calculateSlideWidth();
 
         window.addEventListener('resize', () => {
@@ -946,12 +955,12 @@
         });
 
         slideInterval = setInterval(() => {
-            promoCurrentIndex = (promoCurrentIndex + 1) % promoSlides.length; // Gunakan promoCurrentIndex
+            promoCurrentIndex = (promoCurrentIndex + 1) % promoSlides.length; 
             promoContainer.style.transform = `translateX(-${promoCurrentIndex * slideWidth}px)`;
         }, 3000);
     }
 
-    // --- Navigasi Aktif (Bottom Nav) ---
+    // --- Navigasi Aktif (Bottom Nav) (tetap sama) ---
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', function() {
@@ -960,9 +969,9 @@
         });
     });
 
-    // --- Category Icon Spin ---
+    // --- Category Icon Spin (tetap sama) ---
     const icons = document.querySelectorAll('.category-icon i');
-    let categoryIconIndex = 0; // Ganti nama variabel agar tidak konflik
+    let categoryIconIndex = 0; 
 
     setInterval(() => {
         icons.forEach((icon, index) => {
@@ -971,7 +980,7 @@
                 icon.classList.add('rotating');
             }
         });
-        categoryIconIndex = (categoryIconIndex + 1) % icons.length; // Gunakan categoryIconIndex
+        categoryIconIndex = (categoryIconIndex + 1) % icons.length; 
     }, 2000); 
 
 
@@ -979,53 +988,58 @@
     function bukaPopup(htmlFile) {
         popupFrame.src = htmlFile;
         popupPanel.classList.add('show');
-        // Sembunyikan summary bar halaman utama saat popup muncul
-        if (checkoutSummaryBar) {
-            checkoutSummaryBar.classList.remove('show'); 
-            checkoutSummaryBar.classList.add('hidden'); 
+        // Sembunyikan summary bar UTAMA saat popup muncul
+        if (mainCheckoutSummaryBar) { 
+            mainCheckoutSummaryBar.classList.remove('show'); 
+            mainCheckoutSummaryBar.classList.add('hidden'); 
         }
         window.addEventListener('message', handleIframeMessage);
     }
 
     function tutupPopup() {
         popupPanel.classList.remove('show');
-        popupFrame.src = ""; // Bersihkan src iframe
+        popupFrame.src = ""; 
         window.removeEventListener('message', handleIframeMessage);
-        // Setelah popup ditutup, perbarui dan tampilkan kembali summary bar utama jika ada item
+        // Setelah popup ditutup, perbarui dan tampilkan kembali summary bar UTAMA jika ada item
         updateCartSummaryFromLocalStorage(); 
     }
 
     // --- Handler Pesan dari Iframe (PENTING: Ini yang menerima data dari product-detail.html/cart.html) ---
     function handleIframeMessage(event) {
-        // Asumsi event.data memiliki format: { type: 'cartUpdate', itemCount: X, totalPrice: Y }
-        // atau { type: 'closePopup' } atau { type: 'goToCart' }
         if (event.data) {
             if (event.data.type === 'cartUpdate') {
-                // Panggil updateCartSummary untuk memperbarui summary bar utama
+                // Panggil updateCartSummary untuk memperbarui summary bar UTAMA
                 updateCartSummary(event.data.itemCount, event.data.totalPrice);
+
+                // DAN juga perbarui bar INTERNAL popup jika popup masih terlihat
+                if (popupPanel.classList.contains('show') && popupCheckoutBar) {
+                    const formattedPrice = 'Rp' + event.data.totalPrice.toLocaleString('id-ID'); 
+                    if (bridgeItemCountInternalSpan) bridgeItemCountInternalSpan.textContent = `${event.data.itemCount} item`;
+                    if (bridgeTotalInternalSpan) bridgeTotalInternalSpan.textContent = `${formattedPrice}`;
+                }
+
             } else if (event.data.type === 'closePopup') {
                 tutupPopup(); 
             } else if (event.data.type === 'goToCart') {
                 tutupPopup(); 
                 bukaPopup('cart.html'); 
             }
-            // Tambahan untuk pesan konfirmasi sukses (jika ada di product-detail/cart)
             if (event.data.type === 'itemAddedSuccess') {
                 alert('✅ Produk ditambahkan ke keranjang!');
             }
         }
     }
 
-    // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR (PENTING: Ini yang mengontrol visibilitas dan kontennya) ---
+    // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR UTAMA (ini yang mengontrol visibilitas dan kontennya) ---
     function updateCartSummary(itemCount, totalPrice) {
-        console.log("--- updateCartSummary Dipanggil ---");
+        console.log("--- updateCartSummary Dipanggil (Bar Utama) ---");
         console.log("Item Count:", itemCount);
         console.log("Total Price:", totalPrice);
         console.log("Popup Panel Show Status:", popupPanel.classList.contains('show'));
 
         const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID'); 
         
-        // Pastikan elemen ada sebelum mencoba mengubah textContent
+        // Perbarui span di summary bar UTAMA
         if (bridgeItemCountSpan) bridgeItemCountSpan.textContent = `${itemCount}`; 
         if (bridgeTotalSpan) bridgeTotalSpan.textContent = `${formattedPrice}`; 
 
@@ -1039,18 +1053,19 @@
             }
         }
 
-        // Atur visibilitas summary bar utama
-        if (checkoutSummaryBar) { // Pastikan elemen bar ada
+        // Atur visibilitas summary bar UTAMA
+        if (mainCheckoutSummaryBar) { 
+            // Bar utama hanya muncul jika ada item DAN popup TIDAK aktif
             if (itemCount > 0 && !popupPanel.classList.contains('show')) {
                 console.log("Menampilkan Summary Bar Utama");
-                checkoutSummaryBar.classList.remove('hidden'); 
-                checkoutSummaryBar.classList.add('show');
+                mainCheckoutSummaryBar.classList.remove('hidden'); 
+                mainCheckoutSummaryBar.classList.add('show');
             } else {
                 console.log("Menyembunyikan Summary Bar Utama");
-                checkoutSummaryBar.classList.remove('show'); 
-                checkoutSummaryBar.classList.add('hidden'); 
+                mainCheckoutSummaryBar.classList.remove('show'); 
+                mainCheckoutSummaryBar.classList.add('hidden'); 
             }
-            console.log("Current Summary Bar classes:", checkoutSummaryBar.classList.value);
+            console.log("Current Summary Bar Utama classes:", mainCheckoutSummaryBar.classList.value);
         }
     }
 
@@ -1065,7 +1080,7 @@
             totalPrice += (item.price || 0) * (item.quantity || 0); 
         });
 
-        updateCartSummary(totalItem, totalPrice); // Panggil fungsi utama
+        updateCartSummary(totalItem, totalPrice); 
     }
 
     // --- Navigasi ke Halaman Checkout (melalui popup) ---
@@ -1075,11 +1090,16 @@
 
     // --- Event Listener: Saat DOM Selesai Dimuat ---
     document.addEventListener('DOMContentLoaded', function () {
-        const checkoutBtn = document.getElementById('bridgeCheckoutBtn');
-        if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', goToCheckoutPage); 
+        // Event listener untuk tombol checkout di bar UTAMA
+        if (bridgeCheckoutBtn) { 
+            bridgeCheckoutBtn.addEventListener('click', goToCheckoutPage); 
         }
-        // Pastikan listener pesan ada saat DOM siap
+        // Event listener untuk tombol checkout di bar INTERNAL popup
+        if (bridgeCheckoutBtnInternal) {
+            bridgeCheckoutBtnInternal.addEventListener('click', () => {
+                bukaPopup('cart.html'); 
+            });
+        }
         window.addEventListener('message', handleIframeMessage);
     });
 
