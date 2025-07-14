@@ -852,45 +852,38 @@ const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtnMain'); // �
     async function renderMenuItems() {
         menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
         try {
-            const snapshot = await menuCollection.where('isAvailable', '==', true).orderBy('nama').get();
-            menuList.innerHTML = '';
-            if (snapshot.empty) {
-                menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
-            } else {
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const product = {
-                        id: doc.id,
-                        name: data.nama,
-                        description: data.deskripsi,
-                        price: data.harga,
-                        image: data.imageUrl,
-                        rating: data.rating,
-                        deliveryTime: data.deliveryTime
-                    };
+           snapshot.forEach(doc => {
+    const data = doc.data();
+    const product = {
+        id: doc.id,
+        name: data.nama,
+        description: data.deskripsi,
+        price: data.harga,
+        image: data.imageUrl,
+        rating: data.rating,
+        deliveryTime: data.deliveryTime
+    };
 
-                    const card = document.createElement('div');
-card.classList.add('restaurant-card', 'fade-in');
-card.innerHTML = `
-    <img src="${product.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.name}" class="restaurant-image">
-    <div class="restaurant-info">
-        <div class="restaurant-name">${product.name}</div>
-        <div class="restaurant-meta">
-            <span class="rating"><i class="fas fa-star"></i> ${product.rating?.toFixed(1) || 'N/A'}</span>
-            <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+    const card = document.createElement('div');
+    card.classList.add('restaurant-card', 'fade-in');
+    card.innerHTML = `
+        <img src="${product.image || 'https://via.placeholder.com/120?text=No+Image'}" alt="${product.name}" class="restaurant-image">
+        <div class="restaurant-info">
+            <div class="restaurant-name">${product.name}</div>
+            <div class="restaurant-meta">
+                <span class="rating"><i class="fas fa-star"></i> ${product.rating?.toFixed(1) || 'N/A'}</span>
+                <span class="delivery-time">${product.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
+            </div>
         </div>
-    </div>`;
+    `;
 
-// 🔁 GANTI INI:
-// sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-// bukaPopup('product-detail.html');
+    // ⬇️ Tambahkan ini
+    card.addEventListener('click', () => {
+        bukaPopup('product-detail.html', product);
+    });
 
-// ✅ JADI INI:
-card.addEventListener('click', () => {
-    bukaPopup('product-detail.html', product); // langsung kirim data
+    menuList.appendChild(card);
 });
-
-menuList.appendChild(card);
                 });
             }
         } catch (error) {
@@ -1012,7 +1005,7 @@ function bukaPopup(htmlFile, dataToSend = null) {
     if (dataToSend) {
         popupFrame.onload = () => {
             popupFrame.contentWindow.postMessage({
-                type: 'loadProduct',
+                type: 'productData',
                 data: dataToSend
             }, '*');
         };
