@@ -287,27 +287,34 @@
   padding-left: 0;
   margin-left: 0;
 }
+        .popup-content {
+  transition: transform 0.3s ease;
+  will-change: transform;
+  touch-action: pan-y;
+}
 </style> 
   
 </head>
 
 <body>
-  <div class="container">
-    <header class="header-detail" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #00C853, #64DD17); color: white; padding: 12px 16px;">
-      
-      <!-- Kiri: Tombol kembali + Judul -->
-      <div style="display: flex; align-items: center;">
-        <i class="fas fa-arrow-left back-button" id="btnBackDetail" style="font-size: 20px; margin-right: 10px; cursor: pointer;"></i>
-        <div class="header-title" style="font-size: 16px; font-weight: bold;">Detail Produk</div>
-      </div>
-      
-      <!-- Kanan: Swipe Bar -->
-      <div style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px;"></div>
+  <div id="popupPanel">
+  <div class="popup-content">
+    <div class="container">
+      <!-- Header + Konten Detail Produk -->
+      <header class="header-detail" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #00C853, #64DD17); color: white; padding: 12px 16px;">
+        <!-- Kiri: Tombol kembali + Judul -->
+        <div style="display: flex; align-items: center;">
+          <i class="fas fa-arrow-left back-button" id="btnBackDetail" style="font-size: 20px; margin-right: 10px; cursor: pointer;"></i>
+          <div class="header-title" style="font-size: 16px; font-weight: bold;">Detail Produk</div>
+        </div>
+        <!-- Kanan: Swipe Bar -->
+        <div style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px;"></div>
+      </header>
 
-    </header>
-        
-        <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
-        <div class="product-info-detail">
+      <!-- Lanjutkan dengan konten kamu -->
+      <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
+      <div class="product-info-detail">
+          
            <div class="product-header-detail">
   <h1 class="product-name-detail" id="productName"></h1>
 
@@ -489,6 +496,37 @@ window.addEventListener('touchmove', function (e) {
 window.addEventListener('touchend', function () {
   isDragging = false;
 });
+
+  const popupContent = document.querySelector('.popup-content');
+  let startY = 0;
+  let currentY = 0;
+  let translateY = 0;
+  let isDragging = false;
+
+  popupContent.addEventListener('touchstart', function (e) {
+    startY = e.touches[0].clientY;
+    isDragging = true;
+    popupContent.style.transition = 'none';
+  });
+
+  popupContent.addEventListener('touchmove', function (e) {
+    if (!isDragging) return;
+    currentY = e.touches[0].clientY;
+    translateY = currentY - startY;
+    if (translateY > 0) {
+      popupContent.style.transform = `translateY(${translateY}px)`;
+    }
+  });
+
+  popupContent.addEventListener('touchend', function () {
+    isDragging = false;
+    popupContent.style.transition = 'transform 0.3s ease';
+    if (translateY > 150) {
+      window.parent.postMessage({ type: 'closePopup' }, '*'); // Perintah tutup popup
+    } else {
+      popupContent.style.transform = 'translateY(0)';
+    }
+  });
 
 
        
