@@ -363,40 +363,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const decreaseButton = document.getElementById('decreaseQuantity');
         const increaseButton = document.getElementById('increaseQuantity');
 
-        function updateCart(quantity) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const index = cart.findIndex(item =>
-                item.id === selectedProduct.id &&
-                JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-            );
+  function updateCart(quantity) {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const index = cart.findIndex(item =>
+        item.id === selectedProduct.id &&
+        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+    );
 
-            if (index > -1) {
-                cart[index].quantity = quantity;
-            } else {
-                cart.push({
-                    id: selectedProduct.id,
-                    name: selectedProduct.name,
-                    price: selectedProduct.price,
-                    image: selectedProduct.image,
-                    quantity: quantity,
-                    custom: { ...selectedVariants }
-                });
-            }
-            localStorage.setItem('cart', JSON.stringify(cart));
+    if (index > -1) {
+        cart[index].quantity = quantity;
+    } else {
+        cart.push({
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            quantity: quantity,
+            custom: { ...selectedVariants }
+        });
+    }
 
-            // ✅ Kirim ke tombol pesan navigator
-            window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
+    localStorage.setItem('cart', JSON.stringify(cart));
 
-            // ✅ Kirim ke summary bar utama (popupCheckoutBar)
-            const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
-            const totalPrice = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    // ✅ Untuk tombol pesan (SUDAH ADA)
+    window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
 
-            window.parent.postMessage({
-                type: 'cartUpdate',
-                itemCount: totalItem,
-                totalPrice: totalPrice
-            }, '*');
-        }
+    // ✅ Untuk summary utama & summary popup
+    const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+    window.parent.postMessage({
+        type: 'cartUpdate',
+        itemCount: totalItem,
+        totalPrice: totalPrice
+    }, '*');
+}
 
         decreaseButton.addEventListener('click', () => {
             let qty = parseInt(productQuantityInput.value);
