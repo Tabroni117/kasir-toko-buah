@@ -980,26 +980,17 @@
                     menuList.appendChild(card);
                 });
 
-                // ✅ Pasang SATU event listener di wadah utamanya
-                menuList.addEventListener('click', (event) => {
-                    // Cari elemen kartu yang diklik
-                    const cardElement = event.target.closest('.restaurant-card');
-                    if (cardElement) {
-                        const productId = cardElement.getAttribute('data-id');
-                        const product = allProducts.find(p => p.id === productId);
-                        if (product) {
-                            bukaPopup('product-detail.html', product);
-                        } else {
-                            console.error("Produk tidak ditemukan untuk ID:", productId);
-                        }
-                    }
-                });
-            }
-        } catch (error) {
-            console.error("🔥 Gagal memuat menu:", error);
-            menuList.innerHTML = `<p class="menu-loading-message" style="color:red;">Gagal memuat menu: ${error.message}</p>`;
+               menuList.addEventListener('click', (event) => {
+    const cardElement = event.target.closest('.restaurant-card');
+    if (cardElement) {
+        const productId = cardElement.getAttribute('data-id');
+        const product = allProducts.find(p => p.id === productId);
+        if (product) {
+            sessionStorage.setItem('selectedProduct', JSON.stringify(product)); // ⬅️ Tambahkan ini
+            bukaPopup('product-detail.html'); // ⬅️ Langsung buka tanpa dataToSend
         }
     }
+});
 
     // --- FUNGSI-FUNGSI LAINNYA (TETAP SAMA) ---
 
@@ -1017,29 +1008,26 @@
         }, 3000);
     }
 
-    function bukaPopup(htmlFile, dataToSend = null) {
-        popupFrame.onload = () => {
-            if (dataToSend) {
-                popupFrame.contentWindow.postMessage({
-                    type: 'loadProduct',
-                    data: dataToSend
-                }, '*');
-            }
-        };
-        popupFrame.src = htmlFile;
-        popupPanel.classList.add('show');
-        if (mainCheckoutSummaryBar) {
-            mainCheckoutSummaryBar.classList.remove('show');
-            mainCheckoutSummaryBar.classList.add('hidden');
-        }
-        if (popupCheckoutBar) {
-            if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
-                popupCheckoutBar.style.display = 'none';
-            } else {
-                popupCheckoutBar.style.display = 'flex';
-            }
+  function bukaPopup(htmlFile) {
+    popupFrame.onload = null; // ⬅️ Tidak perlu lagi postMessage
+    popupFrame.src = htmlFile;
+    popupPanel.classList.add('show');
+
+    // Sembunyikan summary bar utama saat popup muncul
+    if (mainCheckoutSummaryBar) {
+        mainCheckoutSummaryBar.classList.remove('show');
+        mainCheckoutSummaryBar.classList.add('hidden');
+    }
+
+    // Sembunyikan bar popup jika halaman khusus
+    if (popupCheckoutBar) {
+        if (htmlFile.includes('cart.html') || htmlFile.includes('checkout.html')) {
+            popupCheckoutBar.style.display = 'none';
+        } else {
+            popupCheckoutBar.style.display = 'flex';
         }
     }
+}
 
     function tutupPopup() {
         popupPanel.classList.remove('show');
