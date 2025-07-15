@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <style>
+        /* General Styling */
         * {
             margin: 0;
             padding: 0;
@@ -30,11 +31,11 @@
             background: white;
             min-height: 100vh;
             position: relative;
-            /* Disesuaikan: Tinggi bottom-nav (50px) + tinggi floatingCartBar (45px) + sedikit margin (10px) = 105px */
+            /* Adjusted: bottom-nav height (50px) + floatingCartBar height (45px) + a little margin (10px) = 105px */
             padding-bottom: 105px; 
         }
 
-        /* Header Asli yang Dipertahankan */
+        /* Header Styling */
         .header {
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
@@ -45,24 +46,23 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
-            display: flex; /* Make header a flex container */
-            flex-direction: column; /* Menjaga app-header dan address-bar bertumpuk */
-            align-items: flex-start; /* Mengatur alignment ke kiri */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .header-top-row { /* Kontainer untuk judul & logout button */
+        .header-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%; /* Agar memenuhi lebar header */
-            margin-bottom: 8px; /* Jarak ke address-bar */
+            width: 100%;
+            margin-bottom: 8px;
         }
 
         .app-header {
-            margin-bottom: 0; /* Tidak perlu margin-bottom di sini */
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Default alignment */
+            align-items: flex-start;
         }
 
         .app-title {
@@ -87,7 +87,7 @@
 
         /* Logout Button Style */
         .logout-btn {
-            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            background-color: rgba(255, 255, 255, 0.2);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.4);
             padding: 8px 15px;
@@ -95,8 +95,8 @@
             cursor: pointer;
             font-size: 0.9em;
             transition: background-color 0.3s, border-color 0.3s;
-            margin-left: auto; /* Push button to the right */
-            white-space: nowrap; /* Prevent text from wrapping */
+            margin-left: auto;
+            white-space: nowrap;
         }
         .logout-btn:hover {
             background-color: rgba(255, 255, 255, 0.3);
@@ -110,7 +110,7 @@
             border-radius: 8px;
             padding: 10px;
             position: relative;
-            width: 100%; /* Make it full width again below the header info */
+            width: 100%;
         }
 
         .gps-icon {
@@ -170,6 +170,19 @@
             flex-direction: column;
             justify-content: space-between;
             scroll-snap-align: start;
+            box-shadow:
+                2px 2px 3px rgba(22, 163, 74, 0.5),
+                4px 4px 4px rgba(22, 163, 74, 0.6),
+                6px 6px 5px rgba(22, 163, 74, 0.7);
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .promo-slide:hover {
+            box-shadow:
+                2px 2px 4px rgba(22, 163, 74, 0.6),
+                4px 4px 6px rgba(22, 163, 74, 0.7),
+                6px 6px 8px rgba(22, 163, 74, 0.8);
+            transform: translateY(-3px);
         }
 
         .promo-title {
@@ -185,42 +198,79 @@
         .categories {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 12px;
             padding: 16px;
             background: white;
             margin-bottom: 8px;
         }
 
         .category {
-            text-align: center;
-            padding: 8px 0;
-            border-radius: 8px;
-            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px;
+            background:#ffffff;
+            border-radius: 12px;
+            transition: transform 0.2s ease;
             cursor: pointer;
         }
 
         .category:hover {
-            background: #f0f0f0;
+            transform: translateY(-2px);
         }
-
+        
         .category-icon {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 6px;
+            background: #3ee36f;
+            color: #ffffff;
+            border-radius: 10px;
+            border-bottom: 2px solid #15803d;
+            border-right: 2px solid #15803d;
+            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-size: 18px;
+            padding: 14px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f5f5f5;
-            border-radius: 50%;
-            color: #00C853;
+        }
+
+        .category:hover .category-icon,
+        .category.active .category-icon {
+            background: #3ee36f;
+            color: #ffffff;
+            transform: scale(1.1);
+            box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
+            animation: softGlow 1.8s ease-in-out infinite alternate;
+        }
+
+        @keyframes softGlow {
+            from {
+                box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
+            }
+            to {
+                box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
+            }
         }
 
         .category-name {
-            font-size: 11px;
-            font-weight: 500;
+            font-size: 12px;
+            font-weight: 600;
+            color: #22c55e;
+            text-align: center;
+            line-height: 1.2;
         }
 
-        /* Menu Terlaris */
+        @keyframes spinIcon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .category-icon i.rotating {
+            animation: spinIcon 2s linear infinite;
+        }
+
+        /* Menu Section */
         .section-title {
             padding: 16px 16px 8px;
             font-size: 16px;
@@ -250,6 +300,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             transition: transform 0.2s;
+            position: relative; /* Essential for positioning the button */
         }
 
         .restaurant-card:hover {
@@ -292,6 +343,76 @@
             color: #00C853;
         }
 
+        /* NEW: Add to Cart/Quantity Control on Menu Card */
+        .add-to-cart-control {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            z-index: 10;
+        }
+
+        .add-button {
+            background-color: #22c55e; /* Bright green */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .add-button:hover {
+            background-color: #16a34a; /* Darker green on hover */
+            transform: scale(1.05);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            background-color: #22c55e;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .quantity-button-card {
+            background-color: #16a34a; /* Darker green */
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .quantity-button-card:hover {
+            background-color: #0c7a38; /* Even darker green on hover */
+        }
+
+        .quantity-input-card {
+            width: 30px;
+            text-align: center;
+            border: none;
+            background-color: white; /* White background for input */
+            color: #333;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 6px 0;
+            -moz-appearance: textfield; /* Hide arrows in Firefox */
+        }
+        /* Hide arrows in Chrome, Safari, Edge */
+        .quantity-input-card::-webkit-outer-spin-button,
+        .quantity-input-card::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
         /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
@@ -303,8 +424,8 @@
             background: linear-gradient(135deg, #00C853, #64DD17);
             padding: 6px 0;
             border-top: 1px solid rgba(255,255,255,0.2);
-            z-index: 1000; /* Z-index untuk memastikan di atas konten */
-            height: 50px; /* Estimasi tinggi nav bar */
+            z-index: 1000;
+            height: 50px;
         }
 
         .nav-item {
@@ -344,113 +465,13 @@
             font-size: 1.1em;
         }
 
-        .promo-slide {
-            box-shadow:
-                2px 2px 3px rgba(22, 163, 74, 0.5),
-                4px 4px 4px rgba(22, 163, 74, 0.6),
-                6px 6px 5px rgba(22, 163, 74, 0.7);
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        .promo-slide:hover {
-            box-shadow:
-                2px 2px 4px rgba(22, 163, 74, 0.6),
-                4px 4px 6px rgba(22, 163, 74, 0.7),
-                6px 6px 8px rgba(22, 163, 74, 0.8);
-            transform: translateY(-3px);
-        }
-
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .category {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px;
-            background:#ffffff;
-            border-radius: 12px;
-            transition: transform 0.2s ease;
-            cursor: pointer;
-        }
-
-        .category:hover {
-            transform: translateY(-2px);
-        }
-        .category-icon {
-            background: #3ee36f; /* Hijau neon kinclong */
-            color: #ffffff !important;
-            font-size: 18px;
-            padding: 14px;
-            border-radius: 50%;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.35s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .category-icon {
-            background: #3ee36f; /* Hijau cerah elegan */
-            color: #ffffff;
-            border-radius: 10px;
-            border-bottom: 2px solid #15803d; /* Hijau gelap untuk bawah */
-            border-right: 2px solid #15803d;  /* Hijau gelap untuk kanan */
-            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3); /* Bayangan arah kanan bawah */
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .category:hover .category-icon,
-        .category.active .category-icon {
-            background: #3ee36f;
-            color: #ffffff;
-            transform: scale(1.1);
-            box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
-            animation: softGlow 1.8s ease-in-out infinite alternate;
-        }
-
-        @keyframes softGlow {
-            from {
-                box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
-            }
-            to {
-                box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
-            }
-        }
-
-        .category-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #22c55e;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        @keyframes spinIcon {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .category-icon i.rotating {
-            animation: spinIcon 2s linear infinite;
-        }
-        .promo-banner {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: white; /* atau #f0fdf4 agar tidak transparan saat scroll */
-            padding: 10px 16px;
-        }
+        /* Cart Badge on Bottom Nav */
         .cart-badge {
             position: absolute;
             top: 0;
             right: 0;
             transform: translate(30%, -30%);
-            background-color: #ef4444; /* merah terang */
+            background-color: #ef4444; /* red */
             color: white;
             font-size: 10px;
             font-weight: bold;
@@ -462,89 +483,47 @@
             z-index: 10;
         }
 
-        .btn-tutup {
-            padding: 10px;
-            border: none;
-            background: #f44336;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-keranjang {
-            margin: 10px auto;
-            background-color: #ff5722;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            width: 90%;
-            font-size: 16px;
-            cursor: pointer;
-            display: block;
-        }
-
-        .btn-keranjang:hover {
-            background-color: #e64a19;
-        }
-
-        .floating-cart {
-            position: fixed;
-            bottom: 90px; /* Atur agar tidak tabrakan dengan popup bawah */
-            right: 16px;
-            z-index: 1000; /* Lebih tinggi dari popup */
-            background-color: #ff5c5c;
-            color: white;
-            border-radius: 50%;
-            padding: 14px;
-            font-size: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-        }
-        /* Removed .cart-badge styling for floating-cart as it's no longer needed for the floating bar */
-
+        /* Floating Cart Bar */
         #floatingCartBar {
             position: fixed;
-            bottom: 50px; /* Tepat di atas bottom-nav (tinggi 50px) */
-            left: 50%; /* Pusatkan secara horizontal */
-            transform: translateX(-50%); /* Kompensasi untuk pusatkan */
-            max-width: 480px; /* Batasi lebar sesuai container */
-            width: 100%; /* Ambil lebar penuh dalam max-width */
-            z-index: 9999; /* Lebih tinggi dari bottom-nav */
-            background: #22c55e; /* Hijau sesuai permintaan */
+            bottom: 50px; /* Right above bottom-nav (50px height) */
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 480px;
+            width: 100%;
+            z-index: 9999;
+            background: #22c55e; /* Green as requested */
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 16px; /* Disesuaikan: Padding vertikal dikurangi */
-            border-top: 1px solid #16a34a; /* Border hijau lebih gelap */
+            padding: 5px 16px;
+            border-top: 1px solid #16a34a;
             box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            height: 45px; /* Disesuaikan: Tinggi bar dikurangi */
-            border-top-left-radius: 10px; /* Tambah border radius */
-            border-top-right-radius: 10px; /* Tambah border radius */
+            height: 45px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
         }
 
-        #floatingCartBar .cart-info { /* NEW: Style for the wrapper of cart details */
+        #floatingCartBar .cart-info {
             display: flex;
             align-items: center;
-            gap: 10px; /* Space between elements */
+            gap: 10px;
         }
 
         #floatingCartBar .cart-button {
-            color: white; /* Icon keranjang putih */
-            /* Removed padding/border/background for the number badge, as the badge itself is removed */
+            color: white;
         }
 
-        /* Removed .cart-count styling as the element is removed from floatingCartBar */
-
-        #floatingCartBar .cart-text { /* NEW: Style for the text elements */
-            color: white; /* Text color white for visibility */
-            font-size: 14px; /* Adjust font size as needed */
+        #floatingCartBar .cart-text {
+            color: white;
+            font-size: 14px;
             font-weight: bold;
         }
 
         #floatingCartBar .checkout-button {
-            background-color: #fde047; /* Tombol checkout kuning */
-            color: black; /* Teks tombol checkout hitam */
-            padding: 6px 12px; /* Disesuaikan: Padding tombol checkout dikurangi */
+            background-color: #fde047; /* Yellow */
+            color: black;
+            padding: 6px 12px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
@@ -552,43 +531,17 @@
             transition: background-color 0.3s;
         }
         #floatingCartBar .checkout-button:hover {
-            background-color: #facc15; /* Hover kuning sedikit lebih gelap */
+            background-color: #facc15; /* Darker yellow on hover */
         }
 
-
-        #popupCheckoutBar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background-color: #fff; /* Default, akan diubah oleh JS */
-            border-top: 1px solid #ddd;
-            font-size: 16px;
-            font-weight: 500;
-            position: relative;
-            z-index: 10;
-        }
-
-        #bridgeItemCount, #bridgeTotal {
-            margin-right: 10px;
-        }
-
-        #bridgeCheckoutBtn {
-            padding: 6px 12px;
-            background-color: #f55;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
+        /* Popup Panel */
         #popupPanel {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.3); /* Latar belakang transparan */
+            background: rgba(0, 0, 0, 0.3);
             display: none;
             justify-content: center;
-            align-items: flex-end; /* Muncul dari bawah */
+            align-items: flex-end; /* Appears from bottom */
             z-index: 9999;
         }
 
@@ -599,7 +552,7 @@
         .popup-content {
             width: 100%;
             max-width: 460px;
-            height: 85vh; /* Cukup tinggi tapi tidak terlalu kelabasan */
+            height: 85vh;
             background-color: white;
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
@@ -607,20 +560,13 @@
             box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
-
-            /* Efek muncul dari bawah */
             transform: translateY(100%);
             animation: slideUp 0.35s ease-out forwards;
         }
 
-        /* Animasi popup muncul */
         @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-            }
-            to {
-                transform: translateY(0%);
-            }
+            from { transform: translateY(100%); }
+            to { transform: translateY(0%); }
         }
 
         #popupFrame {
@@ -628,10 +574,11 @@
             width: 100%;
             border: none;
         }
+
         .btn-tutup-hijau {
             padding: 10px;
             border: none;
-            background-color: #22c55e; /* hijau segar */
+            background-color: #22c55e; /* green */
             color: white;
             font-weight: bold;
             border-radius: 8px;
@@ -639,33 +586,33 @@
             transition: background-color 0.3s;
         }
         .btn-tutup-hijau:hover {
-            background-color: #16a34a; /* hijau lebih gelap saat hover */
+            background-color: #16a34a; /* darker green on hover */
         }
+
         #popupCheckoutBar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 14px;
-            background-color: #22c55e; /* 💚 HIJAU CERAH */
+            background-color: #22c55e; /* bright green */
             border-top: 1px solid #ddd;
             font-size: 16px;
             font-weight: 500;
-            color: white; /* Teks jadi putih */
+            color: white;
             position: relative;
             z-index: 10;
         }
 
         #bridgeItemCount,
         #bridgeTotal {
-            color: white; /* Teks putih */
+            color: white;
             margin-right: 10px;
         }
 
-        /* Tombol Checkout */
         #bridgeCheckoutBtn {
             padding: 6px 12px;
-            background-color: #fde047; /* 🟨 KUNING */
-            color: black;              /* 🔤 HITAM */
+            background-color: #fde047; /* yellow */
+            color: black;
             border: none;
             border-radius: 8px;
             font-weight: bold;
@@ -674,7 +621,7 @@
         }
 
         #bridgeCheckoutBtn:hover {
-            background-color: #facc15; /* Hover kuning sedikit lebih gelap */
+            background-color: #facc15; /* darker yellow on hover */
         }
     </style>
 </head>
@@ -797,12 +744,12 @@
             </a>
         </div>
 
-        <!-- === PANEL POPUP DARI BAWAH === -->
+        <!-- === POPUP PANEL FROM BOTTOM === -->
         <div id="popupPanel">
             <div class="popup-content">
                 <iframe id="popupFrame"></iframe>
 
-                <div id="popupCheckoutBar"> <!-- Ini "summary bar" di dalam popup -->
+                <div id="popupCheckoutBar"> <!-- This is the "summary bar" inside the popup -->
                     🛒 <span id="bridgeItemCount">0 item</span>
                     Total: <span id="bridgeTotal">Rp 0</span>
                     <button id="bridgeCheckoutBtn">Checkout</button>
@@ -812,7 +759,7 @@
             </div>
         </div>
 
-        <!-- Bar Bawah untuk Checkout -->
+        <!-- Floating Bar for Checkout -->
         <div id="floatingCartBar" style="display: none;">
             <div class="cart-info"> <!-- Wrapper for icon, count, and total -->
                 <div class="cart-button" onclick="bukaPopup('cart.html')">
@@ -826,7 +773,7 @@
     </div>
 
     <script>
-        // --- Konfigurasi Firebase ---
+        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -837,26 +784,26 @@
             measurementId: "G-7CPE2DB2BV"
         };
 
-        // Inisialisasi Firebase
+        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
         const auth = firebase.auth();
         const db = firebase.firestore();
         const menuCollection = db.collection('buah');
-        const cartsCollection = db.collection('carts'); // Referensi ke koleksi keranjang
+        const cartsCollection = db.collection('carts'); // Reference to the cart collection
 
-        // --- Elemen Utama ---
+        // --- Main Elements ---
         const menuList = document.getElementById('menuList');
-        const deliveryAddressInput = document.getElementById('deliveryAddressInput'); // ID untuk input alamat
+        const deliveryAddressInput = document.getElementById('deliveryAddressInput'); // ID for address input
 
-        // Elemen untuk tampilan keranjang
-        const cartBadge = document.getElementById('cartBadge'); // Notif di bottom nav
-        const floatingCartBar = document.getElementById('floatingCartBar'); // Bar keranjang mengambang
-        const barItemCountText = document.getElementById('barItemCountText'); // Teks jumlah item
-        const barTotalPrice = document.getElementById('barTotalPrice'); // Teks total harga
+        // Elements for cart display
+        const cartBadge = document.getElementById('cartBadge'); // Notification on bottom nav
+        const floatingCartBar = document.getElementById('floatingCartBar'); // Floating cart bar
+        const barItemCountText = document.getElementById('barItemCountText'); // Item count text
+        const barTotalPrice = document.getElementById('barTotalPrice'); // Total price text
 
-        // Elemen untuk popupCheckoutBar
+        // Elements for popupCheckoutBar
         const popupPanel = document.getElementById('popupPanel');
         const popupFrame = document.getElementById('popupFrame');
         const popupCheckoutBar = document.getElementById('popupCheckoutBar');
@@ -865,9 +812,9 @@
         const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn');
 
 
-        let currentUserId = null; // Untuk menyimpan UID pengguna yang sedang login
+        let currentUserId = null; // To store the UID of the logged-in user
 
-        // --- Fungsi Format Rupiah ---
+        // --- Rupiah Formatting Function ---
         function formatRupiah(amount) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -876,7 +823,7 @@
             }).format(amount);
         }
 
-        // --- Fungsi untuk Logout ---
+        // --- Logout Function ---
         async function logout() {
             try {
                 localStorage.setItem('isLoggingOut', 'true');
@@ -888,13 +835,65 @@
                 alert('Anda telah berhasil logout.');
                 window.location.href = 'index.html';
             } catch (error) {
-                console.error("Error saat logout:", error);
+                console.error("Error during logout:", error);
                 alert('Gagal logout. Coba lagi.');
                 localStorage.removeItem('isLoggingOut');
             }
         }
 
-        // --- Fungsi untuk Memuat dan Menampilkan Menu dari Firebase ---
+        // --- Function to Update Cart Item from Menu List ---
+        async function updateCartItemFromList(productId, change) {
+            if (!currentUserId) {
+                alert("Anda harus login untuk menambahkan item ke keranjang.");
+                return;
+            }
+
+            // Use default variants if added from the main menu list
+            const defaultBumbu = "Pedas";
+            const defaultKacang = "Dengan Kacang";
+            // Create a unique key for the cart item based on product ID and default variants
+            const customKey = `${defaultBumbu}_${defaultKacang}`;
+            const cartItemRef = cartsCollection.doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
+
+            try {
+                const doc = await cartItemRef.get();
+                let currentQuantity = 0;
+                if (doc.exists) {
+                    currentQuantity = doc.data().quantity;
+                }
+
+                let newQuantity = currentQuantity + change;
+
+                if (newQuantity > 0) {
+                    // Fetch product details from 'buah' collection to ensure price etc.
+                    const productDoc = await menuCollection.doc(productId).get();
+                    if (!productDoc.exists) {
+                        console.error("Product not found in 'buah' collection:", productId);
+                        alert("Produk tidak tersedia.");
+                        return;
+                    }
+                    const productData = productDoc.data();
+
+                    await cartItemRef.set({
+                        id: productId,
+                        name: productData.nama,
+                        image: productData.imageUrl,
+                        price: productData.harga,
+                        custom: { bumbu: defaultBumbu, kacang: defaultKacang },
+                        quantity: newQuantity
+                    }, { merge: true });
+                } else {
+                    // If newQuantity is 0 or less, delete the item from cart
+                    await cartItemRef.delete();
+                }
+                // updateCartDisplay will be called by the onSnapshot listener
+            } catch (error) {
+                console.error("Error updating cart item from list:", error);
+                alert("Gagal memperbarui keranjang. Silakan coba lagi.");
+            }
+        }
+
+        // --- Function to Load and Display Menu from Firebase ---
         async function renderMenuItems() {
             menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';    
             try {
@@ -923,6 +922,7 @@
                         
                         const card = document.createElement('div');
                         card.classList.add('restaurant-card', 'fade-in');    
+                        card.dataset.productId = productForDetail.id; // Add data-product-id
 
                         card.innerHTML = `
                             <img src="${productForDetail.image || 'https://placehold.co/120x120/cccccc/333333?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
@@ -933,17 +933,40 @@
                                     <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
                                 </div>
                             </div>
+                            <!-- NEW: Add to Cart/Quantity Control -->
+                            <div class="add-to-cart-control">
+                                <button class="add-button" data-product-id="${productForDetail.id}">+</button>
+                                <div class="quantity-control" style="display: none;">
+                                    <button class="quantity-button-card decrease-qty-card" data-product-id="${productForDetail.id}">-</button>
+                                    <input type="number" class="quantity-input-card" value="0" readonly>
+                                    <button class="quantity-button-card increase-qty-card" data-product-id="${productForDetail.id}">+</button>
+                                </div>
+                            </div>
                         `;
                         
-                        card.addEventListener('click', () => {
-                            sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                            bukaPopup('product-detail.html');
+                        // Event listener to open product detail (click anywhere on the card except control buttons)
+                        card.addEventListener('click', (event) => {
+                            // Ensure the click is not from a button inside add-to-cart-control
+                            if (!event.target.closest('.add-to-cart-control')) {
+                                sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
+                                bukaPopup('product-detail.html');
+                            }
                         });
+
                         menuList.appendChild(card);
+
+                        // Attach event listeners for the new buttons
+                        const addButton = card.querySelector('.add-button');
+                        const decreaseButton = card.querySelector('.decrease-qty-card');
+                        const increaseButton = card.querySelector('.increase-qty-card');
+
+                        addButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, 1));
+                        decreaseButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, -1));
+                        increaseButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, 1));
                     });
                 }
             } catch (error) {
-                console.error("Error memuat menu dari Firebase: ", error);
+                console.error("Error loading menu from Firebase: ", error);
                 menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
             }
         }
@@ -983,7 +1006,7 @@
                         console.error("Error getting geolocation:", error);
                         deliveryAddressInput.placeholder = "Lokasi tidak dapat diakses";
                         gpsIcon.classList.remove('loading');
-                        alert("Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin diberikan."); // Menggunakan alert() sesuai permintaan user
+                        alert("Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin diberikan.");
                     }
                 );
             } else {
@@ -1008,7 +1031,7 @@
             }, 3000);
         }
 
-        // --- Navigasi Aktif ---
+        // --- Active Navigation ---
         const navItems = document.querySelectorAll('.nav-item');
         navItems.forEach(item => {
             item.addEventListener('click', function() {
@@ -1017,78 +1040,99 @@
             });
         });
 
-        // --- Fungsi Buka/Tutup Popup ---
+        // --- Popup Open/Close Functions ---
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
-            popupCheckoutBar.style.display = 'flex'; // Pastikan popupCheckoutBar terlihat
-            floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat popup muncul
-            updateCartDisplay(); // Panggil untuk memastikan data di popupCheckoutBar terbaru
+            popupCheckoutBar.style.display = 'flex'; // Ensure popupCheckoutBar is visible
+            floatingCartBar.style.display = 'none'; // Hide floatingCartBar when popup appears
+            updateCartDisplay(); // Call to ensure data in popupCheckoutBar is up-to-date
         }
 
         function tutupPopup() {
             popupPanel.classList.remove('show');
-            popupFrame.src = ''; // Bersihkan src iframe
-            popupCheckoutBar.style.display = 'none'; // Sembunyikan popupCheckoutBar
-            updateCartDisplay(); // Panggil untuk mengevaluasi kembali tampilan floatingCartBar
+            popupFrame.src = ''; // Clear iframe src
+            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
+            updateCartDisplay(); // Call to re-evaluate floatingCartBar display
         }
 
-        // --- Listener untuk Tombol Checkout di popupCheckoutBar ---
+        // --- Listener for Checkout Button in popupCheckoutBar ---
         bridgeCheckoutBtn.addEventListener('click', () => {
             window.location.href = 'checkout.html';
         });
 
-        // --- Fungsi untuk Mengupdate Tampilan Keranjang dari Firebase ---
+        // --- Function to Update Cart Display from Firebase ---
         function updateCartDisplay() {
             if (!currentUserId) {
-                console.log("User ID tidak tersedia, tidak dapat mengupdate tampilan keranjang.");
+                console.log("User ID not available, cannot update cart display.");
                 cartBadge.style.display = 'none';
                 floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none'; // Pastikan tersembunyi
+                popupCheckoutBar.style.display = 'none'; // Ensure hidden
                 return;
             }
 
-            // Real-time listener untuk keranjang pengguna
+            // Real-time listener for user's cart
             cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
                 let totalItems = 0;
                 let totalPrice = 0;
+                const cartItemsMap = new Map(); // To store cart items by productId_customKey
 
-                if (snapshot.empty) {
-                    console.log("Keranjang kosong.");
-                    cartBadge.style.display = 'none';
-                    floatingCartBar.style.display = 'none';
-                    popupCheckoutBar.style.display = 'none'; // Pastikan tersembunyi
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    // Create a unique key for the cart item based on product ID and custom variants
+                    const customKey = `${item.custom.bumbu}_${item.custom.kacang}`;
+                    cartItemsMap.set(`${item.id}_${customKey}`, item); // Store item with unique key
+                    totalItems += item.quantity;
+                    totalPrice += item.price * item.quantity;
+                });
+
+                // Update badge in bottom navigation
+                cartBadge.textContent = totalItems;
+                cartBadge.style.display = totalItems > 0 ? 'block' : 'none';
+
+                // Update floating cart bar
+                barItemCountText.textContent = `${totalItems} item`; // Item count text
+                barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`; // Total price text
+
+                // Only show floatingCartBar if popup is not active
+                if (!popupPanel.classList.contains('show')) {
+                    floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
                 } else {
-                    snapshot.forEach(doc => {
-                        const item = doc.data();
-                        totalItems += item.quantity;
-                        totalPrice += item.price * item.quantity;
-                    });
-
-                    // Update badge di navigasi bawah
-                    cartBadge.textContent = totalItems;
-                    cartBadge.style.display = totalItems > 0 ? 'block' : 'none';
-
-                    // Update floating cart bar
-                    barItemCountText.textContent = `${totalItems} item`; // Teks jumlah item
-                    barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`; // Teks total harga
-
-                    // Hanya tampilkan floatingCartBar jika popup tidak sedang aktif
-                    if (!popupPanel.classList.contains('show')) {
-                        floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
-                    } else {
-                        floatingCartBar.style.display = 'none'; // Pastikan tersembunyi jika popup aktif
-                    }
-
-                    // Update popup checkout bar (bridge)
-                    bridgeItemCount.textContent = `${totalItems} item`;
-                    bridgeTotal.textContent = formatRupiah(totalPrice);
-                    // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
-                    // but ensure its content is updated even if it's currently hidden
-                    popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItems > 0 ? 'flex' : 'none';
-
-                    console.log(`Keranjang diperbarui: ${totalItems} item, Total: ${formatRupiah(totalPrice)}`);
+                    floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
                 }
+
+                // Update popup checkout bar (bridge)
+                bridgeItemCount.textContent = `${totalItems} item`;
+                bridgeTotal.textContent = formatRupiah(totalPrice);
+                // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
+                // but ensure its content is updated even if it's currently hidden
+                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItems > 0 ? 'flex' : 'none';
+
+                console.log(`Cart updated: ${totalItems} items, Total: ${formatRupiah(totalPrice)}`);
+
+                // Update quantity display on each menu card
+                document.querySelectorAll('.restaurant-card').forEach(card => {
+                    const productId = card.dataset.productId;
+                    const defaultBumbu = "Pedas"; // Default variant for buttons in the menu list
+                    const defaultKacang = "Dengan Kacang";
+                    const customKey = `${defaultBumbu}_${defaultKacang}`;
+                    const cartItem = cartItemsMap.get(`${productId}_${customKey}`);
+
+                    const addButton = card.querySelector('.add-button');
+                    const quantityControl = card.querySelector('.quantity-control');
+                    const quantityInput = card.querySelector('.quantity-input-card');
+
+                    if (cartItem && cartItem.quantity > 0) {
+                        addButton.style.display = 'none';
+                        quantityControl.style.display = 'flex';
+                        quantityInput.value = cartItem.quantity;
+                    } else {
+                        addButton.style.display = 'flex';
+                        quantityControl.style.display = 'none';
+                        quantityInput.value = 0;
+                    }
+                });
+
             }, error => {
                 console.error("Error fetching cart items:", error);
                 // Handle error, e.g., show a message or hide cart displays
@@ -1098,9 +1142,9 @@
             });
         }
 
-        // --- Inisialisasi Halaman ---
+        // --- Page Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Proteksi Halaman: Cek Status Login dan Peran
+            // Page Protection: Check Login Status and Role
             auth.onAuthStateChanged(user => {
                 const isLoggingOut = localStorage.getItem('isLoggingOut');
 
@@ -1114,25 +1158,15 @@
                     if (!isLoggingOut) {
                         alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
                     }
-                    window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+                    window.location.href = 'index.html'; // Redirect to login page
                 } else {
-                    currentUserId = user.uid; // Set UID pengguna yang sedang login
-                    renderMenuItems(); // Muat menu
-                    startAutoScroll(); // Mulai auto-scroll promo
-                    updateCartDisplay(); // Mulai mendengarkan dan mengupdate tampilan keranjang
+                    currentUserId = user.uid; // Set the logged-in user's UID
+                    renderMenuItems(); // Load menu
+                    startAutoScroll(); // Start promo auto-scroll
+                    updateCartDisplay(); // Start listening and updating cart display
                 }
             });
         });
-
-        // Kode JavaScript yang belum selesai dari sebelumnya (opsional, bisa dihapus jika tidak digunakan)
-        const icons = document.querySelectorAll('.category-icon i');
-        let current = 0;
-
-        // setInterval(() => {
-        //     icons.forEach((icon, index) => {
-        //         // Logika animasi ikon kategori jika ada
-        //     });
-        // }, 1000); // Contoh interval
     </script>
 </body>
 </html>
