@@ -1052,20 +1052,42 @@
             console.log("Current Summary Bar classes:", checkoutSummaryBar.classList.value);
         }
     }
+// --- Tambahkan kode ini di dalam <script> pada apl05.html ---
 
-    // --- Memuat Ulang Ringkasan Keranjang dari LocalStorage (Dipanggil saat halaman dimuat dan popup ditutup) ---
-    function updateCartSummaryFromLocalStorage() {
-        const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        let totalItem = 0;
-        let totalPrice = 0;
+// Fungsi untuk memperbarui tampilan summary bar
+function updateCartSummary(itemCount, totalPrice) {
+    const checkoutSummaryBar = document.querySelector('.checkout-summary-bar');
+    const cartItemCount = document.getElementById('cartItemCount');
+    const cartTotalPrice = document.getElementById('cartTotalPrice');
 
-        cart.forEach(item => {
-            totalItem += item.quantity || 0; 
-            totalPrice += (item.price || 0) * (item.quantity || 0); 
-        });
+    // Perbarui teks dengan data yang diterima
+    cartItemCount.textContent = itemCount;
+    cartTotalPrice.textContent = `Rp${totalPrice.toLocaleString('id-ID')}`;
 
-        updateCartSummary(totalItem, totalPrice); // Panggil fungsi utama
+    // Tampilkan/sembunyikan summary bar
+    if (itemCount > 0) {
+        checkoutSummaryBar.classList.add('show');
+        checkoutSummaryBar.classList.remove('hidden');
+    } else {
+        checkoutSummaryBar.classList.add('hidden');
+        checkoutSummaryBar.classList.remove('show');
     }
+}
+
+// Mendengarkan pesan dari iframe (popup)
+window.addEventListener('message', (event) => {
+    // Hanya proses pesan dari domain yang sama
+    if (event.origin !== window.location.origin) {
+        return;
+    }
+
+    const data = event.data;
+
+    // Periksa apakah ini pesan update keranjang
+    if (data.type === 'cartUpdate') {
+        updateCartSummary(data.itemCount, data.totalPrice);
+    }
+});
 
     // --- Navigasi ke Halaman Checkout (melalui popup) ---
     function goToCheckoutPage() {
