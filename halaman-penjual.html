@@ -441,7 +441,7 @@
             localStorage.removeItem('pesananSudahDibuka');
             // Hapus juga flag pesanan baru jika ada
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('sudahBuka_') || key.startsWith('sudahReloadUntuk_') || key.startsWith('pesananBaruPendingSound')) {
+                if (key.startsWith('sudahBuka_') || key.startsWith('sudahReloadUntuk_') || key.startsWith('pesananBaruPendingSound') || key.startsWith('acknowledgedOrder_')) { // Tambahkan acknowledgedOrder_
                     localStorage.removeItem(key);
                 }
             });
@@ -485,7 +485,8 @@
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.totalAmount) {
+                // Pastikan status pesanan adalah 'Completed' atau 'Delivered' untuk dihitung sebagai penjualan
+                if (data.totalAmount && (data.status === 'Completed' || data.status === 'Delivered')) {
                     totalTransaksi++;
                     totalPendapatan += parseFloat(data.totalAmount);
                 }
@@ -503,43 +504,43 @@
 
     // --- Fungsi untuk Mendengarkan Pesanan Baru (Real-time) ---
     function listenForNewOrders() {
-        // Hanya dengarkan pesanan dengan status 'Pending' yang belum dibuka
         ordersCollection
-            .where('status', '==', 'Pending')
-            .orderBy("orderDate", "desc") // Urutkan berdasarkan tanggal pesanan terbaru
-            .limit(1) // Ambil hanya satu pesanan terbaru
-            .onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    const latestOrderDoc = snapshot.docs[0];
-                    const latestOrderData = latestOrderDoc.data();
-                    const latestOrderId = latestOrderDoc.id;
+            .where('status', '==', 'Pending') // Hanya dengarkan pesanan dengan status 'Pending'
+            .orderBy("orderDate", "desc")
+            .onSnapshot(snapshot => { // Gunakan onSnapshot tanpa limit untuk melihat semua pending orders
+                let newOrdersDetected = false;
+                snapshot.forEach(doc => {
+                    const latestOrderData = doc.data();
+                    const latestOrderId = doc.id;
 
-                    // Cek apakah pesanan ini sudah dibuka atau sudah ada notifikasi
+                    // Cek apakah pesanan ini sudah dibuka atau sudah ada notifikasi di sesi ini
                     const isOrderAcknowledged = localStorage.getItem("acknowledgedOrder_" + latestOrderId);
 
-                    // Jika ada pesanan pending terbaru dan belum diakui
                     if (!isOrderAcknowledged) {
-                        notifLonceng.style.display = "inline";
-                        btnCekPesanan.classList.add("berkedip-kuat");
-
-                        // Putar suara notifikasi
-                        if (notifSound) {
-                            try {
-                                notifSound.currentTime = 0;
-                                notifSound.play();
-                                // Vibrate jika didukung
-                                if (navigator.vibrate) {
-                                    navigator.vibrate([500, 200, 500, 200, 500]);
-                                }
-                            } catch (e) {
-                                console.error("Gagal memainkan suara notifikasi:", e);
-                            }
-                        }
-                        // Tandai pesanan ini sebagai sudah diakui di localStorage
+                        newOrdersDetected = true;
+                        // Tandai pesanan ini sebagai sudah dinotifikasi di localStorage
                         localStorage.setItem("acknowledgedOrder_" + latestOrderId, "true");
                     }
+                });
+
+                if (newOrdersDetected) {
+                    notifLonceng.style.display = "inline";
+                    btnCekPesanan.classList.add("berkedip-kuat");
+
+                    if (notifSound) {
+                        try {
+                            // Coba putar suara. Jika gagal (misal belum ada interaksi pengguna), akan ditangkap di catch.
+                            notifSound.play();
+                            if (navigator.vibrate) {
+                                navigator.vibrate([500, 200, 500, 200, 500]);
+                            }
+                        } catch (e) {
+                            console.warn("Gagal memainkan suara notifikasi otomatis, mungkin perlu interaksi pengguna pertama.");
+                            // Tidak perlu alert, cukup warning di console
+                        }
+                    }
                 } else {
-                    // Tidak ada pesanan pending, sembunyikan notifikasi
+                    // Tidak ada pesanan pending yang belum diakui
                     notifLonceng.style.display = "none";
                     btnCekPesanan.classList.remove("berkedip-kuat");
                     if (notifSound) {
@@ -562,7 +563,7 @@
         notifLonceng.style.display = "none";
         btnCekPesanan.classList.remove("berkedip-kuat");
 
-        // Tandai semua pesanan 'Pending' yang ada saat ini sebagai 'acknowledged' di localStorage
+        // Tandai SEMUA pesanan 'Pending' yang ada saat ini sebagai 'acknowledged' di localStorage
         // Ini mencegah notifikasi berulang untuk pesanan yang sama setelah penjual melihatnya
         try {
             const snapshot = await ordersCollection.where('status', '==', 'Pending').get();
@@ -609,6 +610,7 @@
     });
 
     // Ini untuk memastikan suara bisa diputar setelah interaksi pengguna pertama
+    // Ini adalah workaround untuk kebijakan autoplay browser
     document.addEventListener("click", () => {
         if (notifSound) {
             notifSound.play().then(() => {
