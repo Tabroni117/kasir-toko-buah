@@ -533,6 +533,12 @@
             border-top-right-radius: 10px; /* Tambah border radius */
         }
 
+        #floatingCartBar .cart-info { /* NEW: Style for the wrapper of cart details */
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between elements */
+        }
+
         #floatingCartBar .cart-button {
             color: white; /* Icon keranjang putih */
         }
@@ -540,6 +546,12 @@
         #floatingCartBar .cart-count {
             background-color: #fde047; /* Badge kuning */
             color: black; /* Teks badge hitam */
+            font-weight: bold;
+        }
+
+        #floatingCartBar .cart-text { /* NEW: Style for the text elements */
+            color: white; /* Text color white for visibility */
+            font-size: 14px; /* Adjust font size as needed */
             font-weight: bold;
         }
 
@@ -816,9 +828,13 @@
 
         <!-- Bar Bawah untuk Checkout -->
         <div id="floatingCartBar" style="display: none;">
-            <div class="cart-button" onclick="bukaPopup('cart.html')">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count" id="barCartCount">0</span>
+            <div class="cart-info"> <!-- NEW: Wrapper for icon, count, and total -->
+                <div class="cart-button" onclick="bukaPopup('cart.html')">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="barCartCount">0</span>
+                </div>
+                <span id="barItemCountText" class="cart-text">0 item</span> <!-- NEW: Element for item count text -->
+                <span id="barTotalPrice" class="cart-text">Total: Rp 0</span> <!-- NEW: Element for total price text -->
             </div>
             <button class="checkout-button" onclick="window.location.href='checkout.html'">Checkout</button>
         </div>
@@ -851,8 +867,10 @@
 
         // Elemen untuk tampilan keranjang
         const cartBadge = document.getElementById('cartBadge'); // Notif di bottom nav
-        const barCartCount = document.getElementById('barCartCount'); // Notif di floatingCartBar
+        const barCartCount = document.getElementById('barCartCount'); // Notif di floatingCartBar (badge angka)
         const floatingCartBar = document.getElementById('floatingCartBar'); // Bar keranjang mengambang
+        const barItemCountText = document.getElementById('barItemCountText'); // NEW: Teks jumlah item
+        const barTotalPrice = document.getElementById('barTotalPrice'); // NEW: Teks total harga
 
         // Elemen untuk popupCheckoutBar
         const popupPanel = document.getElementById('popupPanel');
@@ -1068,7 +1086,10 @@
                     cartBadge.style.display = totalItems > 0 ? 'block' : 'none';
 
                     // Update floating cart bar
-                    barCartCount.textContent = totalItems;
+                    barCartCount.textContent = totalItems; // Badge angka di ikon keranjang
+                    barItemCountText.textContent = `${totalItems} item`; // Teks jumlah item
+                    barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`; // Teks total harga
+
                     // Hanya tampilkan floatingCartBar jika popup tidak sedang aktif
                     if (!popupPanel.classList.contains('show')) {
                         floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
