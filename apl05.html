@@ -889,37 +889,44 @@
             bukaPopup('cart.html'); 
         }
 
-        // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR (PENTING) ---
-        function updateCartSummary(itemCount, totalPrice) {
-            const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID');
-            
-            // Update badge keranjang di bottom nav
-            if (cartBadge) {
-                if (itemCount > 0) {
-                    cartBadge.textContent = itemCount;
-                    cartBadge.style.display = "inline-block";
-                } else {
-                    cartBadge.style.display = "none";
-                }
-            }
-
-            // Atur visibilitas summary bar utama
-            const cartItemCountSpan = document.getElementById('cartItemCount');
-            const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
-
-            if (cartItemCountSpan) cartItemCountSpan.textContent = `${itemCount}`;
-            if (cartTotalPriceSpan) cartTotalPriceSpan.textContent = `${formattedPrice}`;
-
-            if (mainCheckoutBar) {
-                if (itemCount > 0 && !popupPanel.classList.contains('show')) {
-                    mainCheckoutBar.classList.remove('hidden');
-                    mainCheckoutBar.classList.add('show');
-                } else {
-                    mainCheckoutBar.classList.remove('show');
-                    mainCheckoutBar.classList.add('hidden');
-                }
-            }
+      // --- FUNGSI UNTUK CHECKOUT SUMMARY BAR (PENTING) ---
+function updateCartSummary(itemCount, totalPrice) {
+    const formattedPrice = 'Rp' + totalPrice.toLocaleString('id-ID');
+    
+    // Update badge keranjang di bottom nav
+    if (cartBadge) {
+        if (itemCount > 0) {
+            cartBadge.textContent = itemCount;
+            cartBadge.style.display = "inline-block";
+        } else {
+            cartBadge.style.display = "none";
         }
+    }
+
+    // Atur visibilitas summary bar utama
+    const cartItemCountSpan = document.getElementById('cartItemCount');
+    const cartTotalPriceSpan = document.getElementById('cartTotalPrice');
+
+    if (cartItemCountSpan) cartItemCountSpan.textContent = `${itemCount}`;
+    if (cartTotalPriceSpan) cartTotalPriceSpan.textContent = `${formattedPrice}`;
+
+    if (mainCheckoutBar) {
+        if (itemCount > 0 && !popupPanel.classList.contains('show')) {
+            mainCheckoutBar.classList.remove('hidden');
+            mainCheckoutBar.classList.add('show');
+        } else {
+            mainCheckoutBar.classList.remove('show');
+            mainCheckoutBar.classList.add('hidden');
+        }
+    }
+}
+
+function updateCartSummaryFromLocalStorage() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    updateCartSummary(totalItem, totalPrice);
+}
 
         // --- Panggil ini untuk update dari localStorage saat halaman dimuat ---
         function updateCartSummaryFromLocalStorage() {
