@@ -1094,15 +1094,41 @@ window.addEventListener('message', (event) => {
         bukaPopup('cart.html'); 
     }
 
-    // --- Event Listener: Saat DOM Selesai Dimuat ---
-    document.addEventListener('DOMContentLoaded', function () {
-        const checkoutBtn = document.getElementById('bridgeCheckoutBtn');
-        if (checkoutBtn) {
-            checkoutBtn.addEventListener('click', goToCheckoutPage); 
-        }
-        // Pastikan listener pesan ada saat DOM siap
-        window.addEventListener('message', handleIframeMessage);
-    });
+
+
+
+// --- Event Listener: Saat DOM Selesai Dimuat ---
+document.addEventListener('DOMContentLoaded', function () {
+    const checkoutBtn = document.getElementById('bridgeCheckoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', goToCheckoutPage);
+    }
+    // Pastikan listener pesan ada saat DOM siap
+    window.addEventListener('message', handleIframeMessage);
+
+    // ✅ KODE TAMBAHAN UNTUK MEMASTIKAN SUMMARY BAR TETAP ADA SAAT DI-RELOAD
+    // 1. Ambil data keranjang dari localStorage
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // 2. Hitung ulang total item dan total harga
+    const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+    // 3. Panggil fungsi updateCartSummary dengan data yang sudah dihitung
+    updateCartSummary(totalItem, totalPrice);
+});
+
+
+
+
+
+
+
+
+
+
+
+     
 
 </script>
 </body>
