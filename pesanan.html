@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -10,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Firebase SDKs (Versi 9.6.1 yang konsisten) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
 
     <style>
         :root {
@@ -55,15 +54,14 @@
             align-items: center;
             margin-bottom: 15px;
         }
-        /* Penyesuaian untuk header-top agar elemennya berada di ujung */
         .header-top .left-controls {
             display: flex;
-            gap: 10px; /* Jarak antara tombol */
+            gap: 10px;
             align-items: center;
         }
         .header-top .right-controls {
             display: flex;
-            gap: 10px; /* Jarak antara lonceng dan tombol kembali dashboard */
+            gap: 10px;
             align-items: center;
         }
 
@@ -115,6 +113,7 @@
             margin-bottom: 12px;
             background: #ffffff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            cursor: pointer; /* Agar bisa diklik untuk detail */
         }
         .order-row-top, .order-row-bottom {
             display: flex;
@@ -227,36 +226,20 @@
             animation: spin 1s linear infinite;
         }
         
-        /* Fixed Header utama aplikasi - Dihapus karena akan digabung ke sticky-header */
-        /* .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background: white;
-            padding: 15px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e2e8f0;
-        } */
-
         .content-wrapper {
-            /* padding-top akan disesuaikan dengan tinggi sticky-header */
-            padding-top: 0; /* Akan diatur dinamis oleh JS atau biarkan elemen mengikuti aliran normal */
+            padding-top: 0;
         }
-        /* Sticky header yang sudah ada, akan ditingkatkan */
         .sticky-header {
             position: sticky;
             top: 0;
-            z-index: 20; /* Lebih rendah dari modal notifikasi */
+            z-index: 20;
             background: white;
-            padding: 15px; /* Tambahkan padding ke sticky-header */
+            padding: 15px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.06);
             border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Padding pada body agar konten tidak tertutup fixed header di halaman lain */
-        body { padding-top: 0; } /* Reset padding-top body jika sebelumnya diatur untuk fixed-header */
+        body { padding-top: 0; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -328,22 +311,21 @@
             margin-left: 10px;
         }
 
-        /* Perbaikan untuk popupDetail: HANYA SATU DISPLAY NONE */
         #popupDetail {
-            display: none; /* Default hidden, JS will set to flex */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.6); /* Lebih gelap */
+            background: rgba(0,0,0,0.6);
             z-index: 9999;
             padding: 20px;
             align-items: center;
             justify-content: center;
         }
 
-        #popupDetail > div { /* Konten popup */
+        #popupDetail > div {
             background: white;
             padding: 20px;
             border-radius: 12px;
@@ -399,14 +381,14 @@
         }
 
         #popupDetail button.close-button {
-            position: absolute; /* Pastikan posisi absolut */
+            position: absolute;
             top: 12px;
             right: 18px;
             font-size: 28px;
             color: #666;
             transition: color 0.2s;
-            background: none; /* Tambahkan ini agar tidak ada background default button */
-            border: none; /* Hapus border default button */
+            background: none;
+            border: none;
             cursor: pointer;
         }
         #popupDetail button.close-button:hover {
@@ -471,17 +453,17 @@
 
         /* Styling untuk NOTIFIKASI POPUP BARU */
         #notificationModal {
-            display: none; /* Sembunyikan default */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7); /* Overlay gelap */
-            z-index: 10000; /* Lebih tinggi dari popupDetail */
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
             justify-content: center;
             align-items: center;
-            opacity: 0; /* Awalnya transparan untuk animasi */
+            opacity: 0;
             transition: opacity 0.3s ease-out;
         }
 
@@ -491,7 +473,7 @@
         }
 
         #notificationModalContent {
-            background: linear-gradient(135deg, #16a34a, #22c55e); /* Background gradien hijau */
+            background: linear-gradient(135deg, #16a34a, #22c55e);
             color: white;
             padding: 30px;
             border-radius: 15px;
@@ -500,12 +482,12 @@
             text-align: center;
             position: relative;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transform: scale(0.9); /* Mulai dari skala kecil */
+            transform: scale(0.9);
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
         }
 
         #notificationModal.show-notification #notificationModalContent {
-            transform: scale(1); /* Membesar ke skala normal */
+            transform: scale(1);
         }
 
         #notificationModalContent .close-btn-notif {
@@ -537,8 +519,8 @@
 
         #notificationModalContent h3 i {
             font-size: 30px;
-            color: #ffeb3b; /* Kuning untuk icon bell */
-            animation: bellShake 0.5s infinite alternate; /* Animasi goyang lonceng */
+            color: #ffeb3b;
+            animation: bellShake 0.5s infinite alternate;
         }
 
         @keyframes bellShake {
@@ -572,16 +554,11 @@
             transform: translateY(-2px);
         }
 
-.tombol-hapus {
-  margin-left: 20px;
-  background-color: crimson;
-  color: white;
-}
-
-
-
-
-        
+        .tombol-hapus {
+            margin-left: 20px;
+            background-color: crimson;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-green-50 min-h-screen flex flex-col" style="padding-bottom: 60px;">
@@ -593,7 +570,6 @@
     <button onclick="window.location.href='apl04.html'" class="laporan-fixed-btn">
         <i class="fas fa-file-alt"></i> Laporan Harian
     </button>
-   
     
     <div class="container">
         <div class="sticky-header">
@@ -608,7 +584,9 @@
 
                 <div class="right-controls flex items-center gap-3">
                     <i id="notifLonceng" class="fa-solid fa-bell" style="font-size: 22px; color: var(--primary); cursor: pointer;"></i>
-      
+                    <!-- Tombol kembali ke dashboard utama penjual -->
+                    <button onclick="window.location.href='halaman-penjual.html'" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> Kembali
                     </button>
                 </div>
             </div>
@@ -617,36 +595,26 @@
                 <div class="stat-box"><h3 id="totalOrders">0</h3><p>Total Pesanan</p></div>
                 <div class="stat-box"><h3 id="todayIncome">Rp0</h3><p>Pendapatan Hari Ini</p></div>
                 <div class="stat-box"><h3 id="avgOrder">Rp0</h3><p>Rata-rata Pesanan</p></div>
-                <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div> </div>
-
-
+                <div class="stat-box"><h3 id="lastOrder">-</h3><p>Pesanan Terakhir</p></div>
+            </div>
             
-<div class="filter-buttons">
-  <button class="filter-btn active" data-status="All">Semua</button>
-  <button class="filter-btn" data-status="Pending">Pending</button>
-  <button class="filter-btn" data-status="Diproses">Diproses</button>
-  <button class="filter-btn" data-status="Selesai">Selesai</button>
-  <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="All">Semua</button>
+                <button class="filter-btn" data-status="Pending">Pending</button>
+                <button class="filter-btn" data-status="Diproses">Diproses</button>
+                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
 
-  <!-- 🧼 Tambahkan margin kiri sebagai jarak pembeda -->
-  <button class="filter-btn" 
-          style="background-color: crimson; color: white; margin-left: 20px;" 
-          onclick="hapusSemuaPesananPenjual()">
-    🗑️ Hapus Semua
-  </button>
-</div>
+                <button class="filter-btn tombol-hapus" onclick="konfirmasiHapusSemuaPesanan()">
+                    🗑️ Hapus Semua
+                </button>
+            </div>
         </div>
-
-
-
-
-
-
         
         <div class="content-wrapper">
             <div class="order-list" id="daftarPesanan"><p style="text-align:center;">Memuat data pesanan...</p></div>
         </div>
-    </div> 
+    </div>
 
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
@@ -733,15 +701,15 @@
 
 <!-- 🔐 Modal Verifikasi Password -->
 <div id="modalVerifikasi" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background-color:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0,0,0,0.3);">
-    <h3>🔐 Verifikasi Hapus</h3>
-    <p>Masukkan email & password untuk melanjutkan.</p>
-    <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
-    <div style="margin-top:15px; text-align:right;">
-      <button onclick="tutupModalVerifikasi()" style="margin-right:10px;">Batal</button>
-      <button onclick="verifikasiPasswordDanHapus()">Hapus</button>
+    <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0,0,0,0.3);">
+        <h3>🔐 Verifikasi Hapus</h3>
+        <p>Masukkan email & password untuk melanjutkan.</p>
+        <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
+        <div style="margin-top:15px; text-align:right;">
+            <button onclick="tutupModalVerifikasi()" style="margin-right:10px;">Batal</button>
+            <button onclick="verifikasiPasswordDanHapus()">Hapus</button>
+        </div>
     </div>
-  </div>
 </div>
 
     <script>
@@ -757,6 +725,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth(); // Inisialisasi Firebase Auth
 
         // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
         const daftar = document.getElementById("daftarPesanan");
@@ -766,6 +735,24 @@
         const lastOrderEl = document.getElementById("lastOrder");
         const loadingSpinner = document.getElementById("loadingSpinner");
         const filterButtons = document.querySelectorAll('.filter-btn');
+
+        // Elemen untuk popup detail
+        const popupDetail = document.getElementById('popupDetail');
+        const popupNama = document.getElementById('popupNama');
+        const popupOrderId = document.getElementById('popupOrderId');
+        const popupNomor = document.getElementById('popupNomor');
+        const popupAlamat = document.getElementById('popupAlamat');
+        const popupTotal = document.getElementById('popupTotal');
+        const popupMetodeBayar = document.getElementById('popupMetodeBayar');
+        const popupCatatan = document.getElementById('popupCatatan');
+        const popupStatus = document.getElementById('popupStatus');
+        const statusUpdater = document.getElementById('statusUpdater');
+        const popupWaktu = document.getElementById('popupWaktu');
+        const popupDibukaOleh = document.getElementById('popupDibukaOleh');
+        const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
+        const popupDiubahOleh = document.getElementById('popupDiubahOleh');
+        const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
+        const popupItems = document.getElementById('popupItems');
 
         let currentOrderIdForDetail = null; // Digunakan untuk popup detail
         let activeFilterStatus = 'All'; // Default filter
@@ -811,7 +798,7 @@
             });
             activeFilterStatus = statusFilter;
 
-            let query = db.collection("pesanan").orderBy("waktu", "desc");
+            let query = db.collection("orders").orderBy("orderDate", "desc"); // Ganti "pesanan" ke "orders" dan "waktu" ke "orderDate"
 
             if (statusFilter !== 'All') {
                 query = query.where('status', '==', statusFilter);
@@ -824,45 +811,53 @@
                     let totalIncomeAllTime = 0;
                     let totalOrderCount = 0;
                     let todayIncome = 0;
-                    const now = new Date(); 
-                    now.setHours(0, 0, 0, 0); 
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
 
-                    daftar.innerHTML = ""; 
+                    daftar.innerHTML = "";
 
-                    let firstOrderTime = null; 
+                    let firstOrderTime = null;
 
                     if (snapshot.empty) {
                         daftar.innerHTML = "<p style='text-align:center;'>Belum ada pesanan masuk dengan status ini.</p>";
+                        totalOrdersEl.innerText = "0";
+                        todayIncomeEl.innerText = formatCurrency(0);
+                        avgOrderEl.innerText = formatCurrency(0);
+                        lastOrderEl.innerText = "-";
                     } else {
                         snapshot.forEach(doc => {
                             const data = doc.data();
-                            const orderId = doc.id; 
+                            const orderId = doc.id;
                             
-                            const waktu = data.waktu && data.waktu.toDate ? data.waktu.toDate() : new Date(0);
+                            const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : new Date(0); // Gunakan orderDate
                             
-                            if (isNaN(waktu.getTime())) {
-                                console.warn("Invalid timestamp found for order:", orderId, data.waktu);
-                                return; 
+                            if (isNaN(orderDate.getTime())) {
+                                console.warn("Invalid timestamp found for order:", orderId, data.orderDate);
+                                return;
                             }
 
-                            if (!firstOrderTime) firstOrderTime = waktu; 
+                            if (!firstOrderTime) firstOrderTime = orderDate;
 
-                            const isToday = waktu.toDateString() === now.toDateString();
-                            const totalHarga = data.totalAmount || 0; 
+                            const isToday = orderDate.toDateString() === now.toDateString();
+                            const totalHarga = data.totalAmount || 0;
 
-                            if (isToday) todayIncome += totalHarga;
-                            totalIncomeAllTime += totalHarga;
-                            totalOrderCount++;
+                            if (data.status === 'Selesai' || data.status === 'Completed') { // Hanya hitung jika status selesai/completed
+                                if (isToday) todayIncome += totalHarga;
+                                totalIncomeAllTime += totalHarga;
+                                totalOrderCount++;
+                            }
 
                             const customerName = data.customer?.fullName || "Pelanggan";
                             const customerPhone = data.customer?.phoneNumber || "-";
                             const currentStatus = data.status || "Pending";
+                            const displayOrderId = data.displayOrderId || ('#' + orderId.substring(0, 6).toUpperCase()); // Gunakan displayOrderId
 
                             const itemsHtml = (data.items || []).map(item => {
                                 const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
                                 return `
-                                    <div style="margin-bottom: 5px;">
-                                        🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)})</span>
+                                        <span>${formatCurrency(itemTotalPrice)}</span>
                                     </div>
                                 `;
                             }).join("");
@@ -877,432 +872,248 @@
                                                 <div class='phone'>${customerPhone}</div>
                                             </div>
                                         </div>
-                                        <div class='meta'>
-                                            <div class='total'>${formatCurrency(totalHarga)}</div>
-                                            <div class='status ${getStatusClass(currentStatus)}'>${currentStatus}</div>
-                                        </div>
+                                        <div class='total'>${formatCurrency(totalHarga)}</div>
                                     </div>
                                     <div class='order-row-bottom'>
-                                        <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
-                                        <div class='items'>${itemsHtml}</div>
+                                        <span class='status ${getStatusClass(currentStatus)}'>${currentStatus}</span>
+                                        <span class='time'><i class='fas fa-clock'></i> ${formatDate(orderDate)}</span>
+                                    </div>
+                                    <div class='items mt-3'>
+                                        ${itemsHtml}
                                     </div>
                                 </div>
                             `;
                         });
+
+                        totalOrdersEl.innerText = totalOrderCount.toLocaleString('id-ID');
+                        todayIncomeEl.innerText = formatCurrency(todayIncome);
+                        avgOrderEl.innerText = totalOrderCount > 0 ? formatCurrency(totalIncomeAllTime / totalOrderCount) : formatCurrency(0);
+                        lastOrderEl.innerText = firstOrderTime ? formatDate(firstOrderTime) : "-";
                     }
-
-                    totalOrdersEl.textContent = totalOrderCount;
-                    todayIncomeEl.textContent = formatCurrency(todayIncome);
-                    // Hindari pembagian dengan nol
-                    avgOrderEl.textContent = formatCurrency(totalOrderCount > 0 ? totalIncomeAllTime / totalOrderCount : 0); 
-                    lastOrderEl.textContent = firstOrderTime ? formatDate(firstOrderTime) : "-";
-
                 })
-                .catch(err => {
+                .catch(error => {
                     hideLoading();
-                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: ${err.message}. Pastikan Firebase Rules dan Indeks Firestore Anda sudah benar.</p>`;
-                    console.error("Error loading orders from Firestore:", err); 
+                    console.error("Error memuat data pesanan:", error);
+                    daftar.innerHTML = `<p style='text-align:center; color:red;'>Gagal memuat data: Missing or insufficient permissions. Pastikan Firebase Rules dan indeks Firestore Anda sudah benar.</p>`;
+                    totalOrdersEl.innerText = "Error";
+                    todayIncomeEl.innerText = "Rp Error";
+                    avgOrderEl.innerText = "Rp Error";
+                    lastOrderEl.innerText = "Error";
                 });
         }
 
+        // --- Fungsi Detail Popup ---
+        async function tampilkanDetail(orderId) {
+            showLoading();
+            try {
+                const doc = await db.collection('orders').doc(orderId).get();
+                if (!doc.exists) {
+                    alert("Pesanan tidak ditemukan.");
+                    return;
+                }
+                const data = doc.data();
+                currentOrderIdForDetail = orderId; // Simpan ID pesanan yang sedang dibuka
 
+                popupNama.innerText = data.customer?.fullName || "N/A";
+                popupOrderId.innerText = data.displayOrderId || ('#' + orderId.substring(0, 6).toUpperCase());
+                popupNomor.innerText = data.customer?.phoneNumber || "N/A";
+                popupAlamat.innerText = data.customer?.address || "N/A";
+                popupTotal.innerText = formatCurrency(data.totalAmount);
+                popupMetodeBayar.innerText = data.paymentMethod || "N/A";
+                popupCatatan.innerText = data.customer?.notes || "Tidak ada catatan.";
 
+                popupStatus.innerText = data.status || "Pending";
+                popupStatus.className = `status ${getStatusClass(data.status)}`; // Update class
+                statusUpdater.value = data.status || "Pending"; // Set dropdown value
 
+                popupWaktu.innerText = formatDate(data.orderDate);
+                popupDibukaOleh.innerText = data.dibukaOlehNama || "Belum dibuka";
+                popupWaktuDibuka.innerText = formatDate(data.dibukaAt);
+                popupDiubahOleh.innerText = data.diubahOlehNama || "Belum diubah";
+                popupWaktuDiubah.innerText = formatDate(data.diubahAt);
 
-        
-      
-function tampilkanDetail(orderId) {
-  currentOrderIdForDetail = orderId;
-  const docRef = db.collection("pesanan").doc(orderId);
-  const uid = localStorage.getItem("userUid") || "Unknown";
-  const nama = localStorage.getItem("userEmail") || "Tanpa Nama";
+                popupItems.innerHTML = (data.items || []).map(item => {
+                    const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                    return `
+                        <div>${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency(itemTotalPrice)}</div>
+                        <div style="font-size: 0.9em; color: #666;">Bumbu: ${item.custom?.bumbu || 'N/A'}, Kacang: ${item.custom?.kacang || 'N/A'}</div>
+                    `;
+                }).join("");
 
-  db.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(docRef);
-    if (!snapshot.exists) throw "Pesanan tidak ditemukan.";
-    const d = snapshot.data();
-    if (!d.dibukaOlehUid) {
-      transaction.update(docRef, {
-        dibukaOlehUid: uid,
-        dibukaOlehNama: nama,
-        waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-  })
-  .catch(err => {
-    console.warn("Gagal update data pembuka:", err);
-  })
-  .finally(() => {
-    // Ambil ulang data terbaru setelah transaksi
-    docRef.get().then(doc => {
-      if (!doc.exists) {
-        alert("Pesanan tidak ditemukan.");
-        return;
-      }
+                popupDetail.style.display = 'flex';
+            } catch (error) {
+                console.error("Error menampilkan detail pesanan:", error);
+                alert("Gagal menampilkan detail pesanan. Silakan coba lagi.");
+            } finally {
+                hideLoading();
+            }
+        }
 
-      const data = doc.data();
-      const customer = data.customer || {};
-      const waktu = data.waktu?.toDate?.() || new Date(0);
-      const items = data.items || [];
-
-      document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-      const displayId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-      document.getElementById("popupOrderId").textContent = displayId;
-      document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-      document.getElementById("popupAlamat").textContent = customer.address || "-";
-      document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-      document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-      document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-
-      const popupStatusEl = document.getElementById("popupStatus");
-      const currentStatus = data.status || "Pending";
-      popupStatusEl.textContent = currentStatus;
-      popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-
-      const statusUpdater = document.getElementById("statusUpdater");
-      statusUpdater.value = currentStatus;
-
-      document.getElementById("popupWaktu").textContent = formatDate(waktu);
-
-      // ⬇️ Daftar Item
-      const popupItemsHtml = items.map(item => {
-        const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-        return `
-          <div style="margin-bottom:5px;">
-            - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x Rp${(item.price || 0).toLocaleString("id-ID")}) = Rp ${itemTotalPrice.toLocaleString("id-ID")}
-          </div>
-        `;
-      }).join("");
-      document.getElementById("popupItems").innerHTML = popupItemsHtml;
-
-      // ✅ Tampilkan info siapa yang membuka
-      const dibukaOleh = data.dibukaOlehNama || "-";
-      const waktuDibuka = data.waktuDibuka?.toDate?.();
-      document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
-      document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
-
-      // ✅ Info pengubah status
-      const diubahOleh = data.diubahOlehNama || "-";
-      const waktuDiubah = data.waktuDiubah?.toDate?.();
-      document.getElementById("popupDiubahOleh").textContent = diubahOleh;
-      document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
-
-      // ✅ Tampilkan Popup
-      document.getElementById("popupDetail").style.display = "flex";
-
-    }).catch(error => {
-      console.error("Gagal ambil ulang detail:", error);
-      alert("Gagal menampilkan detail pesanan.");
-    });
-  });
-}
-
-
-
-
-
-
-
-
-
-        
         function tutupDetail() {
-            document.getElementById("popupDetail").style.display = "none";
-            currentOrderIdForDetail = null; 
-            loadData(activeFilterStatus); // Refresh data setelah menutup detail, untuk melihat status terbaru
+            popupDetail.style.display = 'none';
+            currentOrderIdForDetail = null; // Reset ID pesanan
         }
 
-       document.getElementById("statusUpdater").addEventListener("change", async function () {
-    const newStatus = this.value;
-    if (currentOrderIdForDetail && confirm(`Ubah status pesanan ini menjadi "${newStatus}"?`)) {
-        try {
-            // 1️⃣ Update status di pesanan (untuk penjual)
-            await db.collection("pesanan").doc(currentOrderIdForDetail).update({
-                status: newStatus
-            });
+        // --- Update Status Pesanan ---
+        statusUpdater.addEventListener('change', async (e) => {
+            if (!currentOrderIdForDetail) return;
 
-            // 2️⃣ Ambil userId dari dokumen pesanan
-            const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
-            const data = docSnap.data();
-            const userId = data.userId;
+            const newStatus = e.target.value;
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Anda harus login untuk mengubah status pesanan.");
+                return;
+            }
 
-            // 3️⃣ Update status di riwayat customer (agar tampilan customer ikut berubah)
-            await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
-                status: newStatus
-            }, { merge: true });
+            // Konfirmasi perubahan status
+            if (!confirm(`Apakah Anda yakin ingin mengubah status pesanan ${popupOrderId.innerText} menjadi "${newStatus}"?`)) {
+                statusUpdater.value = popupStatus.innerText; // Kembalikan ke status sebelumnya
+                return;
+            }
 
-            alert("Status pesanan berhasil diperbarui!");
-            tutupDetail(); // Menutup popup dan refresh daftar
-        } catch (error) {
-            console.error("Error updating order status:", error);
-            alert("Gagal memperbarui status pesanan.");
-        }
-    }
-});
-        // --- Event Listeners untuk Tombol Filter ---
+            showLoading();
+            try {
+                const orderRef = db.collection('orders').doc(currentOrderIdForDetail);
+                await orderRef.update({
+                    status: newStatus,
+                    diubahOleh: user.uid,
+                    diubahOlehNama: user.email,
+                    diubahAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Update juga di riwayat_customer
+                const customerOrderRef = db.collection('riwayat_customer').doc(popupDetail.querySelector('#popupOrderId').innerText.substring(1)).collection('pesanan').doc(currentOrderIdForDetail);
+                await customerOrderRef.update({
+                    status: newStatus,
+                    diubahOleh: user.uid,
+                    diubahOlehNama: user.email,
+                    diubahAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Status pesanan berhasil diupdate!");
+                tutupDetail();
+                loadData(); // Muat ulang data untuk merefleksikan perubahan
+            } catch (error) {
+                console.error("Error mengubah status pesanan:", error);
+                alert("Gagal mengubah status pesanan. Pastikan Anda memiliki izin.");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- Filter Pesanan ---
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
-                const status = button.dataset.status;
-                loadData(status);
+                loadData(button.dataset.status);
             });
         });
 
-        // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Implementasi Terbaru) ---
-        const sound = document.getElementById("notifSound");
-        const notificationModal = document.getElementById('notificationModal');
-        const notificationModalContent = document.getElementById('notificationModalContent');
-        const closeBtnNotif = document.querySelector('.close-btn-notif');
-        const btnActionNotif = document.querySelector('.btn-action-notif');
-        const notificationMessage = document.getElementById('notificationMessage');
-        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
-        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah
+        // --- Hapus Semua Pesanan (dengan Verifikasi) ---
+        let orderIdsToDelete = []; // Untuk menyimpan ID pesanan yang akan dihapus
+        async function konfirmasiHapusSemuaPesanan() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Anda harus login untuk melakukan operasi ini.");
+                return;
+            }
 
-        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
-        let sedangBerbunyi = false; 
-        let audioSudahDiizinkan = false;
-        let currentNewOrderId = null; // ID pesanan terbaru yang sedang ditampilkan notifikasinya
+            const snapshot = await db.collection('orders').get();
+            if (snapshot.empty) {
+                alert("Tidak ada pesanan untuk dihapus.");
+                return;
+            }
 
-        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+            orderIdsToDelete = [];
+            snapshot.forEach(doc => {
+                orderIdsToDelete.push(doc.id);
+            });
+
+            document.getElementById('modalVerifikasi').style.display = 'flex';
+        }
+
+        function tutupModalVerifikasi() {
+            document.getElementById('modalVerifikasi').style.display = 'none';
+            document.getElementById('inputPassword').value = '';
+            orderIdsToDelete = [];
+        }
+
+        async function verifikasiPasswordDanHapus() {
+            const password = document.getElementById('inputPassword').value;
+            const user = auth.currentUser;
+
+            if (!user || !user.email) {
+                alert("Tidak dapat memverifikasi. Pastikan Anda login dengan email.");
+                tutupModalVerifikasi();
+                return;
+            }
+
+            showLoading();
+            try {
+                // Re-autentikasi pengguna
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                await user.reauthenticateWithCredential(credential);
+
+                // Jika re-autentikasi berhasil, lanjutkan penghapusan
+                const batch = db.batch();
+                for (const orderId of orderIdsToDelete) {
+                    const orderRef = db.collection('orders').doc(orderId);
+                    batch.delete(orderRef);
+
+                    // Hapus juga dari riwayat_customer
+                    const customerOrderRef = db.collection('riwayat_customer').doc(orderId.substring(1)).collection('pesanan').doc(orderId);
+                    batch.delete(customerOrderRef);
+                }
+                await batch.commit();
+
+                alert("Semua pesanan berhasil dihapus!");
+                tutupModalVerifikasi();
+                loadData(); // Muat ulang data
+            } catch (error) {
+                console.error("Error verifikasi atau hapus pesanan:", error);
+                alert("Verifikasi gagal atau terjadi kesalahan saat menghapus: " + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Event Listener Saat DOM Siap ---
+        document.addEventListener("DOMContentLoaded", () => {
+            // Proteksi Halaman: Cek Status Login dan Peran
+            auth.onAuthStateChanged(user => {
+                if (!user) {
+                    alert('Anda harus login untuk mengakses halaman ini.');
+                    window.location.href = 'index.html'; // Arahkan ke halaman login
+                    return;
+                }
+
+                // Ambil peran pengguna dari Firestore
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    const userData = doc.data();
+                    if (!userData || userData.role !== 'penjual') {
+                        alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
+                        window.location.href = 'index.html'; // Arahkan ke halaman login
+                        return;
+                    }
+                    // Jika peran adalah penjual, muat data
+                    loadData();
+                }).catch(error => {
+                    console.error("Error fetching user role:", error);
+                    alert("Gagal memuat peran pengguna. Silakan coba lagi.");
+                    window.location.href = 'index.html';
+                });
+            });
+        });
+
+        // Ini untuk memastikan suara bisa diputar setelah interaksi pengguna pertama
         document.addEventListener("click", () => {
-            if (!audioSudahDiizinkan) {
-                sound.play().catch(() => {}); // Play and immediately pause to enable autoplay later
-                sound.pause();
-                sound.currentTime = 0;
-                audioSudahDiizinkan = true;
-                console.log("Audio diizinkan setelah interaksi pengguna.");
+            const notifSound = document.getElementById("notifSound");
+            if (notifSound) {
+                notifSound.play().then(() => {
+                    notifSound.pause();
+                    notifSound.currentTime = 0;
+                }).catch(() => { /* handle error if play fails */ });
             }
         }, { once: true });
-
-        // Fungsi tampilkan popup notifikasi baru
-        function showNotificationModal(orderData) {
-            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
-            
-            // Hapus kelas hidden jika ada dan terapkan transisi
-            notificationModal.style.display = 'flex'; 
-            setTimeout(() => {
-                notificationModal.classList.add('show-notification'); 
-            }, 50); 
-
-            currentNewOrderId = orderData.id;
-        }
-
-        // Fungsi tutup popup notifikasi baru
-        function hideNotificationModal() {
-            notificationModal.classList.remove('show-notification'); 
-            setTimeout(() => {
-                notificationModal.style.display = 'none'; 
-            }, 300); 
-
-            sound.pause();
-            sound.currentTime = 0;
-            sedangBerbunyi = false; 
-
-            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
-            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
-            // idPesananTerakhirDibunyikan hanya diupdate saat bunyi baru, tidak saat menutup
-            // Ini untuk memastikan jika user menutup notif tapi ada notif baru, tetap bunyi
-            // localStorage.setItem("idPesananTerakhirDibunyikan", terakhirDitampilkan); 
-
-            notifLonceng.classList.remove("berkedip-kuat");
-            navPesanan.classList.remove("berkedip-kuat"); 
-        }
-
-        // Event listener untuk tombol tutup 'X' di notificationModal
-        closeBtnNotif.addEventListener('click', hideNotificationModal);
-
-        // Event listener untuk klik di luar konten notificationModal (overlay)
-        notificationModal.addEventListener('click', function(event) {
-            if (event.target === notificationModal) { 
-                hideNotificationModal();
-            }
-        });
-
-        // Event listener untuk tombol aksi "Lihat Detail Pesanan" di notificationModal
-        btnActionNotif.addEventListener('click', function() {
-            hideNotificationModal(); 
-            if (currentNewOrderId) {
-                tampilkanDetail(currentNewOrderId); 
-            }
-        });
-
-        // Fungsi utama cek pesanan baru dari Firebase
-        function cekPesananBaru() {
-            // Menggunakan onSnapshot untuk real-time updates
-            db.collection("pesanan").orderBy("waktu", "desc").limit(1)
-                .onSnapshot(snapshot => {
-                    if (!snapshot.empty) {
-                        const doc = snapshot.docs[0];
-                        const data = doc.data();
-                        data.id = doc.id; 
-                        
-                        const waktuPesanan = data.waktu?.toDate?.() || new Date();
-                        const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
-                        const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
-
-                        // KONDISI UNTUK MEMICU NOTIFIKASI
-                        // Notifikasi (popup dan kedip lonceng) akan muncul jika:
-                        // 1. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir ditampilkan (terakhirDitampilkan)
-                        // 2. Waktu pesanan terbaru lebih baru dari waktu terakhir user "membuka" notifikasi (waktuBukaTerakhir)
-                        // 3. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir dibunyikan (idPesananTerakhirDibunyikan)
-                        if (doc.id !== terakhirDitampilkan || (waktuPesanan > waktuBukaTerakhir && doc.id !== idPesananTerakhirDibunyikan)) {
-                            // Update terakhirDitampilkan agar tidak memicu notifikasi visual berulang-ulang dalam satu sesi
-                            terakhirDitampilkan = doc.id; 
-                            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
-
-                            // Logic untuk SUARA: Hanya berbunyi jika ID pesanan belum pernah dibunyikan sebelumnya
-                            if (doc.id !== idPesananTerakhirDibunyikan && audioSudahDiizinkan && !sedangBerbunyi) {
-                                sound.play().catch(error => {
-                                    console.warn("Gagal memutar suara notifikasi:", error);
-                                });
-                                sedangBerbunyi = true; 
-                                localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
-                            }
-
-                            // Tampilkan popup notifikasi baru
-                            showNotificationModal(data); 
-
-                            // Aktifkan efek berkedip pada lonceng dan tombol nav
-                            notifLonceng.classList.add("berkedip-kuat");
-                            navPesanan.classList.add("berkedip-kuat");
-
-                        } else {
-                            // KONDISI UNTUK MEMASTIKAN NOTIFIKASI MATI jika tidak ada pesanan baru yang valid
-                            if (!notificationModal.classList.contains('show-notification')) { // Hanya matikan jika modal tidak aktif
-                                sound.pause();
-                                sound.currentTime = 0;
-                                sedangBerbunyi = false;
-                                notifLonceng.classList.remove("berkedip-kuat");
-                                navPesanan.classList.remove("berkedip-kuat");
-                            }
-                        }
-                    } else {
-                        // Jika tidak ada pesanan sama sekali di Firebase
-                        sound.pause();
-                        sound.currentTime = 0;
-                        sedangBerbunyi = false;
-                        notifLonceng.classList.remove("berkedip-kuat");
-                        navPesanan.classList.remove("berkedip-kuat");
-                    }
-                }, error => {
-                    console.error("Error fetching latest order (onSnapshot):", error);
-                    // Jika ada error dalam mengambil data, matikan juga notifikasi
-                    sound.pause();
-                    sound.currentTime = 0;
-                    sedangBerbunyi = false;
-                    notifLonceng.classList.remove("berkedip-kuat");
-                    navPesanan.classList.remove("berkedip-kuat");
-                });
-        }
-
-
-
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (!user) {
-      alert("Silakan login terlebih dahulu.");
-      window.location.href = "index.html"; // Ganti ke halaman login kamu
-    }
-  });
-
-     // --- Jalankan saat halaman selesai dimuat ---
-        
-        window.addEventListener("DOMContentLoaded", () => {
-            loadData('All');
-            // Ganti setInterval(cekPesananBaru, 3000) dengan onSnapshot di dalam cekPesananBaru
-            cekPesananBaru(); 
-
-            // Event listener untuk tombol navigasi "Pesanan"
-            navPesanan.addEventListener("click", function () {
-                hideNotificationModal(); // Pastikan popup notifikasi baru tertutup
-            });
-
-            // Event listener untuk tombol lonceng notifikasi di header
-            notifLonceng.addEventListener("click", function() {
-                // Saat lonceng diklik, cek pesanan baru lagi
-                // Namun, karena sudah pakai onSnapshot, ini mungkin tidak diperlukan lagi
-                // Jika ingin hanya menutup notifikasi visual, bisa panggil hideNotificationModal
-                if (notificationModal.classList.contains('show-notification')) {
-                    hideNotificationModal();
-                } else {
-                    // Opsional: jika ingin menampilkan riwayat notifikasi atau semacamnya
-                    console.log("Lonceng diklik, tidak ada notifikasi aktif.");
-                }
-            });
-
-            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
-            document.addEventListener("keydown", function(event) {
-                if (event.key === "Escape") {
-                    if (notificationModal.classList.contains('show-notification')) {
-                        hideNotificationModal();
-                    } else if (document.getElementById("popupDetail").style.display === "flex") {
-                        tutupDetail();
-                    }
-                }
-            });
-
-
-// ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
-window.hapusSemuaPesananPenjual = function () {
-  const konfirmasi = confirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
-  if (!konfirmasi) return;
-
-  // Tampilkan modal verifikasi password
-  const modal = document.getElementById('modalVerifikasi');
-  if (modal) {
-    modal.style.display = 'flex';
-  } else {
-    alert("❌ Modal verifikasi tidak ditemukan di halaman.");
-  }
-};
-
-// ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
-window.verifikasiPasswordDanHapus = async function () {
-  const user = firebase.auth().currentUser;
-  if (!user) {
-    alert("⚠️ Anda belum login.");
-    return;
-  }
-
-  const passwordInput = document.getElementById('inputPassword');
-  if (!passwordInput || !passwordInput.value) {
-    alert("⚠️ Masukkan password terlebih dahulu.");
-    return;
-  }
-
-  const password = passwordInput.value;
-  const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-
-  try {
-    await user.reauthenticateWithCredential(credential);
-
-    // Lanjutkan hapus pesanan
-    const snapshot = await db.collection("pesanan").get();
-    const batch = db.batch();
-
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    await batch.commit();
-
-    alert("✅ Semua pesanan berhasil dihapus.");
-    location.reload();
-  } catch (error) {
-    console.error("❌ Gagal re-auth:", error);
-    alert("❌ Password salah atau gagal autentikasi.");
-  }
-};
-
-// ✅ Tutup modal jika klik "Batal"
-window.tutupModalVerifikasi = function () {
-  const modal = document.getElementById('modalVerifikasi');
-  if (modal) modal.style.display = 'none';
-};
-
-// --- Fungsi DUMMY ---
-window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
-window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
-window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
-        });
     </script>
 </body>
 </html>
