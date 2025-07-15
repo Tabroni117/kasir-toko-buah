@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <style>
         /* Variabel Warna Utama (Disesuaikan dengan Kode Anda) */
         :root {
@@ -137,6 +142,11 @@
             z-index: 15;
             box-shadow: 0 1px 5px var(--shadow-subtle);
             margin-top: 80px; /* Sesuaikan dengan tinggi header */
+            position: fixed; /* Fixed position */
+            width: 100%;
+            max-width: 420px;
+            left: 50%;
+            transform: translateX(-50%);
         }
         .search-bar {
             display: flex;
@@ -177,10 +187,14 @@
             padding: 12px 0;
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
+            position: fixed; /* Fixed position */
             top: 150px; /* Sesuaikan dengan tinggi header + search bar */
             z-index: 10;
             box-shadow: 0 1px 5px var(--shadow-subtle);
+            width: 100%;
+            max-width: 420px;
+            left: 50%;
+            transform: translateX(-50%);
         }
         .tab-item {
             flex: 1;
@@ -215,6 +229,8 @@
             overflow-y: auto;
             padding: 20px;
             background-color: var(--bg-light);
+            padding-top: 180px; /* Space for fixed header, search, and tabs */
+            padding-bottom: 80px; /* Space for bottom nav and FAB */
         }
         .menu-list-container::-webkit-scrollbar {
             display: none;
@@ -224,16 +240,131 @@
             scrollbar-width: none;
         }
 
-        /* Menu Utama Group */
-        .menu-utama-group {
-            /* display: block; by default */
+        /* Content Groups */
+        .content-group {
+            display: none; /* Hidden by default, shown by JS */
+        }
+        .content-group.active {
+            display: block;
         }
 
-        /* Kategori Varian Group */
-        .kategori-varian-group {
+        /* Forms (Add/Edit Menu & Variant) */
+        .form-section {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            padding: 20px;
+            margin-bottom: 20px;
             display: none; /* Hidden by default */
         }
+        .form-section.active {
+            display: block;
+        }
 
+        .form-section h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: var(--text-dark);
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-medium);
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--text-dark);
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group textarea:focus {
+            border-color: var(--header-green-start);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--header-green-start);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end; /* Align buttons to the right */
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--header-green-start);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--header-green-end);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #B0BEC5; /* Light grey blue */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #90A4AE;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: #EF5350; /* Red */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #E53935;
+            transform: translateY(-2px);
+        }
+
+        /* Menu List Styling */
         .category-section {
             margin-bottom: 30px;
         }
@@ -492,6 +623,27 @@
         .spacer-for-bottom-nav {
             height: 80px; /* Tinggi navbar fixed + sedikit ruang untuk FAB */
         }
+
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 150px; /* Above FAB and Navbar */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+        }
+
+        .toast-notification.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -499,19 +651,20 @@
         <header class="header">
             <div class="header-content-wrapper">
                 <h1><i class="fas fa-leaf leaf-icon"></i> RUJAK BUAH INDONESIA</h1>
-                <button class="logout-button">
+                <button class="logout-button" id="logoutButton">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
             <div class="app-description">Aplikasi Penjual</div>
         </header>
 
-        <div class="spacer-for-fixed-elements"></div>
+        <!-- Spacers are no longer needed as padding is applied to menu-list-container -->
+        <!-- <div class="spacer-for-fixed-elements"></div> -->
 
         <div class="search-bar-container">
             <div class="search-bar">
                 <span class="material-icons">search</span>
-                <input type="text" placeholder="Cari nama menu / kategori varian / varian">
+                <input type="text" id="searchInput" placeholder="Cari nama menu / kategori varian / varian">
             </div>
         </div>
 
@@ -521,264 +674,715 @@
         </div>
 
         <div class="menu-list-container">
+            <!-- Form for Add/Edit Menu (Initially hidden) -->
+            <div class="form-section" id="menuFormSection">
+                <h2><span id="menuFormTitle">Tambah Menu Baru</span></h2>
+                <form id="menuForm">
+                    <input type="hidden" id="menuId">
+                    <div class="form-group">
+                        <label for="namaProduk">Nama Produk:</label>
+                        <input type="text" id="namaProduk" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="deskripsiProduk">Deskripsi:</label>
+                        <textarea id="deskripsiProduk" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="hargaProduk">Harga (Rp):</label>
+                        <input type="number" id="hargaProduk" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrlProduk">URL Gambar:</label>
+                        <input type="text" id="imageUrlProduk" placeholder="Contoh: https://example.com/gambar.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label for="ratingProduk">Rating (1-5):</label>
+                        <input type="number" id="ratingProduk" min="1" max="5" step="0.1" value="4.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryTimeProduk">Estimasi Waktu Pengiriman:</label>
+                        <input type="text" id="deliveryTimeProduk" placeholder="Contoh: 15-30 menit" value="15-30 menit">
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="isAvailableProduk" checked>
+                        <label for="isAvailableProduk">Tersedia</label>
+                    </div>
 
-            <div class="content-group menu-utama-group">
+                    <h3>Pilih Varian untuk Produk Ini:</h3>
+                    <div id="productVariantCheckboxes">
+                        <!-- Checkboxes for variant types will be loaded here dynamically -->
+                        <p>Memuat tipe varian...</p>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" id="saveMenuBtn">Simpan Menu</button>
+                        <button type="button" class="btn btn-secondary" id="cancelMenuFormBtn">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Form for Add/Edit Variant Type (Initially hidden) -->
+            <div class="form-section" id="variantTypeFormSection">
+                <h2><span id="variantTypeFormTitle">Tambah Kategori Varian Baru</span></h2>
+                <form id="variantTypeForm">
+                    <input type="hidden" id="variantTypeId">
+                    <div class="form-group">
+                        <label for="variantTypeName">Nama Kategori Varian (Contoh: Bumbu, Kacang, Buah):</label>
+                        <input type="text" id="variantTypeName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="variantTypeOptions">Opsi Varian (Pisahkan dengan koma, Contoh: Pedas,Extra Pedas,Manis):</label>
+                        <input type="text" id="variantTypeOptions" required>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" id="saveVariantTypeBtn">Simpan Kategori</button>
+                        <button type="button" class="btn btn-secondary" id="cancelVariantTypeFormBtn">Batal</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-group menu-utama-group active">
                 <div class="category-section">
                     <div class="category-header">
-                        <span>Menu Utama</span>
-                        <span class="item-count">3/3</span>
-                        <span class="material-icons">keyboard_arrow_up</span>
+                        <span>Daftar Menu</span>
+                        <span class="item-count" id="menuCount">0/0</span>
+                        <!-- <span class="material-icons">keyboard_arrow_up</span> -->
                     </div>
-                    <div class="menu-items">
-                        <div class="menu-item-card" onclick="alert('Buka detail Rujak Buah Manis untuk edit stok')">
-                            <div class="menu-item-image">
-                                <img src="https://via.placeholder.com/70x70/E6FCE6/00A300?text=RBM" alt="Rujak Buah Manis">
-                            </div>
-                            <div class="menu-item-details">
-                                <h3>RUJAK BUAH MANIS Komplit | Thinwal/100...</h3>
-                                <p class="price">Rp41.500</p>
-                            </div>
-                            <label class="item-toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="item-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="menu-item-card" onclick="alert('Buka detail Rujak Mangga Mengkal untuk edit stok')">
-                            <div class="menu-item-image">
-                                <img src="https://via.placeholder.com/70x70/FFFBE6/FFC107?text=RMM" alt="Rujak Mangga Mengkal">
-                            </div>
-                            <div class="menu-item-details">
-                                <h3>Rujak Mangga Mengkal dan Jambu Thinwal...</h3>
-                                <p class="price">Rp35.500</p>
-                            </div>
-                            <label class="item-toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="item-slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="menu-item-card" onclick="alert('Buka detail Rujak Mangga J.B. untuk edit stok')">
-                            <div class="menu-item-image">
-                                <img src="https://via.placeholder.com/70x70/F3E5F5/9C27B0?text=RMJ" alt="Rujak Mangga J.B.">
-                            </div>
-                            <div class="menu-item-details">
-                                <h3>RUJAK Mangga Jb Jr.Jb Kristal Nanas Thin...</h3>
-                                <p class="price">Rp35.500</p>
-                            </div>
-                            <label class="item-toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="item-slider"></span>
-                            </label>
-                        </div>
+                    <div class="menu-items" id="menuList">
+                        <p>Memuat daftar menu...</p>
                     </div>
                 </div>
-
+            </div> 
+            
+            <div class="content-group kategori-varian-group">
                 <div class="category-section">
                     <div class="category-header">
-                        <span>SPECIAL MIX</span>
-                        <span class="item-count">1/1</span>
-                        <span class="material-icons">keyboard_arrow_up</span>
+                        <span>Daftar Kategori Varian</span>
+                        <span class="item-count" id="variantTypeCount">0/0</span>
+                        <!-- <span class="material-icons">keyboard_arrow_up</span> -->
                     </div>
-                    <div class="menu-items">
-                        <div class="menu-item-card" onclick="alert('Buka detail Buah Potong Segar untuk edit stok')">
-                            <div class="menu-item-image">
-                                <img src="https://via.placeholder.com/70x70/E0F2F7/2196F3?text=BPS" alt="Buah Potong Segar">
-                            </div>
-                            <div class="menu-item-details">
-                                <h3>Buah Potong Segar Aneka Rasa - Besar</h3>
-                                <p class="price">Rp45.000</p>
-                            </div>
-                            <label class="item-toggle-switch">
-                                <input type="checkbox" checked>
-                                <span class="item-slider"></span>
-                            </label>
-                        </div>
+                    <div class="variant-type-items" id="variantTypeList">
+                        <p>Memuat tipe varian...</p>
                     </div>
-                </div>
-            </div> <div class="content-group kategori-varian-group">
-                <div class="variant-category-item">
-                    <div class="variant-category-item-header">
-                        <span>Menu Buah</span>
-                        <span class="variant-category-item-count">10/10</span>
-                    </div>
-                    <div class="variant-category-content">
-                        Jambu Air, Mangga, Jambu Kristal, Nanas, Bengkoang, Ked...
-                    </div>
-                    <a href="#" class="add-variant-button">
-                        <span class="material-icons">add</span>
-                        Tambah Varian
+                    <a href="#" class="add-variant-button" id="addNewVariantTypeButton" style="background-color: #f0f0f0; color: var(--text-dark); border: 1px dashed var(--border-color); margin-top: 20px;">
+                        <span class="material-icons" style="color: var(--header-green-start);">add</span>
+                        <span style="color: var(--header-green-start);">Tambahkan Kategori Varian Baru</span>
                     </a>
                 </div>
-
-                <div class="variant-category-item">
-                    <div class="variant-category-item-header">
-                        <span>Level Pedas</span>
-                        <span class="variant-category-item-count">3/3</span>
-                    </div>
-                    <div class="variant-category-content">
-                        Tidak Pedas, Pedas Manis, Extra Pedas
-                    </div>
-                    <a href="#" class="add-variant-button">
-                        <span class="material-icons">add</span>
-                        Tambah Varian
-                    </a>
-                </div>
-
-                <div class="variant-category-item">
-                    <div class="variant-category-item-header">
-                        <span>Bumbu/Sambal</span>
-                        <span class="variant-category-item-count">2/2</span>
-                    </div>
-                    <div class="variant-category-content">
-                        Bumbu Kacang | Di pisah, Tanpa Kacang | Di pisah
-                    </div>
-                    <a href="#" class="add-variant-button">
-                        <span class="material-icons">add</span>
-                        Tambah Varian
-                    </a>
-                </div>
-
-                <div class="variant-category-item">
-                    <div class="variant-category-item-header">
-                        <span>Isi Buah</span>
-                        <span class="variant-category-item-count">8/8</span>
-                    </div>
-                    <div class="variant-category-content">
-                        Mangga, Bengkoang, Jambu Air, Kedondong, Nanas, Ubi, Timun...
-                    </div>
-                    <a href="#" class="add-variant-button">
-                        <span class="material-icons">add</span>
-                        Tambah Varian
-                    </a>
-                </div>
-
-                <a href="#" class="add-variant-button" style="background-color: #f0f0f0; color: var(--text-dark); border: 1px dashed var(--border-color); margin-top: 20px;">
-                    <span class="material-icons" style="color: var(--header-green-start);">add</span>
-                    <span style="color: var(--header-green-start);">Tambahkan Kategori Varian</span>
-                </a>
-
-            </div> <div class="spacer-for-bottom-nav"></div>
+            </div> 
         </div>
 
-        <a href="#" class="add-menu-fab">
+        <!-- <div class="spacer-for-bottom-nav"></div> -->
+
+        <a href="#" class="add-menu-fab" id="addMenuFab">
             <span class="material-icons">add</span>
         </a>
 
         <nav class="navbar">
-            <a href="#" class="nav-item nav-link">
-                <div class="icon"><i class="fas fa-sync-alt"></i></div>
-                <div class="label">Refresh</div>
+            <a href="#" class="nav-item nav-link active" data-tab-target="menu-utama">
+                <div class="icon"><i class="fas fa-home"></i></div>
+                <div class="label">Menu</div>
             </a>
-            <a href="#" class="nav-item nav-link">
-                <div class="icon">&#128276;</div>
-                <div class="label">Notifikasi</div>
+            <a href="#" class="nav-item nav-link" data-tab-target="kategori-varian">
+                <div class="icon"><i class="fas fa-tags"></i></div>
+                <div class="label">Varian</div>
             </a>
-            <a href="#" class="nav-item nav-link">
-                <div class="icon">&#128172;</div>
-                <div class="label">Chat</div>
+            <a href="pesanan-penjual.html" class="nav-item nav-link">
+                <div class="icon"><i class="fas fa-shopping-bag"></i></div>
+                <div class="label">Pesanan</div>
             </a>
-            <a href="#" class="nav-item nav-link">
-                <div class="icon">&#128200;</div>
-                <div class="label">Marketing</div>
+            <a href="Qris.html" class="nav-item nav-link">
+                <div class="icon"><i class="fas fa-qrcode"></i></div>
+                <div class="label">QRIS</div>
             </a>
         </nav>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabMenuItems = document.querySelectorAll('.category-tabs .tab-item');
-            const menuUtamaGroup = document.querySelector('.menu-utama-group');
-            const kategoriVarianGroup = document.querySelector('.kategori-varian-group');
-            const addMenuFab = document.querySelector('.add-menu-fab');
+    <div id="toastNotification" class="toast-notification"></div>
 
-            // Function to show/hide content based on active tab
-            function showContentForTab(targetTab) {
-                if (targetTab === 'menu-utama') {
-                    menuUtamaGroup.style.display = 'block';
-                    kategoriVarianGroup.style.display = 'none';
-                    addMenuFab.style.display = 'flex'; // Show FAB for Menu Utama
-                } else if (targetTab === 'kategori-varian') {
-                    menuUtamaGroup.style.display = 'none';
-                    kategoriVarianGroup.style.display = 'block';
-                    addMenuFab.style.display = 'none'; // Hide FAB for Kategori Varian
+    <script>
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Firestore Collections
+        const menuCollection = db.collection('buah');
+        const variantTypesCollection = db.collection('variantTypes');
+
+        // DOM Elements
+        const logoutButton = document.getElementById('logoutButton');
+        const searchInput = document.getElementById('searchInput');
+        const tabItems = document.querySelectorAll('.category-tabs .tab-item');
+        const contentGroups = document.querySelectorAll('.content-group');
+        const addMenuFab = document.getElementById('addMenuFab');
+        const toastNotification = document.getElementById('toastNotification');
+
+        // Menu Form Elements
+        const menuFormSection = document.getElementById('menuFormSection');
+        const menuFormTitle = document.getElementById('menuFormTitle');
+        const menuForm = document.getElementById('menuForm');
+        const menuIdInput = document.getElementById('menuId');
+        const namaProdukInput = document.getElementById('namaProduk');
+        const deskripsiProdukInput = document.getElementById('deskripsiProduk');
+        const hargaProdukInput = document.getElementById('hargaProduk');
+        const imageUrlProdukInput = document.getElementById('imageUrlProduk');
+        const ratingProdukInput = document.getElementById('ratingProduk');
+        const deliveryTimeProdukInput = document.getElementById('deliveryTimeProduk');
+        const isAvailableProdukInput = document.getElementById('isAvailableProduk');
+        const productVariantCheckboxesDiv = document.getElementById('productVariantCheckboxes');
+        const saveMenuBtn = document.getElementById('saveMenuBtn');
+        const cancelMenuFormBtn = document.getElementById('cancelMenuFormBtn');
+        const menuListDiv = document.getElementById('menuList');
+        const menuCountSpan = document.getElementById('menuCount');
+
+        // Variant Type Form Elements
+        const variantTypeFormSection = document.getElementById('variantTypeFormSection');
+        const variantTypeFormTitle = document.getElementById('variantTypeFormTitle');
+        const variantTypeForm = document.getElementById('variantTypeForm');
+        const variantTypeIdInput = document.getElementById('variantTypeId');
+        const variantTypeNameInput = document.getElementById('variantTypeName');
+        const variantTypeOptionsInput = document.getElementById('variantTypeOptions');
+        const saveVariantTypeBtn = document.getElementById('saveVariantTypeBtn');
+        const cancelVariantTypeFormBtn = document.getElementById('cancelVariantTypeFormBtn');
+        const variantTypeListDiv = document.getElementById('variantTypeList');
+        const variantTypeCountSpan = document.getElementById('variantTypeCount');
+        const addNewVariantTypeButton = document.getElementById('addNewVariantTypeButton');
+
+
+        let currentUserId = null;
+        let allMenuItems = []; // Cache for search filtering
+        let allVariantTypes = []; // Cache for search filtering
+
+        // --- Helper Functions ---
+        function showToast(message) {
+            toastNotification.textContent = message;
+            toastNotification.classList.add('show');
+            setTimeout(() => {
+                toastNotification.classList.remove('show');
+            }, 3000);
+        }
+
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // --- Authentication ---
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUserId = user.uid;
+                // In a real app, you'd verify admin role here:
+                // const userDoc = await db.collection('users').doc(user.uid).get();
+                // if (userDoc.exists && userDoc.data().role === 'admin') {
+                //     loadContent();
+                // } else {
+                //     alert('Akses Ditolak: Anda bukan admin.');
+                //     window.location.href = 'index.html';
+                // }
+                loadContent(); // For demonstration, assume authenticated user is admin
+            } else {
+                if (initialAuthToken) {
+                    try {
+                        await auth.signInWithCustomToken(initialAuthToken);
+                    } catch (error) {
+                        console.error("Admin: Error signing in with custom token:", error);
+                        // alert("Gagal login otomatis. Silakan login manual.");
+                        // window.location.href = 'index.html';
+                    }
+                } else {
+                    try {
+                        await auth.signInAnonymously();
+                    } catch (error) {
+                        console.error("Admin: Error signing in anonymously:", error);
+                        // alert("Gagal login anonim. Silakan login manual.");
+                        // window.location.href = 'index.html';
+                    }
                 }
             }
+        });
 
-            // Logic for Category Tabs (active state and content toggle)
-            tabMenuItems.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabMenuItems.forEach(item => item.classList.remove('active'));
-                    tab.classList.add('active');
-                    const target = tab.dataset.target;
-                    showContentForTab(target);
-                    console.log('Tab selected: ' + tab.textContent);
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('userUid');
+                showToast('Anda telah berhasil logout.');
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error("Error during logout:", error);
+                showToast('Gagal logout. Coba lagi.');
+            }
+        });
+
+        // --- Tab Switching Logic ---
+        function showContentForTab(targetTab) {
+            contentGroups.forEach(group => {
+                group.classList.remove('active');
+            });
+            document.querySelector(`.content-group.${targetTab}-group`).classList.add('active');
+
+            // Hide all forms when switching tabs
+            menuFormSection.classList.remove('active');
+            variantTypeFormSection.classList.remove('active');
+
+            // Control FAB visibility
+            if (targetTab === 'menu-utama') {
+                addMenuFab.style.display = 'flex';
+            } else {
+                addMenuFab.style.display = 'none';
+            }
+            applySearchFilter(); // Re-apply filter when tab changes
+        }
+
+        tabItems.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabItems.forEach(item => item.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.target;
+                showContentForTab(target);
+            });
+        });
+
+        // --- Menu Management ---
+
+        // Load all variant types to populate product variant checkboxes
+        async function loadVariantTypeCheckboxes(selectedVariantTypeIds = []) {
+            productVariantCheckboxesDiv.innerHTML = '<p>Memuat tipe varian...</p>';
+            try {
+                const snapshot = await variantTypesCollection.orderBy('name').get();
+                if (snapshot.empty) {
+                    productVariantCheckboxesDiv.innerHTML = '<p>Belum ada tipe varian. Tambahkan di tab "Kategori Varian".</p>';
+                    return;
+                }
+
+                productVariantCheckboxesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const type = doc.data();
+                    const checkboxId = `variantType-${doc.id}`;
+                    const isChecked = selectedVariantTypeIds.includes(doc.id); // Check if this variant type is selected for the product
+                    const div = document.createElement('div');
+                    div.classList.add('checkbox-group');
+                    div.innerHTML = `
+                        <input type="checkbox" id="${checkboxId}" value="${doc.id}" ${isChecked ? 'checked' : ''}>
+                        <label for="${checkboxId}">${type.name} (${type.options.join(', ')})</label>
+                    `;
+                    productVariantCheckboxesDiv.appendChild(div);
                 });
+            } catch (error) {
+                console.error("Error loading variant type checkboxes:", error);
+                productVariantCheckboxesDiv.innerHTML = '<p style="color: red;">Gagal memuat tipe varian.</p>';
+            }
+        }
+
+        // Load menu items from Firestore
+        async function loadMenuItems() {
+            menuListDiv.innerHTML = '<p>Memuat daftar menu...</p>';
+            try {
+                const snapshot = await menuCollection.orderBy('nama').get();
+                allMenuItems = []; // Clear cache
+                snapshot.forEach(doc => {
+                    allMenuItems.push({ id: doc.id, ...doc.data() });
+                });
+                renderMenuItems(allMenuItems); // Render all initially
+            } catch (error) {
+                console.error("Error loading menu items:", error);
+                showToast("Gagal memuat daftar menu.");
+                menuListDiv.innerHTML = '<p style="color: red;">Gagal memuat daftar menu.</p>';
+            }
+        }
+
+        // Render menu items based on filtered list
+        function renderMenuItems(itemsToRender) {
+            menuListDiv.innerHTML = '';
+            if (itemsToRender.length === 0) {
+                menuListDiv.innerHTML = '<p>Tidak ada menu ditemukan.</p>';
+                menuCountSpan.textContent = `0/${allMenuItems.length}`;
+                return;
+            }
+
+            itemsToRender.forEach(menu => {
+                const card = document.createElement('div');
+                card.classList.add('menu-item-card');
+                card.dataset.id = menu.id; // Store ID for easy access
+                card.innerHTML = `
+                    <div class="menu-item-image">
+                        <img src="${menu.imageUrl || 'https://placehold.co/70x70/cccccc/333333?text=No+Image'}" alt="${menu.nama}">
+                    </div>
+                    <div class="menu-item-details">
+                        <h3>${menu.nama}</h3>
+                        <p class="price">${formatRupiah(menu.harga)}</p>
+                        <p style="font-size:12px; color:var(--text-light);">Varian: ${menu.variantTypeIds && menu.variantTypeIds.length > 0 ? menu.variantTypeIds.join(', ') : 'Tidak ada'}</p>
+                    </div>
+                    <label class="item-toggle-switch">
+                        <input type="checkbox" data-id="${menu.id}" ${menu.isAvailable ? 'checked' : ''}>
+                        <span class="item-slider"></span>
+                    </label>
+                `;
+                menuListDiv.appendChild(card);
             });
 
-            // Initialize: show Menu Utama by default
-            showContentForTab('menu-utama');
+            // Update count display
+            menuCountSpan.textContent = `${itemsToRender.length}/${allMenuItems.length}`;
 
-            // Logic for Item Availability Toggles (inside Menu Utama)
-            const itemToggles = document.querySelectorAll('.menu-utama-group .item-toggle-switch input[type="checkbox"]');
-            itemToggles.forEach(toggle => {
-                toggle.addEventListener('change', (event) => {
-                    const itemName = event.target.closest('.menu-item-card').querySelector('h3').textContent;
-                    const isChecked = event.target.checked;
-                    console.log(`${itemName} status updated to: ${isChecked ? 'Tersedia' : 'Tidak Tersedia'}`);
-                    // In a real app, send update to backend API
-                });
-            });
-
-            // Logic for clicking on a menu item card (to go to edit page)
-            const menuCards = document.querySelectorAll('.menu-utama-group .menu-item-card');
-            menuCards.forEach(card => {
-                card.addEventListener('click', (event) => {
-                    // Prevent toggle click from triggering card click
-                    if (!event.target.closest('.item-toggle-switch')) {
-                        const itemName = card.querySelector('h3').textContent;
-                        alert(`Membuka halaman detail/edit untuk: ${itemName}`);
-                        // In a real app: window.location.href = `edit_menu.html?id=${productId}`;
+            // Attach event listeners for toggles
+            menuListDiv.querySelectorAll('.item-toggle-switch input[type="checkbox"]').forEach(toggle => {
+                toggle.addEventListener('change', async (event) => {
+                    const id = event.target.dataset.id;
+                    const isAvailable = event.target.checked;
+                    try {
+                        await menuCollection.doc(id).update({ isAvailable: isAvailable });
+                        showToast(`Status menu diperbarui: ${isAvailable ? 'Tersedia' : 'Tidak Tersedia'}`);
+                    } catch (error) {
+                        console.error("Error updating menu availability:", error);
+                        showToast("Gagal memperbarui ketersediaan menu.");
+                        event.target.checked = !isAvailable; // Revert checkbox if error
                     }
                 });
             });
 
-            // Logic for "Add Menu" FAB click (only visible for Menu Utama)
-            addMenuFab.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent default link behavior
-                alert('Menuju halaman Tambah Menu Baru');
-                // In a real app: window.location.href = 'add_new_menu.html';
-            });
-
-            // Logic for Add Varian Buttons (inside Kategori Varian)
-            const addVariantButtons = document.querySelectorAll('.kategori-varian-group .add-variant-button');
-            addVariantButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const categoryName = button.closest('.variant-category-item') ?
-                                         button.closest('.variant-category-item').querySelector('.variant-category-item-header span').textContent :
-                                         'Kategori Varian Baru';
-                    alert(`Menuju halaman Tambah Varian untuk: ${categoryName}`);
-                    // In a real app: window.location.href = `add_variant.html?category=${categoryName}`;
+            // Attach event listeners for card clicks (edit menu)
+            menuListDiv.querySelectorAll('.menu-item-card').forEach(card => {
+                card.addEventListener('click', (event) => {
+                    // Prevent toggle click from triggering card click
+                    if (!event.target.closest('.item-toggle-switch')) {
+                        editMenu(card.dataset.id);
+                    }
                 });
             });
+        }
 
+        // Show Add/Edit Menu Form
+        addMenuFab.addEventListener('click', (e) => {
+            e.preventDefault();
+            showMenuForm();
+        });
 
-            // Logic for Bottom Navigation items (active state - contoh sederhana)
-            const navItems = document.querySelectorAll('.navbar .nav-item');
-            navItems.forEach((nav, index) => {
-                nav.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navItems.forEach(item => item.classList.remove('active'));
-                    nav.classList.add('active');
-                    console.log('Navigated to: ' + nav.textContent.trim());
-                    // Di sini Anda bisa menambahkan logika untuk mengubah konten halaman
-                    // berdasarkan item navigasi yang diklik.
-                });
-                // Set the first item as active by default for demonstration
-                if (index === 0) {
-                    // nav.classList.add('active'); // Tidak perlu aktifkan default di sini, karena sudah di homepage.
+        function showMenuForm(menuData = null) {
+            menuFormSection.classList.add('active');
+            document.querySelector('.menu-utama-group').classList.remove('active'); // Hide menu list
+            addMenuFab.style.display = 'none'; // Hide FAB
+
+            // Reset form
+            menuForm.reset();
+            menuIdInput.value = '';
+            menuFormTitle.textContent = 'Tambah Menu Baru';
+            saveMenuBtn.textContent = 'Simpan Menu';
+            isAvailableProdukInput.checked = true; // Default to available
+
+            if (menuData) {
+                menuIdInput.value = menuData.id;
+                namaProdukInput.value = menuData.nama;
+                deskripsiProdukInput.value = menuData.deskripsi;
+                hargaProdukInput.value = menuData.harga;
+                imageUrlProdukInput.value = menuData.imageUrl;
+                ratingProdukInput.value = menuData.rating;
+                deliveryTimeProdukInput.value = menuData.deliveryTime;
+                isAvailableProdukInput.checked = menuData.isAvailable;
+                menuFormTitle.textContent = 'Edit Menu';
+                saveMenuBtn.textContent = 'Update Menu';
+                loadVariantTypeCheckboxes(menuData.variantTypeIds || []); // Load checkboxes with selected ones
+            } else {
+                loadVariantTypeCheckboxes([]); // Load empty checkboxes for new menu
+            }
+            menuListContainer.scrollTop = 0; // Scroll to top of container
+        }
+
+        // Edit Menu Item (called from card click)
+        async function editMenu(id) {
+            try {
+                const doc = await menuCollection.doc(id).get();
+                if (doc.exists) {
+                    showMenuForm({ id: doc.id, ...doc.data() });
+                } else {
+                    showToast("Menu tidak ditemukan.");
                 }
+            } catch (error) {
+                console.error("Error fetching menu for edit:", error);
+                showToast("Gagal memuat data menu untuk diedit.");
+            }
+        }
+
+        // Save Menu Item
+        menuForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = menuIdInput.value;
+            const selectedVariantTypeIds = Array.from(productVariantCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
+                                            .map(cb => cb.value);
+
+            const menuData = {
+                nama: namaProdukInput.value,
+                deskripsi: deskripsiProdukInput.value,
+                harga: parseFloat(hargaProdukInput.value),
+                imageUrl: imageUrlProdukInput.value,
+                rating: parseFloat(ratingProdukInput.value),
+                deliveryTime: deliveryTimeProdukInput.value,
+                isAvailable: isAvailableProdukInput.checked,
+                variantTypeIds: selectedVariantTypeIds
+            };
+
+            try {
+                if (id) {
+                    await menuCollection.doc(id).update(menuData);
+                    showToast("Menu berhasil diperbarui!");
+                } else {
+                    await menuCollection.add(menuData);
+                    showToast("Menu berhasil ditambahkan!");
+                }
+                loadMenuItems(); // Reload list
+                menuFormSection.classList.remove('active'); // Hide form
+                document.querySelector('.menu-utama-group').classList.add('active'); // Show menu list
+                addMenuFab.style.display = 'flex'; // Show FAB
+            } catch (error) {
+                console.error("Error saving menu:", error);
+                showToast("Gagal menyimpan menu.");
+            }
+        });
+
+        // Cancel Menu Form
+        cancelMenuFormBtn.addEventListener('click', () => {
+            menuFormSection.classList.remove('active'); // Hide form
+            document.querySelector('.menu-utama-group').classList.add('active'); // Show menu list
+            addMenuFab.style.display = 'flex'; // Show FAB
+        });
+
+        // Delete Menu Item
+        async function deleteMenu(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus menu ini?")) {
+                try {
+                    await menuCollection.doc(id).delete();
+                    showToast("Menu berhasil dihapus!");
+                    loadMenuItems(); // Reload list
+                } catch (error) {
+                    console.error("Error deleting menu:", error);
+                    showToast("Gagal menghapus menu.");
+                }
+            }
+        }
+
+        // --- Variant Type Management ---
+
+        // Load variant types from Firestore
+        async function loadVariantTypes() {
+            variantTypeListDiv.innerHTML = '<p>Memuat tipe varian...</p>';
+            try {
+                const snapshot = await variantTypesCollection.orderBy('name').get();
+                allVariantTypes = []; // Clear cache
+                snapshot.forEach(doc => {
+                    allVariantTypes.push({ id: doc.id, ...doc.data() });
+                });
+                renderVariantTypes(allVariantTypes); // Render all initially
+                loadVariantTypeCheckboxes(); // Also update checkboxes for menu form
+            } catch (error) {
+                console.error("Error loading variant types:", error);
+                showToast("Gagal memuat tipe varian.");
+                variantTypeListDiv.innerHTML = '<p style="color: red;">Gagal memuat tipe varian.</p>';
+            }
+        }
+
+        // Render variant types based on filtered list
+        function renderVariantTypes(typesToRender) {
+            variantTypeListDiv.innerHTML = '';
+            if (typesToRender.length === 0) {
+                variantTypeListDiv.innerHTML = '<p>Tidak ada kategori varian ditemukan.</p>';
+                variantTypeCountSpan.textContent = `0/${allVariantTypes.length}`;
+                return;
+            }
+
+            typesToRender.forEach(type => {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('variant-category-item');
+                itemDiv.dataset.id = type.id; // Store ID
+                itemDiv.innerHTML = `
+                    <div class="variant-category-item-header">
+                        <span>${type.name}</span>
+                        <div class="menu-item-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editVariantType('${type.id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteVariantType('${type.id}')">Hapus</button>
+                        </div>
+                    </div>
+                    <div class="variant-category-content">
+                        Opsi: ${type.options.map(opt => `<span>${opt}</span>`).join('')}
+                    </div>
+                    <a href="#" class="add-variant-button" onclick="editVariantType('${type.id}'); return false;">
+                        <span class="material-icons">edit</span>
+                        Edit Opsi Varian
+                    </a>
+                `;
+                variantTypeListDiv.appendChild(itemDiv);
+            });
+            variantTypeCountSpan.textContent = `${typesToRender.length}/${allVariantTypes.length}`;
+        }
+
+        // Show Add/Edit Variant Type Form
+        addNewVariantTypeButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            showVariantTypeForm();
+        });
+
+        function showVariantTypeForm(variantTypeData = null) {
+            variantTypeFormSection.classList.add('active');
+            document.querySelector('.kategori-varian-group').classList.remove('active'); // Hide list
+            addMenuFab.style.display = 'none'; // Ensure FAB is hidden
+
+            // Reset form
+            variantTypeForm.reset();
+            variantTypeIdInput.value = '';
+            variantTypeFormTitle.textContent = 'Tambah Kategori Varian Baru';
+            saveVariantTypeBtn.textContent = 'Simpan Kategori';
+
+            if (variantTypeData) {
+                variantTypeIdInput.value = variantTypeData.id;
+                variantTypeNameInput.value = variantTypeData.name;
+                variantTypeOptionsInput.value = variantTypeData.options.join(', ');
+                variantTypeFormTitle.textContent = 'Edit Kategori Varian';
+                saveVariantTypeBtn.textContent = 'Update Kategori';
+            }
+            menuListContainer.scrollTop = 0; // Scroll to top of container
+        }
+
+        // Edit Variant Type (called from button click)
+        async function editVariantType(id) {
+            try {
+                const doc = await variantTypesCollection.doc(id).get();
+                if (doc.exists) {
+                    showVariantTypeForm({ id: doc.id, ...doc.data() });
+                } else {
+                    showToast("Tipe varian tidak ditemukan.");
+                }
+            } catch (error) {
+                console.error("Error fetching variant type for edit:", error);
+                showToast("Gagal memuat data tipe varian untuk diedit.");
+            }
+        }
+
+        // Save Variant Type
+        variantTypeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = variantTypeIdInput.value;
+            const optionsArray = variantTypeOptionsInput.value.split(',').map(opt => opt.trim()).filter(opt => opt !== '');
+
+            if (optionsArray.length === 0) {
+                showToast("Opsi varian tidak boleh kosong.");
+                return;
+            }
+
+            const variantTypeData = {
+                name: variantTypeNameInput.value,
+                options: optionsArray
+            };
+
+            try {
+                if (id) {
+                    await variantTypesCollection.doc(id).update(variantTypeData);
+                    showToast("Kategori varian berhasil diperbarui!");
+                } else {
+                    const newId = variantTypeNameInput.value.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_]/g, '');
+                    await variantTypesCollection.doc(newId).set(variantTypeData);
+                    showToast("Kategori varian berhasil ditambahkan!");
+                }
+                loadVariantTypes(); // Reload list
+                variantTypeFormSection.classList.remove('active'); // Hide form
+                document.querySelector('.kategori-varian-group').classList.add('active'); // Show list
+            } catch (error) {
+                console.error("Error saving variant type:", error);
+                showToast("Gagal menyimpan kategori varian.");
+            }
+        });
+
+        // Cancel Variant Type Form
+        cancelVariantTypeFormBtn.addEventListener('click', () => {
+            variantTypeFormSection.classList.remove('active'); // Hide form
+            document.querySelector('.kategori-varian-group').classList.add('active'); // Show list
+        });
+
+        // Delete Variant Type
+        async function deleteVariantType(id) {
+            if (confirm("Menghapus kategori varian ini akan menghapusnya dari semua produk yang menggunakannya. Lanjutkan?")) {
+                try {
+                    await variantTypesCollection.doc(id).delete();
+                    showToast("Kategori varian berhasil dihapus!");
+                    loadVariantTypes(); // Reload list
+                    loadMenuItems(); // Reload menu items to reflect changes
+                } catch (error) {
+                    console.error("Error deleting variant type:", error);
+                    showToast("Gagal menghapus kategori varian.");
+                }
+            }
+        }
+
+        // --- Search Functionality ---
+        searchInput.addEventListener('input', applySearchFilter);
+
+        function applySearchFilter() {
+            const query = searchInput.value.toLowerCase();
+            const activeTab = document.querySelector('.category-tabs .tab-item.active').dataset.target;
+
+            if (activeTab === 'menu-utama') {
+                const filteredItems = allMenuItems.filter(item =>
+                    item.nama.toLowerCase().includes(query) ||
+                    item.deskripsi.toLowerCase().includes(query) ||
+                    (item.variantTypeIds && item.variantTypeIds.some(vId => vId.toLowerCase().includes(query)))
+                );
+                renderMenuItems(filteredItems);
+            } else if (activeTab === 'kategori-varian') {
+                const filteredTypes = allVariantTypes.filter(type =>
+                    type.name.toLowerCase().includes(query) ||
+                    type.options.some(opt => opt.toLowerCase().includes(query))
+                );
+                renderVariantTypes(filteredTypes);
+            }
+        }
+
+        // --- Initial Load ---
+        const menuListContainer = document.querySelector('.menu-list-container');
+
+        function loadContent() {
+            loadMenuItems();
+            loadVariantTypes();
+            showContentForTab('menu-utama'); // Default to Menu Utama tab
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial setup of tab display
+            showContentForTab('menu-utama');
+
+            // Set the first nav item as active by default
+            const navItems = document.querySelectorAll('.navbar .nav-item');
+            if (navItems.length > 0) {
+                navItems[0].classList.add('active');
+            }
+
+            // Bottom Nav Link Handlers (for changing active state)
+            navItems.forEach(nav => {
+                nav.addEventListener('click', (e) => {
+                    // Only prevent default if it has a data-tab-target (for tab switching)
+                    if (nav.dataset.tabTarget) {
+                        e.preventDefault();
+                        navItems.forEach(item => item.classList.remove('active'));
+                        nav.classList.add('active');
+                        // No need to call showContentForTab here, as tabItems handler does it
+                    }
+                    // For actual links like pesanan-penjual.html, let default behavior happen
+                });
             });
         });
     </script>
