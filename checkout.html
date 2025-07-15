@@ -361,7 +361,7 @@
             <h2 class="section-title-checkout">Ringkasan Pesanan</h2>
             <div id="loadingMessage">Memuat ringkasan keranjang...</div> <!-- Loading message for summary -->
             <div id="checkoutContent" style="display: none;">
-                <!-- Order items list is removed as per request -->
+                <!-- Order items list is removed as per new design -->
                 <div class="order-summary-checkout">
                     <div class="summary-row">
                         <span>Total Belanja (<span id="itemCount">0</span> item)</span>
@@ -405,8 +405,8 @@
 
         // Referensi koleksi Firestore
         const usersCollection = db.collection('users');
-        const ordersCollection = db.collection('orders');
-        const customerHistoryCollection = db.collection('riwayat_customer');
+        const ordersCollection = db.collection('orders'); // Ganti 'pesanan' menjadi 'orders' agar konsisten dengan aturan
+        const customerHistoryCollection = db.collection('riwayat_customer'); // Koleksi riwayat pesanan customer
 
         // Elemen DOM
         const userIdDisplay = document.getElementById('userIdDisplay');
@@ -419,7 +419,6 @@
 
         const loadingMessage = document.getElementById('loadingMessage'); 
         const checkoutContent = document.getElementById('checkoutContent'); 
-        // const orderItemsList = document.getElementById('orderItemsList'); // Removed as per new design
         const itemCountSpan = document.getElementById('itemCount');
         const subtotalCheckoutSpan = document.getElementById('subtotalCheckout');
         const deliveryFeeCheckoutSpan = document.getElementById('deliveryFeeCheckout');
@@ -644,8 +643,14 @@
                 console.log("Keranjang berhasil dikosongkan setelah pesanan dibuat.");
 
             } catch (err) {
-                console.error("❌ Gagal membuat pesanan:", err);
-                alert("❌ Gagal membuat pesanan. Silakan coba lagi.");
+                let errorMessage = "Terjadi kesalahan tidak diketahui.";
+                if (err.code) {
+                    errorMessage = `Kesalahan Firebase: ${err.code}`;
+                } else if (err.message) {
+                    // Batasi panjang pesan error agar tidak terlalu panjang di alert
+                    errorMessage = `Kesalahan: ${err.message.substring(0, 100)}...`; 
+                }
+                alert(`❌ Gagal membuat pesanan. ${errorMessage} Silakan coba lagi.`);
             } finally {
                 placeOrderButton.disabled = false;
                 placeOrderButton.innerHTML = "Buat Pesanan";
