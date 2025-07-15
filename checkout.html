@@ -6,13 +6,13 @@
     <title>Checkout - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    <!-- Firebase SDKs (Versi 8.10.1 yang Anda gunakan) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        /* Reset CSS */
+        /* General Styling */
         * {
             margin: 0;
             padding: 0;
@@ -250,6 +250,14 @@
             border-radius: 5px;
             margin-top: 10px;
         }
+
+        /* Loading Message */
+        #loadingMessage {
+            text-align: center;
+            padding: 50px 20px;
+            color: #777;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -351,21 +359,24 @@
 
         <div class="checkout-section">
             <h2 class="section-title-checkout">Ringkasan Pesanan</h2>
-            <div class="order-items-list" id="orderItemsList">
-                <!-- Order items will be dynamically loaded here -->
-            </div>
-            <div class="order-summary-checkout">
-                <div class="summary-row">
-                    <span>Total Belanja (<span id="itemCount">0</span> item)</span>
-                    <span id="subtotalCheckout">Rp 0</span>
+            <div id="loadingMessage">Memuat keranjang...</div> <!-- Loading message -->
+            <div id="checkoutContent" style="display: none;">
+                <div class="order-items-list" id="orderItemsList">
+                    <!-- Order items will be dynamically loaded here -->
                 </div>
-                <div class="summary-row">
-                    <span>Biaya Pengiriman</span>
-                    <span id="deliveryFeeCheckout">Rp 0</span>
-                </div>
-                <div class="summary-total">
-                    <span>Total Pembayaran</span>
-                    <span id="totalAmountCheckout">Rp 0</span>
+                <div class="order-summary-checkout">
+                    <div class="summary-row">
+                        <span>Total Belanja (<span id="itemCount">0</span> item)</span>
+                        <span id="subtotalCheckout">Rp 0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Biaya Pengiriman</span>
+                        <span id="deliveryFeeCheckout">Rp 0</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total Pembayaran</span>
+                        <span id="totalAmountCheckout">Rp 0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -408,6 +419,8 @@
         const placeOrderButton = document.getElementById('placeOrderButton');
         const backToCartButton = document.getElementById('backToCart');
 
+        const loadingMessage = document.getElementById('loadingMessage'); // New: Loading message
+        const checkoutContent = document.getElementById('checkoutContent'); // New: Container for actual content
         const orderItemsList = document.getElementById('orderItemsList'); // Daftar item pesanan
         const itemCountSpan = document.getElementById('itemCount');
         const subtotalCheckoutSpan = document.getElementById('subtotalCheckout');
@@ -426,14 +439,6 @@
         let currentUserId = null;
         let currentCartItems = []; // Akan diisi dari Firestore
 
-        // Icon untuk E-Wallet
-        const walletIcons = {
-            QRIS: '<i class="fas fa-qrcode"></i>',
-            OVO: '<i class="fas fa-gem"></i>', // Contoh icon OVO
-            DANA: '<i class="fas fa-wallet"></i>', // Contoh icon DANA
-            GoPay: '<i class="fas fa-mobile-alt"></i>' // Contoh icon GoPay
-        };
-
         // Fungsi format Rupiah
         function formatRupiah(amount) {
             return new Intl.NumberFormat('id-ID', {
@@ -443,15 +448,14 @@
             }).format(amount);
         }
 
-        // Fungsi untuk menampilkan ringkasan pesanan dari data keranjang Firestore
-        async function renderOrderSummaryFromFirestore() {
+        // Fungsi untuk mengambil dan menampilkan detail keranjang di halaman checkout
+        async function fetchAndRenderCheckoutSummary() {
+            loadingMessage.style.display = 'block'; // Tampilkan loading
+            checkoutContent.style.display = 'none'; // Sembunyikan konten utama
+            placeOrderButton.disabled = true; // Nonaktifkan tombol
+
             if (!currentUserId) {
-                orderItemsList.innerHTML = '<p style="text-align: center; color: #777;">Anda belum login atau keranjang kosong.</p>';
-                itemCountSpan.textContent = '0';
-                subtotalCheckoutSpan.textContent = formatRupiah(0);
-                deliveryFeeCheckoutSpan.textContent = formatRupiah(0);
-                totalAmountCheckoutSpan.textContent = formatRupiah(0);
-                placeOrderButton.disabled = true;
+                loadingMessage.textContent = 'Anda belum login atau User ID tidak tersedia.';
                 return;
             }
 
@@ -464,7 +468,9 @@
                 orderItemsList.innerHTML = ''; // Bersihkan daftar item
 
                 if (snapshot.empty) {
-                    orderItemsList.innerHTML = '<p style="text-align: center; color: #777;">Keranjang Anda kosong. Silakan kembali ke keranjang.</p>';
+                    loadingMessage.textContent = 'Keranjang Anda kosong. Silakan kembali ke keranjang.';
+                    loadingMessage.style.display = 'block';
+                    checkoutContent.style.display = 'none';
                     placeOrderButton.disabled = true;
                 } else {
                     snapshot.forEach(doc => {
@@ -488,6 +494,8 @@
                         `;
                         orderItemsList.appendChild(itemElement);
                     });
+                    loadingMessage.style.display = 'none'; // Sembunyikan loading
+                    checkoutContent.style.display = 'block'; // Tampilkan konten utama
                     placeOrderButton.disabled = false;
                 }
 
@@ -502,7 +510,9 @@
 
             } catch (error) {
                 console.error("❌ Gagal memuat ringkasan pesanan dari Firestore:", error);
-                orderItemsList.innerHTML = '<p style="text-align: center; color: #dc3545;">Terjadi kesalahan saat memuat pesanan.</p>';
+                loadingMessage.textContent = 'Terjadi kesalahan saat memuat detail pesanan. Silakan coba lagi.';
+                loadingMessage.style.display = 'block';
+                checkoutContent.style.display = 'none';
                 placeOrderButton.disabled = true;
             }
         }
@@ -556,6 +566,14 @@
             qrisBox.style.display = 'none'; // Sembunyikan QRIS box saat jenis E-Wallet berubah
         });
 
+        // Icon untuk E-Wallet (didefinisikan di sini agar bisa diakses)
+        const walletIcons = {
+            QRIS: '<i class="fas fa-qrcode"></i>',
+            OVO: '<i class="fas fa-gem"></i>',
+            DANA: '<i class="fas fa-wallet"></i>',
+            GoPay: '<i class="fas fa-mobile-alt"></i>'
+        };
+
         // Fungsi untuk membuat pesanan
         placeOrderButton.addEventListener('click', async () => {
             const fullName = fullNameInput.value.trim();
@@ -572,6 +590,11 @@
 
             if (currentCartItems.length === 0) {
                 alert("Keranjang Anda kosong. Tidak dapat membuat pesanan.");
+                return;
+            }
+
+            // Ganti alert dengan modal kustom jika tidak ingin menggunakan alert()
+            if (!confirm("Apakah Anda yakin ingin membuat pesanan ini?")) {
                 return;
             }
 
@@ -673,16 +696,22 @@
 
         // Event listener saat DOM sudah siap
         document.addEventListener('DOMContentLoaded', () => {
-            // Inisialisasi tampilan User ID
+            // Inisialisasi tampilan User ID dan panggil fetch data setelah user login
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUserId = user.uid;
                     userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
-                    renderOrderSummaryFromFirestore(); // Panggil untuk memuat data keranjang
+                    fetchAndRenderCheckoutSummary(); // Panggil untuk memuat data keranjang
                 } else {
                     userIdDisplay.textContent = `User ID: N/A`;
-                    alert("Akses ditolak. Anda harus login untuk melihat halaman checkout.");
-                    window.location.href = "apl05.html"; // Arahkan kembali jika tidak login
+                    // Jika tidak login, tampilkan pesan loading dan kemudian arahkan kembali
+                    loadingMessage.textContent = 'Anda harus login untuk melihat halaman checkout. Mengarahkan kembali...';
+                    loadingMessage.style.display = 'block';
+                    checkoutContent.style.display = 'none';
+                    placeOrderButton.disabled = true;
+                    setTimeout(() => {
+                        window.location.href = "apl05.html"; // Arahkan kembali jika tidak login
+                    }, 2000); // Tunggu 2 detik sebelum redirect
                 }
             });
 
