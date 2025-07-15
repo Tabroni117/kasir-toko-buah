@@ -6,10 +6,10 @@
     <title>Checkout - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- Firebase SDKs (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
         /* General Styling */
@@ -258,6 +258,71 @@
             color: #777;
             font-size: 16px;
         }
+
+        /* Modal styling (from previous version) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content h2 {
+            color: #16a34a;
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .modal-content p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .modal-content .btn-modal {
+            background-color: #16a34a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .modal-content .btn-modal:hover {
+            background-color: #15803d;
+        }
     </style>
 </head>
 <body>
@@ -341,6 +406,7 @@
                         <option value="OVO">OVO</option>
                         <option value="DANA">DANA</option>
                         <option value="GoPay">GoPay</option>
+                        <option value="GoPay">GoPay</option>
                     </select>
                     <div style="
                         position: absolute;
@@ -383,6 +449,16 @@
         <button class="place-order-button" id="placeOrderButton">Buat Pesanan</button>
     </div>
 
+    <!-- Modal Konfirmasi (Sudah ada di HTML Anda) -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h2>Pesanan Berhasil Dibuat!</h2>
+            <p>Terima kasih, pesanan Anda telah berhasil dibuat. Kami akan segera memprosesnya.</p>
+            <button class="btn-modal" onclick="redirectToHome()">OK</button>
+        </div>
+    </div>
+
     <!-- Script Checkout -->
     <script>
         // Konfigurasi Firebase Anda
@@ -405,7 +481,7 @@
 
         // Referensi koleksi Firestore
         const usersCollection = db.collection('users');
-        const ordersCollection = db.collection('orders'); // Ganti 'pesanan' menjadi 'orders' agar konsisten dengan aturan
+        const ordersCollection = db.collection('pesanan'); // DIGANTI: 'orders' menjadi 'pesanan'
         const customerHistoryCollection = db.collection('riwayat_customer'); // Koleksi riwayat pesanan customer
 
         // Elemen DOM
@@ -586,9 +662,9 @@
             }
 
             // Ganti alert dengan modal kustom jika tidak ingin menggunakan alert()
-            if (!confirm("Apakah Anda yakin ingin membuat pesanan ini?")) {
-                return;
-            }
+            // if (!confirm("Apakah Anda yakin ingin membuat pesanan ini?")) {
+            //     return;
+            // }
 
             const subtotal = currentCartItems.reduce((s, i) => s + i.price * i.quantity, 0);
             const deliveryFee = subtotal > 0 ? DELIVERY_FEE : 0;
@@ -604,32 +680,32 @@
                 paymentMethod: paymentMethod,
                 ...(selectedEWalletType && { eWalletType: selectedEWalletType }),
                 status: "Pending",
-                orderDate: firebase.firestore.FieldValue.serverTimestamp()
+                waktu: firebase.firestore.FieldValue.serverTimestamp() // DIGANTI: 'orderDate' menjadi 'waktu'
             };
 
             placeOrderButton.disabled = true;
             placeOrderButton.innerHTML = "⏳ Memproses Pesanan...";
 
             try {
-                // 1. Simpan pesanan ke koleksi 'orders'
-                const docRef = await ordersCollection.add(orderData);
+                // 1. Simpan pesanan ke koleksi 'pesanan'
+                const docRef = await ordersCollection.add(orderData); // Menggunakan 'pesanan'
                 const orderId = docRef.id;
                 const displayOrderId = "#" + orderId.substring(0, 6).toUpperCase();
                 
                 // Update dokumen pesanan dengan displayOrderId
                 await ordersCollection.doc(orderId).update({ displayOrderId: displayOrderId });
 
-                // 2. Simpan salinan pesanan ke riwayat_customer
+                // 2. Simpan salinan pesanan ke riwayat_customer (subkoleksi 'pesanan')
                 await customerHistoryCollection.doc(currentUserId).collection('pesanan').doc(orderId).set({ ...orderData, displayOrderId: displayOrderId });
                 
-                sessionStorage.setItem("lastOrderId", displayOrderId); // Simpan ID pesanan terakhir
+                // Hapus sessionStorage.setItem("lastOrderId", displayOrderId); karena tidak digunakan lagi
 
                 // 3. Proses QRIS jika E-Wallet dan QRIS dipilih
                 if (paymentMethod === "E-Wallet" && selectedEWalletType === "QRIS") {
                     await buatQRIS(totalAmount, fullName, displayOrderId);
                 } else {
-                    alert(`✅ Pesanan berhasil dibuat!\nNomor Pesanan: ${displayOrderId}\nSilakan konfirmasi pembayaran Anda di halaman Riwayat.`);
-                    window.location.href = "order-history.html";
+                    // Tampilkan modal konfirmasi
+                    document.getElementById('confirmationModal').style.display = 'flex';
                 }
 
                 // 4. Kosongkan keranjang di Firestore setelah pesanan berhasil (penting!)
@@ -681,7 +757,7 @@
                         <p style="font-size:12px; margin-top: 10px;">Setelah pembayaran, Anda akan diarahkan ke halaman Riwayat Pesanan.</p>
                     `;
                     setTimeout(() => {
-                        window.location.href = "order-history.html";
+                        window.location.href = "riwayat.html"; // DIGANTI: 'order-history.html' menjadi 'riwayat.html'
                     }, 5000); // Contoh 5 detik
                 } else {
                     qrisBox.innerHTML = `<p style="color:red;">❌ Gagal membuat QRIS: ${data.message}</p>`;
@@ -689,6 +765,17 @@
             } catch (e) {
                 qrisBox.innerHTML = `<p style="color:red;">⚠️ Gagal membuat QRIS. Error koneksi.</p>`;
             }
+        }
+
+        // Fungsi untuk menutup modal konfirmasi
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+
+        // Fungsi untuk redirect setelah konfirmasi modal
+        function redirectToHome() {
+            closeModal();
+            window.location.href = 'riwayat.html'; // DIGANTI: 'index.html' menjadi 'riwayat.html'
         }
 
         // Event listener saat DOM sudah siap
@@ -706,7 +793,7 @@
                     checkoutContent.style.display = 'none';
                     placeOrderButton.disabled = true;
                     setTimeout(() => {
-                        window.location.href = "apl05.html";
+                        window.location.href = "index.html"; // DIGANTI: 'apl05.html' menjadi 'index.html' (halaman login)
                     }, 2000);
                 }
             });
