@@ -196,6 +196,19 @@
             color: #777;
             font-size: 16px;
         }
+
+        /* User ID Display for Debugging */
+        #userIdDisplay {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 5px;
+            z-index: 101;
+        }
     </style>
 </head>
 <body>
@@ -203,7 +216,7 @@
         <header class="header">
             <i class="fas fa-arrow-left back-button" id="backToHome"></i>
             <div class="header-title">Keranjang Belanja</div>
-            <div></div> <!-- Placeholder for alignment -->
+            <div id="userIdDisplay">Loading User ID...</div> <!-- User ID Display -->
         </header>
 
         <div class="cart-items" id="cartItemsContainer">
@@ -249,8 +262,16 @@
         const checkoutButton = document.getElementById('checkoutButton');
         const clearCartButton = document.getElementById('clearCartButton');
         const backToHomeButton = document.getElementById('backToHome');
+        const userIdDisplay = document.getElementById('userIdDisplay'); // User ID display element
 
         let currentUserId = null; // Untuk menyimpan UID pengguna yang sedang login
+
+        // Pastikan pengguna login anonim segera
+        auth.signInAnonymously().then(() => {
+            console.log("cart.html: Signed in anonymously.");
+        }).catch((error) => {
+            console.error("cart.html: Error signing in anonymously:", error);
+        });
 
         // Fungsi untuk memperbarui tampilan keranjang
         function renderCart(cartItems) {
@@ -359,6 +380,32 @@
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
+            // Update User ID display
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUserId = user.uid; // Set currentUserId di sini
+                    userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
+                    
+                    // Mulai mendengarkan perubahan keranjang setelah user ID tersedia
+                    const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
+                    cartItemsRef.onSnapshot((snapshot) => {
+                        const cartItems = [];
+                        snapshot.forEach(doc => {
+                            cartItems.push(doc.data());
+                        });
+                        renderCart(cartItems);
+                    }, (error) => {
+                        console.error("Error getting real-time cart updates:", error);
+                    });
+
+                } else {
+                    userIdDisplay.textContent = `User ID: N/A`;
+                    console.log("cart.html: No user is signed in.");
+                    currentUserId = null;
+                    renderCart([]); // Kosongkan keranjang jika tidak ada user
+                }
+            });
+
             // Kembali ke halaman utama
             backToHomeButton.addEventListener('click', () => {
                 window.location.href = 'apl05.html'; // Ganti dengan URL halaman utama Anda
@@ -395,35 +442,6 @@
                             await removeItemFromCart(productId, bumbu, kacang);
                         }
                     }
-                }
-            });
-
-            // Autentikasi anonim dan dengarkan perubahan keranjang
-            auth.signInAnonymously().then(() => {
-                console.log("Signed in anonymously.");
-            }).catch((error) => {
-                console.error("Error signing in anonymously:", error);
-            });
-
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUserId = user.uid;
-                    const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
-
-                    // Real-time listener untuk keranjang
-                    cartItemsRef.onSnapshot((snapshot) => {
-                        const cartItems = [];
-                        snapshot.forEach(doc => {
-                            cartItems.push(doc.data());
-                        });
-                        renderCart(cartItems);
-                    }, (error) => {
-                        console.error("Error getting real-time cart updates:", error);
-                    });
-                } else {
-                    console.log("No user is signed in.");
-                    currentUserId = null;
-                    renderCart([]); // Kosongkan keranjang jika tidak ada user
                 }
             });
         });
