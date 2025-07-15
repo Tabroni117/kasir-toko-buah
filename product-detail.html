@@ -194,6 +194,19 @@
             transform: translateY(50px); /* Turun pelan sambil fade */
             pointer-events: none;
         }
+
+        /* User ID Display for Debugging */
+        #userIdDisplay {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 5px;
+            z-index: 101;
+        }
     </style>
 </head>
 
@@ -205,6 +218,7 @@
                 <div class="header-title">Detail Produk</div>
             </div>
             <div id="swipeBarClose" style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px; cursor: pointer;"></div>
+            <div id="userIdDisplay">Loading User ID...</div> <!-- User ID Display -->
         </header>
 
         <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
@@ -265,6 +279,7 @@
 
         let selectedProduct = null;
         let productQuantityInput = null; // Akan diinisialisasi di DOMContentLoaded
+        const userIdDisplay = document.getElementById('userIdDisplay');
 
         // Fungsi untuk animasi "terbang ke keranjang"
         function lemparKeKeranjang(imgSrc) {
@@ -331,7 +346,7 @@
 
                 // Ambil total keranjang setelah update
                 const itemsCollectionRef = db.collection('carts').doc(userId).collection('items');
-                const snapshot = await itemsCollectionRef.get(); // Menggunakan .get() untuk snapshot sekali
+                const snapshot = await itemsCollectionRef.get();
                 let totalItem = 0;
                 let totalPrice = 0;
 
@@ -354,6 +369,23 @@
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
 
+            // --- Autentikasi Anonim dan Update User ID Display ---
+            auth.signInAnonymously().then(() => {
+                console.log("productdetail: Signed in anonymously.");
+            }).catch((error) => {
+                console.error("productdetail: Error signing in anonymously:", error);
+            });
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
+                } else {
+                    userIdDisplay.textContent = `User ID: N/A`;
+                }
+            });
+            // --- End Autentikasi Anonim dan Update User ID Display ---
+
+
             // Tangani klik pada varian
             document.querySelectorAll('.variant-options').forEach(group => {
                 const variantType = group.dataset.variant;
@@ -362,27 +394,27 @@
                         group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
                         option.classList.add('active');
                         selectedVariants[variantType] = option.dataset.value;
+                        
                         // Ketika varian berubah, update quantity dari Firestore
-                        auth.onAuthStateChanged(async user => {
-                            if (user) {
-                                const userId = user.uid;
-                                const productId = selectedProduct.id;
-                                const newCustomKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
-                                const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${newCustomKey}`);
-                                try {
-                                    const d = await cartDocRef.get();
-                                    if (d.exists) {
-                                        const data = d.data();
-                                        productQuantityInput.value = data.quantity || 1;
-                                    } else {
-                                        productQuantityInput.value = 1;
-                                    }
-                                } catch (error) {
-                                    console.error("❌ Gagal ambil data Firestore setelah ganti varian:", error);
+                        // Pastikan user dan selectedProduct sudah ada sebelum memanggil
+                        if (auth.currentUser && selectedProduct) {
+                            const userId = auth.currentUser.uid;
+                            const productId = selectedProduct.id;
+                            const newCustomKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
+                            const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${newCustomKey}`);
+                            
+                            cartDocRef.get().then(d => {
+                                if (d.exists) {
+                                    const data = d.data();
+                                    productQuantityInput.value = data.quantity || 1;
+                                } else {
                                     productQuantityInput.value = 1;
                                 }
-                            }
-                        });
+                            }).catch(error => {
+                                console.error("❌ Gagal ambil data Firestore setelah ganti varian:", error);
+                                productQuantityInput.value = 1;
+                            });
+                        }
                     });
                 });
             });
@@ -399,8 +431,9 @@
                 const increaseButton = document.getElementById('increaseQuantity');
 
                 // Ambil quantity awal dari Firestore saat pertama kali halaman dimuat
+                // Pastikan user dan selectedProduct sudah ada sebelum memanggil
                 auth.onAuthStateChanged(async user => {
-                    if (user) {
+                    if (user && selectedProduct) {
                         const userId = user.uid;
                         const productId = selectedProduct.id;
                         const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
