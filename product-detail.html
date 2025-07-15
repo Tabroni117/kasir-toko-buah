@@ -278,17 +278,33 @@
   border: 1px solid #15803d;
   font-weight: bold;
 }
+        .product-title-detail {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #111;
+  text-align: left;
+  padding-left: 0;
+  margin-left: 0;
+}
 </style> 
   
 </head>
 
 <body>
-    <div class="container">
-        <header class="header-detail">
-         <i class="fas fa-arrow-left back-button" onclick="kirimPermintaanTutup()"></i>
-            
-            <div class="header-title">Detail Produk</div>
-        </header>
+  <div class="container">
+    <header class="header-detail" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #00C853, #64DD17); color: white; padding: 12px 16px;">
+      
+      <!-- Kiri: Tombol kembali + Judul -->
+      <div style="display: flex; align-items: center;">
+        <i class="fas fa-arrow-left back-button" id="btnBackDetail" style="font-size: 20px; margin-right: 10px; cursor: pointer;"></i>
+        <div class="header-title" style="font-size: 16px; font-weight: bold;">Detail Produk</div>
+      </div>
+      
+      <!-- Kanan: Swipe Bar -->
+      <div style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px;"></div>
+
+    </header>
         
         <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
         <div class="product-info-detail">
@@ -354,28 +370,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const decreaseButton = document.getElementById('decreaseQuantity');
         const increaseButton = document.getElementById('increaseQuantity');
 
-        function updateCart(quantity) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const index = cart.findIndex(item =>
-                item.id === selectedProduct.id &&
-                JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
-            );
+  function updateCart(quantity) {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const index = cart.findIndex(item =>
+        item.id === selectedProduct.id &&
+        JSON.stringify(item.custom) === JSON.stringify(selectedVariants)
+    );
 
-            if (index > -1) {
-                cart[index].quantity = quantity;
-            } else {
-                cart.push({
-                    id: selectedProduct.id,
-                    name: selectedProduct.name,
-                    price: selectedProduct.price,
-                    image: selectedProduct.image,
-                    quantity: quantity,
-                    custom: { ...selectedVariants }
-                });
-            }
-            localStorage.setItem('cart', JSON.stringify(cart));
-            window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
-        }
+    if (index > -1) {
+        cart[index].quantity = quantity;
+    } else {
+        cart.push({
+            id: selectedProduct.id,
+            name: selectedProduct.name,
+            price: selectedProduct.price,
+            image: selectedProduct.image,
+            quantity: quantity,
+            custom: { ...selectedVariants }
+        });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    // ✅ Untuk tombol pesan (SUDAH ADA)
+    window.parent.postMessage({ action: 'keranjangUpdate' }, '*');
+
+    // ✅ Untuk summary utama & summary popup
+    const totalItem = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPrice = cart.reduce((sum, item) => sum + item.quantity * item.price, 0);
+
+    window.parent.postMessage({
+        type: 'cartUpdate',
+        itemCount: totalItem,
+        totalPrice: totalPrice
+    }, '*');
+}
 
         decreaseButton.addEventListener('click', () => {
             let qty = parseInt(productQuantityInput.value);
@@ -386,13 +415,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-       increaseButton.addEventListener('click', () => {
-    let qty = parseInt(productQuantityInput.value);
-    qty++;
-    productQuantityInput.value = qty;
-    updateCart(qty);
-    lemparKeKeranjang(selectedProduct.image); // ✅ animasi hanya saat tambah
-});
+        increaseButton.addEventListener('click', () => {
+            let qty = parseInt(productQuantityInput.value);
+            qty++;
+            productQuantityInput.value = qty;
+            updateCart(qty);
+            lemparKeKeranjang(selectedProduct.image); // ✅ animasi saat tambah
+        });
+
     } else {
         alert('Produk tidak ditemukan. Kembali ke halaman utama.');
         window.location.href = 'apl05.html';
@@ -400,44 +430,69 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-function kirimPermintaanTutup() {
-    // 👉 Tambahkan flag agar halaman apl05.html reload otomatis setelah popup ditutup
-    sessionStorage.setItem('reloadAfterPopup', 'yes');
+function lemparKeKeranjang(imgSrc) {
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.classList.add('fly-to-cart');
 
-    // 👉 Kirim perintah ke apl05.html untuk menutup popup
-    window.parent.postMessage({ type: 'closePopup' }, '*');
-}
+    const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+    const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
 
-       function lemparKeKeranjang(imgSrc) {
-  const img = document.createElement('img');
-  img.src = imgSrc;
-  img.classList.add('fly-to-cart');
+    img.style.left = `${startRect.left}px`;
+    img.style.top = `${startRect.top}px`;
+    img.style.opacity = 1;
 
-  // Awal: posisi tombol + (ambil posisi tombol atau produk)
-  const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+    document.body.appendChild(img);
 
-  // Target: posisi bridge keranjang
-  const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
+    requestAnimationFrame(() => {
+        img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
+        img.style.opacity = 0;
+    });
 
-  // Posisi awal
-  img.style.left = `${startRect.left}px`;
-  img.style.top = `${startRect.top}px`;
-  img.style.opacity = 1;
-
-  document.body.appendChild(img);
-
-  // Trigger animasi
-  requestAnimationFrame(() => {
-    img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
-    img.style.opacity = 0;
-  });
-
-  // Hapus elemen setelah animasi selesai
-  setTimeout(() => {
-    document.body.removeChild(img);
-  }, 700);
+    setTimeout(() => {
+        document.body.removeChild(img);
+    }, 700);
 }
        
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnBackDetail = document.getElementById('btnBackDetail');
+
+    if (btnBackDetail) {
+      btnBackDetail.addEventListener('click', () => {
+        // Tutup popup via postMessage ke apl05.html
+        window.parent.postMessage({ type: 'closePopup' }, '*');
+      });
+    }
+  });
+
+// Geser ke bawah untuk menutup popup
+let startY = 0;
+let isDragging = false;
+
+window.addEventListener('touchstart', function (e) {
+  startY = e.touches[0].clientY;
+  isDragging = true;
+});
+
+window.addEventListener('touchmove', function (e) {
+  if (!isDragging) return;
+  const currentY = e.touches[0].clientY;
+  const deltaY = currentY - startY;
+
+  if (deltaY > 150) {
+    window.parent.postMessage({ type: 'closePopup' }, '*');
+    isDragging = false;
+  }
+});
+
+window.addEventListener('touchend', function () {
+  isDragging = false;
+});
+
+
+       
+
 </script>
 </body>
 </html>
