@@ -515,47 +515,48 @@
         }
         #floatingCartBar {
             position: fixed;
-            bottom: 50px; /* Disesuaikan: Tepat di atas bottom-nav (tinggi 50px) */
-            left: 0;
-            right: 0;
+            bottom: 50px; /* Tepat di atas bottom-nav (tinggi 50px) */
+            left: 50%; /* Pusatkan secara horizontal */
+            transform: translateX(-50%); /* Kompensasi untuk pusatkan */
+            max-width: 480px; /* Batasi lebar sesuai container */
+            width: 100%; /* Ambil lebar penuh dalam max-width */
             z-index: 9999; /* Lebih tinggi dari bottom-nav */
-            background: #fff;
+            background: #22c55e; /* Hijau sesuai permintaan */
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px 16px;
-            border-top: 1px solid #ccc;
+            border-top: 1px solid #16a34a; /* Border hijau lebih gelap */
             box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
             height: 60px; /* Estimasi tinggi floating bar */
+            border-top-left-radius: 10px; /* Tambah border radius */
+            border-top-right-radius: 10px; /* Tambah border radius */
         }
 
-        .cart-button {
-            position: relative;
-            font-size: 20px;
-            cursor: pointer;
-            color: #333;
+        #floatingCartBar .cart-button {
+            color: white; /* Icon keranjang putih */
         }
 
-        .cart-count {
-            position: absolute;
-            top: -6px;
-            right: -10px;
-            background-color: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 12px;
+        #floatingCartBar .cart-count {
+            background-color: #fde047; /* Badge kuning */
+            color: black; /* Teks badge hitam */
+            font-weight: bold;
         }
 
-        .checkout-button {
-            background-color: orange;
-            color: white;
+        #floatingCartBar .checkout-button {
+            background-color: #fde047; /* Tombol checkout kuning */
+            color: black; /* Teks tombol checkout hitam */
             padding: 8px 16px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
+        #floatingCartBar .checkout-button:hover {
+            background-color: #facc15; /* Hover kuning sedikit lebih gelap */
+        }
+
 
         #popupCheckoutBar {
             display: flex;
@@ -1018,17 +1019,16 @@
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
-            // Pastikan popupCheckoutBar terlihat saat popup dibuka
-            popupCheckoutBar.style.display = 'flex'; // Set display ke flex
-            // Panggil updateCartDisplay() untuk memastikan data di popupCheckoutBar terbaru
-            updateCartDisplay();
+            popupCheckoutBar.style.display = 'flex'; // Pastikan popupCheckoutBar terlihat
+            floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat popup muncul
+            updateCartDisplay(); // Panggil untuk memastikan data di popupCheckoutBar terbaru
         }
 
         function tutupPopup() {
             popupPanel.classList.remove('show');
             popupFrame.src = ''; // Bersihkan src iframe
-            // Sembunyikan popupCheckoutBar saat popup ditutup
-            popupCheckoutBar.style.display = 'none'; // Set display ke none
+            popupCheckoutBar.style.display = 'none'; // Sembunyikan popupCheckoutBar
+            updateCartDisplay(); // Panggil untuk mengevaluasi kembali tampilan floatingCartBar
         }
 
         // --- Listener untuk Tombol Checkout di popupCheckoutBar ---
@@ -1069,7 +1069,12 @@
 
                     // Update floating cart bar
                     barCartCount.textContent = totalItems;
-                    floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
+                    // Hanya tampilkan floatingCartBar jika popup tidak sedang aktif
+                    if (!popupPanel.classList.contains('show')) {
+                        floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
+                    } else {
+                        floatingCartBar.style.display = 'none'; // Pastikan tersembunyi jika popup aktif
+                    }
 
                     // Update popup checkout bar (bridge)
                     bridgeItemCount.textContent = `${totalItems} item`;
