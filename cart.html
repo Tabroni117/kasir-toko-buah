@@ -190,6 +190,11 @@
             background: linear-gradient(135deg, #00B04C, #5BB914);
         }
 
+        .checkout-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
         .empty-cart-message {
             text-align: center;
             padding: 50px 20px;
@@ -281,11 +286,11 @@
 
             if (cartItems.length === 0) {
                 emptyCartMessage.style.display = 'block';
-                checkoutButton.disabled = true;
+                checkoutButton.disabled = true; // Nonaktifkan tombol checkout jika keranjang kosong
                 clearCartButton.disabled = true;
             } else {
                 emptyCartMessage.style.display = 'none';
-                checkoutButton.disabled = false;
+                checkoutButton.disabled = false; // Aktifkan tombol checkout jika ada item
                 clearCartButton.disabled = false;
 
                 cartItems.forEach(item => {
@@ -360,7 +365,8 @@
         async function clearAllCartItems() {
             if (!currentUserId) return;
 
-            if (confirm("Apakah Anda yakin ingin mengosongkan seluruh keranjang?")) { // Menggunakan confirm untuk kesederhanaan
+            // Ganti alert dengan modal kustom jika tidak ingin menggunakan alert()
+            if (confirm("Apakah Anda yakin ingin mengosongkan seluruh keranjang?")) {
                 const itemsCollectionRef = db.collection('carts').doc(currentUserId).collection('items');
                 const snapshot = await itemsCollectionRef.get();
                 const batch = db.batch();
@@ -378,9 +384,34 @@
             }
         }
 
+        // Fungsi untuk melanjutkan ke pembayaran
+        async function proceedToCheckout() {
+            if (!currentUserId) {
+                alert("Anda perlu login untuk melanjutkan pembayaran.");
+                return;
+            }
+            
+            const totalItemsInCart = parseInt(totalItemCount.textContent);
+            if (totalItemsInCart === 0) {
+                alert("Keranjang Anda kosong. Tambahkan produk terlebih dahulu.");
+                return;
+            }
+
+            // Di sini Anda bisa menambahkan logika untuk:
+            // 1. Membuat dokumen pesanan baru di koleksi 'orders' Firestore
+            // 2. Mengarahkan pengguna ke halaman pembayaran yang sebenarnya
+            // 3. Menampilkan modal konfirmasi pembayaran
+
+            // Contoh sederhana: Menampilkan alert dan mengarahkan ke halaman pembayaran placeholder
+            alert("Melanjutkan ke pembayaran! Total: " + totalPriceDisplay.textContent);
+            // Anda bisa mengarahkan ke halaman pembayaran yang sebenarnya, contoh:
+            window.location.href = 'payment.html'; // Ganti dengan URL halaman pembayaran Anda
+        }
+
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            // Update User ID display
+            // Update User ID display dan mulai listener keranjang setelah user login
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUserId = user.uid; // Set currentUserId di sini
@@ -414,6 +445,9 @@
             // Event untuk tombol Bersihkan Keranjang
             clearCartButton.addEventListener('click', clearAllCartItems);
 
+            // Event untuk tombol Lanjutkan ke Pembayaran
+            checkoutButton.addEventListener('click', proceedToCheckout);
+
             // Event delegation untuk tombol +/- dan hapus
             cartItemsContainer.addEventListener('click', async (event) => {
                 const target = event.target;
@@ -438,7 +472,8 @@
                             await removeItemFromCart(productId, bumbu, kacang);
                         }
                     } else if (parentButton.classList.contains('remove-item-button')) {
-                        if (confirm("Apakah Anda yakin ingin menghapus item ini dari keranjang?")) { // Menggunakan confirm untuk kesederhanaan
+                        // Ganti alert dengan modal kustom jika tidak ingin menggunakan alert()
+                        if (confirm("Apakah Anda yakin ingin menghapus item ini dari keranjang?")) {
                             await removeItemFromCart(productId, bumbu, kacang);
                         }
                     }
