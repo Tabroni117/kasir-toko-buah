@@ -81,7 +81,6 @@
         .app-tagline {
             font-size: 12px;
             font-style: italic;
-            margin-bottom: 0;
             color: rgba(255,255,255,0.9);
         }
 
@@ -372,45 +371,27 @@
             transform: scale(1.05);
         }
 
-        .quantity-control {
-            display: flex;
-            align-items: center;
+        /* Quantity display when item is in cart */
+        .quantity-display-only {
             background-color: #22c55e;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .quantity-button-card {
-            background-color: #16a34a; /* Darker green */
             color: white;
-            border: none;
-            padding: 6px 10px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .quantity-button-card:hover {
-            background-color: #0c7a38; /* Even darker green on hover */
-        }
-
-        .quantity-input-card {
-            width: 30px;
-            text-align: center;
-            border: none;
-            background-color: white; /* White background for input */
-            color: #333;
+            border-radius: 20px;
+            padding: 6px 12px; /* Adjusted padding for better look */
             font-size: 14px;
             font-weight: bold;
-            padding: 6px 0;
-            -moz-appearance: textfield; /* Hide arrows in Firefox */
+            text-align: center;
+            min-width: 36px; /* Ensure it's at least as wide as the plus button */
+            display: flex; /* Use flex to center content */
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer; /* Make it clickable */
+            transition: background-color 0.2s, transform 0.2s;
         }
-        /* Hide arrows in Chrome, Safari, Edge */
-        .quantity-input-card::-webkit-outer-spin-button,
-        .quantity-input-card::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+
+        .quantity-display-only:hover {
+            background-color: #16a34a;
+            transform: scale(1.05);
         }
 
         /* Bottom Navigation */
@@ -595,10 +576,10 @@
             align-items: center;
             padding: 10px 14px;
             background-color: #22c55e; /* bright green */
+            color: white;
             border-top: 1px solid #ddd;
             font-size: 16px;
             font-weight: 500;
-            color: white;
             position: relative;
             z-index: 10;
         }
@@ -841,58 +822,6 @@
             }
         }
 
-        // --- Function to Update Cart Item from Menu List ---
-        async function updateCartItemFromList(productId, change) {
-            if (!currentUserId) {
-                alert("Anda harus login untuk menambahkan item ke keranjang.");
-                return;
-            }
-
-            // Use default variants if added from the main menu list
-            const defaultBumbu = "Pedas";
-            const defaultKacang = "Dengan Kacang";
-            // Create a unique key for the cart item based on product ID and default variants
-            const customKey = `${defaultBumbu}_${defaultKacang}`;
-            const cartItemRef = cartsCollection.doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
-
-            try {
-                const doc = await cartItemRef.get();
-                let currentQuantity = 0;
-                if (doc.exists) {
-                    currentQuantity = doc.data().quantity;
-                }
-
-                let newQuantity = currentQuantity + change;
-
-                if (newQuantity > 0) {
-                    // Fetch product details from 'buah' collection to ensure price etc.
-                    const productDoc = await menuCollection.doc(productId).get();
-                    if (!productDoc.exists) {
-                        console.error("Product not found in 'buah' collection:", productId);
-                        alert("Produk tidak tersedia.");
-                        return;
-                    }
-                    const productData = productDoc.data();
-
-                    await cartItemRef.set({
-                        id: productId,
-                        name: productData.nama,
-                        image: productData.imageUrl,
-                        price: productData.harga,
-                        custom: { bumbu: defaultBumbu, kacang: defaultKacang },
-                        quantity: newQuantity
-                    }, { merge: true });
-                } else {
-                    // If newQuantity is 0 or less, delete the item from cart
-                    await cartItemRef.delete();
-                }
-                // updateCartDisplay will be called by the onSnapshot listener
-            } catch (error) {
-                console.error("Error updating cart item from list:", error);
-                alert("Gagal memperbarui keranjang. Silakan coba lagi.");
-            }
-        }
-
         // --- Function to Load and Display Menu from Firebase ---
         async function renderMenuItems() {
             menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';    
@@ -936,17 +865,14 @@
                             <!-- NEW: Add to Cart/Quantity Control -->
                             <div class="add-to-cart-control">
                                 <button class="add-button" data-product-id="${productForDetail.id}">+</button>
-                                <div class="quantity-control" style="display: none;">
-                                    <button class="quantity-button-card decrease-qty-card" data-product-id="${productForDetail.id}">-</button>
-                                    <input type="number" class="quantity-input-card" value="0" readonly>
-                                    <button class="quantity-button-card increase-qty-card" data-product-id="${productForDetail.id}">+</button>
-                                </div>
+                                <div class="quantity-display-only" style="display: none;" data-product-id="${productForDetail.id}">0</div>
                             </div>
                         `;
                         
-                        // Event listener to open product detail (click anywhere on the card except control buttons)
+                        // Event listener to open product detail (click anywhere on the card)
                         card.addEventListener('click', (event) => {
-                            // Ensure the click is not from a button inside add-to-cart-control
+                            // Check if the click originated from within the add-to-cart-control
+                            // If not, proceed to product detail page
                             if (!event.target.closest('.add-to-cart-control')) {
                                 sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
                                 bukaPopup('product-detail.html');
@@ -955,14 +881,18 @@
 
                         menuList.appendChild(card);
 
-                        // Attach event listeners for the new buttons
+                        // Attach event listeners for the new buttons/display to redirect to product detail
                         const addButton = card.querySelector('.add-button');
-                        const decreaseButton = card.querySelector('.decrease-qty-card');
-                        const increaseButton = card.querySelector('.increase-qty-card');
+                        const quantityDisplayOnly = card.querySelector('.quantity-display-only');
 
-                        addButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, 1));
-                        decreaseButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, -1));
-                        increaseButton.addEventListener('click', () => updateCartItemFromList(productForDetail.id, 1));
+                        // Function to handle redirection to product detail page
+                        const redirectToProductDetail = () => {
+                            sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
+                            bukaPopup('product-detail.html');
+                        };
+
+                        addButton.addEventListener('click', redirectToProductDetail);
+                        quantityDisplayOnly.addEventListener('click', redirectToProductDetail); // Now the number is clickable
                     });
                 }
             } catch (error) {
@@ -1061,7 +991,7 @@
             window.location.href = 'checkout.html';
         });
 
-        // --- Function to Update Cart Display from Firebase ---
+        // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
         function updateCartDisplay() {
             if (!currentUserId) {
                 console.log("User ID not available, cannot update cart display.");
@@ -1073,63 +1003,67 @@
 
             // Real-time listener for user's cart
             cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
-                let totalItems = 0;
-                let totalPrice = 0;
-                const cartItemsMap = new Map(); // To store cart items by productId_customKey
+                let totalItemsInCart = 0;
+                let totalPriceInCart = 0;
+                const productTotalQuantities = new Map(); // Map to store total quantity per product ID
 
                 snapshot.forEach(doc => {
                     const item = doc.data();
-                    // Create a unique key for the cart item based on product ID and custom variants
-                    const customKey = `${item.custom.bumbu}_${item.custom.kacang}`;
-                    cartItemsMap.set(`${item.id}_${customKey}`, item); // Store item with unique key
-                    totalItems += item.quantity;
-                    totalPrice += item.price * item.quantity;
+                    const productId = item.id;
+                    const currentTotal = productTotalQuantities.get(productId) || 0;
+                    productTotalQuantities.set(productId, currentTotal + item.quantity);
+
+                    totalItemsInCart += item.quantity;
+                    totalPriceInCart += item.price * item.quantity;
                 });
 
+                console.log("--- Cart Update Summary ---");
+                console.log("Total Items in Cart (all products):", totalItemsInCart);
+                console.log("Total Price in Cart:", formatRupiah(totalPriceInCart));
+                console.log("Quantities per Product ID:", Object.fromEntries(productTotalQuantities));
+                console.log("---------------------------");
+
+
                 // Update badge in bottom navigation
-                cartBadge.textContent = totalItems;
-                cartBadge.style.display = totalItems > 0 ? 'block' : 'none';
+                cartBadge.textContent = totalItemsInCart;
+                cartBadge.style.display = totalItemsInCart > 0 ? 'block' : 'none';
 
                 // Update floating cart bar
-                barItemCountText.textContent = `${totalItems} item`; // Item count text
-                barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`; // Total price text
+                barItemCountText.textContent = `${totalItemsInCart} item`; // Item count text
+                barTotalPrice.textContent = `Total: ${formatRupiah(totalPriceInCart)}`; // Total price text
 
                 // Only show floatingCartBar if popup is not active
                 if (!popupPanel.classList.contains('show')) {
-                    floatingCartBar.style.display = totalItems > 0 ? 'flex' : 'none';
+                    floatingCartBar.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
                 } else {
                     floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
                 }
 
                 // Update popup checkout bar (bridge)
-                bridgeItemCount.textContent = `${totalItems} item`;
-                bridgeTotal.textContent = formatRupiah(totalPrice);
+                bridgeItemCount.textContent = `${totalItemsInCart} item`;
+                bridgeTotal.textContent = formatRupiah(totalPriceInCart);
                 // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
                 // but ensure its content is updated even if it's currently hidden
-                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItems > 0 ? 'flex' : 'none';
-
-                console.log(`Cart updated: ${totalItems} items, Total: ${formatRupiah(totalPrice)}`);
+                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItemsInCart > 0 ? 'flex' : 'none';
 
                 // Update quantity display on each menu card
                 document.querySelectorAll('.restaurant-card').forEach(card => {
                     const productId = card.dataset.productId;
-                    const defaultBumbu = "Pedas"; // Default variant for buttons in the menu list
-                    const defaultKacang = "Dengan Kacang";
-                    const customKey = `${defaultBumbu}_${defaultKacang}`;
-                    const cartItem = cartItemsMap.get(`${productId}_${customKey}`);
+                    const totalQuantityForProduct = productTotalQuantities.get(productId) || 0; // Get the aggregated quantity
 
                     const addButton = card.querySelector('.add-button');
-                    const quantityControl = card.querySelector('.quantity-control');
-                    const quantityInput = card.querySelector('.quantity-input-card');
+                    const quantityDisplayOnly = card.querySelector('.quantity-display-only');
 
-                    if (cartItem && cartItem.quantity > 0) {
+                    if (totalQuantityForProduct > 0) { // Check against total quantity
                         addButton.style.display = 'none';
-                        quantityControl.style.display = 'flex';
-                        quantityInput.value = cartItem.quantity;
+                        quantityDisplayOnly.style.display = 'flex'; // Show the quantity number
+                        quantityDisplayOnly.textContent = totalQuantityForProduct; // Display the total aggregated quantity
+                        console.log(`Product ${productId}: Displaying total quantity ${totalQuantityForProduct}`);
                     } else {
-                        addButton.style.display = 'flex';
-                        quantityControl.style.display = 'none';
-                        quantityInput.value = 0;
+                        addButton.style.display = 'flex'; // Show the add button
+                        quantityDisplayOnly.style.display = 'none'; // Hide the quantity number
+                        quantityDisplayOnly.textContent = '0'; // Reset to 0 if not in cart
+                        console.log(`Product ${productId}: Displaying '+' button (quantity 0)`);
                     }
                 });
 
