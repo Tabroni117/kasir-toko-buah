@@ -429,13 +429,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        increaseButton.addEventListener('click', () => {
-            let qty = parseInt(productQuantityInput.value);
-            qty++;
-            productQuantityInput.value = qty;
-            updateCart(qty);
-            lemparKeKeranjang(selectedProduct.image); // ✅ animasi saat tambah
-        });
+        iincreaseButton.addEventListener('click', () => {
+    let qty = parseInt(productQuantityInput.value);
+    qty++;
+    productQuantityInput.value = qty;
+
+    updateCart(qty); // localStorage dan summary
+    updateCartInFirestore(selectedProduct.id, qty, selectedVariants); // ✅ Firestore
+    lemparKeKeranjang(selectedProduct.image);
+});
 
     } else {
         alert('Produk tidak ditemukan. Kembali ke halaman utama.');
@@ -508,7 +510,31 @@ window.addEventListener('touchstart', function (e) {
     }
   });
 
-       
+       async function updateCartInFirestore(productId, quantity, variants) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    const uid = user.uid;
+    const variantKey = Object.values(variants).join('_'); // contoh: "Pedas_DenganKacang"
+    const docId = `${productId}_${variantKey}`;
+
+    try {
+        const cartRef = firebase.firestore()
+            .collection('carts')
+            .doc(uid)
+            .collection('items')
+            .doc(docId);
+
+        if (quantity > 0) {
+            await cartRef.set({ quantity });
+        } else {
+            // Jika quantity = 0, hapus dari keranjang
+            await cartRef.delete();
+        }
+    } catch (error) {
+        console.error("❌ Gagal update keranjang ke Firestore:", error);
+    }
+}
 
 </script>
 </body>
