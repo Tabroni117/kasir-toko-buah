@@ -1,649 +1,811 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Beranda Utama Rujak Buah Indonesia (Penjual)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-
-    <!-- Firebase SDK WAJIB ditaruh di sini -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <!-- Firebase SDKs (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* (Gaya CSS Anda yang sama, tidak ada perubahan di sini) */
-        body {
-            font-family: sans-serif;
+        /* General Styling */
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f0f2f5;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: calc(100% - 40px);
-            background: linear-gradient(135deg, #4CAF50, #2E8B57);
-            color: white;
-            padding: 20px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            z-index: 1000;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 17px;
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-        }
-
-        .leaf-icon {
-            margin-right: 5px;
-            font-size: 20px;
-        }
-
-        .app-description {
-            font-size: 14px;
-            font-style: italic;
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
         }
 
         .container {
-            width: 90%;
-            max-width: 1200px;
-            margin: 80px auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            padding-bottom: 60px;
-            animation: fadeIn 0.8s ease;
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 100px; /* Space for payment button */
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
 
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(10px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-
-        .main-info {
-            background-color: #E8F5E9;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
+        /* Header Styling */
+        .header-detail {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 12px 16px;
             display: flex;
-            justify-content: space-around;
-            gap: 20px;
-        }
-
-        .info-box {
-            text-align: center;
-            flex: 1;
-            color: #388E3C;
-        }
-
-        .info-box .value {
-            font-size: 36px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .info-box .label {
-            font-size: 14px;
-            color: #66BB6A;
-        }
-
-        .outlet-score {
-            background-color: #C8E6C9;
-            padding: 15px;
-            margin: 0 20px 20px 20px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            color: #388E3C;
-            font-weight: bold;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            padding: 20px;
-        }
-
-        .menu-item {
-            text-align: center;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #F1F8E9;
-            color: #388E3C;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            transition: background-color 0.3s;
-        }
-
-        .menu-item:hover {
-            background-color: #D0F0C0;
+        .back-button {
+            color: white;
+            font-size: 24px;
+            margin-right: 15px;
             cursor: pointer;
         }
 
-        .menu-item .icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-
-        .menu-item .label {
-            font-size: 14px;
-        }
-
-        .special-feature {
-            background-color: #A5D6A7;
-            color: white;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            text-align: center;
+        .header-title {
             font-size: 18px;
             font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .special-feature:hover {
-            background-color: #81C784;
-        }
-
-        .navbar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #388E3C;
-            color: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            padding: 4px 20px;
-            z-index: 1000;
-        }
-
-        .nav-item {
+            flex-grow: 1;
             text-align: center;
-            padding: 5px;
-            transition: background-color 0.3s;
         }
 
-        .nav-item:hover {
-            background-color: #2E7D32;
-            cursor: pointer;
+        /* Checkout Section */
+        .checkout-section {
+            padding: 16px;
+            margin-top: 10px;
+            background-color: #fff;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        .nav-item .icon {
-            font-size: 22px;
+        .section-title-checkout {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #00C853;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
             margin-bottom: 5px;
-        }
-
-        .nav-item .label {
-            font-size: 10px;
-        }
-
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding-right: 12px;
-        }
-
-        .logout-button {
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: 1px solid white;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
             font-size: 13px;
-            margin-left: 10px;
-            margin-right: 10px;
-            backdrop-filter: blur(3px);
+            color: #555;
+            font-weight: 500;
         }
-        .logout-button i {
-            font-size: 14px
-        }
-        .spinner-container {
+
+        /* GPS Input Group */
+        .input-with-icon {
+            position: relative;
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 80px;
         }
-        .spinner {
-            width: 36px;
-            height: 36px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CD964;
-            border-radius: 50%;
+        .input-with-icon textarea {
+            width: 100%;
+            padding-right: 40px;
+        }
+        .input-with-icon .gps-icon-small {
+            position: absolute;
+            right: 10px;
+            color: #00C853;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .input-with-icon .gps-icon-small.loading {
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
-            0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .berkedip-kuat {
-            animation: kedipHebat 1s infinite;
-            background-color: #00FF00 !important;
-            color: white !important;
+
+        .form-group input[type="text"],
+        .form-group input[type="tel"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #333;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group input[type="tel"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #00C853;
+        }
+
+        /* Payment Methods */
+        .payment-method {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .payment-method:hover {
+            background-color: #f5f5f5;
+        }
+
+        .payment-method input[type="radio"] {
+            margin-right: 10px;
+            accent-color: #00C853;
+        }
+
+        .payment-method label {
+            font-size: 15px;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+
+        .payment-method i {
+            font-size: 20px;
+            color: #00C853;
+        }
+
+        /* Order Summary */
+        .order-summary-checkout {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .summary-total {
             font-weight: bold;
-            border: 2px solid white !important;
-            box-shadow: 0 0 10px #ff5252;
+            font-size: 18px;
+            color: #00C853;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            margin-top: 10px;
         }
 
-        @keyframes kedipHebat {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
-        
-        .fa-sync-alt.spin {
-            animation: rotateRefresh 1s linear infinite;
-        }
-        @keyframes rotateRefresh {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .logout-button:hover {
-            background: rgba(46, 125, 50, 0.9);
+        /* Place Order Button */
+        .place-order-button {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: calc(100% - 32px);
+            position: fixed;
+            bottom: 10px;
+            max-width: 448px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease;
         }
 
-        @media (max-width: 768px) {
-            .menu-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        .place-order-button:hover {
+            background: linear-gradient(135deg, #00B04C, #5BB914);
+        }
+        .place-order-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* User ID Display for Debugging */
+        #userIdDisplay {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 5px;
+            z-index: 101;
+        }
+
+        /* QRIS Box Styling */
+        #qrisBox {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0fff4;
+            border: 2px dashed #00C853;
+            border-radius: 10px;
+        }
+        #qrisBox img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        /* Loading Message */
+        #loadingMessage {
+            text-align: center;
+            padding: 50px 20px;
+            color: #777;
+            font-size: 16px;
+        }
+
+        /* Modal styling (from previous version) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-content h2 {
+            color: #16a34a;
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .modal-content p {
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .modal-content .btn-modal {
+            background-color: #16a34a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .modal-content .btn-modal:hover {
+            background-color: #15803d;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <header class="header-detail">
+            <i class="fas fa-arrow-left back-button" id="backToCart"></i>
+            <div class="header-title">Checkout Pesanan</div>
+            <div id="userIdDisplay">Loading User ID...</div> <!-- User ID Display -->
+        </header>
 
-<div id="loadingOverlay" style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    flex-direction: column;
-    font-family: 'Poppins', sans-serif;
-">
-    <div class="spinner" style="
-        width: 48px;
-        height: 48px;
-        border: 6px solid #e0e0e0;
-        border-top: 6px solid #4CAF50;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 16px;
-    "></div>
-    <div style="font-size: 18px; color: #4CAF50; font-weight: bold;">Memuat Halaman...</div>
-</div>
+        <div class="checkout-section">
+            <h2 class="section-title-checkout">Informasi Pengiriman</h2>
+            <div class="form-group">
+                <label for="fullName">Nama Lengkap</label>
+                <input type="text" id="fullName" placeholder="Masukkan nama lengkap Anda" required>
+            </div>
+            <div class="form-group">
+                <label for="phoneNumber">Nomor Telepon</label>
+                <input type="tel" id="phoneNumber" placeholder="Masukkan nomor telepon" required>
+            </div>
+            <div class="form-group">
+                <label for="deliveryAddress">Alamat Pengiriman</label>
+                <div class="input-with-icon">
+                    <textarea id="deliveryAddress" rows="3" placeholder="Contoh: Jl. Merdeka No. 123" required></textarea>
+                    <i class="fas fa-map-marker-alt gps-icon-small" id="gpsIconCheckout"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Catatan (Opsional)</label>
+                <textarea id="notes" rows="2" placeholder="Contoh: Tanpa kacang, pedas sedang"></textarea>
+            </div>
+        </div>
 
-<div class="header" style="padding: 10px 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <h1 style="margin: 0; font-size: 17px; display: flex; align-items: center;">
-            <i class="fas fa-leaf leaf-icon"></i> RUJAK BUAH INDONESIA
-        </h1>
-        <button class="logout-button" onclick="logout()">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
-        <div id="logoutSpinner" class="spinner-container" style="display: none;">
-            <div class="spinner"></div>
+        <div class="checkout-section">
+            <h2 class="section-title-checkout">Metode Pembayaran</h2>
+            <div class="payment-method">
+                <input type="radio" id="cashOnDelivery" name="paymentMethod" value="COD" checked>
+                <label for="cashOnDelivery">Bayar di Tempat (COD)</label>
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="payment-method">
+                <input type="radio" id="bankTransfer" name="paymentMethod" value="Transfer Bank">
+                <label for="bankTransfer">Transfer Bank</label>
+                <i class="fas fa-university"></i>
+            </div>
+            <div id="bankTransferInfo" style="display: none; margin-top: 10px; padding: 12px; background: #fffbe6; border: 2px solid #ffc107; border-radius: 8px; font-size: 14px;">
+                <strong>Transfer ke:</strong><br>
+                BCA - 1234567890 a.n. Rujak Buah Indonesia<br>
+                BRI - 0987654321 a.n. Rujak Buah Indonesia<br><br>
+                Setelah transfer, konfirmasi pembayaran Anda di halaman "Riwayat".
+            </div>
+            <div class="payment-method">
+                <input type="radio" id="ewallet" name="paymentMethod" value="E-Wallet">
+                <label for="ewallet">E-Wallet (OVO, GoPay, DANA)</label>
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div id="eWalletTypeWrapper" style="display: none; margin-top: 10px;">
+                <label for="eWalletType" style="display: block; margin-bottom: 6px; font-weight: 600; color: #00C853;">
+                    Pilih Jenis E-Wallet:
+                </label>
+                <div style="position: relative; max-width: 260px;">
+                    <select id="eWalletType" style="
+                        width: 100%;
+                        padding: 10px 16px;
+                        padding-left: 44px;
+                        border-radius: 8px;
+                        background-color: #f0fff4;
+                        border: 2px solid #00C853;
+                        font-size: 14px;
+                        color: #222;
+                        font-weight: 600;
+                        appearance: none;
+                        background-image: url('data:image/svg+xml;charset=UTF-8,<svg fill=\'%2300C853\' height=\'20\' viewBox=\'0 0 24 24\' width=\'20\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/></svg>');
+                        background-repeat: no-repeat;
+                        background-position: right 14px center;
+                        background-size: 14px;
+                        box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.1);
+                        transition: all 0.2s ease;
+                    ">
+                        <option value="QRIS" selected>QRIS (Scan Semua E-Wallet)</option>
+                        <option value="OVO">OVO</option>
+                        <option value="DANA">DANA</option>
+                        <option value="GoPay">GoPay</option>
+                        <option value="GoPay">GoPay</option>
+                    </select>
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 12px;
+                        transform: translateY(-50%);
+                        font-size: 18px;
+                        color: #00C853;
+                        pointer-events: none;
+                    " id="eWalletIcon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="checkout-section">
+            <h2 class="section-title-checkout">Ringkasan Pesanan</h2>
+            <div id="loadingMessage">Memuat ringkasan keranjang...</div> <!-- Loading message for summary -->
+            <div id="checkoutContent" style="display: none;">
+                <!-- Order items list is removed as per new design -->
+                <div class="order-summary-checkout">
+                    <div class="summary-row">
+                        <span>Total Belanja (<span id="itemCount">0</span> item)</span>
+                        <span id="subtotalCheckout">Rp 0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Biaya Pengiriman</span>
+                        <span id="deliveryFeeCheckout">Rp 0</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total Pembayaran</span>
+                        <span id="totalAmountCheckout">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="qrisBox" style="display: none;"></div> <!-- QRIS box, initially hidden -->
+        <button class="place-order-button" id="placeOrderButton">Buat Pesanan</button>
+    </div>
+
+    <!-- Modal Konfirmasi (Sudah ada di HTML Anda) -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <h2>Pesanan Berhasil Dibuat!</h2>
+            <p>Terima kasih, pesanan Anda telah berhasil dibuat. Kami akan segera memprosesnya.</p>
+            <button class="btn-modal" onclick="redirectToHome()">OK</button>
         </div>
     </div>
-    <div class="app-description">Aplikasi Penjual</div>
-</div>
-    
-<div class="container">
-    <div class="main-info">
-        <div class="info-box">
-            <div class="value" id="totalPenjualan">Rp 0</div>
-            <div class="label">Total Penjualan (Rp)</div>
-        </div>
-        <div class="info-box">
-            <div class="value" id="totalTransaksi">0</div>
-            <div class="label">Total Transaksi</div>
-        </div>
-    </div>
 
-    <div class="outlet-score">
-        <span>Skor Outlet</span>
-        <span>74/100 &#10095;</span>
-    </div>
-
-    <div class="menu-grid">
-        <a href="Qris.html" class="menu-item nav-link">
-            <div class="icon">&#9776;</div>
-            <div class="label">Menu</div>
-        </a>
-        <a href="dashboard_rujak.html" class="menu-item nav-link">
-            <div class="icon">&#x1F4B0;</div>
-            <div class="label">Keuangan</div>
-        </a>
-        <a href="iklan.html" class="menu-item nav-link">
-            <div class="icon">&#128227;</div>
-            <div class="label">Pasang Iklan</div>
-        </a>
-        <a href="pesanan-penjual.html" class="menu-item nav-link">
-            <div class="icon">&#x1F4CA;</div>
-            <div class="label">Id Order</div>
-        </a>
-        <a href="rating.html" class="menu-item nav-link">
-            <div class="icon">&#9733;</div>
-            <div class="label">Rating</div>
-        </a>
-        <a href="penalti.html" class="menu-item nav-link">
-            <div class="icon">&#x1F6A8;</div>
-            <div class="label">Penalti</div>
-        </a>
-        <a href="PRODUK.html" class="menu-item nav-link">
-            <div class="icon">&#127891;</div>
-            <div class="label">Pusat Edukasi</div>
-        </a>
-        <a href="bantuan.html" class="menu-item nav-link">
-            <div class="icon">&#x2753;</div>
-            <div class="label">Pusat Bantuan</div>
-        </a>
-    </div>
-
-    <div id="btnCekPesanan" class="special-feature" onclick="window.location.href='pesanan.html'" style="position: relative;">
-        Lihat / Cek Pesanan Masuk
-        <span id="notifLonceng" style="display: none; position: absolute; top: -6px; right: -6px;">🔔</span>
-    </div>
-</div>
-    
-<div class="navbar">
-    <a href="#" onclick="manualReload()" class="nav-item nav-link">
-        <div class="icon"><i class="fas fa-sync-alt"></i></div>
-        <div class="label">Refresh</div>
-    </a>
-    <a href="notifikasi.html" class="nav-item nav-link">
-        <div class="icon">&#128276;</div>
-        <div class="label">Notifikasi</div>
-    </a>
-    <a href="blankbelumdibuat.html" class="nav-item nav-link">
-        <div class="icon">&#128172;</div>
-        <div class="label">chat</div>
-    </a>
-    <a href="marketing.html" class="nav-item nav-link">
-        <div class="icon">&#128200;</div>
-        <div class="label">Marketing</div>
-    </a>
-</div>
-
-<audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
-
-<script>
-    // --- Konfigurasi Firebase ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-        authDomain: "tokobuahkasir.firebaseapp.com",
-        projectId: "tokobuahkasir",
-        storageBucket: "tokobuahkasir.firebasestorage.app",
-        messagingSenderId: "731011133713",
-        appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-        measurementId: "G-7CPE2DB2BV"
-    };
-
-    // Inisialisasi Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const ordersCollection = db.collection('orders'); // Menggunakan 'orders' sesuai kesepakatan
-    const usersCollection = db.collection('users'); // Untuk cek peran pengguna
-
-    // --- Elemen DOM ---
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const totalPenjualanElement = document.getElementById('totalPenjualan');
-    const totalTransaksiElement = document.getElementById('totalTransaksi');
-    const notifLonceng = document.getElementById("notifLonceng");
-    const btnCekPesanan = document.getElementById("btnCekPesanan");
-    const notifSound = document.getElementById("notifSound");
-    const logoutSpinner = document.getElementById('logoutSpinner');
-
-    // --- Fungsi untuk Logout ---
-    async function logout() {
-        try {
-            logoutSpinner.style.display = 'flex';
-            localStorage.setItem('isLoggingOut', 'true'); // Flag untuk mencegah alert akses ditolak
-
-            await auth.signOut();
-
-            // Bersihkan semua data sesi lokal
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('userUid');
-            localStorage.removeItem('manualReload');
-            localStorage.removeItem('autoReloadCount');
-            localStorage.removeItem('pesananSudahDibuka');
-            // Hapus juga flag pesanan baru jika ada
-            Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('sudahBuka_') || key.startsWith('sudahReloadUntuk_') || key.startsWith('pesananBaruPendingSound') || key.startsWith('acknowledgedOrder_')) {
-                    localStorage.removeItem(key);
-                }
-            });
-
-            setTimeout(() => {
-                logoutSpinner.style.display = 'none';
-                window.location.href = 'index.html'; // Arahkan ke halaman login
-            }, 1000); // Beri waktu spinner tampil sebentar
-        } catch (error) {
-            console.error("Error saat logout:", error);
-            alert('Gagal logout. Coba lagi.');
-            localStorage.removeItem('isLoggingOut');
-            logoutSpinner.style.display = 'none';
+    <!-- Script Checkout -->
+    <script>
+        // Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        
+        // Inisialisasi Firebase (gunakan ini saja, jangan ada inisialisasi ganda)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-    }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    // --- Reload Manual (Disederhanakan) ---
-    function manualReload() {
-        const icon = document.querySelector('.fa-sync-alt');
-        if (icon) icon.classList.add('spin');
-        loadingOverlay.style.display = "flex";
-        setTimeout(() => {
-            location.reload();
-        }, 500);
-    }
+        // Referensi koleksi Firestore
+        const usersCollection = db.collection('users');
+        const ordersCollection = db.collection('pesanan'); // DIGANTI: 'orders' menjadi 'pesanan'
+        const customerHistoryCollection = db.collection('riwayat_customer'); // Koleksi riwayat pesanan customer
 
-    // --- Fungsi untuk Menghitung Statistik Harian ---
-    async function hitungStatistikHarian() {
-        console.log("hitungStatistikHarian: Memulai perhitungan statistik.");
-        const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        // Elemen DOM
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const fullNameInput = document.getElementById('fullName');
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const deliveryAddressInput = document.getElementById('deliveryAddress');
+        const notesInput = document.getElementById('notes');
+        const placeOrderButton = document.getElementById('placeOrderButton');
+        const backToCartButton = document.getElementById('backToCart');
 
-        try {
-            const snapshot = await ordersCollection
-                .where("orderDate", ">=", startOfDay)
-                .where("orderDate", "<=", endOfDay)
-                .get();
+        const loadingMessage = document.getElementById('loadingMessage'); 
+        const checkoutContent = document.getElementById('checkoutContent'); 
+        const itemCountSpan = document.getElementById('itemCount');
+        const subtotalCheckoutSpan = document.getElementById('subtotalCheckout');
+        const deliveryFeeCheckoutSpan = document.getElementById('deliveryFeeCheckout');
+        const totalAmountCheckoutSpan = document.getElementById('totalAmountCheckout');
+        const gpsIconCheckout = document.getElementById('gpsIconCheckout');
 
-            let totalTransaksi = 0;
-            let totalPendapatan = 0;
+        const bankTransferInfo = document.getElementById('bankTransferInfo');
+        const eWalletTypeWrapper = document.getElementById('eWalletTypeWrapper');
+        const eWalletType = document.getElementById("eWalletType");
+        const eWalletIcon = document.getElementById("eWalletIcon");
+        const qrisBox = document.getElementById("qrisBox");
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                // Pastikan status pesanan adalah 'Completed' atau 'Delivered' untuk dihitung sebagai penjualan
-                if (data.totalAmount && (data.status === 'Completed' || data.status === 'Delivered')) {
-                    totalTransaksi++;
-                    totalPendapatan += parseFloat(data.totalAmount);
-                }
-            });
+        // Variabel global
+        const DELIVERY_FEE = 10000;
+        let currentUserId = null;
+        let currentCartItems = []; // Akan diisi dari Firestore
 
-            totalPenjualanElement.innerText = "Rp " + totalPendapatan.toLocaleString('id-ID');
-            totalTransaksiElement.innerText = totalTransaksi.toLocaleString('id-ID');
-            console.log(`hitungStatistikHarian: Total Penjualan Hari Ini: ${totalPendapatan}, Total Transaksi Hari Ini: ${totalTransaksi}`);
-
-        } catch (error) {
-            console.error("❌ Gagal mengambil data statistik harian:", error);
-            totalPenjualanElement.innerText = "Rp Error";
-            totalTransaksiElement.innerText = "Error";
+        // Fungsi format Rupiah
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
         }
-    }
 
-    // --- Fungsi untuk Mendengarkan Pesanan Baru (Real-time) ---
-    function listenForNewOrders() {
-        console.log("listenForNewOrders: Memulai listener pesanan baru.");
-        ordersCollection
-            .where('status', '==', 'Pending') // Hanya dengarkan pesanan dengan status 'Pending'
-            .orderBy("orderDate", "desc") // Urutkan berdasarkan tanggal pesanan terbaru
-            .onSnapshot(snapshot => { // Gunakan onSnapshot tanpa limit untuk melihat semua pending orders
-                console.log("listenForNewOrders: Snapshot diterima.");
-                let newOrdersDetected = false;
-                snapshot.forEach(doc => {
-                    const latestOrderData = doc.data();
-                    const latestOrderId = doc.id;
-                    console.log(`listenForNewOrders: Memeriksa pesanan ID: ${latestOrderId}, Status: ${latestOrderData.status}`);
+        // Fungsi untuk mengambil data profil pengguna dan keranjang dari Firestore
+        async function fetchUserDataAndCartSummary() {
+            loadingMessage.style.display = 'block'; // Tampilkan loading
+            checkoutContent.style.display = 'none'; // Sembunyikan konten utama
+            placeOrderButton.disabled = true; // Nonaktifkan tombol
 
-                    // --- DEBUGGING: NONAKTIFKAN SEMENTARA acknowledgedOrder_ ---
-                    // const isOrderAcknowledged = localStorage.getItem("acknowledgedOrder_" + latestOrderId);
-                    // if (!isOrderAcknowledged) {
-                    //     newOrdersDetected = true;
-                    //     localStorage.setItem("acknowledgedOrder_" + latestOrderId, "true");
-                    //     console.log(`listenForNewOrders: Pesanan baru terdeteksi dan diakui: ${latestOrderId}`);
-                    // }
-                    // --- AKTIFKAN NOTIFIKASI UNTUK SEMUA PENDING ORDER UNTUK DEBUGGING ---
-                    newOrdersDetected = true;
-                    console.log(`listenForNewOrders: DEBUG MODE - Notifikasi aktif untuk semua pending order.`);
-                    // -------------------------------------------------------------------
-                });
-
-                if (newOrdersDetected) {
-                    console.log("listenForNewOrders: Mengaktifkan notifikasi UI dan suara.");
-                    notifLonceng.style.display = "inline";
-                    btnCekPesanan.classList.add("berkedip-kuat");
-
-                    if (notifSound) {
-                        try {
-                            notifSound.currentTime = 0; // Reset audio to start
-                            notifSound.play();
-                            if (navigator.vibrate) {
-                                navigator.vibrate([500, 200, 500, 200, 500]);
-                            }
-                            console.log("listenForNewOrders: Suara notifikasi diputar.");
-                        } catch (e) {
-                            console.warn("listenForNewOrders: Gagal memainkan suara notifikasi otomatis:", e);
-                        }
-                    }
-                } else {
-                    console.log("listenForNewOrders: Tidak ada pesanan pending yang belum diakui, menonaktifkan notifikasi UI.");
-                    notifLonceng.style.display = "none";
-                    btnCekPesanan.classList.remove("berkedip-kuat");
-                    if (notifSound) {
-                        notifSound.pause();
-                        notifSound.currentTime = 0;
-                    }
-                }
-            }, error => {
-                console.error("❌ Error mendengarkan pesanan baru:", error);
-            });
-    }
-
-    // --- Event Listener untuk Tombol Cek Pesanan ---
-    btnCekPesanan.addEventListener("click", async () => {
-        console.log("btnCekPesanan: Tombol 'Lihat Pesanan Masuk' diklik.");
-        if (notifSound) {
-            notifSound.pause();
-            notifSound.currentTime = 0;
-        }
-        notifLonceng.style.display = "none";
-        btnCekPesanan.classList.remove("berkedip-kuat");
-
-        // --- DEBUGGING: AKTIFKAN KEMBALI LOGIKA ACKNOWLEDGED JIKA SUDAH SELESAI DEBUGGING ---
-        // try {
-        //     const snapshot = await ordersCollection.where('status', '==', 'Pending').get();
-        //     snapshot.forEach(doc => {
-        //         localStorage.setItem("acknowledgedOrder_" + doc.id, "true");
-        //     });
-        //     console.log("btnCekPesanan: Semua pesanan pending ditandai sebagai diakui.");
-        // } catch (error) {
-        //     console.error("❌ Error menandai pesanan sebagai diakui:", error);
-        // }
-        // ------------------------------------------------------------------------------------
-
-        window.location.href = 'pesanan.html';
-    });
-
-    // --- Main Logic on DOMContentLoaded ---
-    document.addEventListener("DOMContentLoaded", () => {
-        console.log("DOMContentLoaded: Halaman penjual dimuat.");
-        loadingOverlay.style.display = "none"; // Sembunyikan overlay loading setelah DOM siap
-
-        auth.onAuthStateChanged(user => {
-            console.log("onAuthStateChanged: Status autentikasi berubah.");
-            const isLoggingOut = localStorage.getItem('isLoggingOut');
-
-            if (isLoggingOut) {
-                localStorage.removeItem('isLoggingOut');
-                console.log("onAuthStateChanged: Flag isLoggingOut dihapus.");
-            }
-
-            if (!user) {
-                console.log("onAuthStateChanged: Pengguna tidak login, mengarahkan ke index.html.");
-                alert('Anda harus login untuk mengakses halaman ini.');
-                window.location.href = 'index.html';
+            if (!currentUserId) {
+                loadingMessage.textContent = 'Anda belum login atau User ID tidak tersedia.';
                 return;
             }
 
-            // Ambil peran pengguna dari Firestore
-            db.collection('users').doc(user.uid).get().then(doc => {
-                const userData = doc.data();
-                if (!userData || userData.role !== 'penjual') {
-                    console.log("onAuthStateChanged: Peran pengguna bukan penjual, mengarahkan ke index.html.");
-                    alert('Akses Ditolak: Anda harus login sebagai Penjual untuk mengakses halaman ini.');
-                    window.location.href = 'index.html';
-                    return;
+            try {
+                // 1. Ambil data profil pengguna
+                const userDoc = await usersCollection.doc(currentUserId).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    fullNameInput.value = userData.fullName || '';
+                    phoneNumberInput.value = userData.phoneNumber || '';
+                    deliveryAddressInput.value = userData.address || '';
+                } else {
+                    console.warn("Data profil pengguna tidak ditemukan.");
+                    // Biarkan input kosong jika data tidak ada
                 }
-                // Jika peran adalah penjual, muat data
-                console.log('onAuthStateChanged: User Penjual Login:', user.uid);
-                hitungStatistikHarian();
-                listenForNewOrders(); // Mulai mendengarkan pesanan baru secara real-time
-                setInterval(hitungStatistikHarian, 60000); // Perbarui statistik setiap 1 menit
-            }).catch(error => {
-                console.error("❌ Error fetching user role:", error);
-                alert("Gagal memuat peran pengguna. Silakan coba lagi.");
-                window.location.href = 'index.html';
+
+                // 2. Ambil data keranjang
+                const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
+                const snapshot = await cartItemsRef.get();
+                currentCartItems = []; // Reset item keranjang
+                let subtotal = 0;
+
+                if (snapshot.empty) {
+                    loadingMessage.textContent = 'Keranjang Anda kosong. Silakan kembali ke keranjang.';
+                    loadingMessage.style.display = 'block';
+                    checkoutContent.style.display = 'none';
+                    placeOrderButton.disabled = true;
+                } else {
+                    snapshot.forEach(doc => {
+                        const item = doc.data();
+                        currentCartItems.push(item);
+                        subtotal += item.price * item.quantity;
+                    });
+                    loadingMessage.style.display = 'none'; // Sembunyikan loading
+                    checkoutContent.style.display = 'block'; // Tampilkan konten utama
+                    placeOrderButton.disabled = false;
+                }
+
+                const totalItems = currentCartItems.reduce((sum, item) => sum + item.quantity, 0);
+                const deliveryFee = subtotal > 0 ? DELIVERY_FEE : 0;
+                const totalAmount = subtotal + deliveryFee;
+
+                itemCountSpan.textContent = totalItems;
+                subtotalCheckoutSpan.textContent = formatRupiah(subtotal);
+                deliveryFeeCheckoutSpan.textContent = formatRupiah(deliveryFee);
+                totalAmountCheckoutSpan.textContent = formatRupiah(totalAmount);
+
+            } catch (error) {
+                console.error("❌ Gagal memuat data checkout:", error);
+                loadingMessage.textContent = 'Terjadi kesalahan saat memuat detail pesanan. Silakan coba lagi.';
+                loadingMessage.style.display = 'block';
+                checkoutContent.style.display = 'none';
+                placeOrderButton.disabled = true;
+            }
+        }
+
+        // Event listener untuk GPS
+        gpsIconCheckout.addEventListener('click', () => {
+            deliveryAddressInput.placeholder = "Mendeteksi lokasi...";
+            gpsIconCheckout.classList.add('loading'); // Tambahkan kelas loading untuk animasi
+            navigator.geolocation?.getCurrentPosition(async position => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+                    const address = [
+                        data.address.road,
+                        data.address.village || data.address.town,
+                        data.address.city,
+                        data.address.state
+                    ].filter(Boolean).join(', ');
+                    deliveryAddressInput.value = address;
+                } catch (e) {
+                    deliveryAddressInput.placeholder = "Gagal mengambil alamat.";
+                } finally {
+                    gpsIconCheckout.classList.remove('loading'); // Hapus kelas loading
+                }
+            }, err => {
+                alert("Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin diberikan.");
+                gpsIconCheckout.classList.remove('loading'); // Hapus kelas loading
             });
         });
-    });
 
-    // Ini untuk memastikan suara bisa diputar setelah interaksi pengguna pertama
-    document.addEventListener("click", () => {
-        const notifSound = document.getElementById("notifSound");
-        if (notifSound) {
-            notifSound.play().then(() => {
-                notifSound.pause();
-                notifSound.currentTime = 0;
-                console.log("Autoplay workaround: Suara berhasil diputar dan dihentikan.");
-            }).catch((e) => {
-                console.warn("Autoplay workaround: Gagal memutar suara awal:", e);
+        // Event listener untuk radio button metode pembayaran
+        document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const method = radio.value;
+                eWalletTypeWrapper.style.display = method === "E-Wallet" ? 'block' : 'none';
+                bankTransferInfo.style.display = method === "Transfer Bank" ? 'block' : 'none';
+
+                if (method === "E-Wallet" && eWalletIcon && eWalletType) {
+                    const selected = eWalletType.value;
+                    eWalletIcon.innerHTML = walletIcons[selected] || '<i class="fas fa-wallet"></i>';
+                }
+                qrisBox.style.display = 'none'; // Sembunyikan QRIS box saat metode pembayaran berubah
             });
+        });
+
+        // Event listener untuk dropdown jenis E-Wallet
+        eWalletType.addEventListener("change", () => {
+            const selected = eWalletType.value;
+            eWalletIcon.innerHTML = walletIcons[selected] || '<i class="fas fa-wallet"></i>';
+            qrisBox.style.display = 'none'; // Sembunyikan QRIS box saat jenis E-Wallet berubah
+        });
+
+        // Icon untuk E-Wallet (didefinisikan di sini agar bisa diakses)
+        const walletIcons = {
+            QRIS: '<i class="fas fa-qrcode"></i>',
+            OVO: '<i class="fas fa-gem"></i>',
+            DANA: '<i class="fas fa-wallet"></i>',
+            GoPay: '<i class="fas fa-mobile-alt"></i>'
+        };
+
+        // Fungsi untuk membuat pesanan
+        placeOrderButton.addEventListener('click', async () => {
+            const fullName = fullNameInput.value.trim();
+            const phoneNumber = phoneNumberInput.value.trim();
+            const deliveryAddress = deliveryAddressInput.value.trim();
+            const notes = notesInput.value.trim();
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+            const selectedEWalletType = paymentMethod === "E-Wallet" ? eWalletType.value : null;
+
+            if (!fullName || !phoneNumber || !deliveryAddress || !paymentMethod || (paymentMethod === "E-Wallet" && !selectedEWalletType)) {
+                alert("Mohon lengkapi semua informasi pengiriman dan metode pembayaran.");
+                return;
+            }
+
+            if (currentCartItems.length === 0) {
+                alert("Keranjang Anda kosong. Tidak dapat membuat pesanan.");
+                return;
+            }
+
+            // Ganti alert dengan modal kustom jika tidak ingin menggunakan alert()
+            // if (!confirm("Apakah Anda yakin ingin membuat pesanan ini?")) {
+            //     return;
+            // }
+
+            const subtotal = currentCartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+            const deliveryFee = subtotal > 0 ? DELIVERY_FEE : 0;
+            const totalAmount = subtotal + deliveryFee;
+
+            const orderData = {
+                userId: currentUserId,
+                customer: { fullName, phoneNumber, address: deliveryAddress, notes },
+                items: currentCartItems, // Tetap simpan detail item di pesanan
+                subtotal,
+                deliveryFee,
+                totalAmount,
+                paymentMethod: paymentMethod,
+                ...(selectedEWalletType && { eWalletType: selectedEWalletType }),
+                status: "Pending",
+                waktu: firebase.firestore.FieldValue.serverTimestamp() // DIGANTI: 'orderDate' menjadi 'waktu'
+            };
+
+            placeOrderButton.disabled = true;
+            placeOrderButton.innerHTML = "⏳ Memproses Pesanan...";
+
+            try {
+                // 1. Simpan pesanan ke koleksi 'pesanan'
+                const docRef = await ordersCollection.add(orderData); // Menggunakan 'pesanan'
+                const orderId = docRef.id;
+                const displayOrderId = "#" + orderId.substring(0, 6).toUpperCase();
+                
+                // Update dokumen pesanan dengan displayOrderId
+                await ordersCollection.doc(orderId).update({ displayOrderId: displayOrderId });
+
+                // 2. Simpan salinan pesanan ke riwayat_customer (subkoleksi 'pesanan')
+                await customerHistoryCollection.doc(currentUserId).collection('pesanan').doc(orderId).set({ ...orderData, displayOrderId: displayOrderId });
+                
+                // Hapus sessionStorage.setItem("lastOrderId", displayOrderId); karena tidak digunakan lagi
+
+                // 3. Proses QRIS jika E-Wallet dan QRIS dipilih
+                if (paymentMethod === "E-Wallet" && selectedEWalletType === "QRIS") {
+                    await buatQRIS(totalAmount, fullName, displayOrderId);
+                } else {
+                    // Tampilkan modal konfirmasi
+                    document.getElementById('confirmationModal').style.display = 'flex';
+                }
+
+                // 4. Kosongkan keranjang di Firestore setelah pesanan berhasil (penting!)
+                const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
+                const snapshot = await cartItemsRef.get();
+                const batch = db.batch();
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                console.log("Keranjang berhasil dikosongkan setelah pesanan dibuat.");
+
+            } catch (err) {
+                let errorMessage = "Terjadi kesalahan tidak diketahui.";
+                if (err.code) {
+                    errorMessage = `Kesalahan Firebase: ${err.code}`;
+                } else if (err.message) {
+                    // Batasi panjang pesan error agar tidak terlalu panjang di alert
+                    errorMessage = `Kesalahan: ${err.message.substring(0, 100)}...`; 
+                }
+                alert(`❌ Gagal membuat pesanan. ${errorMessage} Silakan coba lagi.`);
+            } finally {
+                placeOrderButton.disabled = false;
+                placeOrderButton.innerHTML = "Buat Pesanan";
+            }
+        });
+
+        // Fungsi untuk membuat QRIS (memanggil Cloud Function)
+        async function buatQRIS(amount, name, orderIdForQRIS) {
+            qrisBox.style.display = 'block'; // Tampilkan QRIS box
+            qrisBox.innerHTML = "⏳ Memuat QRIS...";
+            try {
+                const res = await fetch("https://tokobuahkasir.cloudfunctions.net/buatQRIS", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        method: "QRIS",
+                        merchant_ref: orderIdForQRIS,
+                        amount,
+                        customer_name: name
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    qrisBox.innerHTML = `
+                        <p>✅ Silakan scan QRIS di bawah ini:</p>
+                        <img src="${data.data.qr_url}" width="220" alt="QRIS Code">
+                        <p><strong>Ref: ${data.data.reference}</strong></p>
+                        <p style="font-size:12px; margin-top: 10px;">Setelah pembayaran, Anda akan diarahkan ke halaman Riwayat Pesanan.</p>
+                    `;
+                    setTimeout(() => {
+                        window.location.href = "riwayat.html"; // DIGANTI: 'order-history.html' menjadi 'riwayat.html'
+                    }, 5000); // Contoh 5 detik
+                } else {
+                    qrisBox.innerHTML = `<p style="color:red;">❌ Gagal membuat QRIS: ${data.message}</p>`;
+                }
+            } catch (e) {
+                qrisBox.innerHTML = `<p style="color:red;">⚠️ Gagal membuat QRIS. Error koneksi.</p>`;
+            }
         }
-    }, { once: true });
-</script>
+
+        // Fungsi untuk menutup modal konfirmasi
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+
+        // Fungsi untuk redirect setelah konfirmasi modal
+        function redirectToHome() {
+            closeModal();
+            window.location.href = 'riwayat.html'; // DIGANTI: 'index.html' menjadi 'riwayat.html'
+        }
+
+        // Event listener saat DOM sudah siap
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inisialisasi tampilan User ID dan panggil fetch data setelah user login
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
+                    fetchUserDataAndCartSummary(); // Panggil untuk memuat data profil dan ringkasan keranjang
+                } else {
+                    userIdDisplay.textContent = `User ID: N/A`;
+                    loadingMessage.textContent = 'Anda harus login untuk melihat halaman checkout. Mengarahkan kembali...';
+                    loadingMessage.style.display = 'block';
+                    checkoutContent.style.display = 'none';
+                    placeOrderButton.disabled = true;
+                    setTimeout(() => {
+                        window.location.href = "index.html"; // DIGANTI: 'apl05.html' menjadi 'index.html' (halaman login)
+                    }, 2000);
+                }
+            });
+
+            // Setel status awal radio button
+            document.querySelector('input[name="paymentMethod"]:checked').dispatchEvent(new Event('change'));
+
+            // Event untuk tombol kembali ke keranjang
+            backToCartButton.addEventListener('click', () => {
+                window.location.href = 'cart.html';
+            });
+        });
+    </script>
 </body>
 </html>
