@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Produk - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
     <style>
+        /* Reset CSS */
         * {
             margin: 0;
             padding: 0;
@@ -27,12 +34,14 @@
             padding-bottom: 70px; /* Space for the add to cart button */
         }
 
+        /* Header Styling */
         .header-detail {
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
             padding: 12px 16px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             position: sticky;
             top: 0;
             z-index: 100;
@@ -41,16 +50,17 @@
 
         .back-button {
             color: white;
-            font-size: 24px;
-            margin-right: 15px;
+            font-size: 20px;
+            margin-right: 10px;
             cursor: pointer;
         }
 
         .header-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
         }
 
+        /* Product Image */
         .product-image-detail {
             width: 100%;
             height: 250px;
@@ -58,487 +68,398 @@
             object-position: center 70%;
         }
 
+        /* Product Info Section */
         .product-info-detail {
             padding: 16px;
         }
 
-        .product-name-detail {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 8px;
+        .product-header-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding: 0; /* Override previous padding */
         }
 
+        .product-name-detail {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        /* Quantity Selector */
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quantity-button {
+            background-color: #00c853;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .quantity-input {
+            width: 30px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        /* Product Description & Price */
         .product-description-detail {
             font-size: 14px;
             color: #555;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             line-height: 1.5;
         }
 
         .product-price-detail {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            color: #00C853;
-            margin-bottom: 15px;
+            color: #22c55e;
+            margin-bottom: 16px;
         }
 
-        .quantity-selector {
-            display: flex;
-            align-items: center;
+        /* Variant Section */
+        .variant-group {
             margin-bottom: 20px;
         }
 
-        .quantity-button {
-            background-color: #e0e0e0;
-            border: none;
-            padding: 8px 12px;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 5px;
+        .variant-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
             color: #333;
-            transition: background-color 0.2s;
         }
 
-        .quantity-button:hover {
-            background-color: #d0d0d0;
+        .variant-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
-        .quantity-input {
-            width: 40px;
-            text-align: center;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin: 0 10px;
-            padding: 8px 0;
-            font-size: 16px;
-        }
-
-        .add-to-cart-button {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 15px 20px;
-            text-align: center;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
+        .variant-option {
+            background-color: #f3f4f6;
+            color: #333;
+            padding: 8px 14px;
+            border-radius: 20px;
             cursor: pointer;
-            width: calc(100% - 32px); /* Full width minus padding */
+            font-size: 13px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .variant-option:hover {
+            background-color: #e0f2f1;
+        }
+
+        .variant-option.active {
+            background-color: #22c55e;
+            color: white;
+            border: 1px solid #15803d;
+            font-weight: bold;
+        }
+
+        /* Fly to Cart Animation */
+        .fly-to-cart {
             position: fixed;
-            bottom: 10px;
-            max-width: 448px; /* Max width 480px - 16px padding on each side */
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            transition: background 0.3s ease;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            z-index: 9999;
+            transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
+            pointer-events: none;
         }
 
-        .add-to-cart-button:hover {
-            background: linear-gradient(135deg, #00B04C, #5BB914);
+        /* Popup Panel Animation */
+        #popupPanel {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 1;
+            transform: translateY(0);
         }
 
-.variant-group {
-    margin-bottom: 20px;
-}
-
-.variant-label {
-    font-weight: 600;
-    margin-bottom: 6px;
-    font-size: 14px;
-    display: block;
-}
-
-.variant-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.variant-option {
-    padding: 8px 14px;
-    border: 2px solid #00C853;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #00C853;
-    background-color: #f0fdf4;
-    transition: all 0.2s;
-}
-
-.variant-option.active {
-    background-color: #00C853;
-    color: white;
-    font-weight: bold;
-}
-        .product-header-detail {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  padding: 0 16px;
-}
-
-.product-name-detail {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin: 0;
-  max-width: 60%;
-  word-break: break-word;
-}
-
-.quantity-selector {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.quantity-button {
-  background-color: #00c853;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.quantity-input {
-  width: 30px;
-  text-align: center;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-}
-
-       
-.fly-to-cart {
-  position: fixed;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  z-index: 9999;
-  transition: transform 0.7s ease-in-out, opacity 0.7s ease-in-out;
-  pointer-events: none;
-}
-        /* Deskripsi Produk */
-.product-description-detail {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 8px;
-  line-height: 1.5;
-}
-
-/* Harga Produk */
-.product-price-detail {
-  font-size: 18px;
-  font-weight: bold;
-  color: #22c55e;
-  margin-bottom: 16px;
-}
-
-/* Varian Group */
-.variant-group {
-  margin-bottom: 20px;
-}
-
-.variant-label {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  display: block;
-  color: #333;
-}
-
-/* Tombol Varian */
-.variant-options {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.variant-option {
-  background-color: #f3f4f6;
-  color: #333;
-  padding: 8px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 13px;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-}
-
-.variant-option:hover {
-  background-color: #e0f2f1;
-}
-
-.variant-option.active {
-  background-color: #22c55e;
-  color: white;
-  border: 1px solid #15803d;
-  font-weight: bold;
-}
-        .product-title-detail {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #111;
-  text-align: left;
-  padding-left: 0;
-  margin-left: 0;
-}
-
-#popupPanel {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-#popupPanel.hide-popup {
-  opacity: 0;
-  transform: translateY(50px); /* Turun pelan sambil fade */
-  pointer-events: none;
-}
-
-        
-</style> 
-  
+        #popupPanel.hide-popup {
+            opacity: 0;
+            transform: translateY(50px); /* Turun pelan sambil fade */
+            pointer-events: none;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="container">
-    <header class="header-detail" style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #00C853, #64DD17); color: white; padding: 12px 16px;">
-      
-      <!-- Kiri: Tombol kembali + Judul -->
-      <div style="display: flex; align-items: center;">
-        <i class="fas fa-arrow-left back-button" id="btnBackDetail" style="font-size: 20px; margin-right: 10px; cursor: pointer;"></i>
-        <div class="header-title" style="font-size: 16px; font-weight: bold;">Detail Produk</div>
-      </div>
-      
-      <!-- Kanan: Swipe Bar -->
-      <div id="swipeBarClose" style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px; cursor: pointer;"></div>
+    <div class="container" id="popupPanel">
+        <header class="header-detail">
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-arrow-left back-button" id="btnBackDetail"></i>
+                <div class="header-title">Detail Produk</div>
+            </div>
+            <div id="swipeBarClose" style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px; cursor: pointer;"></div>
+        </header>
 
-    </header>
-        
         <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
         <div class="product-info-detail">
-           <div class="product-header-detail">
-  <h1 class="product-name-detail" id="productName"></h1>
-
-  <div class="quantity-selector">
-    <button class="quantity-button" id="decreaseQuantity">-</button>
-    <input type="number" class="quantity-input" id="productQuantity" value="0" min="0" readonly>
-    <button class="quantity-button" id="increaseQuantity">+</button>
-  </div>
-</div>
-            <p class="product-description-detail" id="productDescription"></p>
+            <div class="product-header-detail">
+                <h1 class="product-name-detail" id="productName"></h1>
+                <div class="quantity-selector">
+                    <button class="quantity-button" id="decreaseQuantity">-</button>
+                    <input type="number" class="quantity-input" id="productQuantity" value="0" min="0" readonly>
+                    <button class="quantity-button" id="increaseQuantity">+</button>
+                </div>
+            </div>
             <p class="product-price-detail" id="productPrice"></p>
+            <p class="product-description-detail" id="productDescription"></p>
 
-<!-- VARIAN SECTION -->
-<div class="variant-group">
-    <label class="variant-label">Pilih Bumbu:</label>
-    <div class="variant-options" data-variant="bumbu">
-        <div class="variant-option active" data-value="Pedas">Pedas</div>
-        <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
-        <div class="variant-option" data-value="Manis">Manis</div>
+            <!-- VARIAN SECTION -->
+            <div class="variant-group">
+                <label class="variant-label">Pilih Bumbu:</label>
+                <div class="variant-options" data-variant="bumbu">
+                    <div class="variant-option active" data-value="Pedas">Pedas</div>
+                    <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
+                    <div class="variant-option" data-value="Manis">Manis</div>
+                </div>
+            </div>
+
+            <div class="variant-group">
+                <label class="variant-label">Pilih Kacang:</label>
+                <div class="variant-options" data-variant="kacang">
+                    <div class="variant-option active" data-value="Dengan Kacang">Dengan Kacang</div>
+                    <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="variant-group">
-    <label class="variant-label">Pilih Kacang:</label>
-    <div class="variant-options" data-variant="kacang">
-        <div class="variant-option active" data-value="Dengan Kacang">Dengan Kacang</div>
-        <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
-    </div>
-</div>
-            
-<script>
-// Variabel global untuk menyimpan pilihan varian
-const selectedVariants = {
-    bumbu: "Pedas",
-    kacang: "Dengan Kacang"
-};
+    <script>
+        // Konfigurasi Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", 
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
 
-let selectedProduct = null;
-const productQuantityInput = document.getElementById('productQuantity');
+        // Inisialisasi Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
+        // Variabel global untuk menyimpan pilihan varian
+        const selectedVariants = {
+            bumbu: "Pedas",
+            kacang: "Dengan Kacang"
+        };
 
-// Fungsi untuk animasi "terbang ke keranjang"
-function lemparKeKeranjang(imgSrc) {
-    const img = document.createElement('img');
-    img.src = imgSrc;
-    img.classList.add('fly-to-cart');
+        let selectedProduct = null;
+        let productQuantityInput = null; // Akan diinisialisasi di DOMContentLoaded
 
-    const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
-    const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
+        // Fungsi untuk animasi "terbang ke keranjang"
+        function lemparKeKeranjang(imgSrc) {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.classList.add('fly-to-cart');
 
-    img.style.left = `${startRect.left}px`;
-    img.style.top = `${startRect.top}px`;
-    img.style.opacity = 1;
+            const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+            const endRect = window.parent.document.getElementById('popupCheckoutBar').getBoundingClientRect();
 
-    document.body.appendChild(img);
+            img.style.left = `${startRect.left}px`;
+            img.style.top = `${startRect.top}px`;
+            img.style.opacity = 1;
 
-    requestAnimationFrame(() => {
-        img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
-        img.style.opacity = 0;
-    });
+            document.body.appendChild(img);
 
-    setTimeout(() => {
-        document.body.removeChild(img);
-    }, 700);
-}
+            requestAnimationFrame(() => {
+                img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
+                img.style.opacity = 0;
+            });
 
-// Fungsi untuk menutup popup
-function closePopup() {
-    const popupPanel = document.getElementById('popupPanel');
-    if (popupPanel) {
-        popupPanel.classList.add('hide-popup');
-        setTimeout(() => {
-            window.parent.postMessage({ type: 'closePopup' }, '*');
-        }, 300);
-    }
-}
+            setTimeout(() => {
+                document.body.removeChild(img);
+            }, 700);
+        }
 
+        // Fungsi untuk menutup popup
+        function closePopup() {
+            const popupPanel = document.getElementById('popupPanel');
+            if (popupPanel) {
+                popupPanel.classList.add('hide-popup');
+                setTimeout(() => {
+                    window.parent.postMessage({ type: 'closePopup' }, '*');
+                }, 300);
+            }
+        }
 
-// Fungsi untuk mengupdate jumlah keranjang di Firebase
-async function updateCartInFirestore(quantity) {
-    const user = firebase.auth().currentUser;
-    if (!user || !selectedProduct) {
-        console.warn("Pengguna belum login atau produk tidak ditemukan.");
-        return;
-    }
+        // Fungsi untuk mengupdate jumlah keranjang di Firebase
+        async function updateCartInFirestore(quantity) {
+            const user = auth.currentUser;
+            if (!user || !selectedProduct) {
+                console.warn("Pengguna belum login atau produk tidak ditemukan.");
+                return;
+            }
 
-    const userId = user.uid;
-    const productId = selectedProduct.id;
-    const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
-    const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${customKey}`);
+            const userId = user.uid;
+            const productId = selectedProduct.id;
+            const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
+            const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${customKey}`);
 
-    try {
-        if (quantity > 0) {
-            await cartDocRef.set({
-                id: productId,
-                name: selectedProduct.name,
-                image: selectedProduct.image,
-                price: selectedProduct.price,
-                custom: selectedVariants,
-                quantity: quantity
-            }, { merge: true });
-        } else {
-            await cartDocRef.delete();
-        }
+            try {
+                if (quantity > 0) {
+                    await cartDocRef.set({
+                        id: productId,
+                        name: selectedProduct.name,
+                        image: selectedProduct.image,
+                        price: selectedProduct.price,
+                        custom: selectedVariants,
+                        quantity: quantity
+                    }, { merge: true });
+                } else {
+                    await cartDocRef.delete();
+                }
 
-        // Ambil total keranjang setelah update
-        const snapshot = await db.collection('carts').doc(userId).collection('items').get();
-        let totalItem = 0;
-        let totalPrice = 0;
+                // Ambil total keranjang setelah update
+                const itemsCollectionRef = db.collection('carts').doc(userId).collection('items');
+                const snapshot = await itemsCollectionRef.get(); // Menggunakan .get() untuk snapshot sekali
+                let totalItem = 0;
+                let totalPrice = 0;
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            totalItem += data.quantity || 0;
-            totalPrice += (data.quantity || 0) * (data.price || 0); // Tambahkan validasi harga
-        });
+                snapshot.forEach(d => {
+                    const data = d.data();
+                    totalItem += data.quantity || 0;
+                    totalPrice += (data.quantity || 0) * (data.price || 0);
+                });
 
-        // Kirim data ke halaman induk
-        window.parent.postMessage({ type: 'cartUpdate', itemCount: totalItem, totalPrice }, '*');
+                // Kirim data ke halaman induk
+                window.parent.postMessage({ type: 'cartUpdate', itemCount: totalItem, totalPrice }, '*');
 
-    } catch (error) {
-        console.error("❌ Gagal update keranjang:", error);
-        alert("Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.");
-    }
-}
+            } catch (error) {
+                console.error("❌ Gagal update keranjang:", error);
+                alert("Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.");
+            }
+        }
 
+        // Event listener saat DOM sudah siap
+        document.addEventListener('DOMContentLoaded', function () {
+            productQuantityInput = document.getElementById('productQuantity');
 
-// Event listener saat DOM sudah siap
-document.addEventListener('DOMContentLoaded', function () {
-    // Tangani klik pada varian
-    document.querySelectorAll('.variant-options').forEach(group => {
-        const variantType = group.dataset.variant;
-        group.querySelectorAll('.variant-option').forEach(option => {
-            option.addEventListener('click', () => {
-                group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                option.classList.add('active');
-                selectedVariants[variantType] = option.dataset.value;
-            });
-        });
-    });
+            // Tangani klik pada varian
+            document.querySelectorAll('.variant-options').forEach(group => {
+                const variantType = group.dataset.variant;
+                group.querySelectorAll('.variant-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                        option.classList.add('active');
+                        selectedVariants[variantType] = option.dataset.value;
+                        // Ketika varian berubah, update quantity dari Firestore
+                        auth.onAuthStateChanged(async user => {
+                            if (user) {
+                                const userId = user.uid;
+                                const productId = selectedProduct.id;
+                                const newCustomKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
+                                const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${newCustomKey}`);
+                                try {
+                                    const d = await cartDocRef.get();
+                                    if (d.exists) {
+                                        const data = d.data();
+                                        productQuantityInput.value = data.quantity || 1;
+                                    } else {
+                                        productQuantityInput.value = 1;
+                                    }
+                                } catch (error) {
+                                    console.error("❌ Gagal ambil data Firestore setelah ganti varian:", error);
+                                    productQuantityInput.value = 1;
+                                }
+                            }
+                        });
+                    });
+                });
+            });
 
-    selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
+            selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
 
-    if (selectedProduct) {
-        document.getElementById('productImage').src = selectedProduct.image;
-        document.getElementById('productName').textContent = selectedProduct.name;
-        document.getElementById('productDescription').textContent = selectedProduct.description;
-        document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+            if (selectedProduct) {
+                document.getElementById('productImage').src = selectedProduct.image;
+                document.getElementById('productName').textContent = selectedProduct.name;
+                document.getElementById('productDescription').textContent = selectedProduct.description;
+                document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
 
-        const decreaseButton = document.getElementById('decreaseQuantity');
-        const increaseButton = document.getElementById('increaseQuantity');
+                const decreaseButton = document.getElementById('decreaseQuantity');
+                const increaseButton = document.getElementById('increaseQuantity');
 
-        // Ambil quantity awal dari Firestore
-        firebase.auth().onAuthStateChanged(async user => {
-            if (user) {
-                const userId = user.uid;
-                const productId = selectedProduct.id;
-                const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
-                const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${customKey}`);
+                // Ambil quantity awal dari Firestore saat pertama kali halaman dimuat
+                auth.onAuthStateChanged(async user => {
+                    if (user) {
+                        const userId = user.uid;
+                        const productId = selectedProduct.id;
+                        const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
+                        const cartDocRef = db.collection('carts').doc(userId).collection('items').doc(`${productId}_${customKey}`);
 
-                try {
-                    const doc = await cartDocRef.get();
-                    if (doc.exists) {
-                        const data = doc.data();
-                        productQuantityInput.value = data.quantity || 1;
-                    } else {
-                        productQuantityInput.value = 1;
-                    }
-                } catch (error) {
-                    console.error("❌ Gagal ambil data Firestore:", error);
-                    productQuantityInput.value = 1;
-                }
-            }
-        });
+                        try {
+                            const d = await cartDocRef.get();
+                            if (d.exists) {
+                                const data = d.data();
+                                productQuantityInput.value = data.quantity || 1;
+                            } else {
+                                productQuantityInput.value = 1;
+                            }
+                        } catch (error) {
+                            console.error("❌ Gagal ambil data Firestore:", error);
+                            productQuantityInput.value = 1;
+                        }
+                    }
+                });
 
+                // Event untuk tombol -
+                decreaseButton.addEventListener('click', () => {
+                    let qty = parseInt(productQuantityInput.value);
+                    if (qty > 1) {
+                        qty--;
+                        productQuantityInput.value = qty;
+                        updateCartInFirestore(qty);
+                    } else if (qty === 1) {
+                        // Jika kuantitas 1, klik tombol minus akan menghapus produk
+                        productQuantityInput.value = 0;
+                        updateCartInFirestore(0);
+                    }
+                });
 
-        // Event untuk tombol -
-        decreaseButton.addEventListener('click', () => {
-            let qty = parseInt(productQuantityInput.value);
-            if (qty > 1) {
-                qty--;
-                productQuantityInput.value = qty;
-                updateCartInFirestore(qty);
-            } else if (qty === 1) {
-                // Jika kuantitas 1, klik tombol minus akan menghapus produk
-                productQuantityInput.value = 0;
-                updateCartInFirestore(0);
-            }
-        });
+                // Event untuk tombol +
+                increaseButton.addEventListener('click', () => {
+                    let qty = parseInt(productQuantityInput.value);
+                    qty++;
+                    productQuantityInput.value = qty;
+                    updateCartInFirestore(qty);
+                    lemparKeKeranjang(selectedProduct.image);
+                });
 
-        // Event untuk tombol +
-        increaseButton.addEventListener('click', () => {
-            let qty = parseInt(productQuantityInput.value);
-            qty++;
-            productQuantityInput.value = qty;
-            updateCartInFirestore(qty);
-            lemparKeKeranjang(selectedProduct.image);
-        });
+            } else {
+                alert('Produk tidak ditemukan. Kembali ke halaman utama.');
+                window.location.href = 'apl05.html';
+            }
 
-    } else {
-        alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-        window.location.href = 'apl05.html';
-    }
+            // Event listener untuk tombol kembali dan swipe bar
+            const btnBackDetail = document.getElementById('btnBackDetail');
+            if (btnBackDetail) {
+                btnBackDetail.addEventListener('click', closePopup);
+            }
 
-    // Event listener untuk tombol kembali dan swipe bar
-    const btnBackDetail = document.getElementById('btnBackDetail');
-    if (btnBackDetail) {
-        btnBackDetail.addEventListener('click', closePopup);
-    }
-
-    const swipeBar = document.getElementById('swipeBarClose');
-    if (swipeBar) {
-        swipeBar.addEventListener('click', closePopup);
-    }
-});
-
-</script>
-</body>
-</html>
+            const swipeBar = document.getElementById('swipeBarClose');
+            if (swipeBar) {
+                swipeBar.addEventListener('click', closePopup);
+            }
+        });
+    </script>
 </body>
 </html>
