@@ -22,6 +22,8 @@
         body {
             background-color: #f9f9f9;
             color: #333;
+            /* Tambahkan padding-top ke body agar konten tidak tertutup header fixed */
+            padding-top: 130px; /* Sesuaikan tinggi header */
         }
 
         .container {
@@ -38,10 +40,12 @@
             background: white;
             color: #333;
             padding: 12px 16px 20px;
-            position: sticky;
-            top: 0;
+            position: fixed; /* PERBAIKAN: Header menjadi fixed */
+            top: 0; /* Menempel di bagian atas */
+            width: 100%;
+            max-width: 480px; /* Penting agar tidak melebihi lebar container */
             z-index: 100;
-            box-shadow: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Tambahkan sedikit shadow agar terlihat jelas fixed */
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
             display: flex;
@@ -51,19 +55,17 @@
 
         .header-top-row {
             display: flex;
-            justify-content: space-between; /* DIUBAH KEMBALI: Untuk memposisikan tombol bagikan di kanan */
+            justify-content: space-between;
             align-items: center;
             width: 100%;
             margin-bottom: 8px;
-            gap: 12px; /* Memberikan jarak antar item di kiri */
+            gap: 12px; 
         }
 
         .app-header {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            /* Flex-grow akan memastikan app-header mengisi ruang yang tersisa,
-               mendorong share-btn ke paling kanan */
             flex-grow: 1; 
         }
 
@@ -73,6 +75,7 @@
             color: #333;
             text-decoration: none;
             transition: color 0.3s;
+            font-weight: normal; /* PERBAIKAN: Membuat panah lebih tipis */
         }
         .back-btn:hover {
             color: #00C853;
@@ -93,7 +96,7 @@
             color: #757575;
         }
 
-        /* NEW: Share Button Style */
+        /* Share Button Style */
         .share-btn {
             background: none;
             border: none;
@@ -108,32 +111,6 @@
             color: #00C853;
         }
 
-        /* Search Bar Styling */
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background: #f0f0f0;
-            border-radius: 8px;
-            padding: 10px;
-            position: relative;
-            width: 100%;
-        }
-
-        .search-icon {
-            color: #999;
-            margin-right: 8px;
-            font-size: 18px;
-        }
-
-        .search-input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            background: #f0f0f0;
-            font-size: 14px;
-            color: #333;
-        }
-        
         /* Menu Section */
         .section-title {
             padding: 16px 16px 8px;
@@ -142,6 +119,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: #22c55e; /* PERBAIKAN: Warna teks "Menu Terlaris" menjadi hijau */
         }
 
         .see-all {
@@ -459,7 +437,7 @@
             </div>
         </header>
 
-        <div class="section-title">
+        <div class="section-title" id="sectionTitleContainer">
             <span id="sectionTitle">Menu Terlaris</span>
             <span class="see-all">Lihat Semua</span>
         </div>
@@ -517,7 +495,7 @@
         // --- Main Elements ---
         const menuList = document.getElementById('menuList');
         const searchInput = document.getElementById('searchInput');
-        const sectionTitle = document.getElementById('sectionTitle');
+        const sectionTitle = document.getElementById('sectionTitle'); // Target the span inside section-title-container
         
         // Elements for cart display
         const cartBadge = document.getElementById('cartBadge');
@@ -544,7 +522,7 @@
             }).format(amount);
         }
 
-        // --- Share Function (NEW) ---
+        // --- Share Function ---
         async function shareContent() {
             if (navigator.share) {
                 try {
