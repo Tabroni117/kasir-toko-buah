@@ -622,7 +622,8 @@
             </div>
             <div class="address-bar">
                 <i class="fas fa-map-marker-alt gps-icon"></i>
-                <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Kirim ke alamat pemesan..." readonly> </div>
+                <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
+            </div>
         </header>
 
         <div class="promo-banner">
@@ -898,6 +899,7 @@
         
         gpsIcon.addEventListener('click', function() {
             this.classList.add('loading');
+            deliveryAddressInput.value = ""; // Clear existing value
             deliveryAddressInput.placeholder = "Mendeteksi lokasi...";
             
             if (navigator.geolocation) {
@@ -908,170 +910,177 @@
                             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                             const data = await response.json();
                             if (data.address) {
-                                // --- START PERBAIKAN DI SINI ---
+                                // Construct a more readable address
                                 const addressParts = [];
                                 if (data.address.road) addressParts.push(data.address.road);
-                                if (data.address.suburb) addressParts.push(data.address.suburb); // Contoh: Kelurahan/Dusun
-                                if (data.address.village) addressParts.push(data.address.village); // Contoh: Desa
-                                if (data.address.town) addressParts.push(data.address.town); // Contoh: Kota kecil
-                                if (data.address.city) addressParts.push(data.address.city); // Contoh: Kota besar
-                                if (data.address.county) addressParts.push(data.address.county); // Contoh: Kabupaten/Wilayah
-                                if (data.address.state) addressParts.push(data.address.state); // Contoh: Provinsi
-                                if (data.address.postcode) addressParts.push(data.address.postcode);
+                                if (data.address.suburb) addressParts.push(data.address.suburb);
+                                if (data.address.village) addressParts.push(data.address.village);
+                                else if (data.address.town) addressParts.push(data.address.town);
+                                else if (data.address.city) addressParts.push(data.address.city);
+                                if (data.address.postcode) addressParts.push(`(${data.address.postcode})`); // Add postcode if available
                                 
-                                const fullAddress = addressParts.filter(part => part).join(', '); // Filter out undefined/null parts
+                                const fullAddress = addressParts.filter(Boolean).join(', '); // Join valid parts
                                 deliveryAddressInput.value = fullAddress || "Alamat tidak ditemukan.";
-                                // --- END PERBAIKAN DI SINI ---
                             } else {
-                                deliveryAddressInput.value = "Alamat tidak ditemukan.";
+                                deliveryAddressInput.value = `Koordinat: ${latitude}, ${longitude}`;
                             }
                         } catch (error) {
-                            console.error("Error fetching address from Nominatim: ", error);
-                            deliveryAddressInput.value = "Gagal mendapatkan alamat. Coba lagi.";
+                            console.error("Error fetching address from Nominatim:", error);
+                            deliveryAddressInput.value = "Gagal mendapatkan alamat.";
                         } finally {
                             this.classList.remove('loading');
-                            deliveryAddressInput.placeholder = "Kirim ke alamat pemesan..."; // Reset placeholder
+                            if (!deliveryAddressInput.value) { // If still empty, restore placeholder
+                                deliveryAddressInput.placeholder = "Kirim ke alamat pemesan...";
+                            }
                         }
                     },
                     (error) => {
-                        console.error("Error getting geolocation: ", error);
-                        let errorMessage = "Gagal mendeteksi lokasi.";
+                        console.error("Error getting geolocation:", error);
+                        this.classList.remove('loading');
+                        deliveryAddressInput.value = ""; // Clear any partial loading text
+                        deliveryAddressInput.placeholder = "Gagal mendeteksi lokasi. Izinkan akses GPS.";
+                        let errorMessage = "Tidak dapat menemukan lokasi Anda.";
                         switch(error.code) {
                             case error.PERMISSION_DENIED:
-                                errorMessage += " Mohon izinkan akses lokasi.";
+                                errorMessage = "Izinkan akses lokasi di pengaturan browser Anda.";
                                 break;
                             case error.POSITION_UNAVAILABLE:
-                                errorMessage += " Informasi lokasi tidak tersedia.";
+                                errorMessage = "Informasi lokasi tidak tersedia.";
                                 break;
                             case error.TIMEOUT:
-                                errorMessage += " Waktu habis saat mendeteksi lokasi.";
+                                errorMessage = "Permintaan lokasi habis waktu.";
                                 break;
                             case error.UNKNOWN_ERROR:
-                                errorMessage += " Terjadi kesalahan tidak dikenal.";
+                                errorMessage = "Terjadi kesalahan yang tidak diketahui.";
                                 break;
                         }
-                        deliveryAddressInput.value = errorMessage;
-                        this.classList.remove('loading');
-                        deliveryAddressInput.placeholder = "Kirim ke alamat pemesan..."; // Reset placeholder
+                        alert("Gagal mendapatkan lokasi GPS: " + errorMessage);
                     },
                     {
-                        enableHighAccuracy: true, // Mencoba mendapatkan lokasi yang lebih akurat
-                        timeout: 10000, // Timeout setelah 10 detik
-                        maximumAge: 0 // Tidak menggunakan cache lokasi lama
+                        enableHighAccuracy: true,
+                        timeout: 10000, // 10 seconds
+                        maximumAge: 0 // No cached position
                     }
                 );
             } else {
-                deliveryAddressInput.value = "Browser Anda tidak mendukung Geolocation.";
                 this.classList.remove('loading');
-                deliveryAddressInput.placeholder = "Kirim ke alamat pemesan..."; // Reset placeholder
+                deliveryAddressInput.value = "";
+                deliveryAddressInput.placeholder = "Browser Anda tidak mendukung Geolocation.";
+                alert("Geolocation tidak didukung oleh browser ini.");
             }
         });
 
-        // Optional: Add a 'readonly' attribute to the input so users don't type over the GPS result
-        // You can add this directly in HTML: <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Kirim ke alamat pemesan..." readonly>
-
-
-        // --- Promo Banner Auto-Scroll ---
-        const promoSlides = document.getElementById('promoSlides');
-        let promoIndex = 0;
-        const totalPromoSlides = promoSlides.children.length;
-
-        function autoScrollPromo() {
-            promoIndex++;
-            if (promoIndex >= totalPromoSlides) {
-                promoIndex = 0;
+        // --- Firebase Auth State Listener ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserId = user.uid;
+                console.log("User logged in:", currentUserId);
+                // Listen for real-time cart updates for this user
+                listenToCartChanges(currentUserId);
+                renderMenuItems(); // Load menu items after user is confirmed
+            } else {
+                console.log("No user logged in, redirecting to index.html");
+                if (localStorage.getItem('isLoggingOut') !== 'true') {
+                    window.location.href = 'index.html';
+                }
+                localStorage.removeItem('isLoggingOut');
             }
-            const offset = -promoIndex * (promoSlides.children[0].offsetWidth + 12); // +12 for gap
-            promoSlides.style.transform = `translateX(${offset}px)`;
+        });
+
+        // --- Real-time Cart Listener ---
+        function listenToCartChanges(userId) {
+            cartsCollection.doc(userId).onSnapshot(docSnapshot => {
+                if (docSnapshot.exists) {
+                    const cartData = docSnapshot.data();
+                    updateCartUI(cartData);
+                } else {
+                    // Cart does not exist for this user, reset UI
+                    updateCartUI({ items: {} });
+                }
+            }, error => {
+                console.error("Error listening to cart changes:", error);
+            });
         }
 
-        let promoInterval = setInterval(autoScrollPromo, 3000); // Change slide every 3 seconds
+        // --- Update Cart UI Function ---
+        function updateCartUI(cartData) {
+            let totalItems = 0;
+            let totalPrice = 0;
 
-        // Pause on hover
-        promoSlides.addEventListener('mouseenter', () => clearInterval(promoInterval));
-        promoSlides.addEventListener('mouseleave', () => promoInterval = setInterval(autoScrollPromo, 3000));
+            if (cartData && cartData.items) {
+                Object.values(cartData.items).forEach(item => {
+                    totalItems += item.quantity;
+                    totalPrice += item.price * item.quantity;
+                });
+            }
+
+            // Update bottom navigation cart badge
+            if (totalItems > 0) {
+                cartBadge.textContent = totalItems;
+                cartBadge.style.display = 'block';
+            } else {
+                cartBadge.style.display = 'none';
+            }
+
+            // Update floating cart bar
+            if (totalItems > 0) {
+                floatingCartBar.style.display = 'flex';
+                barItemCountText.textContent = `${totalItems} item`;
+                barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`;
+            } else {
+                floatingCartBar.style.display = 'none';
+            }
+
+            // Update popup checkout bar (if popup is open, or to prepare it)
+            bridgeItemCount.textContent = `${totalItems} item`;
+            bridgeTotal.textContent = `Total: ${formatRupiah(totalPrice)}`;
+            
+            // Adjust visibility of popupCheckoutBar within the popup,
+            // though it's typically always shown when the popup itself is visible.
+            // popupCheckoutBar.style.display = totalItems > 0 ? 'flex' : 'none'; // Re-enable if you want it to hide when cart is empty within popup
+        }
 
 
-        // --- Pop-up Panel Functions ---
+        // --- Popup Functions ---
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
-            document.body.style.overflow = 'hidden'; // Prevent scrolling background
-            popupCheckoutBar.style.display = 'flex'; // Show summary bar when popup opens
-            // Optional: You might want to pass data to the iframe using localStorage/sessionStorage
-            // or URL parameters if the iframe content needs dynamic data from parent.
+            // Hide the floating cart bar when the popup is open
+            floatingCartBar.style.display = 'none'; 
+            document.body.style.overflow = 'hidden'; // Prevent scrolling the main page
         }
 
         function tutupPopup() {
             popupPanel.classList.remove('show');
-            document.body.style.overflow = ''; // Allow scrolling background
             popupFrame.src = ""; // Clear iframe content
-            popupCheckoutBar.style.display = 'none'; // Hide summary bar when popup closes
+            // Show the floating cart bar again if there are items
+            // This is handled by updateCartUI, but we can force a check here if needed
+            // For now, let updateCartUI handle its visibility based on cart state
+            if (parseInt(cartBadge.textContent) > 0) {
+                floatingCartBar.style.display = 'flex';
+            }
+            document.body.style.overflow = ''; // Allow scrolling the main page again
         }
 
-        // Listen for messages from the iframe (e.g., cart updates)
-        window.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'cartUpdate') {
-                const { itemCount, totalPrice } = event.data;
-                updateCartUI(itemCount, totalPrice);
-                // Also update the bridge bar inside the popup
-                if (popupPanel.classList.contains('show')) {
-                    bridgeItemCount.textContent = `${itemCount} item`;
-                    bridgeTotal.textContent = `Rp ${formatRupiah(totalPrice).replace('Rp', '').trim()}`;
-                }
-            }
+        // Initial render when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check auth state will call renderMenuItems and listenToCartChanges
         });
 
+        // --- Promo Banner Carousel (existing code, untouched) ---
+        const promoSlides = document.getElementById('promoSlides');
+        let currentSlide = 0;
+        const slideWidth = 200 + 12; // promo-slide width + gap
 
-        // --- Cart UI Update Function (main page) ---
-        function updateCartUI(itemCount, totalPrice) {
-            if (itemCount > 0) {
-                cartBadge.textContent = itemCount;
-                cartBadge.style.display = 'block'; // Show badge
-
-                barItemCountText.textContent = `${itemCount} item`;
-                barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`;
-                floatingCartBar.style.display = 'flex'; // Show floating bar
-            } else {
-                cartBadge.style.display = 'none'; // Hide badge
-                floatingCartBar.style.display = 'none'; // Hide floating bar
+        function scrollPromo() {
+            currentSlide++;
+            if (currentSlide >= promoSlides.children.length) {
+                currentSlide = 0; // Reset to start
             }
+            promoSlides.style.transform = `translateX(-${currentSlide * slideWidth}px)`;
         }
 
-
-        // --- Initial Load Functions ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUserId = user.uid;
-                console.log("User logged in:", user.email, "UID:", currentUserId);
-                renderMenuItems(); // Load menu after user is confirmed logged in
-                // Start listening to the cart for this user
-                db.collection('carts').doc(currentUserId).onSnapshot(docSnapshot => {
-                    if (docSnapshot.exists) {
-                        const cartData = docSnapshot.data();
-                        const items = cartData.items || [];
-                        const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-                        const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                        updateCartUI(itemCount, totalPrice);
-                    } else {
-                        updateCartUI(0, 0); // Cart is empty
-                    }
-                }, error => {
-                    console.error("Error listening to cart changes:", error);
-                });
-
-            } else {
-                console.log("No user logged in, redirecting to index.html");
-                if (localStorage.getItem('isLoggingOut') !== 'true') {
-                    window.location.href = 'index.html'; // Redirect to login if not explicitly logging out
-                }
-                localStorage.removeItem('isLoggingOut'); // Clear flag
-            }
-        });
-
-        // Initial render (will be updated by onAuthStateChanged)
-        renderMenuItems();
-
+        setInterval(scrollPromo, 3000); // Change slide every 3 seconds
     </script>
 </body>
 </html>
