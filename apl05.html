@@ -797,6 +797,7 @@
 
 
         let currentUserId = null; // To store the UID of the logged-in user
+        let currentCartData = { items: {} }; // Tambahkan ini untuk menyimpan data keranjang di parent
 
         // --- Rupiah Formatting Function ---
         function formatRupiah(amount) {
@@ -992,13 +993,14 @@
 
             cartsCollection.doc(userId).onSnapshot(docSnapshot => {
                 if (docSnapshot.exists) {
-                    const cartData = docSnapshot.data();
-                    updateCartUI(cartData);
-                    updateProductCardQuantities(cartData); // Update quantities on menu cards
+                    currentCartData = docSnapshot.data(); // Simpan data keranjang di variabel global
+                    updateCartUI(currentCartData);
+                    updateProductCardQuantities(currentCartData); // Update quantities on menu cards
                 } else {
                     // Cart does not exist for this user, show empty state
-                    updateCartUI({ items: {} });
-                    updateProductCardQuantities({ items: {} });
+                    currentCartData = { items: {} }; // Reset data keranjang
+                    updateCartUI(currentCartData);
+                    updateProductCardQuantities(currentCartData);
                 }
             }, error => {
                 console.error("Error listening to cart changes:", error);
@@ -1027,9 +1029,14 @@
             }
 
             // Update popup checkout bar (if popup is open)
-            if (popupPanel.classList.contains('show')) {
-                bridgeItemCount.textContent = `${totalItems} item`;
-                bridgeTotal.textContent = `${formatRupiah(totalPrice)}`;
+            // Notifikasi iframe tentang update keranjang agar ia bisa memperbarui tampilannya
+            if (popupPanel.classList.contains('show') && popupFrame.contentWindow) {
+                if (typeof popupFrame.contentWindow.updateProductCardQuantitiesForIframe === 'function') {
+                    popupFrame.contentWindow.updateProductCardQuantitiesForIframe(cartData);
+                }
+                // Jika popup adalah cart.html, biarkan dia yang mengelola bridgeItemCount dan bridgeTotal
+                // Tapi jika popup adalah menulengkap.html dan ingin menampilkan ringkasan, bisa di-update di sini
+                // Untuk kesederhanaan, biarkan cart.html yang mengelola bridgeCheckoutBar.
             }
         }
 
@@ -1054,10 +1061,10 @@
         function bukaPopup(pageUrl) {
             popupFrame.src = pageUrl;
             popupPanel.classList.add('show');
-            // Hide floatingCartBar when popup is open
-            floatingCartBar.style.display = 'none'; 
+            // floatingCartBar.style.display = 'none'; // BARIS INI TIDAK ADA LAGI / DIKOMEN
 
             // If the popup is for 'cart.html', show the checkout bar
+            // Note: popupCheckoutBar ini hanya muncul di dalam popup, bukan floatingCartBar
             if (pageUrl === 'cart.html') {
                 popupCheckoutBar.style.display = 'flex';
             } else {
@@ -1068,12 +1075,38 @@
         function tutupPopup() {
             popupPanel.classList.remove('show');
             popupFrame.src = ''; // Clear iframe content
-            // Restore floatingCartBar visibility if cart has items
-            // This will be handled by the cart listener, but can add a check here too
-            if (parseInt(cartBadge.textContent) > 0) { // Check if cart has items
-                floatingCartBar.style.display = 'flex';
+            // Tidak perlu mengembalikan floatingCartBar di sini, karena cart listener akan mengaturnya.
+        }
+
+        // Fungsi yang akan dipanggil dari iframe (menulengkap.html atau cart.html)
+        // untuk memperbarui UI keranjang di parent (apl05.html)
+        function updateCartUIFromIframe(cartData) {
+            console.log("Parent received cart update from iframe.");
+            currentCartData = cartData; // Update parent's copy of cart data
+            updateCartUI(cartData); // Update floating bar and badge
+            updateProductCardQuantities(cartData); // Update quantities on apl05 menu cards
+            // Also update popupCheckoutBar if cart.html is sending the update
+            if (popupPanel.classList.contains('show') && popupFrame.contentWindow.location.href.includes('cart.html')) {
+                const totalItems = Object.values(cartData.items || {}).reduce((sum, item) => sum + item.quantity, 0);
+                const totalPrice = Object.values(cartData.items || {}).reduce((sum, item) => sum + (item.quantity * item.price), 0);
+                bridgeItemCount.textContent = `${totalItems} item`;
+                bridgeTotal.textContent = `${formatRupiah(totalPrice)}`;
             }
         }
+
+        // Tambahkan event listener untuk bridgeCheckoutBtn di popupCheckoutBar
+        // Ini akan mengarahkan ke halaman checkout, atau menutup popup dan mengarah ke checkout
+        bridgeCheckoutBtn.addEventListener('click', () => {
+            if (popupFrame.contentWindow && typeof popupFrame.contentWindow.proceedToCheckout === 'function') {
+                popupFrame.contentWindow.proceedToCheckout(); // Call checkout function in iframe
+            } else {
+                // Fallback or if not coming from cart.html directly
+                tutupPopup(); // Close the popup
+                alert("Proceed to checkout logic here from main app. (Not yet implemented)");
+                // Redirect to a dedicated checkout page if you have one
+                // window.location.href = 'checkout.html';
+            }
+        });
     </script>
 </body>
 </html>
