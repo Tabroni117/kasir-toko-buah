@@ -414,7 +414,7 @@
             background: linear-gradient(135deg, #00C853, #64DD17);
             padding: 6px 0;
             border-top: 1px solid rgba(255,255,255,0.2);
-            z-index: 1000;
+            z-index: 1000; /* Tetap 1000 */
             height: 50px;
         }
 
@@ -481,7 +481,7 @@
             transform: translateX(-50%);
             max-width: 480px;
             width: 100%;
-            z-index: 9999; /* Pastikan ini di atas yang lain tapi di bawah popupPanel */
+            z-index: 999; /* Z-index ini HARUS LEBIH RENDAH dari popupPanel, tapi LEBIH TINGGI dari bottom-nav */
             background: #22c55e; /* Green as requested */
             display: flex;
             justify-content: space-between;
@@ -532,7 +532,7 @@
             display: none;
             justify-content: center;
             align-items: flex-end; /* Appears from bottom */
-            z-index: 10000; /* Z-index lebih tinggi dari floatingCartBar */
+            z-index: 10000; /* Paling atas */
         }
 
         #popupPanel.show {
@@ -542,7 +542,7 @@
         .popup-content {
             width: 100%;
             max-width: 460px;
-            height: 85vh;
+            height: 85vh; /* Menggunakan 85vh agar ada ruang di atas untuk 'tutup' atau info lain */
             background-color: white;
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
@@ -579,8 +579,8 @@
             background-color: #16a34a; /* darker green on hover */
         }
 
-        /* popupCheckoutBar (Ini ada di dalam popup, bukan di apl05.html secara langsung) */
-        /* Anda perlu memastikan gaya ini juga diterapkan di cart.html dan menulengkap.html jika ingin muncul di sana */
+        /* popupCheckoutBar (Ini ada di dalam popupPanel) */
+        /* Pastikan elemen dengan ID popupCheckoutBar ada di cart.html atau menulengkap.html jika ingin muncul di sana */
         #popupCheckoutBar { 
             display: flex;
             justify-content: space-between;
@@ -591,8 +591,8 @@
             border-top: 1px solid #ddd;
             font-size: 16px;
             font-weight: 500;
-            position: relative;
-            z-index: 10;
+            position: relative; /* relative agar flexbox bekerja dengan baik */
+            z-index: 10; /* Z-index dalam popupPanel */
         }
 
         #bridgeItemCount,
@@ -790,11 +790,10 @@
         const barItemCountText = document.getElementById('barItemCountText'); // Item count text
         const barTotalPrice = document.getElementById('barTotalPrice'); // Total price text
 
-        // Elements for popupCheckoutBar (ini hanya referensi ke elemen di apl05.html)
-        // Untuk kontrol penuh popupCheckoutBar, Anda perlu mengelola visibility-nya di dalam iframe (cart.html / menulengkap.html)
+        // Elements for popupCheckoutBar (ini adalah bridge/copy di apl05.html)
         const popupPanel = document.getElementById('popupPanel');
         const popupFrame = document.getElementById('popupFrame');
-        const popupCheckoutBar = document.getElementById('popupCheckoutBar'); // Ini elemen di apl05.html, tapi sembunyi secara default
+        const popupCheckoutBar = document.getElementById('popupCheckoutBar'); 
         const bridgeItemCount = document.getElementById('bridgeItemCount');
         const bridgeTotal = document.getElementById('bridgeTotal');
         const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn');
@@ -1024,30 +1023,28 @@
             }
 
             // Update floating cart bar (di apl05.html)
-            if (totalItems > 0) {
+            // Ini hanya akan ditampilkan jika tidak ada popup yang sedang terbuka
+            if (totalItems > 0 && !popupPanel.classList.contains('show')) {
                 floatingCartBar.style.display = 'flex';
                 barItemCountText.textContent = `${totalItems} item`;
                 barTotalPrice.textContent = `${formatRupiah(totalPrice)}`;
             } else {
-                floatingCartBar.style.display = 'none';
+                floatingCartBar.style.display = 'none'; // Sembunyikan jika 0 item ATAU jika popup terbuka
             }
 
-            // Update popup checkout bar (di dalam popup)
-            // Ini akan dipanggil ketika iframe terbuka dan mengirim pesan kembali
+            // Notifikasi iframe tentang update keranjang agar ia bisa memperbarui tampilannya
             if (popupPanel.classList.contains('show') && popupFrame.contentWindow) {
-                if (typeof popupFrame.contentWindow.updateProductCardQuantitiesForIframe === 'function') {
-                    popupFrame.contentWindow.updateProductCardQuantitiesForIframe(cartData);
+                // Panggil fungsi di iframe untuk memperbarui UI keranjang mereka
+                if (typeof popupFrame.contentWindow.updateCartUIForIframe === 'function') {
+                    popupFrame.contentWindow.updateCartUIForIframe(cartData);
                 }
-                // Jika popup adalah cart.html, kita juga bisa memperbarui bridgeItemCount dan bridgeTotal di popupCheckoutBar parent
-                // (Ini hanya jika popupCheckoutBar di apl05.html ini ingin digunakan sebagai 'bridge' atau tampilan duplikat)
-                if (popupFrame.contentWindow.location.href.includes('cart.html') || popupFrame.contentWindow.location.href.includes('menulengkap.html')) {
-                    if (totalItems > 0) {
-                        popupCheckoutBar.style.display = 'flex';
-                        bridgeItemCount.textContent = `${totalItems} item`;
-                        bridgeTotal.textContent = `${formatRupiah(totalPrice)}`;
-                    } else {
-                        popupCheckoutBar.style.display = 'none';
-                    }
+                // Update 'bridge' popupCheckoutBar di apl05.html juga
+                if (totalItems > 0) {
+                    popupCheckoutBar.style.display = 'flex';
+                    bridgeItemCount.textContent = `${totalItems} item`;
+                    bridgeTotal.textContent = `${formatRupiah(totalPrice)}`;
+                } else {
+                    popupCheckoutBar.style.display = 'none';
                 }
             }
         }
@@ -1073,38 +1070,12 @@
         function bukaPopup(pageUrl) {
             popupFrame.src = pageUrl;
             popupPanel.classList.add('show');
-            // floatingCartBar TIDAK AKAN DISMEBUNYIKAN DI SINI. Ini dihandle oleh updateCartUI.
+            floatingCartBar.style.display = 'none'; // Sembunyikan floating bar utama saat popup terbuka
 
-            // Tampilkan popupCheckoutBar yang ada di apl05.html
-            // Ini akan ditampilkan jika ada item di keranjang.
-            // Namun, kontrol utama ada di iframe itu sendiri.
-            if (Object.values(currentCartData.items || {}).reduce((sum, item) => sum + item.quantity, 0) > 0) {
-                 popupCheckoutBar.style.display = 'flex'; // Pastikan ini juga tampil
-            } else {
-                 popupCheckoutBar.style.display = 'none';
-            }
-           
-        }
+            // Pastikan bridge popupCheckoutBar di apl05.html juga terupdate
+            const totalItems = Object.values(currentCartData.items || {}).reduce((sum, item) => sum + item.quantity, 0);
+            const totalPrice = Object.values(currentCartData.items || {}).reduce((sum, item) => sum + (item.quantity * item.price), 0);
 
-        function tutupPopup() {
-            popupPanel.classList.remove('show');
-            popupFrame.src = ''; // Clear iframe content
-            popupCheckoutBar.style.display = 'none'; // Sembunyikan popupCheckoutBar saat popup ditutup
-            // floatingCartBar TIDAK AKAN DISEMBUYIKAN/DIKEMBALIKAN DI SINI, karena updateCartUI mengaturnya.
-        }
-
-        // Fungsi yang akan dipanggil dari iframe (menulengkap.html atau cart.html)
-        // untuk memperbarui UI keranjang di parent (apl05.html)
-        function updateCartUIFromIframe(cartData) {
-            console.log("Parent received cart update from iframe.");
-            currentCartData = cartData; // Update parent's copy of cart data
-            updateCartUI(cartData); // Update floating bar and badge, dan juga popupCheckoutBar jika popup terbuka
-            updateProductCardQuantities(cartData); // Update quantities on apl05 menu cards
-
-            // Update tampilan popupCheckoutBar di parent (apl05.html)
-            const totalItems = Object.values(cartData.items || {}).reduce((sum, item) => sum + item.quantity, 0);
-            const totalPrice = Object.values(cartData.items || {}).reduce((sum, item) => sum + (item.quantity * item.price), 0);
-            
             if (totalItems > 0) {
                 popupCheckoutBar.style.display = 'flex';
                 bridgeItemCount.textContent = `${totalItems} item`;
@@ -1114,17 +1085,36 @@
             }
         }
 
+        function tutupPopup() {
+            popupPanel.classList.remove('show');
+            popupFrame.src = ''; // Clear iframe content
+            popupCheckoutBar.style.display = 'none'; // Sembunyikan bridge popupCheckoutBar
+
+            // Kembalikan floating bar utama (jika ada item di keranjang)
+            const totalItems = Object.values(currentCartData.items || {}).reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                floatingCartBar.style.display = 'flex';
+            }
+        }
+
+        // Fungsi yang akan dipanggil dari iframe (menulengkap.html atau cart.html)
+        // untuk memperbarui UI keranjang di parent (apl05.html)
+        window.updateCartUIFromIframe = function(cartData) { // Penting: jadikan global agar bisa diakses dari iframe
+            console.log("Parent received cart update from iframe.");
+            currentCartData = cartData; // Update parent's copy of cart data
+            updateCartUI(cartData); // Update floating bar and badge, dan juga popupCheckoutBar jika popup terbuka
+            updateProductCardQuantities(cartData); // Update quantities on apl05 menu cards
+        };
+
         // Tambahkan event listener untuk bridgeCheckoutBtn di popupCheckoutBar
-        // Ini akan mengarahkan ke halaman checkout, atau menutup popup dan mengarah ke checkout
         bridgeCheckoutBtn.addEventListener('click', () => {
             if (popupFrame.contentWindow && typeof popupFrame.contentWindow.proceedToCheckout === 'function') {
-                popupFrame.contentWindow.proceedToCheckout(); // Call checkout function in iframe
+                popupFrame.contentWindow.proceedToCheckout(); // Panggil fungsi checkout di iframe
             } else {
-                // Fallback or if not coming from cart.html directly
-                tutupPopup(); // Close the popup
-                alert("Proceed to checkout logic here from main app. (Not yet implemented)");
-                // Redirect to a dedicated checkout page if you have one
-                // window.location.href = 'checkout.html';
+                // Fallback atau jika bukan dari cart.html langsung
+                tutupPopup(); // Tutup popup
+                alert("Proceed to checkout logic here from main app. (Not yet implemented, redirect to actual checkout page)");
+                // Contoh: window.location.href = 'checkout.html';
             }
         });
     </script>
