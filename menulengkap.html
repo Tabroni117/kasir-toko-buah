@@ -30,7 +30,7 @@
             background: white;
             min-height: 100vh;
             position: relative;
-            padding-bottom: 65px; /* Adjusted: floatingCartBar height (45px) + a little margin (20px) */
+            padding-bottom: 65px;
         }
 
         /* Header Styling */
@@ -102,8 +102,8 @@
             border-color: #b0b0b0;
         }
 
-        /* Address Bar Styling */
-        .address-bar {
+        /* Search Bar Styling (NEW) */
+        .search-bar {
             display: flex;
             align-items: center;
             background: #f0f0f0;
@@ -113,30 +113,19 @@
             width: 100%;
         }
 
-        .gps-icon {
-            color: #00C853;
+        .search-icon {
+            color: #999;
             margin-right: 8px;
             font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-        .gps-icon.loading {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
         }
 
-        .delivery-input {
+        .search-input {
             flex-grow: 1;
             border: none;
             outline: none;
+            background: #f0f0f0;
             font-size: 14px;
             color: #333;
-        }
-
-        .location-placeholder {
-            color: #999;
         }
         
         /* Menu Section */
@@ -299,7 +288,7 @@
 
         #floatingCartBar {
             position: fixed;
-            bottom: 0; /* Changed to 0 to sit at the very bottom */
+            bottom: 0;
             left: 50%;
             transform: translateX(-50%);
             max-width: 480px;
@@ -453,9 +442,10 @@
                     <i class="fas fa-sign-out-alt mr-1"></i> Logout
                 </button>
             </div>
-            <div class="address-bar">
-                <i class="fas fa-map-marker-alt gps-icon"></i>
-                <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
+            
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Cari menu...">
             </div>
         </header>
 
@@ -516,7 +506,7 @@
         
         // --- Main Elements ---
         const menuList = document.getElementById('menuList');
-        const deliveryAddressInput = document.getElementById('deliveryAddressInput');
+        const searchInput = document.getElementById('searchInput');
         const sectionTitle = document.getElementById('sectionTitle');
         
         // Elements for cart display
@@ -563,13 +553,20 @@
         }
         
         // --- Function to Load and Display Menu from Firebase ---
-        async function renderMenuItems() {
+        async function renderMenuItems(searchQuery = '') {
             menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
             
             try {
                 let query = menuCollection.where('isAvailable', '==', true);
                 
-                sectionTitle.textContent = 'Menu Terlaris';
+                if (searchQuery) {
+                    // Search Firestore based on 'nama' field (case-insensitive prefix search)
+                    sectionTitle.textContent = 'Hasil Pencarian';
+                    query = query.where('nama', '>=', searchQuery)
+                                 .where('nama', '<=', searchQuery + '\uf8ff');
+                } else {
+                    sectionTitle.textContent = 'Menu Terlaris';
+                }
                 
                 const snapshot = await query.orderBy('nama').get();
 
@@ -652,6 +649,12 @@
         // --- Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
             renderMenuItems();
+            
+            // Listen for input on the search bar
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value;
+                renderMenuItems(query);
+            });
         });
     </script>
 
