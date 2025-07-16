@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Rujak Buah</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .header-top i {
+            font-size: 20px;
+            color: #4CAF50;
+            cursor: pointer;
+        }
+
+        .store-info {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .store-info h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .store-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            color: #4CAF50;
+            font-size: 12px;
+        }
+
+        .header-icons i {
+            font-size: 16px;
+            margin-right: 5px;
+        }
+
+        .categories {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 5px;
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            margin-right: 10px;
+            background-color: #fff;
+            color: #555;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .category-btn.active {
+            background-color: #4CAF50;
+            color: #fff;
+            border-color: #4CAF50;
+        }
+
+        .search-btn {
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            background-color: #fff;
+            color: #555;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .menu-container {
+            padding: 15px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .menu-item {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .item-info {
+            padding: 10px;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin: 0 0 5px;
+        }
+
+        .item-desc {
+            font-size: 12px;
+            color: #888;
+            margin: 0;
+        }
+
+        .price-promo {
+            margin-top: 5px;
+        }
+
+        .price-current {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .price-original {
+            font-size: 12px;
+            color: #aaa;
+            text-decoration: line-through;
+            margin-left: 5px;
+        }
+
+        .add-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-list-item {
+            display: flex;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .menu-list-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .item-info-list {
+            padding: 10px;
+            flex-grow: 1;
+        }
+
+        .item-note {
+            font-size: 10px;
+            color: #aaa;
+            margin: 0 0 5px;
+        }
+
+        .price-list {
+            margin-top: 5px;
+        }
+
+        .add-btn-list {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 600px) {
+            .header-top {
+                justify-content: flex-start;
+            }
+            
+            .store-info {
+                text-align: left;
+                margin-left: 15px;
+            }
+            
+            .header-icons {
+                margin-left: auto;
+            }
+            
+            .search-btn {
+                margin-left: auto;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* CSS untuk Floating Cart Bar */
+        #floatingCartBar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 30px;
+            display: none; /* Default hidden */
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 200;
+        }
+        
+        #floatingCartBar i {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        #floatingCartBar span {
+            font-weight: bold;
+        }
+
+        /* CSS untuk Popup Panel */
+        #popupPanel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none; /* Default hidden */
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 300;
+        }
+
+        #popupFrame {
+            background-color: #fff;
+            width: 100%;
+            padding: 20px;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -4px 8px rgba(0,0,0,0.2);
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        #popupCheckoutBar {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-top">
+            <i class="fas fa-arrow-left"></i>
+            <div class="store-info">
+                <h3>RUJAK BUAH NUSA...</h3>
+                <p>- Tambora</p>
+            </div>
+            <div class="header-icons">
+                <i class="fas fa-user-group"></i>
+                <span>Group Order</span>
+            </div>
+        </div>
+        <div class="categories">
+            <button class="category-btn active" data-category="Untukmu">Untukmu</button>
+            <button class="category-btn" data-category="Menu promo">Menu promo</button>
+            <button class="category-btn" data-category="Vegetarian">Vegetarian</button>
+            <button class="search-btn"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+
+    <div class="menu-container">
+        <h2 class="section-title" id="sectionTitle">Untukmu</h2>
+        <div id="menuContent">
+            </div>
+    </div>
+
+    <div id="floatingCartBar">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="barItemCountText"></span>
+        <span id="barTotalPrice"></span>
+    </div>
+
+    <div id="popupPanel">
+        <div id="popupFrame">
+            <div id="cartItemsList"></div>
+
+            <div id="popupCheckoutBar">
+                <div>
+                    <span id="bridgeItemCount">0 items</span>
+                    <br>
+                    <span id="bridgeTotal">Rp0</span>
+                </div>
+                <button id="bridgeCheckoutBtn">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const menuCollection = db.collection('buah');
+        const cartsCollection = db.collection('carts'); // Reference to the cart collection
+
+        // --- Main Elements ---
+        const menuList = document.getElementById('menuList'); // Ini sepertinya tidak digunakan di kode Anda
+        const deliveryAddressInput = document.getElementById('deliveryAddressInput'); // ID for address input. Perlu ditambahkan di HTML jika ingin dipakai
+        const menuContent = document.getElementById('menuContent');
+        const sectionTitle = document.getElementById('sectionTitle');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+
+        // Elements for cart display
+        const cartBadge = document.getElementById('cartBadge'); // Notification on bottom nav. Perlu dibuat HTML-nya
+        const floatingCartBar = document.getElementById('floatingCartBar'); // Floating cart bar
+        const barItemCountText = document.getElementById('barItemCountText'); // Item count text
+        const barTotalPrice = document.getElementById('barTotalPrice'); // Total price text
+
+        // Elements for popupCheckoutBar
+        const popupPanel = document.getElementById('popupPanel');
+        const popupFrame = document.getElementById('popupFrame');
+        const popupCheckoutBar = document.getElementById('popupCheckoutBar');
+        const bridgeItemCount = document.getElementById('bridgeItemCount');
+        const bridgeTotal = document.getElementById('bridgeTotal');
+        const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn');
+        
+        // --- Fungsi yang berhubungan dengan UI & Logika Aplikasi ---
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        }
+
+        function renderProducts(category) {
+            menuContent.innerHTML = ''; // Kosongkan konten sebelumnya
+            sectionTitle.textContent = category;
+
+            // Di sini, Anda akan mengambil data dari Firebase, bukan dari array statis
+            menuCollection.where('category', '==', category).get().then((querySnapshot) => {
+                const gridContainer = document.createElement('div');
+                const listContainer = document.createElement('div');
+                gridContainer.classList.add('menu-grid');
+                listContainer.classList.add('menu-list');
+
+                let hasGridItems = false;
+                let hasListItems = false;
+
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    if (product.layout === 'grid') {
+                        hasGridItems = true;
+                        const itemHTML = `
+                            <div class="menu-item" data-id="${doc.id}">
+                                <img src="${product.image}" alt="${product.name}">
+                                <div class="item-info">
+                                    <p class="item-name">${product.name}</p>
+                                    <p class="item-desc">${product.description}</p>
+                                    <p class="price-promo">
+                                        <span class="price-current">${formatRupiah(product.price)}</span>
+                                        ${product.originalPrice ? `<span class="price-original">${formatRupiah(product.originalPrice)}</span>` : ''}
+                                    </p>
+                                </div>
+                                <button class="add-btn">+</button>
+                            </div>
+                        `;
+                        gridContainer.innerHTML += itemHTML;
+                    } else if (product.layout === 'list') {
+                        hasListItems = true;
+                        const itemHTML = `
+                            <div class="menu-list-item" data-id="${doc.id}">
+                                <img src="${product.image}" alt="${product.name}">
+                                <div class="item-info-list">
+                                    <p class="item-name">${product.name}</p>
+                                    <p class="item-desc">${product.description}</p>
+                                    ${product.note ? `<p class="item-note">${product.note}</p>` : ''}
+                                    <p class="price-list">
+                                        <span class="price-current">${formatRupiah(product.price)}</span>
+                                        ${product.originalPrice ? `<span class="price-original">${formatRupiah(product.originalPrice)}</span>` : ''}
+                                    </p>
+                                </div>
+                                <button class="add-btn-list">+</button>
+                            </div>
+                        `;
+                        listContainer.innerHTML += itemHTML;
+                    }
+                });
+
+                if (hasGridItems) {
+                    menuContent.appendChild(gridContainer);
+                }
+                
+                if (hasListItems) {
+                    menuContent.appendChild(listContainer);
+                }
+            }).catch((error) => {
+                console.error("Error getting documents: ", error);
+                menuContent.innerHTML = "<p>Terjadi kesalahan saat memuat menu.</p>";
+            });
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Event listener untuk tombol kategori
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const category = btn.getAttribute('data-category');
+                    renderProducts(category);
+                });
+            });
+
+            // Tampilkan menu awal saat halaman dimuat
+            renderProducts('Untukmu');
+        });
+        
+    </script>
+
+</body>
+</html>
