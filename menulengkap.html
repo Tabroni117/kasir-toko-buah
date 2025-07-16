@@ -55,12 +55,24 @@
             align-items: center;
             width: 100%;
             margin-bottom: 8px;
+            gap: 12px;
         }
 
         .app-header {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+        }
+
+        /* NEW: Back Button Style */
+        .back-btn {
+            font-size: 24px;
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .back-btn:hover {
+            color: #00C853;
         }
 
         .app-title {
@@ -71,35 +83,11 @@
             margin-bottom: 4px;
             color: #333;
         }
-
-        .leaf-icon {
-            margin-right: 10px;
-            font-size: 24px;
-            color: #00C853;
-        }
         
         .app-tagline {
             font-size: 12px;
             font-style: italic;
             color: #757575;
-        }
-
-        /* Logout Button Style */
-        .logout-btn {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s, border-color 0.3s;
-            margin-left: auto;
-            white-space: nowrap;
-        }
-        .logout-btn:hover {
-            background-color: #e0e0e0;
-            border-color: #b0b0b0;
         }
 
         /* Search Bar Styling */
@@ -431,16 +419,16 @@
     <div class="container">
         <header class="header">
             <div class="header-top-row">
+                <a href="apl05.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                
                 <div class="app-header">
                     <div class="app-title">
-                        <i class="fas fa-leaf leaf-icon"></i>
                         RUJAK BUAH INDONESIA
                     </div>
                     <div class="app-tagline">Aplikasi Pelanggan</div>
                 </div>
-                <button onclick="logout()" class="logout-btn">
-                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                </button>
             </div>
             
             <div class="search-bar">
@@ -533,31 +521,12 @@
                 minimumFractionDigits: 0
             }).format(amount);
         }
-
-        // --- Logout Function ---
-        async function logout() {
-            try {
-                localStorage.setItem('isLoggingOut', 'true');
-                await auth.signOut();
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('userUid');
-                alert('Anda telah berhasil logout.');
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error("Error during logout:", error);
-                alert('Gagal logout. Coba lagi.');
-                localStorage.removeItem('isLoggingOut');
-            }
-        }
         
-        // --- Function to Load and Display Menu from Firebase (FIXED) ---
+        // --- Function to Load and Display Menu from Firebase ---
         async function renderMenuItems(searchQuery = '') {
             menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
             
             try {
-                // Fetch all available menu items first
                 const querySnapshot = await menuCollection
                     .where('isAvailable', '==', true)
                     .orderBy('nama')
@@ -570,12 +539,10 @@
                 
                 let filteredMenuItems = allMenuItems;
                 
-                // If there's a search query, filter the items on the client-side
                 if (searchQuery) {
                     sectionTitle.textContent = 'Hasil Pencarian';
                     const lowerCaseQuery = searchQuery.toLowerCase();
                     filteredMenuItems = allMenuItems.filter(item => {
-                        // Check if the item's name (in lowercase) includes the search query
                         return item.nama && item.nama.toLowerCase().includes(lowerCaseQuery);
                     });
                 } else {
@@ -660,7 +627,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderMenuItems();
             
-            // Listen for input on the search bar
             searchInput.addEventListener('input', (e) => {
                 const query = e.target.value;
                 renderMenuItems(query);
