@@ -476,12 +476,12 @@
         /* Floating Cart Bar */
         #floatingCartBar {
             position: fixed;
-            bottom: 50px; /* Tepat di atas bottom-nav (50px height) */
+            bottom: 50px; /* Right above bottom-nav (50px height) */
             left: 50%;
             transform: translateX(-50%);
             max-width: 480px;
             width: 100%;
-            z-index: 1001; /* Z-index lebih tinggi dari bottom-nav */
+            z-index: 999; /* Z-index ini HARUS LEBIH RENDAH dari popupPanel, tapi LEBIH TINGGI dari bottom-nav */
             background: #22c55e; /* Green as requested */
             display: flex;
             justify-content: space-between;
@@ -532,7 +532,7 @@
             display: none;
             justify-content: center;
             align-items: flex-end; /* Appears from bottom */
-            z-index: 10000; /* Paling atas dari semua */
+            z-index: 10000; /* Paling atas */
         }
 
         #popupPanel.show {
@@ -579,7 +579,7 @@
             background-color: #16a34a; /* darker green on hover */
         }
 
-        /* popupCheckoutBar (Ini adalah bilah summary yang ditampilkan DI DALAM popup) */
+        /* popupCheckoutBar (Ini ada di dalam popupPanel) */
         /* Pastikan elemen dengan ID popupCheckoutBar ada di cart.html atau menulengkap.html jika ingin muncul di sana */
         #popupCheckoutBar { 
             display: flex;
@@ -592,7 +592,7 @@
             font-size: 16px;
             font-weight: 500;
             position: relative; /* relative agar flexbox bekerja dengan baik */
-            z-index: 10; /* Z-index dalam popupPanel (tidak terlalu penting karena sudah di dalam parent) */
+            z-index: 10; /* Z-index dalam popupPanel */
         }
 
         #bridgeItemCount,
@@ -634,7 +634,7 @@
             </div>
             <div class="address-bar">
                 <i class="fas fa-map-marker-alt gps-icon"></i>
-                <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Mendeteksi lokasi...">
+                <input type="text" id="deliveryAddressInput" class="delivery-input" placeholder="Kirim ke alamat pemesan...">
             </div>
         </header>
 
@@ -1023,7 +1023,7 @@
             }
 
             // Update floating cart bar (di apl05.html)
-            // Ini hanya akan ditampilkan jika TIDAK ADA popup yang sedang terbuka
+            // Ini hanya akan ditampilkan jika tidak ada popup yang sedang terbuka
             if (totalItems > 0 && !popupPanel.classList.contains('show')) {
                 floatingCartBar.style.display = 'flex';
                 barItemCountText.textContent = `${totalItems} item`;
@@ -1038,7 +1038,7 @@
                 if (typeof popupFrame.contentWindow.updateCartUIForIframe === 'function') {
                     popupFrame.contentWindow.updateCartUIForIframe(cartData);
                 }
-                // Update 'bridge' popupCheckoutBar di apl05.html juga (ini akan terlihat karena z-index popupPanel lebih tinggi)
+                // Update 'bridge' popupCheckoutBar di apl05.html juga
                 if (totalItems > 0) {
                     popupCheckoutBar.style.display = 'flex';
                     bridgeItemCount.textContent = `${totalItems} item`;
@@ -1111,4 +1111,12 @@
             if (popupFrame.contentWindow && typeof popupFrame.contentWindow.proceedToCheckout === 'function') {
                 popupFrame.contentWindow.proceedToCheckout(); // Panggil fungsi checkout di iframe
             } else {
-                // Fallback atau jika bukan dari cart.html
+                // Fallback atau jika bukan dari cart.html langsung
+                tutupPopup(); // Tutup popup
+                alert("Proceed to checkout logic here from main app. (Not yet implemented, redirect to actual checkout page)");
+                // Contoh: window.location.href = 'checkout.html';
+            }
+        });
+    </script>
+</body>
+</html>
