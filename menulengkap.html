@@ -335,132 +335,149 @@
         </div>
     </div>
 
-    <script>
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
+   <script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+        authDomain: "tokobuahkasir.firebaseapp.com",
+        projectId: "tokobuahkasir",
+        storageBucket: "tokobuahkasir.firebasestorage.app",
+        messagingSenderId: "731011133713",
+        appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+        measurementId: "G-7CPE2DB2BV"
+    };
 
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const menuCollection = db.collection('buah');
-        const cartsCollection = db.collection('carts');
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const menuCollection = db.collection('buah');
+    const cartsCollection = db.collection('carts');
 
-        // --- Main Elements ---
-        const menuList = document.getElementById('menuList');
-        const deliveryAddressInput = document.getElementById('deliveryAddressInput');
-        const sectionTitle = document.getElementById('sectionTitle');
-        const categoryBtns = document.querySelectorAll('.category-btn');
+    // --- Main Elements ---
+    const menuList = document.getElementById('menuList');
+    const deliveryAddressInput = document.getElementById('deliveryAddressInput');
+    const sectionTitle = document.getElementById('sectionTitle');
+    const categoryBtns = document.querySelectorAll('.category-btn');
 
-        // Elements for cart display
-        const cartBadge = document.getElementById('cartBadge');
-        const floatingCartBar = document.getElementById('floatingCartBar');
-        const barItemCountText = document.getElementById('barItemCountText');
-        const barTotalPrice = document.getElementById('barTotalPrice');
+    // Elements for cart display
+    const cartBadge = document.getElementById('cartBadge');
+    const floatingCartBar = document.getElementById('floatingCartBar');
+    const barItemCountText = document.getElementById('barItemCountText');
+    const barTotalPrice = document.getElementById('barTotalPrice');
 
-        // Elements for popupCheckoutBar
-        const popupPanel = document.getElementById('popupPanel');
-        const popupFrame = document.getElementById('popupFrame');
-        const popupCheckoutBar = document.getElementById('popupCheckoutBar');
-        const bridgeItemCount = document.getElementById('bridgeItemCount');
-        const bridgeTotal = document.getElementById('bridgeTotal');
-        const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn');
+    // Elements for popupCheckoutBar
+    const popupPanel = document.getElementById('popupPanel');
+    const popupFrame = document.getElementById('popupFrame');
+    const popupCheckoutBar = document.getElementById('popupCheckoutBar');
+    const bridgeItemCount = document.getElementById('bridgeItemCount');
+    const bridgeTotal = document.getElementById('bridgeTotal');
+    const bridgeCheckoutBtn = document.getElementById('bridgeCheckoutBtn');
 
 
-        // --- Rupiah Formatting Function ---
-        function formatRupiah(amount) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
-        }
+    // --- Rupiah Formatting Function ---
+    function formatRupiah(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
 
-        // --- Function to Load and Display Menu from Firebase ---
-        async function renderMenuItems(category) {
-            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
-            sectionTitle.textContent = category;
-            
-            try {
-                let query = menuCollection.where('isAvailable', '==', true);
-                if (category !== 'Menu Terlaris') {
-                    // Hanya tambahkan filter kategori jika bukan "Menu Terlaris"
-                    // Asumsi: Menu terlaris adalah semua menu yang isAvailable
-                    query = query.where('category', '==', category);
-                }
-                
-                const snapshot = await query.orderBy('nama').get();
-
-                menuList.innerHTML = '';
-
-                if (snapshot.empty) {
-                    menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia di kategori ini.</p>';
-                } else {
-                    snapshot.forEach(doc => {
-                        const productFromFirebase = { id: doc.id, ...doc.data() };
-                        
-                        const card = document.createElement('div');
-                        card.classList.add('restaurant-card');
-                        card.dataset.productId = productFromFirebase.id;
-
-                        card.innerHTML = `
-                            <img src="${productFromFirebase.imageUrl || 'https://placehold.co/120x120/cccccc/333333?text=No+Image'}" alt="${productFromFirebase.nama}" class="restaurant-image">
-                            <div class="restaurant-info">
-                                <div class="restaurant-name">${productFromFirebase.nama}</div>
-                                <div class="restaurant-meta">
-                                    <span class="rating"><i class="fas fa-star"></i> ${productFromFirebase.rating ? productFromFirebase.rating.toFixed(1) : 'N/A'}</span>
-                                </div>
-                            </div>
-                            <div class="add-to-cart-control">
-                                <button class="add-button" data-product-id="${productFromFirebase.id}">+</button>
-                                <div class="quantity-display-only" style="display: none;" data-product-id="${productFromFirebase.id}">0</div>
-                            </div>
-                        `;
-                        
-                        menuList.appendChild(card);
-
-                        // Attach click listener to the add button
-                        const addButton = card.querySelector('.add-button');
-                        addButton.addEventListener('click', () => {
-                            // Di sini Anda bisa menambahkan logika untuk menambahkan ke keranjang
-                            // Contoh: console.log('Ditambahkan ke keranjang:', productFromFirebase.nama);
-                            alert(`Produk ${productFromFirebase.nama} ditambahkan ke keranjang (ini masih contoh).`);
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error("Error loading menu from Firebase: ", error);
-                menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
+    // --- Function to Load and Display Menu from Firebase ---
+    async function renderMenuItems(category) {
+        menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
+        sectionTitle.textContent = category;
+        
+        try {
+            let query = menuCollection.where('isAvailable', '==', true);
+            if (category !== 'Menu Terlaris') {
+                query = query.where('category', '==', category);
             }
-        }
-        
-        // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Event listener untuk tombol kategori
-            categoryBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    categoryBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const category = btn.getAttribute('data-category');
-                    renderMenuItems(category);
-                });
-            });
+            
+            const snapshot = await query.orderBy('nama').get();
 
-            // Tampilkan menu awal saat halaman dimuat
-            renderMenuItems('Menu Terlaris');
+            menuList.innerHTML = '';
+
+            if (snapshot.empty) {
+                menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia di kategori ini.</p>';
+            } else {
+                snapshot.forEach(doc => {
+                    const productFromFirebase = { id: doc.id, ...doc.data() };
+                    
+                    // Membuat objek produk yang lebih lengkap untuk detail halaman
+                    const productForDetail = {
+                        id: productFromFirebase.id,
+                        name: productFromFirebase.nama,
+                        description: productFromFirebase.deskripsi,
+                        price: productFromFirebase.harga,
+                        image: productFromFirebase.imageUrl,
+                        rating: productFromFirebase.rating,
+                        deliveryTime: productFromFirebase.deliveryTime,
+                        originalPrice: productFromFirebase.harga_asli // Tambahkan jika ada
+                    };
+                    
+                    const card = document.createElement('div');
+                    card.classList.add('restaurant-card');
+                    card.dataset.productId = productForDetail.id;
+
+                    card.innerHTML = `
+                        <img src="${productForDetail.image || 'https://placehold.co/120x120/cccccc/333333?text=No+Image'}" alt="${productForDetail.name}" class="restaurant-image">
+                        <div class="restaurant-info">
+                            <div class="restaurant-name">${productForDetail.name}</div>
+                            <div class="restaurant-meta">
+                                <span class="rating"><i class="fas fa-star"></i> ${productForDetail.rating ? productForDetail.rating.toFixed(1) : 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="add-to-cart-control">
+                            <button class="add-button" data-product-id="${productForDetail.id}">+</button>
+                            <div class="quantity-display-only" style="display: none;" data-product-id="${productForDetail.id}">0</div>
+                        </div>
+                    `;
+                    
+                    menuList.appendChild(card);
+
+                    // --- Event Listener untuk mengarahkan ke halaman detail produk ---
+                    const addButton = card.querySelector('.add-button');
+                    const quantityDisplayOnly = card.querySelector('.quantity-display-only');
+                    
+                    // Fungsi untuk redirect
+                    const redirectToProductDetail = () => {
+                        // Simpan data produk ke sessionStorage sebelum redirect
+                        sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
+                        window.location.href = 'product-detail.html'; // Arahkan ke halaman detail produk
+                    };
+
+                    // Tambahkan event listener ke tombol +
+                    addButton.addEventListener('click', redirectToProductDetail);
+                    
+                    // Tambahkan event listener ke elemen quantity-display-only jika tampil
+                    quantityDisplayOnly.addEventListener('click', redirectToProductDetail);
+                });
+            }
+        } catch (error) {
+            console.error("Error loading menu from Firebase: ", error);
+            menuList.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat menu. Coba refresh halaman.</p>';
+        }
+    }
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const category = btn.getAttribute('data-category');
+                renderMenuItems(category);
+            });
         });
-        
-    </script>
+
+        renderMenuItems('Menu Terlaris');
+    });
+    
+</script>
 
 </body>
 </html>
