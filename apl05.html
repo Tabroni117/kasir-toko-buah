@@ -971,15 +971,15 @@
             popupFrame.src = pageUrl; // Setel sumber iframe ke URL halaman yang diminta
             popupPanel.classList.add('show'); // Tampilkan popup panel
 
-            // Sembunyikan floating cart bar saat popup terbuka
-            floatingCartBar.style.display = 'none';
+            // NOTE: floatingCartBar TIDAK disembunyikan di sini, sesuai permintaan terbaru Anda.
+            // floatingCartBar.style.display = 'none'; // BARIS INI DIKOMENTARI/DIHAPUS
 
-            // Logika untuk menampilkan/menyembunyikan popupCheckoutBar
-            // Hanya tampilkan jika bukan cart.html (misal product-detail.html atau menulengkap.html)
+            // Logika untuk menampilkan/menyembunyikan popupCheckoutBar (bar di dalam popup)
+            // Hanya sembunyikan jika halaman yang dimuat adalah cart.html
             if (pageUrl === 'cart.html') {
-                popupCheckoutBar.style.display = 'none'; 
+                popupCheckoutBar.style.display = 'none'; // Sembunyikan bar ini saat cart.html muncul
             } else {
-                popupCheckoutBar.style.display = 'flex'; 
+                popupCheckoutBar.style.display = 'flex'; // Pastikan terlihat untuk halaman lain (misal: product-detail.html)
             }
         }
 
@@ -987,7 +987,8 @@
             popupPanel.classList.remove('show'); // Sembunyikan popup panel
             popupFrame.src = ''; // Bersihkan src iframe untuk menghemat memori dan mencegah konten tersembunyi
             
-            // Panggil fungsi update untuk mengecek dan menampilkan floating bar kembali
+            // Panggil updateCartSummaryDisplay untuk memastikan floatingCartBar dan badge terupdate
+            // terutama jika ada perubahan di keranjang saat popup terbuka
             updateCartSummaryDisplay(); 
         }
 
@@ -1074,22 +1075,20 @@
 
             // Handle pesan untuk update ringkasan keranjang
             if (event.data && event.data.type === 'updateCartSummaryFromIframe') {
-                // window.currentCartItems dan window.currentCartTotal sudah di-update oleh listenToUserCart()
-                // karena perubahan di iframe (product-detail/cart) akan memicu update di Firestore,
-                // dan listener Firestore akan otomatis mengupdate variabel global ini.
-                // Jadi, kita hanya perlu memanggil updateCartSummaryDisplay() untuk refresh UI.
-                console.log("Received updateCartSummaryFromIframe message. Refreshing UI.");
-                updateCartSummaryDisplay(); 
+                // Ini akan memicu listener Firestore untuk mengupdate,
+                // kemudian updateCartSummaryDisplay() akan dipanggil dari sana.
+                console.log("Received updateCartSummaryFromIframe message. Firestore listener should handle update.");
+                // updateCartSummaryDisplay(); // Tidak perlu dipanggil langsung di sini lagi
             }
         });
 
         // --- Initial Callbacks ---
         // Panggil ini saat DOM sudah dimuat sepenuhnya
         document.addEventListener('DOMContentLoaded', () => {
-            // Tidak perlu renderMenuItems() atau listenToUserCart() di sini,
-            // karena sudah dipanggil di onAuthStateChanged untuk memastikan user login dulu.
-            // Tapi kita bisa panggil updateCartSummaryDisplay() untuk state awal
-            updateCartSummaryDisplay(); // Akan menampilkan atau menyembunyikan floating bar berdasarkan data awal
+            // updateCartSummaryDisplay() dipanggil di onAuthStateChanged setelah user login
+            // untuk memastikan data keranjang sudah tersedia.
+            // Namun, panggil sekali di sini untuk initial state sebelum Firestore listener aktif
+            updateCartSummaryDisplay(); 
         });
     </script>
 </body>
