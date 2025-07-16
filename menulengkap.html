@@ -51,17 +51,20 @@
 
         .header-top-row {
             display: flex;
-            justify-content: flex-start; /* PERBAIKAN: Mengatur konten agar tetap di kiri */
+            justify-content: space-between; /* DIUBAH KEMBALI: Untuk memposisikan tombol bagikan di kanan */
             align-items: center;
             width: 100%;
             margin-bottom: 8px;
-            gap: 12px;
+            gap: 12px; /* Memberikan jarak antar item di kiri */
         }
 
         .app-header {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            /* Flex-grow akan memastikan app-header mengisi ruang yang tersisa,
+               mendorong share-btn ke paling kanan */
+            flex-grow: 1; 
         }
 
         /* Back Button Style */
@@ -88,6 +91,21 @@
             font-size: 12px;
             font-style: italic;
             color: #757575;
+        }
+
+        /* NEW: Share Button Style */
+        .share-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 0; 
+        }
+
+        .share-btn:hover {
+            color: #00C853;
         }
 
         /* Search Bar Styling */
@@ -429,6 +447,10 @@
                     </div>
                     <div class="app-tagline">Aplikasi Pelanggan</div>
                 </div>
+
+                <button onclick="shareContent()" class="share-btn">
+                    <i class="fas fa-share-alt"></i>
+                </button>
             </div>
             
             <div class="search-bar">
@@ -520,6 +542,24 @@
                 currency: 'IDR',
                 minimumFractionDigits: 0
             }).format(amount);
+        }
+
+        // --- Share Function (NEW) ---
+        async function shareContent() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Rujak Buah Indonesia',
+                        text: 'Cek menu rujak buah segar kami!',
+                        url: window.location.href 
+                    });
+                    console.log('Konten berhasil dibagikan');
+                } catch (error) {
+                    console.error('Error saat berbagi:', error);
+                }
+            } else {
+                alert('Fitur berbagi tidak didukung di browser ini.');
+            }
         }
         
         // --- Function to Load and Display Menu from Firebase ---
