@@ -6,7 +6,6 @@
     <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -697,7 +696,7 @@
 
         <div class="section-title">
 
-          Menu Terlaris
+            Menu Terlaris
             <span class="see-all" onclick="bukaPopup('menulengkap.html')">Lihat Semua</span>
         </div>
         <div class="restaurants" id="menuList">
@@ -726,13 +725,11 @@
             </a>
         </div>
 
-        <!-- === POPUP PANEL FROM BOTTOM === -->
         <div id="popupPanel">
             <div class="popup-content">
                 <iframe id="popupFrame"></iframe>
 
-                <div id="popupCheckoutBar"> <!-- This is the "summary bar" inside the popup -->
-                    🛒 <span id="bridgeItemCount">0 item</span>
+                <div id="popupCheckoutBar"> 🛒 <span id="bridgeItemCount">0 item</span>
                     Total: <span id="bridgeTotal">Rp 0</span>
                     <button id="bridgeCheckoutBtn">Checkout</button>
                 </div>
@@ -741,15 +738,11 @@
             </div>
         </div>
 
-        <!-- Floating Bar for Checkout -->
         <div id="floatingCartBar" style="display: none;">
-            <div class="cart-info"> <!-- Wrapper for icon, count, and total -->
-                <div class="cart-button" onclick="bukaPopup('cart.html')">
+            <div class="cart-info"> <div class="cart-button" onclick="bukaPopup('cart.html')">
                     <i class="fas fa-shopping-cart"></i>
                 </div>
-                <span id="barItemCountText" class="cart-text">0 item</span> <!-- Element for item count text -->
-                <span id="barTotalPrice" class="cart-text">Total: Rp 0</span> <!-- Element for total price text -->
-            </div>
+                <span id="barItemCountText" class="cart-text">0 item</span> <span id="barTotalPrice" class="cart-text">Total: Rp 0</span> </div>
             <button class="checkout-button" onclick="bukaPopup('cart.html')">Checkout</button>
         </div>
     </div>
@@ -825,10 +818,10 @@
 
         // --- Function to Load and Display Menu from Firebase ---
         async function renderMenuItems() {
-            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';    
+            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';   
             try {
                 const snapshot = await menuCollection
-                                            .where('isAvailable', '==', true)    
+                                            .where('isAvailable', '==', true)   
                                             .orderBy('nama')
                                             .get();
 
@@ -851,7 +844,7 @@
                         };
                         
                         const card = document.createElement('div');
-                        card.classList.add('restaurant-card', 'fade-in');    
+                        card.classList.add('restaurant-card', 'fade-in');   
                         card.dataset.productId = productForDetail.id; // Add data-product-id
 
                         card.innerHTML = `
@@ -863,7 +856,6 @@
                                     <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
                                 </div>
                             </div>
-                            <!-- NEW: Add to Cart/Quantity Control -->
                             <div class="add-to-cart-control">
                                 <button class="add-button" data-product-id="${productForDetail.id}">+</button>
                                 <div class="quantity-display-only" style="display: none;" data-product-id="${productForDetail.id}">0</div>
@@ -917,190 +909,248 @@
                             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                             const data = await response.json();
                             if (data.address) {
-                                const address = [
-                                    data.address.road,
-                                    data.address.village || data.address.town,
-                                    data.address.city,
-                                    data.address.state
-                                ].filter(Boolean).join(', ');
-                                deliveryAddressInput.value = address;
+                                // Prioritaskan menampilkan nama jalan, desa/kelurahan, kota, provinsi
+                                const addressParts = [];
+                                if (data.address.road) addressParts.push(data.address.road);
+                                if (data.address.village) addressParts.push(data.address.village);
+                                else if (data.address.suburb) addressParts.push(data.address.suburb); // Alternatif jika village tidak ada
+                                else if (data.address.town) addressParts.push(data.address.town); // Alternatif jika suburb tidak ada
+
+                                // Jika tidak ada bagian di atas, coba ambil dari city atau county
+                                if (addressParts.length === 0) {
+                                    if (data.address.city) addressParts.push(data.address.city);
+                                    else if (data.address.county) addressParts.push(data.address.county);
+                                }
+
+                                if (data.address.state) addressParts.push(data.address.state);
+                                if (data.address.postcode) addressParts.push(data.address.postcode);
+
+                                const fullAddress = addressParts.filter(Boolean).join(', ');
+                                deliveryAddressInput.value = fullAddress || "Alamat tidak ditemukan.";
                             } else {
-                                deliveryAddressInput.placeholder = "Alamat tidak ditemukan.";
+                                deliveryAddressInput.value = "Alamat tidak ditemukan.";
                             }
                         } catch (error) {
-                            console.error("Error geocoding:", error);
-                            deliveryAddressInput.placeholder = "Gagal mendapatkan alamat";
+                            console.error("Error fetching address:", error);
+                            deliveryAddressInput.value = "Gagal mendapatkan alamat. Coba lagi.";
+                        } finally {
+                            this.classList.remove('loading');
                         }
-                        gpsIcon.classList.remove('loading');
                     },
                     (error) => {
                         console.error("Error getting geolocation:", error);
-                        deliveryAddressInput.placeholder = "Lokasi tidak dapat diakses";
-                        gpsIcon.classList.remove('loading');
-                        alert("Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin diberikan.");
+                        this.classList.remove('loading');
+                        let errorMessage = "Gagal mendapatkan lokasi Anda.";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += " Mohon izinkan akses lokasi.";
+                                alert("Akses lokasi ditolak. Mohon izinkan akses lokasi di pengaturan browser Anda.");
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += " Informasi lokasi tidak tersedia.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += " Permintaan lokasi habis waktu.";
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                errorMessage += " Terjadi kesalahan yang tidak diketahui.";
+                                break;
+                        }
+                        deliveryAddressInput.value = errorMessage;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000, // 10 seconds
+                        maximumAge: 0
                     }
                 );
             } else {
-                deliveryAddressInput.placeholder = "GPS tidak didukung di browser ini";
-                gpsIcon.classList.remove('loading');
+                this.classList.remove('loading');
+                deliveryAddressInput.value = "Geolocation tidak didukung oleh browser Anda.";
+                alert("Geolocation tidak didukung oleh browser Anda. Mohon gunakan browser yang mendukung fitur lokasi.");
             }
         });
 
-        // --- Promo Banner Auto-Scroll ---
-        const promoContainer = document.getElementById('promoSlides');
-        const promoSlides = document.querySelectorAll('.promo-slide');
-        let currentIndex = 0;
-        let slideInterval;
+        // --- Promo Banner Auto-scroll ---
+        let promoScrollInterval;
+        const promoSlides = document.getElementById('promoSlides');
 
-        function startAutoScroll() {
-            if (promoSlides.length <= 1) return;
+        function startPromoScroll() {
+            let scrollAmount = 0;
+            const slideWidth = promoSlides.children[0].offsetWidth + 12; // Slide width + gap
 
-            const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
-            slideInterval = setInterval(() => {
-                currentIndex = (currentIndex + 1) % promoSlides.length;
-                promoContainer.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-            }, 3000);
+            promoScrollInterval = setInterval(() => {
+                scrollAmount += slideWidth;
+                if (scrollAmount >= promoSlides.scrollWidth - promoSlides.offsetWidth) {
+                    scrollAmount = 0; // Reset to start if at the end
+                }
+                promoSlides.style.transform = `translateX(-${scrollAmount}px)`;
+            }, 3000); // Change slide every 3 seconds
         }
 
-        // --- Active Navigation ---
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.addEventListener('click', function() {
-                navItems.forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        function stopPromoScroll() {
+            clearInterval(promoScrollInterval);
+        }
 
-        // --- Popup Open/Close Functions ---
-        function bukaPopup(url) {
-            popupFrame.src = url;
+        // Mouse/touch events to pause/resume scroll
+        promoSlides.addEventListener('mouseover', stopPromoScroll);
+        promoSlides.addEventListener('mouseleave', startPromoScroll);
+        promoSlides.addEventListener('touchstart', stopPromoScroll);
+        promoSlides.addEventListener('touchend', startPromoScroll);
+
+
+        // --- Popup Panel Functions ---
+        function bukaPopup(pageUrl) {
+            popupFrame.src = pageUrl;
             popupPanel.classList.add('show');
-            popupCheckoutBar.style.display = 'flex'; // Ensure popupCheckoutBar is visible
-            floatingCartBar.style.display = 'none'; // Hide floatingCartBar when popup appears
-            updateCartDisplay(); // Call to ensure data in popupCheckoutBar is up-to-date
+            document.body.style.overflow = 'hidden'; // Prevent scrolling on main page
+            // If the URL is cart.html, show the checkout bar. Otherwise, hide it.
+            if (pageUrl === 'cart.html') {
+                popupCheckoutBar.style.display = 'flex';
+            } else {
+                popupCheckoutBar.style.display = 'none';
+            }
         }
 
         function tutupPopup() {
             popupPanel.classList.remove('show');
-            popupFrame.src = ''; // Clear iframe src
-            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
-            updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+            document.body.style.overflow = ''; // Re-enable scrolling
+            popupFrame.src = ""; // Clear iframe content
         }
 
-        // --- Listener for Checkout Button in popupCheckoutBar ---
-        bridgeCheckoutBtn.addEventListener('click', () => {
-            window.location.href = 'checkout.html';
+        // Listen for messages from the iframe (e.g., cart.html)
+        window.addEventListener('message', (event) => {
+            // Ensure the message is from a trusted source if in production
+            // if (event.origin !== "your-app-domain.com") return; 
+
+            if (event.data && event.data.type === 'cartUpdate') {
+                updateCartDisplay(event.data.itemCount, event.data.totalPrice);
+                // Update the bridge elements inside the popupCheckoutBar as well
+                bridgeItemCount.textContent = `${event.data.itemCount} item`;
+                bridgeTotal.textContent = formatRupiah(event.data.totalPrice);
+                
+                if (event.data.itemCount > 0) {
+                    bridgeCheckoutBtn.disabled = false;
+                    bridgeCheckoutBtn.style.opacity = '1';
+                    bridgeCheckoutBtn.style.cursor = 'pointer';
+                } else {
+                    bridgeCheckoutBtn.disabled = true;
+                    bridgeCheckoutBtn.style.opacity = '0.6';
+                    bridgeCheckoutBtn.style.cursor = 'not-allowed';
+                }
+            }
         });
 
-        // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
-        function updateCartDisplay() {
-            if (!currentUserId) {
-                console.log("User ID not available, cannot update cart display.");
+        // Event listener for the "Checkout" button inside popupCheckoutBar
+        bridgeCheckoutBtn.addEventListener('click', () => {
+            if (popupFrame.contentWindow) {
+                popupFrame.contentWindow.postMessage({ type: 'initiateCheckout' }, '*'); // Send message to iframe
+            }
+        });
+
+
+        // --- Cart Display Functions ---
+        function updateCartDisplay(itemCount, totalPrice) {
+            if (itemCount > 0) {
+                cartBadge.textContent = itemCount;
+                cartBadge.style.display = 'block';
+                floatingCartBar.style.display = 'flex';
+                barItemCountText.textContent = `${itemCount} item`;
+                barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`;
+            } else {
                 cartBadge.style.display = 'none';
                 floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none'; // Ensure hidden
+            }
+        }
+
+        // Function to listen for real-time cart updates for the current user
+        function listenForCartUpdates(userId) {
+            if (!userId) {
+                console.log("No user ID available for cart listening.");
+                updateCartDisplay(0, 0); // Reset cart display if no user
                 return;
             }
 
-            // Real-time listener for user's cart
-            cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
-                let totalItemsInCart = 0;
-                let totalPriceInCart = 0;
-                const productTotalQuantities = new Map(); // Map to store total quantity per product ID
+            const userCartRef = cartsCollection.doc(userId);
 
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const productId = item.id;
-                    const currentTotal = productTotalQuantities.get(productId) || 0;
-                    productTotalQuantities.set(productId, currentTotal + item.quantity);
+            userCartRef.onSnapshot(docSnapshot => {
+                if (docSnapshot.exists) {
+                    const cartData = docSnapshot.data();
+                    const items = cartData.items || [];
+                    let itemCount = 0;
+                    let totalPrice = 0;
 
-                    totalItemsInCart += item.quantity;
-                    totalPriceInCart += item.price * item.quantity;
-                });
+                    items.forEach(item => {
+                        itemCount += item.quantity;
+                        totalPrice += item.quantity * item.price;
+                    });
+                    updateCartDisplay(itemCount, totalPrice);
 
-                console.log("--- Cart Update Summary ---");
-                console.log("Total Items in Cart (all products):", totalItemsInCart);
-                console.log("Total Price in Cart:", formatRupiah(totalPriceInCart));
-                console.log("Quantities per Product ID:", Object.fromEntries(productTotalQuantities));
-                console.log("---------------------------");
+                    // Also update "Add" button/quantity display on menu cards
+                    document.querySelectorAll('.restaurant-card').forEach(card => {
+                        const productId = card.dataset.productId;
+                        const addButton = card.querySelector('.add-button');
+                        const quantityDisplay = card.querySelector('.quantity-display-only');
+                        
+                        const cartItem = items.find(item => item.productId === productId);
+                        if (cartItem) {
+                            quantityDisplay.textContent = cartItem.quantity;
+                            quantityDisplay.style.display = 'flex';
+                            addButton.style.display = 'none';
+                        } else {
+                            quantityDisplay.style.display = 'none';
+                            addButton.style.display = 'flex';
+                        }
+                    });
 
-
-                // Update badge in bottom navigation
-                cartBadge.textContent = totalItemsInCart;
-                cartBadge.style.display = totalItemsInCart > 0 ? 'block' : 'none';
-
-                // Update floating cart bar
-                barItemCountText.textContent = `${totalItemsInCart} item`; // Item count text
-                barTotalPrice.textContent = `Total: ${formatRupiah(totalPriceInCart)}`; // Total price text
-
-                // Only show floatingCartBar if popup is not active
-                if (!popupPanel.classList.contains('show')) {
-                    floatingCartBar.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
                 } else {
-                    floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
+                    updateCartDisplay(0, 0); // Cart is empty
+                     // Reset "Add" button/quantity display on all menu cards
+                     document.querySelectorAll('.restaurant-card').forEach(card => {
+                        const addButton = card.querySelector('.add-button');
+                        const quantityDisplay = card.querySelector('.quantity-display-only');
+                        quantityDisplay.style.display = 'none';
+                        addButton.style.display = 'flex';
+                    });
                 }
-
-                // Update popup checkout bar (bridge)
-                bridgeItemCount.textContent = `${totalItemsInCart} item`;
-                bridgeTotal.textContent = formatRupiah(totalPriceInCart);
-                // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
-                // but ensure its content is updated even if it's currently hidden
-                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItemsInCart > 0 ? 'flex' : 'none';
-
-                // Update quantity display on each menu card
-                document.querySelectorAll('.restaurant-card').forEach(card => {
-                    const productId = card.dataset.productId;
-                    const totalQuantityForProduct = productTotalQuantities.get(productId) || 0; // Get the aggregated quantity
-
-                    const addButton = card.querySelector('.add-button');
-                    const quantityDisplayOnly = card.querySelector('.quantity-display-only');
-
-                    if (totalQuantityForProduct > 0) { // Check against total quantity
-                        addButton.style.display = 'none';
-                        quantityDisplayOnly.style.display = 'flex'; // Show the quantity number
-                        quantityDisplayOnly.textContent = totalQuantityForProduct; // Display the total aggregated quantity
-                        console.log(`Product ${productId}: Displaying total quantity ${totalQuantityForProduct}`);
-                    } else {
-                        addButton.style.display = 'flex'; // Show the add button
-                        quantityDisplayOnly.style.display = 'none'; // Hide the quantity number
-                        quantityDisplayOnly.textContent = '0'; // Reset to 0 if not in cart
-                        console.log(`Product ${productId}: Displaying '+' button (quantity 0)`);
-                    }
-                });
-
-            }, error => {
-                console.error("Error fetching cart items:", error);
-                // Handle error, e.g., show a message or hide cart displays
-                cartBadge.style.display = 'none';
-                floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none';
+            }, err => {
+                console.error("Error listening to cart changes:", err);
+                // Optionally show an error to the user
             });
         }
 
-        // --- Page Initialization ---
-        document.addEventListener('DOMContentLoaded', function() {
-            // Page Protection: Check Login Status and Role
-            auth.onAuthStateChanged(user => {
-                const isLoggingOut = localStorage.getItem('isLoggingOut');
 
-                if (isLoggingOut) {
-                    localStorage.removeItem('isLoggingOut');
-                }
+        // --- Authentication State Listener ---
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userUid', user.uid);
 
-                const storedRole = localStorage.getItem('userRole');
-
-                if (!user || storedRole !== 'pembeli') {
-                    if (!isLoggingOut) {
-                        alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
-                    }
-                    window.location.href = 'index.html'; // Redirect to login page
+                // Get user document to retrieve address
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists && userDoc.data().address) {
+                    deliveryAddressInput.value = userDoc.data().address;
                 } else {
-                    currentUserId = user.uid; // Set the logged-in user's UID
-                    renderMenuItems(); // Load menu
-                    startAutoScroll(); // Start promo auto-scroll
-                    updateCartDisplay(); // Start listening and updating cart display
+                    deliveryAddressInput.placeholder = "Kirim ke alamat pemesan...";
                 }
-            });
+
+                renderMenuItems(); // Load menu after user is authenticated
+                listenForCartUpdates(currentUserId); // Start listening for cart updates
+            } else {
+                currentUserId = null;
+                // Redirect to login only if not explicitly logging out
+                if (localStorage.getItem('isLoggingOut') !== 'true') {
+                    window.location.href = 'index.html';
+                }
+                localStorage.removeItem('isLoggingOut'); // Clear the flag
+            }
+        });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            startPromoScroll(); // Start auto-scroll when DOM is ready
+            // The menu items and cart display will be rendered/updated by onAuthStateChanged
         });
     </script>
 </body>
