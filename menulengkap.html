@@ -102,7 +102,7 @@
             border-color: #b0b0b0;
         }
 
-        /* Search Bar Styling (NEW) */
+        /* Search Bar Styling */
         .search-bar {
             display: flex;
             align-items: center;
@@ -560,10 +560,14 @@
                 let query = menuCollection.where('isAvailable', '==', true);
                 
                 if (searchQuery) {
-                    // Search Firestore based on 'nama' field (case-insensitive prefix search)
                     sectionTitle.textContent = 'Hasil Pencarian';
-                    query = query.where('nama', '>=', searchQuery)
-                                 .where('nama', '<=', searchQuery + '\uf8ff');
+                    const lowerCaseQuery = searchQuery.toLowerCase();
+                    
+                    // PENTING: Pencarian ini memerlukan kolom 'nama_lowercase' di setiap dokumen
+                    // di database Firebase Anda. Tambahkan kolom ini secara manual.
+                    // Contoh: nama: "Apel", nama_lowercase: "apel"
+                    query = query.where('nama_lowercase', '>=', lowerCaseQuery)
+                                 .where('nama_lowercase', '<=', lowerCaseQuery + '\uf8ff');
                 } else {
                     sectionTitle.textContent = 'Menu Terlaris';
                 }
