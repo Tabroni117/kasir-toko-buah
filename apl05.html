@@ -890,7 +890,10 @@
             localStorage.removeItem('isLoggingOut');
         }
     }
-
+// --- Cegah tombol BACK keluar dari aplikasi (state awal halaman) ---
+window.addEventListener('DOMContentLoaded', () => {
+    history.replaceState({ homePage: true }, '', '');
+});
 
 // --- Popup Open/Close Functions (VERSI BARU DENGAN BACK SUPPORT) ---
 function bukaPopup(url) {
@@ -914,6 +917,7 @@ function bukaPopup(url) {
     history.pushState({ popupOpen: true }, '', '');
 }
 
+
 // --- Tutup popup dan kembalikan history ---
 function tutupPopup() {
     popupPanel.classList.remove('show');
@@ -933,7 +937,46 @@ function tutupPopup() {
     }
 }
 
-// --- Tangani tombol BACK browser (termasuk tombol back di HP Android) ---
+window.addEventListener('DOMContentLoaded', () => {
+    history.replaceState({ homePage: true }, '', '');
+});
+
+function bukaPopup(url) {
+    popupFrame.src = url;
+    popupPanel.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    if (popupCheckoutBar) {
+        popupCheckoutBar.style.display = (url === 'cart.html') ? 'none' : 'flex';
+    }
+
+    if (floatingCartBar) {
+        floatingCartBar.style.display = 'none';
+    }
+
+    updateCartDisplay();
+
+    history.pushState({ popupOpen: true }, '', '');
+}
+
+function tutupPopup() {
+    popupPanel.classList.remove('show');
+    popupFrame.src = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
+    if (popupCheckoutBar) {
+        popupCheckoutBar.style.display = 'none';
+    }
+
+    updateCartDisplay();
+
+    if (history.state && history.state.popupOpen) {
+        history.back();
+    }
+}
+
 window.addEventListener('popstate', function (event) {
     if (event.state && event.state.popupOpen) {
         popupPanel.classList.remove('show');
@@ -949,21 +992,18 @@ window.addEventListener('popstate', function (event) {
     }
 });
 
-// --- Listener tombol checkout (jika ada) ---
+// Tombol manual
 if (bridgeCheckoutBtn) {
     bridgeCheckoutBtn.addEventListener('click', () => {
         window.location.href = 'cart.html';
     });
 }
 
-// --- Listener tombol tutup di dalam popup (pastikan class: .btn-tutup-hijau) ---
 document.addEventListener('click', function (e) {
     if (e.target.classList.contains('btn-tutup-hijau')) {
         tutupPopup();
     }
 });
-
-
 
     // --- Function to Load and Display Menu from Firebase ---
     async function renderMenuItems() {
