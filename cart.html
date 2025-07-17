@@ -219,13 +219,12 @@
 <body>
     <div class="container">
         <header class="header">
-            <i class="fas fa-arrow-left back-button" id="backToHome"></i>
+            <i class="fas fa-arrow-left back-button" id="backToParent"></i> 
             <div class="header-title">Keranjang Belanja</div>
-            <div id="userIdDisplay">Loading User ID...</div> <!-- User ID Display -->
+            <div id="userIdDisplay">Loading User ID...</div>
         </header>
 
         <div class="cart-items" id="cartItemsContainer">
-            <!-- Cart items will be dynamically loaded here -->
             <p class="empty-cart-message" id="emptyCartMessage">Keranjang Anda kosong.</p>
         </div>
 
@@ -239,7 +238,7 @@
                 <span id="totalPrice">Rp 0</span>
             </div>
             <button class="checkout-button" id="checkoutButton">Lanjutkan ke Pembayaran</button>
-            <button class="remove-item-button" id="clearCartButton" style="background-color: #f44336;">Bersihkan Keranjang</button>
+            <button class="remove-item-button" id="clearCartButton">Bersihkan Keranjang</button>
         </div>
     </div>
 
@@ -256,7 +255,7 @@
         };
 
         // Inisialisasi Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -266,53 +265,66 @@
         const totalPriceDisplay = document.getElementById('totalPrice');
         const checkoutButton = document.getElementById('checkoutButton');
         const clearCartButton = document.getElementById('clearCartButton');
-        const backToHomeButton = document.getElementById('backToHome');
-        const userIdDisplay = document.getElementById('userIdDisplay'); // User ID display element
+        const backToParentButton = document.getElementById('backToParent');
+        const userIdDisplay = document.getElementById('userIdDisplay');
 
-        let currentUserId = null; // Untuk menyimpan UID pengguna yang sedang login
+        let currentUserId = null;
 
-        // Pastikan pengguna login anonim segera
-        auth.signInAnonymously().then(() => {
-            console.log("cart.html: Signed in anonymously.");
-        }).catch((error) => {
-            console.error("cart.html: Error signing in anonymously:", error);
-        });
+        // Fungsi untuk format Rupiah
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
 
         // Fungsi untuk memperbarui tampilan keranjang
         function renderCart(cartItems) {
-            cartItemsContainer.innerHTML = ''; // Bersihkan kontainer sebelumnya
+            cartItemsContainer.innerHTML = '';
             let totalItems = 0;
             let overallTotalPrice = 0;
 
             if (cartItems.length === 0) {
                 emptyCartMessage.style.display = 'block';
-                checkoutButton.disabled = true; // Nonaktifkan tombol checkout jika keranjang kosong
+                checkoutButton.disabled = true;
                 clearCartButton.disabled = true;
             } else {
                 emptyCartMessage.style.display = 'none';
-                checkoutButton.disabled = false; // Aktifkan tombol checkout jika ada item
+                checkoutButton.disabled = false;
                 clearCartButton.disabled = false;
 
                 cartItems.forEach(item => {
                     const itemElement = document.createElement('div');
                     itemElement.classList.add('cart-item');
-                    itemElement.dataset.productId = item.id;
-                    itemElement.dataset.customKey = `${item.custom.bumbu}_${item.custom.kacang}`;
+                    
+                    const docId = item.id; // docId adalah ID dokumen Firestore yang lengkap
+
+                    const bumbuText = item.custom && item.custom.bumbu ? item.custom.bumbu : '';
+                    const kacangText = item.custom && item.custom.kacang ? item.custom.kacang : '';
+                    let variantsDisplay = '';
+                    if (bumbuText && kacangText) {
+                        variantsDisplay = `${bumbuText}, ${kacangText}`;
+                    } else if (bumbuText) {
+                        variantsDisplay = bumbuText;
+                    } else if (kacangText) {
+                        variantsDisplay = kacangText;
+                    }
 
                     itemElement.innerHTML = `
-                        <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                        <img src="${item.image || 'https://placehold.co/70x70/cccccc/333333?text=Produk'}" alt="${item.name}" class="cart-item-image">
                         <div class="cart-item-details">
                             <div class="cart-item-name">${item.name}</div>
                             <div class="cart-item-variants">
-                                ${item.custom.bumbu}, ${item.custom.kacang}
+                                ${variantsDisplay}
                             </div>
-                            <div class="cart-item-price">Rp ${item.price.toLocaleString('id-ID')}</div>
+                            <div class="cart-item-price">${formatRupiah(item.price)}</div>
                         </div>
                         <div class="cart-item-actions">
-                            <button class="quantity-button decrease-qty" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}">-</button>
+                            <button class="quantity-button decrease-qty" data-doc-id="${docId}">-</button>
                             <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
-                            <button class="quantity-button increase-qty" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}">+</button>
-                            <button class="remove-item-button" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}"><i class="fas fa-trash"></i></button>
+                            <button class="quantity-button increase-qty" data-doc-id="${docId}">+</button>
+                            <button class="remove-item-button" data-doc-id="${docId}"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                     cartItemsContainer.appendChild(itemElement);
@@ -323,150 +335,111 @@
             }
 
             totalItemCount.textContent = totalItems;
-            totalPriceDisplay.textContent = `Rp ${overallTotalPrice.toLocaleString('id-ID')}`;
-        }
+            totalPriceDisplay.textContent = formatRupiah(overallTotalPrice);
 
-        // Fungsi untuk mengupdate kuantitas di Firestore (dari halaman keranjang)
-        async function updateCartItemQuantity(productId, bumbu, kacang, newQuantity) {
-            if (!currentUserId) return;
-
-            const customKey = `${bumbu}_${kacang}`;
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
-
-            try {
-                if (newQuantity > 0) {
-                    await cartDocRef.update({ quantity: newQuantity });
-                    console.log(`Kuantitas produk ${productId} (${customKey}) diupdate menjadi ${newQuantity}`);
-                } else {
-                    await cartDocRef.delete();
-                    console.log(`Produk ${productId} (${customKey}) dihapus dari keranjang.`);
-                }
-            } catch (error) {
-                console.error("Error updating cart item quantity:", error);
+            // Beri tahu jendela induk tentang pembaruan keranjang
+            if (window.parent) {
+                window.parent.postMessage({ type: 'cartUpdate' }, '*'); 
             }
         }
 
-        // Fungsi untuk menghapus item dari keranjang
-        async function removeItemFromCart(productId, bumbu, kacang) {
+        // Fungsi untuk mengupdate kuantitas di Firestore
+        async function updateCartItemQuantity(docId, change) {
             if (!currentUserId) return;
-
-            const customKey = `${bumbu}_${kacang}`;
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
-
+            const cartItemRef = db.collection('carts').doc(currentUserId).collection('items').doc(docId);
             try {
-                await cartDocRef.delete();
-                console.log(`Produk ${productId} (${customKey}) dihapus dari keranjang.`);
-            } catch (error) {
-                console.error("Error removing item from cart:", error);
+                const doc = await cartItemRef.get();
+                if (!doc.exists) { console.warn("Item not found:", docId); return; }
+                const currentQuantity = doc.data().quantity;
+                const newQuantity = currentQuantity + change;
+
+                if (newQuantity > 0) { await cartItemRef.update({ quantity: newQuantity }); } 
+                else { await cartItemRef.delete(); }
+            } catch (error) { console.error("Error updating quantity:", error); alert("Gagal update kuantitas."); }
+        }
+
+        // Fungsi untuk menghapus item dari keranjang
+        async function removeItemFromCart(docId) {
+            if (!currentUserId) return;
+            const cartItemRef = db.collection('carts').doc(currentUserId).collection('items').doc(docId);
+            if (confirm("Yakin ingin menghapus item ini?")) {
+                try { await cartItemRef.delete(); } 
+                catch (error) { console.error("Error removing item:", error); alert("Gagal hapus item."); }
             }
         }
 
         // Fungsi untuk membersihkan seluruh keranjang
         async function clearAllCartItems() {
             if (!currentUserId) return;
-
-            if (confirm("Apakah Anda yakin ingin mengosongkan seluruh keranjang?")) {
+            if (confirm("Yakin ingin mengosongkan seluruh keranjang?")) {
                 const itemsCollectionRef = db.collection('carts').doc(currentUserId).collection('items');
                 const snapshot = await itemsCollectionRef.get();
                 const batch = db.batch();
-
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                try {
-                    await batch.commit();
-                    console.log("Seluruh keranjang berhasil dikosongkan.");
-                } catch (error) {
-                    console.error("Error clearing cart:", error);
-                }
+                snapshot.forEach(doc => { batch.delete(doc.ref); });
+                try { await batch.commit(); } 
+                catch (error) { console.error("Error clearing cart:", error); alert("Gagal mengosongkan keranjang."); }
             }
         }
 
-        // Fungsi untuk melanjutkan ke pembayaran (sekarang ke checkout.html)
-        async function proceedToCheckout() {
-            if (!currentUserId) {
-                alert("Anda perlu login untuk melanjutkan pembayaran.");
-                return;
+        // Fungsi untuk melanjutkan ke pembayaran
+        function proceedToCheckout() {
+            if (!currentUserId) { alert("Anda perlu login untuk pembayaran."); return; }
+            if (parseInt(totalItemCount.textContent) === 0) { alert("Keranjang kosong."); return; }
+            if (window.parent) {
+                window.parent.postMessage({ type: 'closePopupAndRedirect', url: 'checkout.html' }, '*');
+            } else {
+                window.location.href = 'checkout.html';
             }
-            
-            const totalItemsInCart = parseInt(totalItemCount.textContent);
-            if (totalItemsInCart === 0) {
-                alert("Keranjang Anda kosong. Tambahkan produk terlebih dahulu.");
-                return;
-            }
-
-            alert("Melanjutkan ke halaman Checkout! Total: " + totalPriceDisplay.textContent);
-            window.location.href = 'checkout.html'; // Mengarahkan ke checkout.html
         }
-
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            // Update User ID display dan mulai listener keranjang setelah user login
+            auth.signInAnonymously().catch((error) => { console.error("Error signing in anonymously:", error); });
+
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    currentUserId = user.uid; // Set currentUserId di sini
+                    currentUserId = user.uid;
                     userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
-                    
-                    // Mulai mendengarkan perubahan keranjang setelah user ID tersedia
                     const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
                     cartItemsRef.onSnapshot((snapshot) => {
                         const cartItems = [];
-                        snapshot.forEach(doc => {
-                            cartItems.push(doc.data());
-                        });
+                        snapshot.forEach(doc => { cartItems.push({ id: doc.id, ...doc.data() }); });
                         renderCart(cartItems);
-                    }, (error) => {
-                        console.error("Error getting real-time cart updates:", error);
-                    });
-
+                    }, (error) => { console.error("Error getting real-time cart updates:", error); });
                 } else {
                     userIdDisplay.textContent = `User ID: N/A`;
-                    console.log("cart.html: No user is signed in.");
                     currentUserId = null;
-                    renderCart([]); // Kosongkan keranjang jika tidak ada user
+                    renderCart([]);
                 }
             });
 
-            // Kembali ke halaman utama
-            backToHomeButton.addEventListener('click', () => {
-                window.location.href = 'apl05.html'; // Ganti dengan URL halaman utama Anda
+            backToParentButton.addEventListener('click', () => {
+                if (window.parent) { window.parent.postMessage({ type: 'closePopup' }, '*'); } 
+                else { window.history.back(); }
             });
 
-            // Event untuk tombol Bersihkan Keranjang
             clearCartButton.addEventListener('click', clearAllCartItems);
-
-            // Event untuk tombol Lanjutkan ke Pembayaran
             checkoutButton.addEventListener('click', proceedToCheckout);
 
-            // Event delegation untuk tombol +/- dan hapus
             cartItemsContainer.addEventListener('click', async (event) => {
-                const target = event.target;
-                const parentButton = target.closest('button');
-
+                const parentButton = event.target.closest('button');
                 if (parentButton) {
-                    const productId = parentButton.dataset.id;
-                    const bumbu = parentButton.dataset.bumbu;
-                    const kacang = parentButton.dataset.kacang;
-                    const quantityInput = parentButton.parentNode.querySelector('.quantity-input');
-                    let currentQty = parseInt(quantityInput.value);
+                    const docId = parentButton.dataset.docId; 
+                    if (!docId) { console.error("Document ID not found on button:", parentButton); return; }
 
                     if (parentButton.classList.contains('increase-qty')) {
-                        currentQty++;
-                        await updateCartItemQuantity(productId, bumbu, kacang, currentQty);
+                        await updateCartItemQuantity(docId, 1);
                     } else if (parentButton.classList.contains('decrease-qty')) {
+                        const currentItem = parentButton.closest('.cart-item');
+                        const quantityInput = currentItem.querySelector('.quantity-input');
+                        let currentQty = parseInt(quantityInput.value);
                         if (currentQty > 1) {
-                            currentQty--;
-                            await updateCartItemQuantity(productId, bumbu, kacang, currentQty);
+                            await updateCartItemQuantity(docId, -1);
                         } else {
-                            // Jika kuantitas 1 dan tombol minus ditekan, hapus item
-                            await removeItemFromCart(productId, bumbu, kacang);
+                            await removeItemFromCart(docId);
                         }
                     } else if (parentButton.classList.contains('remove-item-button')) {
-                        if (confirm("Apakah Anda yakin ingin menghapus item ini dari keranjang?")) {
-                            await removeItemFromCart(productId, bumbu, kacang);
-                        }
+                        await removeItemFromCart(docId);
                     }
                 }
             });
