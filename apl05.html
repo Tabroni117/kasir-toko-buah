@@ -890,19 +890,23 @@
             localStorage.removeItem('isLoggingOut');
         }
     }
-// --- Cegah tombol BACK keluar dari aplikasi (state awal halaman) ---
-window.addEventListener('DOMContentLoaded', () => {
-    history.replaceState({ homePage: true }, '', '');
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Tandai halaman utama (APL05) agar history.back tidak kembali ke index.html
+    if (!history.state || !history.state.isHome) {
+        history.replaceState({ isHome: true }, ''); // Menandai halaman utama
+        history.pushState({ popupOpen: false }, ''); // Dummy langkah agar back tidak ke login
+    }
 });
 
-// --- Popup Open/Close Functions (VERSI BARU DENGAN BACK SUPPORT) ---
+// --- Buka Popup ---
 function bukaPopup(url) {
     popupFrame.src = url;
     popupPanel.classList.add('show');
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    // Sembunyikan popupCheckoutBar jika halaman cart
+    // Sembunyikan bar checkout jika halaman cart
     if (popupCheckoutBar) {
         popupCheckoutBar.style.display = (url === 'cart.html') ? 'none' : 'flex';
     }
@@ -913,12 +917,11 @@ function bukaPopup(url) {
 
     updateCartDisplay();
 
-    // Tambahkan entri ke history agar tombol back bisa menutup popup
+    // Tambah ke history agar tombol back bisa tutup popup
     history.pushState({ popupOpen: true }, '', '');
 }
 
-
-// --- Tutup popup dan kembalikan history ---
+// --- Tutup Popup ---
 function tutupPopup() {
     popupPanel.classList.remove('show');
     popupFrame.src = '';
@@ -931,54 +934,16 @@ function tutupPopup() {
 
     updateCartDisplay();
 
-    // Jika popup terbuka via history, kembali 1 langkah
+    // Kembali 1 langkah hanya jika popupOpen
     if (history.state && history.state.popupOpen) {
         history.back();
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    history.replaceState({ homePage: true }, '', '');
-});
-
-function bukaPopup(url) {
-    popupFrame.src = url;
-    popupPanel.classList.add('show');
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
-    if (popupCheckoutBar) {
-        popupCheckoutBar.style.display = (url === 'cart.html') ? 'none' : 'flex';
-    }
-
-    if (floatingCartBar) {
-        floatingCartBar.style.display = 'none';
-    }
-
-    updateCartDisplay();
-
-    history.pushState({ popupOpen: true }, '', '');
-}
-
-function tutupPopup() {
-    popupPanel.classList.remove('show');
-    popupFrame.src = '';
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-
-    if (popupCheckoutBar) {
-        popupCheckoutBar.style.display = 'none';
-    }
-
-    updateCartDisplay();
-
-    if (history.state && history.state.popupOpen) {
-        history.back();
-    }
-}
-
-window.addEventListener('popstate', function (event) {
+// --- Tombol Back HP ditekan ---
+window.addEventListener('popstate', (event) => {
     if (event.state && event.state.popupOpen) {
+        // Kalau state popup, maka tutup
         popupPanel.classList.remove('show');
         popupFrame.src = '';
         document.body.style.overflow = '';
@@ -991,6 +956,7 @@ window.addEventListener('popstate', function (event) {
         updateCartDisplay();
     }
 });
+
 
 // Tombol manual
 if (bridgeCheckoutBtn) {
