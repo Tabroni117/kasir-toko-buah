@@ -6,7 +6,6 @@
     <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -32,7 +31,7 @@
             min-height: 100vh;
             position: relative;
             /* Adjusted: bottom-nav height (50px) + floatingCartBar height (45px) + a little margin (10px) = 105px */
-            padding-bottom: 105px; 
+            padding-bottom: 105px;
         }
 
         /* Header Styling */
@@ -474,7 +473,7 @@
             width: 100%;
             z-index: 9999;
             background: #22c55e; /* Green as requested */
-            display: flex;
+            display: none; /* Default: hidden */
             justify-content: space-between;
             align-items: center;
             padding: 5px 16px;
@@ -565,23 +564,25 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 10px; /* Tambahkan margin agar tidak terlalu mepet */
         }
         .btn-tutup-hijau:hover {
             background-color: #16a34a; /* darker green on hover */
         }
-#popupCheckoutBar {
-    display: none !important; /* Ini akan menyembunyikan elemen */
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background-color: #22c55e; /* bright green */
-    color: white;
-    border-top: 1px solid #ddd;
-    font-size: 16px;
-    font-weight: 500;
-    position: relative;
-    z-index: 10;
-}
+
+        #popupCheckoutBar {
+            display: none !important; /* Pastikan ini tersembunyi */
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background-color: #22c55e; /* bright green */
+            color: white;
+            border-top: 1px solid #ddd;
+            font-size: 16px;
+            font-weight: 500;
+            position: relative;
+            z-index: 10;
+        }
 
         #bridgeItemCount,
         #bridgeTotal {
@@ -603,9 +604,6 @@
         #bridgeCheckoutBtn:hover {
             background-color: #facc15; /* darker yellow on hover */
         }
-        #popupCheckoutBar {
-  display: none;
-}
     </style>
 </head>
 <body>
@@ -698,8 +696,7 @@
         </div>
 
         <div class="section-title">
-
-          Menu Terlaris
+            Menu Terlaris
             <span class="see-all" onclick="bukaPopup('menulengkap.html')">Lihat Semua</span>
         </div>
         <div class="restaurants" id="menuList">
@@ -728,12 +725,11 @@
             </a>
         </div>
 
-        <!-- === POPUP PANEL FROM BOTTOM === -->
         <div id="popupPanel">
             <div class="popup-content">
                 <iframe id="popupFrame"></iframe>
 
-                <div id="popupCheckoutBar"> <!-- This is the "summary bar" inside the popup -->
+                <div id="popupCheckoutBar">
                     🛒 <span id="bridgeItemCount">0 item</span>
                     Total: <span id="bridgeTotal">Rp 0</span>
                     <button id="bridgeCheckoutBtn">Checkout</button>
@@ -743,14 +739,13 @@
             </div>
         </div>
 
-        <!-- Floating Bar for Checkout -->
         <div id="floatingCartBar" style="display: none;">
-            <div class="cart-info"> <!-- Wrapper for icon, count, and total -->
+            <div class="cart-info">
                 <div class="cart-button" onclick="bukaPopup('cart.html')">
                     <i class="fas fa-shopping-cart"></i>
                 </div>
-                <span id="barItemCountText" class="cart-text">0 item</span> <!-- Element for item count text -->
-                <span id="barTotalPrice" class="cart-text">Total: Rp 0</span> <!-- Element for total price text -->
+                <span id="barItemCountText" class="cart-text">0 item</span>
+                <span id="barTotalPrice" class="cart-text">Total: Rp 0</span>
             </div>
             <button class="checkout-button" onclick="bukaPopup('cart.html')">Checkout</button>
         </div>
@@ -787,7 +782,7 @@
         const barItemCountText = document.getElementById('barItemCountText'); // Item count text
         const barTotalPrice = document.getElementById('barTotalPrice'); // Total price text
 
-        // Elements for popupCheckoutBar
+        // Elements for popupCheckoutBar (will remain hidden by default now)
         const popupPanel = document.getElementById('popupPanel');
         const popupFrame = document.getElementById('popupFrame');
         const popupCheckoutBar = document.getElementById('popupCheckoutBar');
@@ -827,20 +822,20 @@
 
         // --- Function to Load and Display Menu from Firebase ---
         async function renderMenuItems() {
-            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';    
+            menuList.innerHTML = '<p class="menu-loading-message">Memuat menu...</p>';
             try {
                 const snapshot = await menuCollection
-                                            .where('isAvailable', '==', true)    
+                                            .where('isAvailable', '==', true)
                                             .orderBy('nama')
                                             .get();
 
-                menuList.innerHTML = '';    
+                menuList.innerHTML = '';
 
                 if (snapshot.empty) {
                     menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu tersedia saat ini.</p>';
                 } else {
                     snapshot.forEach(doc => {
-                        const productFromFirebase = { id: doc.id, ...doc.data() };    
+                        const productFromFirebase = { id: doc.id, ...doc.data() };
 
                         const productForDetail = {
                             id: productFromFirebase.id,
@@ -853,7 +848,7 @@
                         };
                         
                         const card = document.createElement('div');
-                        card.classList.add('restaurant-card', 'fade-in');    
+                        card.classList.add('restaurant-card', 'fade-in');
                         card.dataset.productId = productForDetail.id; // Add data-product-id
 
                         card.innerHTML = `
@@ -865,7 +860,6 @@
                                     <span class="delivery-time">${productForDetail.deliveryTime || 'Estimasi waktu tidak tersedia'}</span>
                                 </div>
                             </div>
-                            <!-- NEW: Add to Cart/Quantity Control -->
                             <div class="add-to-cart-control">
                                 <button class="add-button" data-product-id="${productForDetail.id}">+</button>
                                 <div class="quantity-display-only" style="display: none;" data-product-id="${productForDetail.id}">0</div>
@@ -878,7 +872,7 @@
                             // If not, proceed to product detail page
                             if (!event.target.closest('.add-to-cart-control')) {
                                 sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                                bukaPopup('product-detail.html');
+                                bukaPopup('product-detail.html'); // Memanggil bukaPopup dengan product-detail.html
                             }
                         });
 
@@ -891,7 +885,7 @@
                         // Function to handle redirection to product detail page
                         const redirectToProductDetail = () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(productForDetail));
-                            bukaPopup('product-detail.html');
+                            bukaPopup('product-detail.html'); // Memanggil bukaPopup dengan product-detail.html
                         };
 
                         addButton.addEventListener('click', redirectToProductDetail);
@@ -921,189 +915,228 @@
                             if (data.address) {
                                 const address = [
                                     data.address.road,
-                                    data.address.village || data.address.town,
-                                    data.address.city,
-                                    data.address.state
-                                ].filter(Boolean).join(', ');
+                                    data.address.village || data.address.suburb || data.address.city,
+                                    data.address.state,
+                                    data.address.postcode
+                                ].filter(Boolean).join(', '); // Filter Boolean untuk menghapus nilai null/undefined
                                 deliveryAddressInput.value = address;
+                                alert('Lokasi ditemukan: ' + address);
                             } else {
-                                deliveryAddressInput.placeholder = "Alamat tidak ditemukan.";
+                                alert('Tidak dapat menemukan alamat untuk lokasi ini.');
                             }
                         } catch (error) {
-                            console.error("Error geocoding:", error);
-                            deliveryAddressInput.placeholder = "Gagal mendapatkan alamat";
+                            console.error('Error fetching address:', error);
+                            alert('Gagal mengambil alamat. Coba lagi.');
+                        } finally {
+                            this.classList.remove('loading');
+                            deliveryAddressInput.placeholder = "Kirim ke alamat pemesan...";
                         }
-                        gpsIcon.classList.remove('loading');
                     },
                     (error) => {
-                        console.error("Error getting geolocation:", error);
-                        deliveryAddressInput.placeholder = "Lokasi tidak dapat diakses";
-                        gpsIcon.classList.remove('loading');
-                        alert("Tidak dapat mengakses lokasi. Pastikan GPS aktif dan izin diberikan.");
-                    }
+                        console.error('Error getting geolocation:', error);
+                        let errorMessage = 'Gagal mendeteksi lokasi.';
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += ' Izin lokasi ditolak.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += ' Informasi lokasi tidak tersedia.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += ' Permintaan waktu habis.';
+                                break;
+                            case error.UNKNOWN_ERROR:
+                                errorMessage += ' Terjadi kesalahan tak dikenal.';
+                                break;
+                        }
+                        alert(errorMessage);
+                        this.classList.remove('loading');
+                        deliveryAddressInput.placeholder = "Kirim ke alamat pemesan...";
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                deliveryAddressInput.placeholder = "GPS tidak didukung di browser ini";
-                gpsIcon.classList.remove('loading');
+                alert('Geolocation tidak didukung oleh browser Anda.');
+                this.classList.remove('loading');
+                deliveryAddressInput.placeholder = "Kirim ke alamat pemesan...";
             }
         });
 
-        // --- Promo Banner Auto-Scroll ---
-        const promoContainer = document.getElementById('promoSlides');
-        const promoSlides = document.querySelectorAll('.promo-slide');
-        let currentIndex = 0;
-        let slideInterval;
-
-        function startAutoScroll() {
-            if (promoSlides.length <= 1) return;
-
-            const slideWidth = promoSlides[0].offsetWidth + 12; // width + gap
-            slideInterval = setInterval(() => {
-                currentIndex = (currentIndex + 1) % promoSlides.length;
-                promoContainer.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-            }, 3000);
-        }
-
-        // --- Active Navigation ---
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.addEventListener('click', function() {
-                navItems.forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // --- Popup Open/Close Functions ---
+        // --- Fungsi untuk membuka Popup ---
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
-            popupCheckoutBar.style.display = 'flex'; // Ensure popupCheckoutBar is visible
-            floatingCartBar.style.display = 'none'; // Hide floatingCartBar when popup appears
-            updateCartDisplay(); // Call to ensure data in popupCheckoutBar is up-to-date
+
+            // Logic untuk menampilkan/menyembunyikan floatingCartBar dan popupCheckoutBar
+            if (url === 'product-detail.html') {
+                floatingCartBar.style.display = 'flex'; // Tampilkan floatingCartBar saat membuka detail produk
+                popupCheckoutBar.style.display = 'none !important'; // Pastikan popupCheckoutBar di dalam popup tersembunyi
+            } else if (url === 'cart.html') {
+                floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar utama saat melihat keranjang
+                // popupCheckoutBar mungkin ditampilkan oleh cart.html sendiri jika Anda memprogramnya
+                // atau Anda bisa tampilkan di sini jika ingin parent mengontrolnya (misal: popupCheckoutBar.style.display = 'flex';)
+            } else {
+                // Untuk URL lain, sembunyikan floatingCartBar dan popupCheckoutBar
+                floatingCartBar.style.display = 'none';
+                popupCheckoutBar.style.display = 'none !important';
+            }
         }
 
+        // --- Fungsi untuk menutup Popup ---
         function tutupPopup() {
             popupPanel.classList.remove('show');
-            popupFrame.src = ''; // Clear iframe src
-            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
-            updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+            // Beri sedikit delay untuk animasi slideUp
+            setTimeout(() => {
+                popupFrame.src = ''; // Hapus src iframe untuk menghemat memori
+                // Setelah popup tertutup, sembunyikan floatingCartBar
+                floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar lagi setelah pop-up ditutup
+                updateCartUI(); // Perbarui badge keranjang setelah menutup popup
+            }, 300); // Sesuaikan dengan durasi animasi slideUp CSS
         }
 
-        // --- Listener for Checkout Button in popupCheckoutBar ---
-        bridgeCheckoutBtn.addEventListener('click', () => {
-            window.location.href = 'checkout.html';
-        });
+        // --- Fungsi untuk mengupdate keranjang di Firebase ---
+        async function updateCart(userId, productId, quantity, productName, productPrice, imageUrl) {
+            const userCartRef = cartsCollection.doc(userId);
 
-        // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
-        function updateCartDisplay() {
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const userCartDoc = await transaction.get(userCartRef);
+                    let cartItems = userCartDoc.exists ? userCartDoc.data().items || [] : [];
+
+                    const itemIndex = cartItems.findIndex(item => item.productId === productId);
+
+                    if (itemIndex > -1) {
+                        // Item sudah ada di keranjang, update kuantitas
+                        cartItems[itemIndex].quantity += quantity;
+                    } else {
+                        // Item baru, tambahkan ke keranjang
+                        cartItems.push({
+                            productId: productId,
+                            name: productName,
+                            price: productPrice,
+                            quantity: quantity,
+                            imageUrl: imageUrl
+                        });
+                    }
+                    transaction.set(userCartRef, { items: cartItems }, { merge: true });
+                });
+                console.log("Keranjang diperbarui!");
+            } catch (error) {
+                console.error("Gagal memperbarui keranjang:", error);
+            }
+        }
+
+        // --- Fungsi untuk memperbarui tampilan UI Keranjang (badge dan floating bar) ---
+        async function updateCartUI() {
             if (!currentUserId) {
-                console.log("User ID not available, cannot update cart display.");
                 cartBadge.style.display = 'none';
                 floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none'; // Ensure hidden
                 return;
             }
 
-            // Real-time listener for user's cart
-            cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
-                let totalItemsInCart = 0;
-                let totalPriceInCart = 0;
-                const productTotalQuantities = new Map(); // Map to store total quantity per product ID
+            try {
+                const cartDoc = await cartsCollection.doc(currentUserId).get();
+                if (cartDoc.exists) {
+                    const cartData = cartDoc.data();
+                    const items = cartData.items || [];
+                    let totalItems = 0;
+                    let totalPrice = 0;
 
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const productId = item.id;
-                    const currentTotal = productTotalQuantities.get(productId) || 0;
-                    productTotalQuantities.set(productId, currentTotal + item.quantity);
+                    items.forEach(item => {
+                        totalItems += item.quantity;
+                        totalPrice += item.quantity * item.price;
+                    });
 
-                    totalItemsInCart += item.quantity;
-                    totalPriceInCart += item.price * item.quantity;
-                });
+                    if (totalItems > 0) {
+                        cartBadge.textContent = totalItems;
+                        cartBadge.style.display = 'block';
 
-                console.log("--- Cart Update Summary ---");
-                console.log("Total Items in Cart (all products):", totalItemsInCart);
-                console.log("Total Price in Cart:", formatRupiah(totalPriceInCart));
-                console.log("Quantities per Product ID:", Object.fromEntries(productTotalQuantities));
-                console.log("---------------------------");
-
-
-                // Update badge in bottom navigation
-                cartBadge.textContent = totalItemsInCart;
-                cartBadge.style.display = totalItemsInCart > 0 ? 'block' : 'none';
-
-                // Update floating cart bar
-                barItemCountText.textContent = `${totalItemsInCart} item`; // Item count text
-                barTotalPrice.textContent = `Total: ${formatRupiah(totalPriceInCart)}`; // Total price text
-
-                // Only show floatingCartBar if popup is not active
-                if (!popupPanel.classList.contains('show')) {
-                    floatingCartBar.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
-                } else {
-                    floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
-                }
-
-                // Update popup checkout bar (bridge)
-                bridgeItemCount.textContent = `${totalItemsInCart} item`;
-                bridgeTotal.textContent = formatRupiah(totalPriceInCart);
-                // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
-                // but ensure its content is updated even if it's currently hidden
-                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItemsInCart > 0 ? 'flex' : 'none';
-
-                // Update quantity display on each menu card
-                document.querySelectorAll('.restaurant-card').forEach(card => {
-                    const productId = card.dataset.productId;
-                    const totalQuantityForProduct = productTotalQuantities.get(productId) || 0; // Get the aggregated quantity
-
-                    const addButton = card.querySelector('.add-button');
-                    const quantityDisplayOnly = card.querySelector('.quantity-display-only');
-
-                    if (totalQuantityForProduct > 0) { // Check against total quantity
-                        addButton.style.display = 'none';
-                        quantityDisplayOnly.style.display = 'flex'; // Show the quantity number
-                        quantityDisplayOnly.textContent = totalQuantityForProduct; // Display the total aggregated quantity
-                        console.log(`Product ${productId}: Displaying total quantity ${totalQuantityForProduct}`);
+                        barItemCountText.textContent = `${totalItems} item`;
+                        barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`;
+                        
+                        // Perbarui status tampilan floatingCartBar di sini hanya jika diperlukan
+                        // Misalnya, jika Anda ingin floatingCartBar muncul di halaman utama saat ada item,
+                        // tambahkan logika di sini. Namun, untuk kasus product-detail,
+                        // event listener 'message' yang akan mengontrolnya.
+                        // Jika tidak ada popup yang aktif, dan ada item di keranjang, tampilkan.
+                        if (!popupPanel.classList.contains('show')) {
+                             floatingCartBar.style.display = 'flex';
+                        }
                     } else {
-                        addButton.style.display = 'flex'; // Show the add button
-                        quantityDisplayOnly.style.display = 'none'; // Hide the quantity number
-                        quantityDisplayOnly.textContent = '0'; // Reset to 0 if not in cart
-                        console.log(`Product ${productId}: Displaying '+' button (quantity 0)`);
+                        cartBadge.style.display = 'none';
+                        floatingCartBar.style.display = 'none'; // Sembunyikan jika keranjang kosong
                     }
-                });
-
-            }, error => {
-                console.error("Error fetching cart items:", error);
-                // Handle error, e.g., show a message or hide cart displays
+                } else {
+                    cartBadge.style.display = 'none';
+                    floatingCartBar.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Error updating cart UI:", error);
                 cartBadge.style.display = 'none';
                 floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none';
-            });
+            }
         }
 
-        // --- Page Initialization ---
-        document.addEventListener('DOMContentLoaded', function() {
-            // Page Protection: Check Login Status and Role
-            auth.onAuthStateChanged(user => {
-                const isLoggingOut = localStorage.getItem('isLoggingOut');
+        // --- Event Listener untuk Komunikasi dari Iframe (Popup) ---
+        window.addEventListener('message', async (event) => {
+            // Penting: Untuk produksi, ganti '*' dengan origin spesifik dari iframe Anda
+            // if (event.origin !== window.location.origin) return; 
 
-                if (isLoggingOut) {
-                    localStorage.removeItem('isLoggingOut');
-                }
-
-                const storedRole = localStorage.getItem('userRole');
-
-                if (!user || storedRole !== 'pembeli') {
-                    if (!isLoggingOut) {
-                        alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk mengakses halaman ini.');
+            if (event.data && event.data.type) {
+                if (event.data.type === 'showFloatingCartBar') {
+                    // Hanya tampilkan floatingCartBar jika memang dari product-detail.html
+                    // dan ada item di keranjang
+                    if (document.getElementById('popupFrame').src.includes('product-detail.html')) {
+                        floatingCartBar.style.display = 'flex';
+                        updateCartUI(); // Pastikan data di bar selalu up-to-date
                     }
-                    window.location.href = 'index.html'; // Redirect to login page
-                } else {
-                    currentUserId = user.uid; // Set the logged-in user's UID
-                    renderMenuItems(); // Load menu
-                    startAutoScroll(); // Start promo auto-scroll
-                    updateCartDisplay(); // Start listening and updating cart display
+                } else if (event.data.type === 'hideFloatingCartBar') {
+                    // Sembunyikan floatingCartBar saat iframe product-detail.html akan ditutup
+                    // Cek apakah memang ini pesan dari product-detail.html yang akan ditutup
+                    if (document.getElementById('popupFrame').src.includes('product-detail.html')) {
+                        floatingCartBar.style.display = 'none';
+                    }
+                    updateCartUI(); // Perbarui UI setelah popup ditutup
+                } else if (event.data.type === 'addToCartFromPopup') {
+                    const { product, quantity } = event.data;
+                    if (currentUserId) {
+                        await updateCart(currentUserId, product.id, quantity, product.name, product.price, product.image); // Pastikan .image sesuai
+                        updateCartUI(); // Perbarui tampilan setelah item ditambahkan
+                    } else {
+                        alert('Anda perlu login untuk menambahkan item ke keranjang.');
+                    }
                 }
-            });
+            }
         });
+
+
+        // --- Auth State Change Listener ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserId = user.uid;
+                updateCartUI(); // Perbarui UI keranjang saat user login
+                renderMenuItems(); // Muat ulang menu saat user login
+            } else {
+                currentUserId = null;
+                updateCartUI(); // Reset UI keranjang saat user logout
+                // Jika user logout, arahkan ke halaman login
+                if (localStorage.getItem('isLoggingOut') !== 'true') { // Hindari redirect ganda setelah logout
+                    window.location.href = 'index.html';
+                }
+                localStorage.removeItem('isLoggingOut'); // Bersihkan flag
+            }
+        });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initial call to renderMenuItems might be delayed by onAuthStateChanged for logged-in users.
+            // If the user is not logged in initially, this will ensure menus are loaded.
+            if (!currentUserId && !auth.currentUser) { // If not logged in and not in the process of logging in
+                 renderMenuItems();
+            }
+            // If the page is loaded and there's a user, updateCartUI will be called by onAuthStateChanged
+        });
+
     </script>
 </body>
 </html>
