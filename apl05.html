@@ -1023,33 +1023,179 @@
             });
         });
 
-      // --- Popup Open/Close Functions ---
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+// --- Popup Open/Close Functions ---
 function bukaPopup(url) {
     popupFrame.src = url;
     popupPanel.classList.add('show');
-    
+    // Mencegah body halaman induk scroll saat popup terbuka
+    document.body.style.overflow = 'hidden';
+
     // Logika untuk menyembunyikan popupCheckoutBar jika URL adalah 'cart.html'
     if (url === 'cart.html') {
         popupCheckoutBar.style.display = 'none'; // Sembunyikan bar jika halaman keranjang dimuat
     } else {
         popupCheckoutBar.style.display = 'flex'; // Tampilkan bar untuk halaman lain (misalnya product-detail.html)
     }
-    
+
     floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
     updateCartDisplay(); // Pastikan data di popupCheckoutBar selalu terbarui
+
+    // --- Tambahkan state baru ke riwayat browser saat popup dibuka ---
+    // Ini penting agar tombol 'Back' HP bisa menutup popup
+    // Menggunakan hash '#popup-open' sebagai penanda
+    history.pushState({ popupOpen: true }, '', '#popup-open');
 }
-        function tutupPopup() {
-            popupPanel.classList.remove('show');
-            popupFrame.src = ''; // Clear iframe src
-            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
-            updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+
+// --- Fungsi untuk menutup popup secara manual (dari tombol "Tutup") ---
+function tutupPopup() {
+    popupPanel.classList.remove('show');
+    popupFrame.src = ''; // Clear iframe src
+    popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
+    document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
+    updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+
+    // PENTING: Hanya panggil history.back() jika hash saat ini adalah '#popup-open'
+    // Ini mencegah masalah jika fungsi ini dipanggil secara tidak sengaja atau dari popstate itu sendiri
+    if (window.location.hash === '#popup-open') {
+        history.back(); // Kembali ke URL sebelumnya, menghapus #popup-open
+    }
+}
+
+// --- Fungsi khusus untuk menutup popup yang dipicu oleh event popstate (tombol Back HP) ---
+// Kita pisahkan agar tidak memicu history.back() lagi secara tidak perlu
+function tutupPopupUntukPopstate() {
+    popupPanel.classList.remove('show');
+    popupFrame.src = ''; // Clear iframe src
+    popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
+    document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
+    updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+    // Tidak ada history.back() di sini karena popstate sudah merupakan hasil dari aksi 'kembali'
+}
+
+
+// --- Listener for Checkout Button in popupCheckoutBar ---
+// Ini akan membuka cart.html di dalam popup, bukan mengarahkan seluruh halaman.
+bridgeCheckoutBtn.addEventListener('click', () => {
+    bukaPopup('cart.html'); // Memanggil fungsi bukaPopup untuk menampilkan cart.html di modal
+});
+
+// --- Event Listener Global untuk Tombol 'Back' HP / Perubahan Riwayat Browser ---
+// Ini harus diletakkan setelah fungsi tutupPopupUntukPopstate didefinisikan
+window.addEventListener('popstate', (event) => {
+    // Event ini terpicu ketika tombol 'Back' browser/HP diklik,
+    // atau ketika history.back()/forward() dipanggil secara programatis.
+
+    // Periksa state saat ini:
+    // Jika event.state kosong atau popupOpen tidak true,
+    // berarti kita telah kembali ke state sebelum popup terbuka.
+    if (!event.state || !event.state.popupOpen) {
+        // Hanya tutup jika popup sedang terlihat
+        if (popupPanel.classList.contains('show')) {
+            tutupPopupUntukPopstate(); // Panggil fungsi khusus untuk popstate
         }
+    }
+    // Jika event.state ada dan popupOpen true, berarti kita berada dalam state popup,
+    // jadi jangan lakukan apa-apa (jangan tutup).
+});
 
-        // --- Listener for Checkout Button in popupCheckoutBar ---
-        bridgeCheckoutBtn.addEventListener('click', () => {
-            window.location.href = 'cart.html';
-        });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+        
+
+
+
+
+        
    // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
 // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
 function updateCartDisplay() {
