@@ -513,7 +513,6 @@
         }
         #floatingCartBar .checkout-button:hover {
             background-color: #facc15; /* Darker yellow on hover */
-        }
 /* Popup Panel (Overlay) */
 #popupPanel {
     position: fixed;
@@ -523,12 +522,11 @@
     justify-content: center;
     align-items: flex-end; /* Konten popup muncul dari bawah */
     z-index: 9999;
-    
-    /* --- PENTING: Gunakan visibility dan opacity untuk transisi --- */
+
+    /* --- PENTING: Gunakan visibility dan opacity untuk transisi FADE IN/OUT --- */
     visibility: hidden; /* Sembunyikan secara default */
     opacity: 0; /* Untuk efek fade */
     transition: opacity 0.35s ease, visibility 0.35s ease; /* Tambah transisi */
-    /* ------------------------------------------------------------------ */
 }
 
 #popupPanel.show {
@@ -537,6 +535,7 @@
 }
 
 /* Konten Popup (Box Putih) */
+/* Saya menggabungkan dua blok .popup-content yang Anda miliki menjadi satu yang lebih rapi */
 .popup-content {
     width: 100%;
     max-width: 460px;
@@ -548,14 +547,14 @@
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    
-    /* --- PENTING: Properti transform ini akan diatur oleh JS/class .show --- */
+
+    /* --- Properti transform ini akan diatur oleh kelas .show untuk SLIDE UP/DOWN --- */
     transform: translateY(100%); /* Awalnya di luar layar bawah */
     transition: transform 0.35s ease-out; /* Transisi untuk geser naik/turun */
-    /* ----------------------------------------------------------------------- */
 
-    /* Tambahkan padding-bottom agar tombol Tutup tidak menutupi konten iframe */
-    padding-bottom: 70px; 
+    position: relative; /* Penting untuk positioning tombol btn-tutup-hijau */
+    /* --- PENTING: Tambahkan padding-bottom agar tombol tidak menutupi konten iframe --- */
+    padding-bottom: 70px; /* Beri ruang di bawah untuk tombol Tutup */
 }
 
 /* Ini adalah kondisi saat popup terlihat dan kontennya sudah bergeser ke atas */
@@ -563,25 +562,18 @@
     transform: translateY(0%); /* Geser ke posisi akhir (terlihat penuh) */
 }
 
-/* Animasi slideUp yang Anda miliki, bisa dihapus jika hanya mengandalkan transisi pada transform */
-/* @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0%); }
-} */
+/* @keyframes slideUp yang lama dihapus karena sudah digantikan oleh transisi pada `transform`
+   saat kelas `.show` ditambahkan atau dihapus. Ini lebih efisien. */
 
-/* Jika Anda ingin animasi slide-out juga, Anda bisa menggunakan keyframes terbalik atau transisi saja.
-   Dengan transition pada `transform` di `.popup-content`, saat kelas `.show` dihapus,
-   elemen akan otomatis kembali ke `transform: translateY(100%)` */
-
-      
+/* --- Popup Checkout Bar (Jembatan antara halaman utama dan detail produk) --- */
 #popupCheckoutBar {
     /* --- Properti Posisi & Layout --- */
     position: fixed;
-    bottom: 35px; /* Tetap 25px dari bawah, sesuaikan jika perlu */
+    bottom: 35px; /* Tetap 35px dari bawah */
     left: 50%;
     transform: translateX(-50%); /* Menjaga posisi di tengah horizontal */
-    width: 75%; /* **INI DIUBAH!** Lebar bar menjadi 75% dari lebar layar */
-    max-width: 320px; /* **INI DIUBAH!** Batas lebar maksimum dikurangi secara signifikan */
+    width: 75%; /* Lebar bar menjadi 75% dari lebar layar */
+    max-width: 320px; /* Batas lebar maksimum dikurangi secara signifikan */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -590,7 +582,7 @@
     /* --- Properti Tampilan --- */
     background: linear-gradient(135deg, #00C853, #64DD17); /* Warna latar belakang gradien */
     color: white; /* Warna teks utama pada bar */
-    padding: 8px 10px; /* **INI DIUBAH!** Padding horizontal dikurangi lagi */
+    padding: 8px 10px; /* Padding horizontal dikurangi lagi */
     border: none;
     border-radius: 15px;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
@@ -625,26 +617,6 @@
 #popupCheckoutBar .checkout-btn:hover {
     background-color: #f0f0f0;
     color: #00B04C;
-
-/* Styling untuk Konten Popup (Box Putih) */
-.popup-content {
-    width: 100%;
-    max-width: 460px;
-    height: 90vh;
-    background-color: white;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    transform: translateY(100%);
-    animation: slideUp 0.35s ease-out forwards;
-    
-    position: relative; /* Tetap penting untuk positioning tombol */
-    /* --- PENTING: Tambahkan padding-bottom agar tombol tidak menutupi konten iframe --- */
-    padding-bottom: 70px; /* Beri ruang di bawah untuk tombol Tutup */
-    /* -------------------------------------------------------------------------------- */
 }
 
 /* Styling untuk Tombol Tutup Hijau */
@@ -656,10 +628,9 @@
     transform: translateX(-50%); /* Geser ke kiri 50% dari lebar tombol untuk menengahkan */
     top: auto; /* Pastikan properti 'top' sebelumnya tidak berlaku */
     right: auto; /* Pastikan properti 'right' sebelumnya tidak berlaku */
-    /* --------------------------------------------------------------- */
 
     z-index: 10; /* Pastikan tombol ada di atas iframe dan konten lain */
-    
+
     padding: 10px 20px; /* Tambahkan padding horizontal agar tombol lebih lebar */
     border: none;
     background-color: #22c55e; /* green */
@@ -669,10 +640,10 @@
     cursor: pointer;
     transition: background-color 0.3s;
 }
+
 .btn-tutup-hijau:hover {
     background-color: #16a34a; /* darker green on hover */
 }
-        
     </style>
 </head>
 <body>
