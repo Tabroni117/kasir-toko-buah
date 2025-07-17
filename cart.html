@@ -23,6 +23,9 @@
             background-color: #f9f9f9;
             color: #333;
             line-height: 1.6;
+            display: flex; /* Use flexbox for body */
+            flex-direction: column; /* Stack children vertically */
+            min-height: 100vh; /* Ensure body takes full viewport height */
         }
 
         .container {
@@ -32,6 +35,9 @@
             min-height: 100vh;
             padding-bottom: 120px; /* Space for fixed footer */
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            display: flex; /* Use flexbox for container */
+            flex-direction: column; /* Stack children vertically */
+            flex-grow: 1; /* Allow container to grow and fill space */
         }
 
         /* Header Styling */
@@ -46,22 +52,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative; /* For userIdDisplay positioning */
         }
 
         .back-button {
             color: white;
             font-size: 24px;
             cursor: pointer;
+            z-index: 10; /* Ensure button is clickable */
         }
 
         .header-title {
             flex-grow: 1; /* Make title take available space */
             text-align: center;
+            position: absolute; /* Position absolutely to truly center */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%; /* Limit width to avoid overlapping buttons */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Cart Items Section */
         .cart-items {
             padding: 20px 15px;
+            flex-grow: 1; /* Allow this section to fill available vertical space */
+            overflow-y: auto; /* Enable scrolling for many items */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
         .cart-item {
@@ -81,10 +99,12 @@
             object-fit: cover;
             border-radius: 8px;
             margin-right: 15px;
+            flex-shrink: 0; /* Prevent image from shrinking */
         }
 
         .cart-item-details {
             flex-grow: 1;
+            margin-right: 10px; /* Space between details and actions */
         }
 
         .cart-item-name {
@@ -109,6 +129,7 @@
             display: flex;
             align-items: center;
             gap: 5px;
+            flex-shrink: 0; /* Prevent actions from shrinking */
         }
 
         .quantity-button {
@@ -126,13 +147,20 @@
         }
 
         .quantity-input {
-            width: 30px;
+            width: 35px; /* Slightly wider */
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 5px 0;
             font-size: 14px;
-            background-color: #f0f0f0; /* Make it look uneditable */
+            background-color: #f0f0f0;
+            -moz-appearance: textfield; /* Hide arrows for Firefox */
+        }
+        /* Hide arrows for Chrome, Safari, Edge */
+        .quantity-input::-webkit-outer-spin-button,
+        .quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .remove-item-button {
@@ -166,6 +194,7 @@
             border-top-right-radius: 15px;
             left: 50%;
             transform: translateX(-50%);
+            z-index: 100; /* Ensure it stays on top */
         }
 
         .summary-row {
@@ -180,7 +209,7 @@
             color: #00C853;
         }
 
-        .checkout-button {
+        .checkout-button, .clear-cart-button-style { /* Class for styling, ID for JS */
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white;
             padding: 15px 20px;
@@ -194,13 +223,22 @@
             transition: background 0.3s ease;
         }
 
-        .checkout-button:hover {
+        .checkout-button:hover:not(:disabled), .clear-cart-button-style:hover:not(:disabled) {
             background: linear-gradient(135deg, #00B04C, #5BB914);
         }
 
-        .checkout-button:disabled {
+        .checkout-button:disabled, .clear-cart-button-style:disabled {
             background: #cccccc;
             cursor: not-allowed;
+        }
+
+        /* Specific style for Clear Cart button if it needs to be different */
+        #clearCartButton {
+            background-color: #f44336; /* Red color as in your original code */
+            color: white;
+        }
+        #clearCartButton:hover:not(:disabled) {
+            background-color: #d32f2f;
         }
 
         .empty-cart-message {
@@ -208,19 +246,18 @@
             padding: 50px 20px;
             color: #777;
             font-size: 16px;
+            display: none; /* Hidden by default */
         }
 
         /* User ID Display for Debugging */
         #userIdDisplay {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-size: 10px;
-            padding: 3px 6px;
-            border-radius: 5px;
-            z-index: 101;
+            font-size: 0.7em; /* Smaller font for user ID */
+            color: rgba(255,255,255,0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 80px; /* Give it a fixed width to prevent overflow */
+            text-align: right;
         }
     </style>
 </head>
@@ -229,11 +266,12 @@
         <header class="header">
             <i class="fas fa-arrow-left back-button" id="backToParent"></i>
             <div class="header-title">Keranjang Belanja</div>
-            <div id="userIdDisplay">Loading User ID...</div> </header>
+            <div id="userIdDisplay">Loading User ID...</div>
+        </header>
 
         <div class="cart-items" id="cartItemsContainer">
             <p class="empty-cart-message" id="emptyCartMessage">Keranjang Anda kosong.</p>
-        </div>
+            </div>
 
         <div class="cart-summary">
             <div class="summary-row">
@@ -245,7 +283,7 @@
                 <span id="totalPrice">Rp 0</span>
             </div>
             <button class="checkout-button" id="checkoutButton">Lanjutkan ke Pembayaran</button>
-            <button class="remove-item-button" id="clearCartButton" style="background-color: #f44336;">Bersihkan Keranjang</button>
+            <button class="checkout-button" id="clearCartButton">Bersihkan Keranjang</button>
         </div>
     </div>
 
@@ -276,7 +314,7 @@
         const totalPriceDisplay = document.getElementById('totalPrice');
         const checkoutButton = document.getElementById('checkoutButton');
         const clearCartButton = document.getElementById('clearCartButton');
-        const backToParentButton = document.getElementById('backToParent'); // Changed ID to reflect action
+        const backToParentButton = document.getElementById('backToParent');
         const userIdDisplay = document.getElementById('userIdDisplay');
 
         let currentUserId = null;
@@ -292,7 +330,8 @@
 
         // --- Function to Render Cart Items ---
         function renderCart(cartItems) {
-            cartItemsContainer.innerHTML = '';
+            cartItemsContainer.innerHTML = ''; // Clear previous items
+
             let totalItems = 0;
             let overallTotalPrice = 0;
 
@@ -308,28 +347,25 @@
                 cartItems.forEach(item => {
                     const itemElement = document.createElement('div');
                     itemElement.classList.add('cart-item');
-                    // productId dan customKey sekarang adalah data-attribute dari Firestore doc ID
-                    const [productId, bumbu, kacang] = item.id.split('_'); // Parse from doc ID
+                    
+                    // Note: Jika item.id adalah 'buah001_Pedas_Dengan Kacang', maka ini akan berfungsi.
+                    // Pastikan format ID saat menyimpan ke keranjang konsisten.
+                    const [productId, bumbu, kacang] = item.id.split('_'); 
                     
                     itemElement.innerHTML = `
                         <img src="${item.imageUrl || 'https://placehold.co/70x70/cccccc/333333?text=Produk'}" alt="${item.name}" class="cart-item-image">
                         <div class="cart-item-details">
                             <div class="cart-item-name">${item.name}</div>
                             <div class="cart-item-variants">
-                                ${bumbu}, ${kacang}
+                                ${bumbu ? bumbu + (kacang ? ', ' : '') : ''}${kacang || ''}
                             </div>
                             <div class="cart-item-price">${formatRupiah(item.price)}</div>
                         </div>
                         <div class="cart-item-actions">
-                            <button class="quantity-button decrease-qty" 
-                                data-doc-id="${item.id}" 
-                                data-qty="${item.quantity}">-</button>
+                            <button class="quantity-button decrease-qty" data-doc-id="${item.id}">-</button>
                             <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
-                            <button class="quantity-button increase-qty" 
-                                data-doc-id="${item.id}" 
-                                data-qty="${item.quantity}">+</button>
-                            <button class="remove-item-button" 
-                                data-doc-id="${item.id}"><i class="fas fa-trash"></i></button>
+                            <button class="quantity-button increase-qty" data-doc-id="${item.id}">+</button>
+                            <button class="remove-item-button" data-doc-id="${item.id}"><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                     cartItemsContainer.appendChild(itemElement);
@@ -342,27 +378,33 @@
             totalItemCount.textContent = totalItems;
             totalPriceDisplay.textContent = formatRupiah(overallTotalPrice);
 
-            // Kirim pesan ke parent untuk update floatingCartBar
+            // IMPORTANT: Notify parent window about cart update
+            // This will trigger the main page (apl05.html) to update its floating bar and badge
             if (window.parent) {
-                window.parent.postMessage({
-                    type: 'updateFloatingCartBar',
-                    totalItems: totalItems,
-                    totalPrice: overallTotalPrice
-                }, '*'); // Ganti '*' dengan origin parent jika ada security concern
+                window.parent.postMessage({ type: 'cartUpdate' }, '*');
             }
         }
 
         // --- Fungsi untuk mengupdate kuantitas di Firestore ---
-        async function updateCartItemQuantity(docId, newQuantity) {
+        async function updateCartItemQuantity(docId, change) {
             if (!currentUserId) return;
 
             const cartItemRef = db.collection('carts').doc(currentUserId).collection('items').doc(docId);
 
             try {
+                const doc = await cartItemRef.get();
+                if (!doc.exists) {
+                    console.warn("Item not found in cart:", docId);
+                    return;
+                }
+                const currentQuantity = doc.data().quantity;
+                const newQuantity = currentQuantity + change;
+
                 if (newQuantity > 0) {
                     await cartItemRef.update({ quantity: newQuantity });
                     console.log(`Kuantitas item ${docId} diupdate menjadi ${newQuantity}`);
                 } else {
+                    // If quantity becomes 0 or less, remove the item
                     await cartItemRef.delete();
                     console.log(`Item ${docId} dihapus dari keranjang.`);
                 }
@@ -452,7 +494,7 @@
                         renderCart(cartItems);
                     }, (error) => {
                         console.error("Error getting real-time cart updates:", error);
-                        // Optional: display a user-friendly error message
+                        cartItemsContainer.innerHTML = '<p class="empty-cart-message" style="display: block; color: red;">Gagal memuat keranjang. Silakan coba lagi.</p>';
                     });
 
                 } else {
@@ -466,10 +508,9 @@
             // Back button: Closes the popup
             backToParentButton.addEventListener('click', () => {
                 if (window.parent) {
-                    window.parent.postMessage({ type: 'closePopup' }, '*'); // Tell parent to close the popup
+                    window.parent.postMessage({ type: 'closePopup' }, '*' /*window.location.origin*/); // Tell parent to close the popup
                 } else {
-                    // Fallback if not in an iframe (e.g., opened directly)
-                    window.history.back(); // Go back in browser history
+                    window.history.back(); // Fallback if not in an iframe (e.g., opened directly)
                 }
             });
 
@@ -488,12 +529,15 @@
                     const docId = parentButton.dataset.docId; // Get the Firestore document ID
                     
                     if (parentButton.classList.contains('increase-qty')) {
-                        let currentQty = parseInt(parentButton.dataset.qty);
-                        await updateCartItemQuantity(docId, currentQty + 1);
+                        // We now pass +1 to the update function
+                        await updateCartItemQuantity(docId, 1); 
                     } else if (parentButton.classList.contains('decrease-qty')) {
-                        let currentQty = parseInt(parentButton.dataset.qty);
+                        // To decrease, we need the current quantity from the input
+                        const quantityInput = parentButton.parentNode.querySelector('.quantity-input');
+                        let currentQty = parseInt(quantityInput.value);
                         if (currentQty > 1) {
-                            await updateCartItemQuantity(docId, currentQty - 1);
+                            // Pass -1 to the update function
+                            await updateCartItemQuantity(docId, -1);
                         } else {
                             // If quantity is 1 and minus button is pressed, remove item
                             await removeItemFromCart(docId);
