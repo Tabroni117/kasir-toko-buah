@@ -514,47 +514,64 @@
         #floatingCartBar .checkout-button:hover {
             background-color: #facc15; /* Darker yellow on hover */
         }
+/* Popup Panel (Overlay) */
+#popupPanel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex; /* Tetap flex agar konten bisa diatur posisinya */
+    justify-content: center;
+    align-items: flex-end; /* Konten popup muncul dari bawah */
+    z-index: 9999;
+    
+    /* --- PENTING: Gunakan visibility dan opacity untuk transisi --- */
+    visibility: hidden; /* Sembunyikan secara default */
+    opacity: 0; /* Untuk efek fade */
+    transition: opacity 0.35s ease, visibility 0.35s ease; /* Tambah transisi */
+    /* ------------------------------------------------------------------ */
+}
 
-        /* Popup Panel */
-        #popupPanel {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            display: none;
-            justify-content: center;
-            align-items: flex-end; /* Appears from bottom */
-            z-index: 9999;
-        }
+#popupPanel.show {
+    visibility: visible;
+    opacity: 1;
+}
 
-        #popupPanel.show {
-            display: flex;
-        }
+/* Konten Popup (Box Putih) */
+.popup-content {
+    width: 100%;
+    max-width: 460px;
+    height: 90vh;
+    background-color: white;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    
+    /* --- PENTING: Properti transform ini akan diatur oleh JS/class .show --- */
+    transform: translateY(100%); /* Awalnya di luar layar bawah */
+    transition: transform 0.35s ease-out; /* Transisi untuk geser naik/turun */
+    /* ----------------------------------------------------------------------- */
 
-        .popup-content {
-            width: 100%;
-            max-width: 460px;
-            height: 90vh;
-            background-color: white;
-            border-top-left-radius: 18px;
-            border-top-right-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            animation: slideUp 0.35s ease-out forwards;
-        }
+    /* Tambahkan padding-bottom agar tombol Tutup tidak menutupi konten iframe */
+    padding-bottom: 70px; 
+}
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0%); }
-        }
+/* Ini adalah kondisi saat popup terlihat dan kontennya sudah bergeser ke atas */
+#popupPanel.show .popup-content {
+    transform: translateY(0%); /* Geser ke posisi akhir (terlihat penuh) */
+}
 
-        #popupFrame {
-            flex: 1;
-            width: 100%;
-            border: none;
-        }
+/* Animasi slideUp yang Anda miliki, bisa dihapus jika hanya mengandalkan transisi pada transform */
+/* @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0%); }
+} */
+
+/* Jika Anda ingin animasi slide-out juga, Anda bisa menggunakan keyframes terbalik atau transisi saja.
+   Dengan transition pada `transform` di `.popup-content`, saat kelas `.show` dihapus,
+   elemen akan otomatis kembali ke `transform: translateY(100%)` */
 
       
 #popupCheckoutBar {
@@ -1044,16 +1061,12 @@
 
 
 
-
-        
-
-
 // --- Popup Open/Close Functions ---
 function bukaPopup(url) {
     popupFrame.src = url;
     popupPanel.classList.add('show');
-    // Mencegah body halaman induk scroll saat popup terbuka
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; // Mencegah body halaman induk scroll saat popup terbuka
+    document.documentElement.style.overflow = 'hidden'; // Tambahan: Mencegah scroll pada elemen html juga
 
     // Logika untuk menyembunyikan popupCheckoutBar jika URL adalah 'cart.html'
     if (url === 'cart.html') {
@@ -1065,9 +1078,7 @@ function bukaPopup(url) {
     floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
     updateCartDisplay(); // Pastikan data di popupCheckoutBar selalu terbarui
 
-    // --- Tambahkan state baru ke riwayat browser saat popup dibuka ---
-    // Ini penting agar tombol 'Back' HP bisa menutup popup
-    // Menggunakan hash '#popup-open' sebagai penanda
+    // Tambahkan state baru ke riwayat browser saat popup dibuka
     history.pushState({ popupOpen: true }, '', '#popup-open');
 }
 
@@ -1077,57 +1088,59 @@ function tutupPopup() {
     popupFrame.src = ''; // Clear iframe src
     popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
     document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
+    document.documentElement.style.overflow = ''; // Tambahan: Mengizinkan scroll pada elemen html juga
+
+    // Pastikan container utama aplikasi terlihat jika mungkin disembunyikan
+    // Asumsi: Konten utama apl05.html ada di dalam div.container
+    const mainContainer = document.querySelector('.container');
+    if (mainContainer) {
+        mainContainer.style.display = 'block'; // Atau 'flex', tergantung display awalnya
+        mainContainer.style.visibility = 'visible';
+        mainContainer.style.opacity = '1';
+    }
+
     updateCartDisplay(); // Call to re-evaluate floatingCartBar display
 
     // PENTING: Hanya panggil history.back() jika hash saat ini adalah '#popup-open'
-    // Ini mencegah masalah jika fungsi ini dipanggil secara tidak sengaja atau dari popstate itu sendiri
     if (window.location.hash === '#popup-open') {
         history.back(); // Kembali ke URL sebelumnya, menghapus #popup-open
     }
 }
 
 // --- Fungsi khusus untuk menutup popup yang dipicu oleh event popstate (tombol Back HP) ---
-// Kita pisahkan agar tidak memicu history.back() lagi secara tidak perlu
 function tutupPopupUntukPopstate() {
     popupPanel.classList.remove('show');
     popupFrame.src = ''; // Clear iframe src
     popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
     document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
+    document.documentElement.style.overflow = ''; // Tambahan: Mengizinkan scroll pada elemen html juga
+
+    // Pastikan container utama aplikasi terlihat jika mungkin disembunyikan
+    const mainContainer = document.querySelector('.container');
+    if (mainContainer) {
+        mainContainer.style.display = 'block'; // Atau 'flex', tergantung display awalnya
+        mainContainer.style.visibility = 'visible';
+        mainContainer.style.opacity = '1';
+    }
+
     updateCartDisplay(); // Call to re-evaluate floatingCartBar display
     // Tidak ada history.back() di sini karena popstate sudah merupakan hasil dari aksi 'kembali'
 }
 
 
 // --- Listener for Checkout Button in popupCheckoutBar ---
-// Ini akan membuka cart.html di dalam popup, bukan mengarahkan seluruh halaman.
 bridgeCheckoutBtn.addEventListener('click', () => {
     bukaPopup('cart.html'); // Memanggil fungsi bukaPopup untuk menampilkan cart.html di modal
 });
 
 // --- Event Listener Global untuk Tombol 'Back' HP / Perubahan Riwayat Browser ---
-// Ini harus diletakkan setelah fungsi tutupPopupUntukPopstate didefinisikan
 window.addEventListener('popstate', (event) => {
-    // Event ini terpicu ketika tombol 'Back' browser/HP diklik,
-    // atau ketika history.back()/forward() dipanggil secara programatis.
-
-    // Periksa state saat ini:
-    // Jika event.state kosong atau popupOpen tidak true,
-    // berarti kita telah kembali ke state sebelum popup terbuka.
     if (!event.state || !event.state.popupOpen) {
-        // Hanya tutup jika popup sedang terlihat
         if (popupPanel.classList.contains('show')) {
-            tutupPopupUntukPopstate(); // Panggil fungsi khusus untuk popstate
+            tutupPopupUntukPopstate();
         }
     }
-    // Jika event.state ada dan popupOpen true, berarti kita berada dalam state popup,
-    // jadi jangan lakukan apa-apa (jangan tutup).
 });
-
-
-
-
-
-
 
 
 
