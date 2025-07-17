@@ -891,52 +891,78 @@
         }
     }
 
-    // --- Popup Open/Close Functions (VERSI AWAL) ---
-    function bukaPopup(url) {
-        popupFrame.src = url;
-        popupPanel.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Mencegah scroll pada body
-        document.documentElement.style.overflow = 'hidden'; // Mencegah scroll pada html
-        
-        // Logika untuk menyembunyikan popupCheckoutBar jika URL adalah 'cart.html'
-        if (popupCheckoutBar) {
-            if (url === 'cart.html') {
-                popupCheckoutBar.style.display = 'none'; // Sembunyikan bar jika halaman keranjang dimuat
-            } else {
-                popupCheckoutBar.style.display = 'flex'; // Tampilkan bar untuk halaman lain (misalnya product-detail.html)
-            }
-        }
-        
-        if (floatingCartBar) {
-            floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
-        }
-        updateCartDisplay(); // Pastikan data di popupCheckoutBar selalu terbarui
+
+// --- Popup Open/Close Functions (VERSI BARU DENGAN BACK SUPPORT) ---
+function bukaPopup(url) {
+    popupFrame.src = url;
+    popupPanel.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    // Sembunyikan popupCheckoutBar jika halaman cart
+    if (popupCheckoutBar) {
+        popupCheckoutBar.style.display = (url === 'cart.html') ? 'none' : 'flex';
     }
-    
-    function tutupPopup() {
+
+    if (floatingCartBar) {
+        floatingCartBar.style.display = 'none';
+    }
+
+    updateCartDisplay();
+
+    // Tambahkan entri ke history agar tombol back bisa menutup popup
+    history.pushState({ popupOpen: true }, '', '');
+}
+
+// --- Tutup popup dan kembalikan history ---
+function tutupPopup() {
+    popupPanel.classList.remove('show');
+    popupFrame.src = '';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
+    if (popupCheckoutBar) {
+        popupCheckoutBar.style.display = 'none';
+    }
+
+    updateCartDisplay();
+
+    // Jika popup terbuka via history, kembali 1 langkah
+    if (history.state && history.state.popupOpen) {
+        history.back();
+    }
+}
+
+// --- Tangani tombol BACK browser (termasuk tombol back di HP Android) ---
+window.addEventListener('popstate', function (event) {
+    if (event.state && event.state.popupOpen) {
         popupPanel.classList.remove('show');
-        popupFrame.src = ''; // Clear iframe src
-        document.body.style.overflow = ''; // Mengembalikan scroll
-        document.documentElement.style.overflow = ''; // Mengembalikan scroll
+        popupFrame.src = '';
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+
         if (popupCheckoutBar) {
-            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
+            popupCheckoutBar.style.display = 'none';
         }
-        updateCartDisplay(); // Call to re-evaluate floatingCartBar display
-    }
 
-    // --- Listener for Checkout Button in popupCheckoutBar (VERSI AWAL) ---
-    if (bridgeCheckoutBtn) {
-        bridgeCheckoutBtn.addEventListener('click', () => {
-            window.location.href = 'cart.html'; // Mengarahkan ke halaman cart.html (bukan popup)
-        });
+        updateCartDisplay();
     }
+});
 
-    // Listener untuk tombol Tutup di dalam Popup (VERSI AWAL)
-    // Asumsi tombol tutup memiliki kelas 'btn-tutup-hijau'
-    const closeButtonInPopup = document.querySelector('.btn-tutup-hijau');
-    if (closeButtonInPopup) {
-        closeButtonInPopup.addEventListener('click', tutupPopup); // Panggil fungsi tutupPopup
+// --- Listener tombol checkout (jika ada) ---
+if (bridgeCheckoutBtn) {
+    bridgeCheckoutBtn.addEventListener('click', () => {
+        window.location.href = 'cart.html';
+    });
+}
+
+// --- Listener tombol tutup di dalam popup (pastikan class: .btn-tutup-hijau) ---
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('btn-tutup-hijau')) {
+        tutupPopup();
     }
+});
+
 
 
     // --- Function to Load and Display Menu from Firebase ---
