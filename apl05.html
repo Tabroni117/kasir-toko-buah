@@ -806,9 +806,6 @@
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
-            // Sembunyikan floatingCartBar utama saat popup dibuka.
-            // floatingCartBar akan ditampilkan oleh pesan dari product-detail.html jika keranjang diubah,
-            // atau akan tersembunyi jika popup adalah cart.html (sesuai updateCartUI).
             floatingCartBar.style.display = 'none'; 
         }
 
@@ -821,10 +818,6 @@
         }
 
         // --- Cart Management Functions ---
-        // updateCartInFirestore ini tidak lagi digunakan di apl05.html
-        // karena update cart sudah ditangani sepenuhnya oleh product-detail.html
-        // dan cart.html. apl05.html hanya akan menerima update.
-
         async function updateCartUI() {
             if (!currentUserId) {
                 cartBadge.style.display = 'none';
@@ -833,7 +826,6 @@
             }
 
             try {
-                // Ambil data keranjang dari sub-koleksi 'items'
                 const itemsCollectionRef = cartsCollection.doc(currentUserId).collection('items');
                 const snapshot = await itemsCollectionRef.get();
                 let totalItems = 0;
@@ -852,7 +844,6 @@
                     barItemCountText.textContent = `${totalItems} item`;
                     barTotalPrice.textContent = `Total: ${formatRupiah(totalPrice)}`;
 
-                    // Tampilkan floatingCartBar hanya jika ada item DAN popup cart.html TIDAK sedang terbuka
                     const isCartPopup = popupPanel.classList.contains('show') && popupFrame.src.includes('cart.html');
 
                     if (totalItems > 0 && !isCartPopup) {
@@ -926,10 +917,8 @@
             auth.onAuthStateChanged(async user => {
                 if (user) {
                     currentUserId = user.uid;
-                    // Initial cart UI update when user logs in/is already logged in
                     await updateCartUI();
                 } else {
-                    // Try to sign in with custom token from Canvas if available
                     if (initialAuthToken) {
                         try {
                             const userCredential = await auth.signInWithCustomToken(initialAuthToken);
@@ -937,7 +926,6 @@
                             await updateCartUI();
                         } catch (error) {
                             console.error("apl05: Error signing in with custom token:", error);
-                            // Fallback to anonymous if custom token fails
                             try {
                                 const anonUserCredential = await auth.signInAnonymously();
                                 currentUserId = anonUserCredential.user.uid;
@@ -948,7 +936,6 @@
                             }
                         }
                     } else {
-                        // If no custom token, sign in anonymously
                         try {
                             const anonUserCredential = await auth.signInAnonymously();
                             currentUserId = anonUserCredential.user.uid;
@@ -964,9 +951,9 @@
             logoutBtn.addEventListener('click', async () => {
                 try {
                     await auth.signOut();
-                    localStorage.removeItem('userToken'); // Clear any local token
-                    localStorage.removeItem('userId'); // Clear userId if stored
-                    window.location.href = 'index.html'; // Redirect to login page
+                    localStorage.removeItem('userToken'); 
+                    localStorage.removeItem('userId'); 
+                    window.location.href = 'index.html'; 
                 } catch (error) {
                     console.error("Error logging out:", error);
                     alert("Gagal logout. Silakan coba lagi.");
@@ -993,28 +980,23 @@
 
                 if (event.data && event.data.type) {
                     if (event.data.type === 'cartUpdatedFromProductDetail' || event.data.type === 'cartUpdatedFromCartPage') {
-                        // Ketika product-detail.html atau cart.html memberi tahu bahwa keranjang telah diperbarui
-                        await updateCartUI(); // Panggil fungsi update UI keranjang
-                        // Jika popup product-detail.html masih terbuka, pastikan floatingCartBar ditampilkan
+                        await updateCartUI();
                         if (popupPanel.classList.contains('show') && popupFrame.src.includes('product-detail.html')) {
                             floatingCartBar.style.display = 'flex';
                         }
                     } else if (event.data.type === 'closeProductDetailPopup') {
-                        // Ketika product-detail.html meminta untuk ditutup
-                        tutupPopup(); // Panggil fungsi tutup popup utama
+                        tutupPopup();
                     } else if (event.data.type === 'closeCartPopup') {
-                        // Ketika cart.html meminta untuk ditutup
-                        tutupPopup(); // Panggil fungsi tutup popup utama
+                        tutupPopup();
                     }
-                    // Tambahkan handler untuk event lain dari iframe jika ada
                 }
             });
 
             // --- Load Menu Terlaris ---
             async function loadMenu() {
                 try {
-                    const snapshot = await buahCollection.where('isAvailable', '==', true).orderBy('name').get();
-                    menuList.innerHTML = ''; // Clear loading text
+                    const snapshot = await buahCollection.where('isAvailable', '==', true).orderBy('nama').get(); // ORDER BY 'nama'
+                    menuList.innerHTML = ''; 
 
                     if (snapshot.empty) {
                         menuList.innerHTML = '<p>Tidak ada menu yang tersedia saat ini.</p>';
@@ -1022,16 +1004,27 @@
                     }
 
                     snapshot.forEach(doc => {
-                        const product = { id: doc.id, ...doc.data() };
+                        const product = { 
+                            id: doc.id, 
+                            // Sesuaikan nama field di sini agar sesuai dengan Firestore Anda
+                            name: doc.data().nama, 
+                            description: doc.data().deskripsi,
+                            price: doc.data().harga,
+                            image: doc.data().imageUrl, // Menggunakan imageUrl dari Firestore
+                            rating: doc.data().rating,
+                            deliveryTime: doc.data().deliveryTime || '15-30 min', // Default jika kosong
+                            isAvailable: doc.data().isAvailable // Pastikan isAvailable juga diambil
+                        };
+
                         const productCard = document.createElement('div');
-                        productCard.classList.add('restaurant-card', 'fade-in'); // Add fade-in class
+                        productCard.classList.add('restaurant-card', 'fade-in'); 
                         productCard.innerHTML = `
                             <img src="${product.image}" alt="${product.name}" class="restaurant-image">
                             <div class="restaurant-info">
                                 <h3 class="restaurant-name">${product.name}</h3>
                                 <div class="rating">
                                     <span>⭐ ${product.rating || 'N/A'}</span>
-                                    <span>${product.deliveryTime || '15-30'} min</span>
+                                    <span>${product.deliveryTime}</span>
                                 </div>
                                 <p class="restaurant-price">${formatRupiah(product.price)}</p>
                             </div>
@@ -1039,34 +1032,27 @@
                         `;
                         menuList.appendChild(productCard);
 
-                        // Event listener for opening product detail
                         productCard.querySelector('.restaurant-info').addEventListener('click', () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(product));
                             bukaPopup('product-detail.html');
                         });
-                        // Event listener for image click (should also open product detail)
                         productCard.querySelector('.restaurant-image').addEventListener('click', () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(product));
                             bukaPopup('product-detail.html');
                         });
                         
-                        // Event listener for the '+' button (this will directly add to cart for simple products,
-                        // or open popup if variants are needed, but for Rujak, detail is needed)
-                        // Karena Rujak butuh varian, tombol '+' di menu utama sebaiknya tetap membuka detail.
-                        // Jika Anda ingin '+' langsung menambahkan tanpa varian, logikanya perlu disesuaikan.
                         productCard.querySelector('.add-button').addEventListener('click', (e) => {
-                            e.stopPropagation(); // Mencegah event click di card ikut terpicu
+                            e.stopPropagation(); 
                             sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-                            bukaPopup('product-detail.html'); // Selalu buka detail untuk Rujak Buah
+                            bukaPopup('product-detail.html'); 
                         });
                     });
                 } catch (error) {
-                    console.error("Error loading menu:", error);
+                    console.error("Error loading menu:", error); 
                     menuList.innerHTML = '<p>Gagal memuat menu. Silakan coba lagi nanti.</p>';
                 }
             }
 
-            // Initial load of menu
             loadMenu();
 
             // Promo Banner Automatic Slider
