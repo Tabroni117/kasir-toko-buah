@@ -1061,95 +1061,106 @@
 
 
 
+// Deklarasikan bridgeTutupBtn jika belum ada
+// const bridgeTutupBtn = document.getElementById('bridgeTutupBtn'); // Contoh: jika ada tombol tutup dengan ID ini
+
 // --- Popup Open/Close Functions ---
 function bukaPopup(url) {
     popupFrame.src = url;
     popupPanel.classList.add('show');
-    document.body.style.overflow = 'hidden'; // Mencegah body halaman induk scroll saat popup terbuka
-    document.documentElement.style.overflow = 'hidden'; // Tambahan: Mencegah scroll pada elemen html juga
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
-    // Logika untuk menyembunyikan popupCheckoutBar jika URL adalah 'cart.html'
     if (url === 'cart.html') {
-        popupCheckoutBar.style.display = 'none'; // Sembunyikan bar jika halaman keranjang dimuat
+        popupCheckoutBar.style.display = 'none';
     } else {
-        popupCheckoutBar.style.display = 'flex'; // Tampilkan bar untuk halaman lain (misalnya product-detail.html)
+        popupCheckoutBar.style.display = 'flex';
     }
 
-    floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
-    updateCartDisplay(); // Pastikan data di popupCheckoutBar selalu terbarui
+    floatingCartBar.style.display = 'none';
+    updateCartDisplay();
 
-    // Tambahkan state baru ke riwayat browser saat popup dibuka
-    history.pushState({ popupOpen: true }, '', '#popup-open');
+    // Pastikan kita tidak mendorong state yang sama berulang kali jika popup sudah terbuka
+    if (window.location.hash !== '#popup-open') {
+        history.pushState({ popupOpen: true }, '', '#popup-open');
+    }
 }
 
 // --- Fungsi untuk menutup popup secara manual (dari tombol "Tutup") ---
-function tutupPopup() {
+// Fungsi ini yang bertanggung jawab untuk 'mundur' di riwayat browser
+function tutupPopupManual() { // NAMANYA DIUBAH AGAR LEBIH JELAS
     popupPanel.classList.remove('show');
-    popupFrame.src = ''; // Clear iframe src
-    popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
-    document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
-    document.documentElement.style.overflow = ''; // Tambahan: Mengizinkan scroll pada elemen html juga
+    popupFrame.src = '';
+    popupCheckoutBar.style.display = 'none';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
 
-    // Pastikan container utama aplikasi terlihat jika mungkin disembunyikan
-    // Asumsi: Konten utama apl05.html ada di dalam div.container
     const mainContainer = document.querySelector('.container');
     if (mainContainer) {
-        mainContainer.style.display = 'block'; // Atau 'flex', tergantung display awalnya
+        mainContainer.style.display = 'block'; // Atau 'flex'
         mainContainer.style.visibility = 'visible';
         mainContainer.style.opacity = '1';
     }
 
-    updateCartDisplay(); // Call to re-evaluate floatingCartBar display
+    updateCartDisplay();
 
     // PENTING: Hanya panggil history.back() jika hash saat ini adalah '#popup-open'
+    // Ini memastikan kita hanya mundur dari state popup kita
     if (window.location.hash === '#popup-open') {
-        history.back(); // Kembali ke URL sebelumnya, menghapus #popup-open
+        history.back(); // Panggil history.back() hanya dari penutupan manual
     }
 }
 
 // --- Fungsi khusus untuk menutup popup yang dipicu oleh event popstate (tombol Back HP) ---
-function tutupPopupUntukPopstate() {
+// Fungsi ini TIDAK memanggil history.back() karena popstate adalah hasil dari aksi 'back' itu sendiri
+function tutupPopupDariPopstate() { // NAMANYA DIUBAH AGAR LEBIH JELAS
     popupPanel.classList.remove('show');
-    popupFrame.src = ''; // Clear iframe src
-    popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
-    document.body.style.overflow = ''; // Mengizinkan body halaman induk untuk scroll kembali
-    document.documentElement.style.overflow = ''; // Tambahan: Mengizinkan scroll pada elemen html juga
+    popupFrame.src = '';
+    popupCheckoutBar.style.display = 'none';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
 
-    // Pastikan container utama aplikasi terlihat jika mungkin disembunyikan
     const mainContainer = document.querySelector('.container');
     if (mainContainer) {
-        mainContainer.style.display = 'block'; // Atau 'flex', tergantung display awalnya
+        mainContainer.style.display = 'block'; // Atau 'flex'
         mainContainer.style.visibility = 'visible';
         mainContainer.style.opacity = '1';
     }
 
-    updateCartDisplay(); // Call to re-evaluate floatingCartBar display
-    // Tidak ada history.back() di sini karena popstate sudah merupakan hasil dari aksi 'kembali'
+    updateCartDisplay();
 }
-
 
 // --- Listener for Checkout Button in popupCheckoutBar ---
 bridgeCheckoutBtn.addEventListener('click', () => {
-    bukaPopup('cart.html'); // Memanggil fungsi bukaPopup untuk menampilkan cart.html di modal
+    bukaPopup('cart.html');
 });
+
+// --- Listener untuk tombol Tutup di dalam Popup (jika ada) ---
+// ASUMSI: Anda punya tombol tutup dengan ID 'bridgeTutupBtn' atau kelas 'btn-tutup-hijau'
+// Sesuaikan selector di bawah dengan ID/kelas tombol tutup Anda yang sebenarnya.
+// Pastikan ini diarahkan ke fungsi tutupPopupManual
+const closeButtonInPopup = document.querySelector('.btn-tutup-hijau'); // Atau id: '#bridgeTutupBtn'
+if (closeButtonInPopup) {
+    closeButtonInPopup.addEventListener('click', tutupPopupManual);
+}
+
 
 // --- Event Listener Global untuk Tombol 'Back' HP / Perubahan Riwayat Browser ---
 window.addEventListener('popstate', (event) => {
+    // Event ini terpicu ketika tombol 'Back' browser/HP diklik,
+    // atau ketika history.back()/forward() dipanggil secara programatis.
+
+    // Periksa apakah state yang kita kembali ke dalamnya BUKAN state popup
+    // Artinya, kita bergerak mundur keluar dari state popup
     if (!event.state || !event.state.popupOpen) {
+        // Hanya tutup jika popup sedang terlihat
         if (popupPanel.classList.contains('show')) {
-            tutupPopupUntukPopstate();
+            tutupPopupDariPopstate(); // Panggil fungsi khusus untuk popstate
         }
     }
+    // Jika event.state ada dan popupOpen true, berarti kita maju/tetap di dalam state popup,
+    // jadi jangan lakukan apa-apa (jangan tutup).
 });
-
-
-
-
-
-
-
-
-
 
 
 
