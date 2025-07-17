@@ -1,610 +1,15 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rujak Buah Indonesia - Aplikasi Pelanggan</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-    <style>
-        /* General Styling */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-
-        body {
-            background-color: #f9f9f9;
-            color: #333;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
-            min-height: 100vh;
-            position: relative;
-            /* Adjusted: bottom-nav height (50px) + floatingCartBar height (45px) + a little margin (10px) = 105px */
-            padding-bottom: 105px;
-        }
-
-        /* Header Styling */
-        .header {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 12px 16px 20px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .header-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 8px;
-        }
-
-        .app-header {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .app-title {
-            font-weight: bold;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .leaf-icon {
-            margin-right: 10px;
-            font-size: 24px;
-        }
-        
-        .app-tagline {
-            font-size: 12px;
-            font-style: italic;
-            color: rgba(255,255,255,0.9);
-        }
-
-        /* Logout Button Style */
-        .logout-btn {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s, border-color 0.3s;
-            margin-left: auto;
-            white-space: nowrap;
-        }
-        .logout-btn:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
-
-        .address-bar {
-            display: flex;
-            align-items: center;
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            position: relative;
-            width: 100%;
-        }
-
-        .gps-icon {
-            color: #00C853;
-            margin-right: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-        .gps-icon.loading {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        .delivery-input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .location-placeholder {
-            color: #999;
-        }
-
-        /* Promo Banner */
-        .promo-banner {
-            padding: 16px;
-            overflow: hidden;
-            position: relative;
-            background: white;
-            margin-bottom: 8px;
-        }
-        
-        .promo-slides-container {
-            display: flex;
-            gap: 12px;
-            transition: transform 0.5s ease;
-            white-space: nowrap;
-        }
-
-        .promo-banner::-webkit-scrollbar {
-            display: none;
-        }
-
-        .promo-slide {
-            min-width: 200px;
-            height: 100px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            scroll-snap-align: start;
-            box-shadow:
-                2px 2px 3px rgba(22, 163, 74, 0.5),
-                4px 4px 4px rgba(22, 163, 74, 0.6),
-                6px 6px 5px rgba(22, 163, 74, 0.7);
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        .promo-slide:hover {
-            box-shadow:
-                2px 2px 4px rgba(22, 163, 74, 0.6),
-                4px 4px 6px rgba(22, 163, 74, 0.7),
-                6px 6px 8px rgba(22, 163, 74, 0.8);
-            transform: translateY(-3px);
-        }
-
-        .promo-title {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .promo-desc {
-            font-size: 12px;
-        }
-
-        /* Categories */
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            padding: 16px;
-            background: white;
-            margin-bottom: 8px;
-        }
-
-        .category {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 12px;
-            background:#ffffff;
-            border-radius: 12px;
-            transition: transform 0.2s ease;
-            cursor: pointer;
-        }
-
-        .category:hover {
-            transform: translateY(-2px);
-        }
-        
-        .category-icon {
-            background: #3ee36f;
-            color: #ffffff;
-            border-radius: 10px;
-            border-bottom: 2px solid #15803d;
-            border-right: 2px solid #15803d;
-            box-shadow: 2px 2px 5px rgba(0, 128, 0, 0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            font-size: 18px;
-            padding: 14px;
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .category:hover .category-icon,
-        .category.active .category-icon {
-            background: #3ee36f;
-            color: #ffffff;
-            transform: scale(1.1);
-            box-shadow: 0 0 14px 6px rgba(253, 224, 71, 0.5);
-            animation: softGlow 1.8s ease-in-out infinite alternate;
-        }
-
-        @keyframes softGlow {
-            from {
-                box-shadow: 0 0 10px 3px rgba(253, 224, 71, 0.3);
-            }
-            to {
-                box-shadow: 0 0 14px 5px rgba(253, 224, 71, 0.6);
-            }
-        }
-
-        .category-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #22c55e;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        @keyframes spinIcon {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .category-icon i.rotating {
-            animation: spinIcon 2s linear infinite;
-        }
-
-        /* Menu Section */
-        .section-title {
-            padding: 16px 16px 8px;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .see-all {
-            font-size: 12px;
-            color: #00C853;
-            font-weight: normal;
-        }
-
-        .restaurants {
-            padding: 0 16px 16px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .restaurant-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: transform 0.2s;
-            position: relative; /* Essential for positioning the button */
-        }
-
-        .restaurant-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .restaurant-image {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            object-position: center 70%;
-            border-radius: 8px 8px 0 0;
-        }
-
-        .restaurant-info {
-            padding: 10px;
-        }
-
-        .restaurant-name {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .restaurant-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #757575;
-        }
-
-        .rating {
-            color: #FFD700;
-        }
-
-        .delivery-time {
-            color: #00C853;
-        }
-
-        /* NEW: Add to Cart/Quantity Control on Menu Card */
-        .add-to-cart-control {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            z-index: 10;
-        }
-
-        .add-button {
-            background-color: #22c55e; /* Bright green */
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background-color 0.2s, transform 0.2s;
-        }
-
-        .add-button:hover {
-            background-color: #16a34a; /* Darker green on hover */
-            transform: scale(1.05);
-        }
-
-        /* Quantity display when item is in cart */
-        .quantity-display-only {
-            background-color: #22c55e;
-            color: white;
-            border-radius: 20px;
-            padding: 6px 12px; /* Adjusted padding for better look */
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            min-width: 36px; /* Ensure it's at least as wide as the plus button */
-            display: flex; /* Use flex to center content */
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            cursor: pointer; /* Make it clickable */
-            transition: background-color 0.2s, transform 0.2s;
-        }
-
-        .quantity-display-only:hover {
-            background-color: #16a34a;
-            transform: scale(1.05);
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            justify-content: space-around;
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            padding: 6px 0;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            z-index: 1000;
-            height: 50px;
-        }
-
-        .nav-item {
-            text-align: center;
-            color: rgba(255,255,255,0.7);
-            font-size: 10px;
-            padding: 4px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .nav-item.active {
-            color: white;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
-        }
-
-        .nav-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-            color: white;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        /* Loading message for menu list */
-        .menu-loading-message {
-            text-align: center;
-            padding: 20px;
-            color: #757575;
-            font-size: 1.1em;
-        }
-
-        /* Cart Badge on Bottom Nav */
-        .cart-badge {
-            position: absolute;
-            top: 0;
-            right: 0;
-            transform: translate(30%, -30%);
-            background-color: #ef4444; /* red */
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            border-radius: 999px;
-            padding: 2px 6px;
-            min-width: 16px;
-            text-align: center;
-            box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
-            z-index: 10;
-        }
-
-        /* Floating Cart Bar */
-        #floatingCartBar {
-            position: fixed;
-            bottom: 50px; /* Right above bottom-nav (50px height) */
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 480px;
-            width: 100%;
-            z-index: 9999;
-            background: #22c55e; /* Green as requested */
-            display: none; /* Default: hidden */
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 16px;
-            border-top: 1px solid #16a34a;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            height: 45px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-
-        #floatingCartBar .cart-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #floatingCartBar .cart-button {
-            color: white;
-        }
-
-        #floatingCartBar .cart-text {
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        #floatingCartBar .checkout-button {
-            background-color: #fde047; /* Yellow */
-            color: black;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        #floatingCartBar .checkout-button:hover {
-            background-color: #facc15; /* Darker yellow on hover */
-        }
-
-        /* Popup Panel */
-        #popupPanel {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            display: none;
-            justify-content: center;
-            align-items: flex-end; /* Appears from bottom */
-            z-index: 9999;
-        }
-
-        #popupPanel.show {
-            display: flex;
-        }
-
-        .popup-content {
-            width: 100%;
-            max-width: 460px;
-            height: 85vh;
-            background-color: white;
-            border-top-left-radius: 18px;
-            border-top-right-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            animation: slideUp 0.35s ease-out forwards;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0%); }
-        }
-
-        #popupFrame {
-            flex: 1;
-            width: 100%;
-            border: none;
-        }
-
-        .btn-tutup-hijau {
-            padding: 10px;
-            border: none;
-            background-color: #22c55e; /* green */
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin: 10px; /* Tambahkan margin agar tidak terlalu mepet */
-        }
-        .btn-tutup-hijau:hover {
-            background-color: #16a34a; /* darker green on hover */
-        }
-
-        #popupCheckoutBar {
-            display: none !important; /* Pastikan ini tersembunyi */
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background-color: #22c55e; /* bright green */
-            color: white;
-            border-top: 1px solid #ddd;
-            font-size: 16px;
-            font-weight: 500;
-            position: relative;
-            z-index: 10;
-        }
-
-        #bridgeItemCount,
-        #bridgeTotal {
-            color: white;
-            margin-right: 10px;
-        }
-
-        #bridgeCheckoutBtn {
-            padding: 6px 12px;
-            background-color: #fde047; /* yellow */
-            color: black;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        #bridgeCheckoutBtn:hover {
-            background-color: #facc15; /* darker yellow on hover */
-        }
-    </style>
+    <title>RUJAK BUAH INDONESIA - Aplikasi Pelanggan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.7/countUp.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -720,10 +125,11 @@
 
     </div>
 
-     <script>
+    <script>
         // --- Firebase Configuration ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Anda bisa menghapus typeof __app_id dan __firebase_config jika Anda yakin ini hanya akan dijalankan di browser biasa
+        // Jika ini bagian dari sistem Canvas atau semacamnya yang menyuntikkan variabel, biarkan saja.
+        const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
             projectId: "tokobuahkasir",
@@ -734,11 +140,8 @@
         };
         
         // Initialize Firebase (pastikan hanya inisialisasi sekali)
-        let app;
         if (!firebase.apps.length) {
-            app = firebase.initializeApp(firebaseConfig);
-        } else {
-            app = firebase.app(); // Gunakan instance yang sudah ada
+            firebase.initializeApp(firebaseConfig);
         }
         
         const auth = firebase.auth();
@@ -750,7 +153,7 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const deliveryAddressInput = document.getElementById('deliveryAddressInput');
         const detectLocationBtn = document.getElementById('detectLocationBtn');
-        const promoBanner = document.getElementById('promo-banner');
+        const promoBanner = document.getElementById('promo-banner'); // Menggunakan ID promo-banner
         const menuList = document.getElementById('menuList');
         const loadingText = document.getElementById('loadingText');
         const popupPanel = document.getElementById('popupPanel');
@@ -762,7 +165,7 @@
         const barItemCountText = document.getElementById('barItemCountText');
         const barTotalPrice = document.getElementById('barTotalPrice');
         const navCart = document.getElementById('navCart');
-        const checkoutBtn = document.getElementById('checkoutBtn');
+        const checkoutBtn = document.getElementById('checkoutBtn'); // Ini adalah tombol checkout di floatingCartBar
 
         let currentUserId = null;
         let promoIndex = 0;
@@ -780,6 +183,7 @@
         function bukaPopup(url) {
             popupFrame.src = url;
             popupPanel.classList.add('show');
+            // Sembunyikan floatingCartBar saat popup terbuka
             floatingCartBar.style.display = 'none'; 
         }
 
@@ -893,64 +297,68 @@
                     currentUserId = user.uid;
                     await updateCartUI();
                 } else {
-                    // Try to sign in with custom token from Canvas if available
-                    // Note: initialAuthToken should be passed by Canvas in your actual setup.
-                    // For direct browser testing, this path might not be taken unless you simulate it.
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        try {
-                            const userCredential = await auth.signInWithCustomToken(__initial_auth_token);
-                            currentUserId = userCredential.user.uid;
-                            await updateCartUI();
-                        } catch (error) {
-                            console.error("apl05: Error signing in with custom token:", error);
-                            // Fallback to anonymous if custom token fails
-                            try {
-                                const anonUserCredential = await auth.signInAnonymously();
-                                currentUserId = anonUserCredential.user.uid;
-                                await updateCartUI();
-                            } catch (anonError) {
-                                console.error("apl05: Error signing in anonymously:", anonError);
-                                alert("Gagal login. Beberapa fitur mungkin tidak berfungsi.");
-                            }
-                        }
-                    } else {
-                        // If no custom token, sign in anonymously
-                        try {
-                            const anonUserCredential = await auth.signInAnonymously();
-                            currentUserId = anonUserCredential.user.uid;
-                            await updateCartUI();
-                        } catch (anonError) {
-                            console.error("apl05: Error signing in anonymously:", anonError);
-                            alert("Gagal login. Beberapa fitur mungkin tidak berfungsi.");
-                        }
+                    // Sign in anonymously if no user is authenticated
+                    try {
+                        const anonUserCredential = await auth.signInAnonymously();
+                        currentUserId = anonUserCredential.user.uid;
+                        await updateCartUI();
+                    } catch (anonError) {
+                        console.error("apl05: Error signing in anonymously:", anonError);
+                        alert("Gagal login. Beberapa fitur mungkin tidak berfungsi.");
                     }
                 }
             });
 
-            logoutBtn.addEventListener('click', async () => {
-                try {
-                    await auth.signOut();
-                    localStorage.removeItem('userToken'); // Clear any local token
-                    localStorage.removeItem('userId'); // Clear userId if stored
-                    window.location.href = 'index.html'; // Redirect to login page
-                } catch (error) {
-                    console.error("Error logging out:", error);
-                    alert("Gagal logout. Silakan coba lagi.");
-                }
-            });
+            // Logout Button Event Listener
+            // Pastikan Anda memiliki elemen dengan ID 'logoutBtn' di HTML
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    try {
+                        await auth.signOut();
+                        localStorage.removeItem('userToken'); // Clear any local token
+                        localStorage.removeItem('userId'); // Clear userId if stored
+                        window.location.href = 'index.html'; // Redirect to login page
+                    } catch (error) {
+                        console.error("Error logging out:", error);
+                        alert("Gagal logout. Silakan coba lagi.");
+                    }
+                });
+            }
 
-            detectLocationBtn.addEventListener('click', detectLocation);
-            closePopupBtn.addEventListener('click', tutupPopup);
-            swipeBarClose.addEventListener('click', tutupPopup);
+            // Detect Location Button Event Listener
+            // Pastikan Anda memiliki elemen dengan ID 'detectLocationBtn' di HTML
+            if (detectLocationBtn) {
+                detectLocationBtn.addEventListener('click', detectLocation);
+            }
+            
+            // Close Popup Button Event Listener
+            // Pastikan Anda memiliki elemen dengan ID 'closePopupBtn' di HTML
+            if (closePopupBtn) {
+                closePopupBtn.addEventListener('click', tutupPopup);
+            }
+            
+            // Swipe Bar Close Button Event Listener
+            // Pastikan Anda memiliki elemen dengan ID 'swipeBarClose' di HTML
+            if (swipeBarClose) {
+                swipeBarClose.addEventListener('click', tutupPopup);
+            }
 
-            navCart.addEventListener('click', (e) => {
-                e.preventDefault();
-                bukaPopup('cart.html');
-            });
-
-            checkoutBtn.addEventListener('click', () => {
-                bukaPopup('cart.html');
-            });
+            // Nav Cart Button Event Listener
+            // Pastikan Anda memiliki elemen dengan ID 'navCart' di HTML
+            if (navCart) {
+                navCart.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    bukaPopup('cart.html');
+                });
+            }
+            
+            // Checkout Button Event Listener (di floatingCartBar)
+            // Pastikan Anda memiliki elemen dengan ID 'checkoutBtn' di HTML
+            if (checkoutBtn) {
+                checkoutBtn.addEventListener('click', () => {
+                    bukaPopup('cart.html');
+                });
+            }
 
             // Handle messages from iframes (product-detail.html, cart.html)
             window.addEventListener('message', async (event) => {
@@ -959,45 +367,36 @@
 
                 if (event.data && event.data.type) {
                     if (event.data.type === 'cartUpdatedFromProductDetail' || event.data.type === 'cartUpdatedFromCartPage') {
-                        // Ketika product-detail.html atau cart.html memberi tahu bahwa keranjang telah diperbarui
-                        await updateCartUI(); // Panggil fungsi update UI keranjang
-                        // Jika popup product-detail.html masih terbuka, pastikan floatingCartBar ditampilkan
+                        await updateCartUI(); 
                         if (popupPanel.classList.contains('show') && popupFrame.src.includes('product-detail.html')) {
                             floatingCartBar.style.display = 'flex';
                         }
-                    } else if (event.data.type === 'closeProductDetailPopup') {
-                        // Ketika product-detail.html meminta untuk ditutup
-                        tutupPopup(); // Panggil fungsi tutup popup utama
-                    } else if (event.data.type === 'closeCartPopup') {
-                        // Ketika cart.html meminta untuk ditutup
-                        tutupPopup(); // Panggil fungsi tutup popup utama
+                    } else if (event.data.type === 'closeProductDetailPopup' || event.data.type === 'closeCartPopup') {
+                        tutupPopup(); 
                     }
-                    // Tambahkan handler untuk event lain dari iframe jika ada
                 }
             });
 
             // --- Load Menu Terlaris ---
             async function loadMenu() {
                 try {
-                    // Menggunakan orderBy('nama') seperti di menulengkap.html
                     const snapshot = await buahCollection.where('isAvailable', '==', true).orderBy('nama').get();
                     menuList.innerHTML = ''; // Clear loading text
 
                     if (snapshot.empty) {
-                        menuList.innerHTML = '<p>Tidak ada menu yang tersedia saat ini.</p>';
+                        menuList.innerHTML = '<p class="menu-loading-message">Tidak ada menu yang tersedia saat ini.</p>';
                         return;
                     }
 
                     snapshot.forEach(doc => {
-                        // Memetakan data dari Firestore ke struktur yang diharapkan
                         const product = { 
                             id: doc.id, 
-                            name: doc.data().nama, // Menggunakan field 'nama' dari Firestore
-                            description: doc.data().deskripsi, // Menggunakan field 'deskripsi'
-                            price: doc.data().harga, // Menggunakan field 'harga'
-                            image: doc.data().imageUrl, // Menggunakan field 'imageUrl'
+                            name: doc.data().nama, 
+                            description: doc.data().deskripsi, 
+                            price: doc.data().harga, 
+                            image: doc.data().imageUrl, 
                             rating: doc.data().rating,
-                            deliveryTime: doc.data().deliveryTime || 'Estimasi waktu tidak tersedia', // Menggunakan 'deliveryTime'
+                            deliveryTime: doc.data().deliveryTime || 'Estimasi waktu tidak tersedia',
                         };
 
                         const productCard = document.createElement('div');
@@ -1017,7 +416,6 @@
                         menuList.appendChild(productCard);
 
                         // Event listener for opening product detail
-                        // Click pada area info atau gambar akan membuka detail produk
                         productCard.querySelector('.restaurant-info').addEventListener('click', () => {
                             sessionStorage.setItem('selectedProduct', JSON.stringify(product));
                             bukaPopup('product-detail.html');
@@ -1027,16 +425,15 @@
                             bukaPopup('product-detail.html');
                         });
                         
-                        // Event listener for the '+' button (this will open product detail)
                         productCard.querySelector('.add-button').addEventListener('click', (e) => {
-                            e.stopPropagation(); // Mencegah event click di card ikut terpicu
+                            e.stopPropagation(); 
                             sessionStorage.setItem('selectedProduct', JSON.stringify(product));
-                            bukaPopup('product-detail.html'); // Selalu buka detail untuk Rujak Buah
+                            bukaPopup('product-detail.html'); 
                         });
                     });
                 } catch (error) {
                     console.error("Error loading menu:", error);
-                    menuList.innerHTML = '<p>Gagal memuat menu. Silakan coba lagi nanti.</p>';
+                    menuList.innerHTML = '<p class="menu-loading-message">Gagal memuat menu. Silakan coba lagi nanti.</p>';
                 }
             }
 
@@ -1044,12 +441,17 @@
             loadMenu();
 
             // Promo Banner Automatic Slider
-            setInterval(() => {
-                const promoImages = promoBanner.querySelectorAll('.promo-image');
-                promoImages[promoIndex].classList.remove('active');
-                promoIndex = (promoIndex + 1) % promoImages.length;
-                promoImages[promoIndex].classList.add('active');
-            }, 5000); // Change image every 5 seconds
+            // Menggunakan ID promo-banner dan mencari class promo-image di dalamnya
+            if (promoBanner) {
+                setInterval(() => {
+                    const promoImages = promoBanner.querySelectorAll('.promo-image');
+                    if (promoImages.length > 0) {
+                        promoImages[promoIndex].classList.remove('active');
+                        promoIndex = (promoIndex + 1) % promoImages.length;
+                        promoImages[promoIndex].classList.add('active');
+                    }
+                }, 5000); // Change image every 5 seconds
+            }
         });
     </script>
 </body>
