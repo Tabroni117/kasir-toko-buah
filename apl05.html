@@ -1040,6 +1040,15 @@
             });
         });
 
+
+
+
+
+
+
+        
+        
+
       // --- Popup Open/Close Functions ---
 function bukaPopup(url) {
     popupFrame.src = url;
@@ -1066,6 +1075,136 @@ function bukaPopup(url) {
         bridgeCheckoutBtn.addEventListener('click', () => {
             window.location.href = 'cart.html';
         });
+
+
+
+
+
+
+
+// --- Fungsi Buka Popup (Pengganti untuk fungsi `bukaPopup` lama Anda) ---
+function bukaPopup(url) {
+    popupFrame.src = url;
+    popupPanel.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Mencegah scroll pada body
+    document.documentElement.style.overflow = 'hidden'; // Mencegah scroll pada html
+
+    // Logika untuk popupCheckoutBar
+    if (popupCheckoutBar) { // Pastikan elemennya ada
+        if (url === 'cart.html') {
+            popupCheckoutBar.style.display = 'none';
+        } else {
+            popupCheckoutBar.style.display = 'flex';
+        }
+    }
+    
+    // Logika untuk floatingCartBar
+    if (floatingCartBar) { // Pastikan elemennya ada
+        floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
+    }
+
+    // PENTING: Tambahkan state ke riwayat browser agar tombol 'Back' HP berfungsi
+    // Hanya tambahkan jika hash saat ini belum '#popup-open' untuk menghindari duplikasi
+    if (window.location.hash !== '#popup-open') {
+        history.pushState({ popupOpen: true }, '', '#popup-open');
+    }
+    
+    // updateCartDisplay(); // Kakak bisa uncomment ini jika memang diperlukan di sini
+}
+
+// --- Fungsi Tutup Popup MANUAL (Pengganti untuk fungsi `tutupPopup` lama Anda) ---
+function tutupPopupManual() { // Nama diubah dari `tutupPopup` menjadi `tutupPopupManual`
+    popupPanel.classList.remove('show');
+    popupFrame.src = '';
+    
+    if (popupCheckoutBar) { // Pastikan elemennya ada
+        popupCheckoutBar.style.display = 'none';
+    }
+
+    document.body.style.overflow = ''; // Mengembalikan scroll
+    document.documentElement.style.overflow = ''; // Mengembalikan scroll
+
+    // updateCartDisplay(); // Kakak bisa uncomment ini jika memang diperlukan di sini
+
+    // PENTING: Panggil history.back() agar riwayat browser mundur 1 langkah,
+    // mensimulasikan efek tombol 'Back' HP dan menjaga konsistensi.
+    if (window.location.hash === '#popup-open') {
+        history.back();
+    }
+}
+
+// --- Fungsi Tutup Popup dari Tombol Back HP (Ini adalah FUNGSI BARU yang perlu ditambahkan) ---
+function tutupPopupDariPopstate() {
+    popupPanel.classList.remove('show');
+    popupFrame.src = '';
+
+    if (popupCheckoutBar) { // Pastikan elemennya ada
+        popupCheckoutBar.style.display = 'none';
+    }
+    
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
+    // updateCartDisplay(); // Kakak bisa uncomment ini jika memang diperlukan di sini
+    // TIDAK memanggil history.back() di sini karena popstate sudah hasil dari 'back' itu sendiri
+}
+
+// --- Event Listener Global untuk Tombol 'Back' HP (Ini adalah LISTENER BARU yang perlu ditambahkan) ---
+window.addEventListener('popstate', (event) => {
+    // Event ini terpicu ketika tombol 'Back' browser/HP diklik
+    // atau ketika history.back()/forward() dipanggil secara programatis.
+
+    // Periksa apakah state yang kita kembali ke dalamnya BUKAN state popup
+    // Artinya, kita bergerak mundur keluar dari state popup
+    if (!event.state || !event.state.popupOpen) {
+        // Hanya tutup jika popup sedang terlihat
+        if (popupPanel.classList.contains('show')) {
+            tutupPopupDariPopstate(); // Panggil fungsi khusus untuk popstate
+        }
+    }
+    // Jika event.state ada dan popupOpen true, berarti kita maju/tetap di dalam state popup,
+    // jadi jangan lakukan apa-apa (jangan tutup).
+});
+
+// --- Listener untuk tombol Tutup di dalam Popup (Pastikan ini sesuai HTML Kakak) ---
+// Cari tombol Tutup di HTML popup Kakak (misal, tombol "X" atau "Tutup")
+// Pastikan tombol itu punya kelas 'btn-tutup-hijau'
+const closeButtonInPopup = document.querySelector('.btn-tutup-hijau');
+if (closeButtonInPopup) {
+    closeButtonInPopup.addEventListener('click', tutupPopupManual); // Panggil fungsi yang baru
+}
+
+// --- Listener untuk Tombol Checkout di popupCheckoutBar (bridgeCheckoutBtn) ---
+// Ini adalah PENGGANTI untuk listener lama `bridgeCheckoutBtn` Anda
+bridgeCheckoutBtn.addEventListener('click', () => {
+    // Ganti baris lama seperti: window.location.href = 'cart.html';
+    bukaPopup('cart.html'); // Membuka keranjang di dalam popup
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
    // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
 // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
