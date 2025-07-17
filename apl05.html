@@ -1000,90 +1000,92 @@ function bukaPopup(url) {
             window.location.href = 'checkout.html';
         });
 
-        // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
-        function updateCartDisplay() {
-            if (!currentUserId) {
-                console.log("User ID not available, cannot update cart display.");
-                cartBadge.style.display = 'none';
-                floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none'; // Ensure hidden
-                return;
-            }
+   // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
+function updateCartDisplay() {
+    if (!currentUserId) {
+        console.log("User ID not available, cannot update cart display.");
+        cartBadge.style.display = 'none';
+        floatingCartBar.style.display = 'none';
+        popupCheckoutBar.style.display = 'none'; // Ensure hidden
+        return;
+    }
 
-            // Real-time listener for user's cart
-            cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
-                let totalItemsInCart = 0;
-                let totalPriceInCart = 0;
-                const productTotalQuantities = new Map(); // Map to store total quantity per product ID
+    // Real-time listener for user's cart
+    cartsCollection.doc(currentUserId).collection('items').onSnapshot(snapshot => {
+        let totalItemsInCart = 0;
+        let totalPriceInCart = 0;
+        const productTotalQuantities = new Map(); // Map to store total quantity per product ID
 
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    const productId = item.id;
-                    const currentTotal = productTotalQuantities.get(productId) || 0;
-                    productTotalQuantities.set(productId, currentTotal + item.quantity);
+        snapshot.forEach(doc => {
+            const item = doc.data();
+            const productId = item.id;
+            const currentTotal = productTotalQuantities.get(productId) || 0;
+            productTotalQuantities.set(productId, currentTotal + item.quantity);
 
-                    totalItemsInCart += item.quantity;
-                    totalPriceInCart += item.price * item.quantity;
-                });
+            totalItemsInCart += item.quantity;
+            totalPriceInCart += item.price * item.quantity;
+        });
 
-                console.log("--- Cart Update Summary ---");
-                console.log("Total Items in Cart (all products):", totalItemsInCart);
-                console.log("Total Price in Cart:", formatRupiah(totalPriceInCart));
-                console.log("Quantities per Product ID:", Object.fromEntries(productTotalQuantities));
-                console.log("---------------------------");
+        console.log("--- Cart Update Summary ---");
+        console.log("Total Items in Cart (all products):", totalItemsInCart);
+        console.log("Total Price in Cart:", formatRupiah(totalPriceInCart));
+        console.log("Quantities per Product ID:", Object.fromEntries(productTotalQuantities));
+        console.log("---------------------------");
 
 
-                // Update badge in bottom navigation
-                cartBadge.textContent = totalItemsInCart;
-                cartBadge.style.display = totalItemsInCart > 0 ? 'block' : 'none';
+        // Update badge in bottom navigation
+        cartBadge.textContent = totalItemsInCart;
+        cartBadge.style.display = totalItemsInCart > 0 ? 'block' : 'none';
 
-                // Update floating cart bar
-                barItemCountText.textContent = `${totalItemsInCart} item`; // Item count text
-                barTotalPrice.textContent = `Total: ${formatRupiah(totalPriceInCart)}`; // Total price text
+        // Update floating cart bar
+        barItemCountText.textContent = `${totalItemsInCart} item`; // Item count text
+        barTotalPrice.textContent = `Total: ${formatRupiah(totalPriceInCart)}`; // Total price text
 
-                // Only show floatingCartBar if popup is not active
-                if (!popupPanel.classList.contains('show')) {
-                    floatingCartBar.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
-                } else {
-                    floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
-                }
-
-                // Update popup checkout bar (bridge)
-                bridgeItemCount.textContent = `${totalItemsInCart} item`;
-                bridgeTotal.textContent = formatRupiah(totalPriceInCart);
-                // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
-                // but ensure its content is updated even if it's currently hidden
-                popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItemsInCart > 0 ? 'flex' : 'none';
-
-                // Update quantity display on each menu card
-                document.querySelectorAll('.restaurant-card').forEach(card => {
-                    const productId = card.dataset.productId;
-                    const totalQuantityForProduct = productTotalQuantities.get(productId) || 0; // Get the aggregated quantity
-
-                    const addButton = card.querySelector('.add-button');
-                    const quantityDisplayOnly = card.querySelector('.quantity-display-only');
-
-                    if (totalQuantityForProduct > 0) { // Check against total quantity
-                        addButton.style.display = 'none';
-                        quantityDisplayOnly.style.display = 'flex'; // Show the quantity number
-                        quantityDisplayOnly.textContent = totalQuantityForProduct; // Display the total aggregated quantity
-                        console.log(`Product ${productId}: Displaying total quantity ${totalQuantityForProduct}`);
-                    } else {
-                        addButton.style.display = 'flex'; // Show the add button
-                        quantityDisplayOnly.style.display = 'none'; // Hide the quantity number
-                        quantityDisplayOnly.textContent = '0'; // Reset to 0 if not in cart
-                        console.log(`Product ${productId}: Displaying '+' button (quantity 0)`);
-                    }
-                });
-
-            }, error => {
-                console.error("Error fetching cart items:", error);
-                // Handle error, e.g., show a message or hide cart displays
-                cartBadge.style.display = 'none';
-                floatingCartBar.style.display = 'none';
-                popupCheckoutBar.style.display = 'none';
-            });
+        // Only show floatingCartBar if popup is not active
+        if (!popupPanel.classList.contains('show')) {
+            floatingCartBar.style.display = totalItemsInCart > 0 ? 'flex' : 'none';
+        } else {
+            floatingCartBar.style.display = 'none'; // Ensure hidden if popup is active
         }
+
+        // Update popup checkout bar (bridge)
+        bridgeItemCount.textContent = `${totalItemsInCart} item`;
+        bridgeTotal.textContent = formatRupiah(totalPriceInCart);
+        // popupCheckoutBar visibility is handled by bukaPopup/tutupPopup
+        // but ensure its content is updated even if it's currently hidden
+        // VVVV --- HAPUS HANYA BARIS INI --- VVVV
+        popupCheckoutBar.style.display = popupPanel.classList.contains('show') && totalItemsInCart > 0 ? 'flex' : 'none';
+        // ^^^^ --- HAPUS HANYA BARIS INI --- ^^^^
+
+        // Update quantity display on each menu card
+        document.querySelectorAll('.restaurant-card').forEach(card => {
+            const productId = card.dataset.productId;
+            const totalQuantityForProduct = productTotalQuantities.get(productId) || 0; // Get the aggregated quantity
+
+            const addButton = card.querySelector('.add-button');
+            const quantityDisplayOnly = card.querySelector('.quantity-display-only');
+
+            if (totalQuantityForProduct > 0) { // Check against total quantity
+                addButton.style.display = 'none';
+                quantityDisplayOnly.style.display = 'flex'; // Show the quantity number
+                quantityDisplayOnly.textContent = totalQuantityForProduct; // Display the total aggregated quantity
+                console.log(`Product ${productId}: Displaying total quantity ${totalQuantityForProduct}`);
+            } else {
+                addButton.style.display = 'flex'; // Show the add button
+                quantityDisplayOnly.style.display = 'none'; // Hide the quantity number
+                quantityDisplayOnly.textContent = '0'; // Reset to 0 if not in cart
+                console.log(`Product ${productId}: Displaying '+' button (quantity 0)`);
+            }
+        });
+
+    }, error => {
+        console.error("Error fetching cart items:", error);
+        // Handle error, e.g., show a message or hide cart displays
+        cartBadge.style.display = 'none';
+        floatingCartBar.style.display = 'none';
+        popupCheckoutBar.style.display = 'none';
+    });
+}
 
         // --- Page Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
