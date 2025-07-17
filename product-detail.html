@@ -416,40 +416,45 @@
             }
         }
 
-        // --- Function to load current product quantity from Firestore ---
-        async function loadProductQuantityFromFirestore() {
-            if (!currentUserId || !selectedProduct) {
-                productQuantityInput.value = 0;
-                return;
-            }
+     async function loadProductQuantityFromFirestore() {
+    if (!currentUserId || !selectedProduct) {
+        productQuantityInput.value = 0;
+        return;
+    }
 
-            // Only load if both variants are selected
-            if (!selectedVariants.bumbu || !selectedVariants.kacang) {
-                productQuantityInput.value = 0;
-                return;
-            }
+    if (!selectedVariants.bumbu || !selectedVariants.kacang) {
+        productQuantityInput.value = 0;
+        return;
+    }
 
-            const productId = selectedProduct.id;
-            const bumbuVariant = selectedVariants.bumbu || 'none';
-            const kacangVariant = selectedVariants.kacang || 'none';
-            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
-            
-            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+    const productId = selectedProduct.id;
+    const bumbuVariant = selectedVariants.bumbu || 'none';
+    const kacangVariant = selectedVariants.kacang || 'none';
+    const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
 
-            try {
-                const doc = await cartItemDocRef.get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    productQuantityInput.value = data.quantity || 0;
-                } else {
-                    productQuantityInput.value = 0;
-                }
-            } catch (error) {
-                console.error("❌ Failed to load Firestore data for product quantity:", error);
-                productQuantityInput.value = 0;
-            }
+    const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+
+    try {
+        const doc = await cartItemDocRef.get();
+        if (doc.exists) {
+            const data = doc.data();
+            productQuantityInput.value = data.quantity || 0;
+
+            // ✅ Tambahkan baris ini:
+            document.getElementById('productName').textContent =
+                selectedProduct.name + (data.quantity > 0 ? ` (${data.quantity})` : '');
+        } else {
+            productQuantityInput.value = 0;
+
+            // ✅ Pastikan tampilkan nama produk tanpa quantity
+            document.getElementById('productName').textContent = selectedProduct.name;
         }
-
+    } catch (error) {
+        console.error("❌ Failed to load Firestore data for product quantity:", error);
+        productQuantityInput.value = 0;
+        document.getElementById('productName').textContent = selectedProduct.name;
+    }
+}
         // --- Function to check if both variants are selected and enable/disable button ---
         function checkAndEnableIncreaseButton() {
             if (selectedVariants.bumbu && selectedVariants.kacang) {
