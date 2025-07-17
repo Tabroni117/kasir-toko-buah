@@ -282,7 +282,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
         // --- Firebase Configuration ---
         // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -301,6 +301,7 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const cartsCollection = db.collection('carts'); // Referensi ke koleksi 'carts'
 
         // Global variables to store variant selections
         const selectedVariants = {
@@ -317,11 +318,13 @@
         // --- Function to display toast message ---
         function showToast(message) {
             const toast = document.getElementById('variantAlert');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000); // Message disappears after 3 seconds
+            if (toast) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000); // Message disappears after 3 seconds
+            }
         }
 
         // --- Function for "fly to cart" animation ---
@@ -331,14 +334,15 @@
             img.classList.add('fly-to-cart');
 
             const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
-            // Get the target element from the parent window's DOM
-            const parentCheckoutBar = window.parent.document.getElementById('floatingCartBar'); // Target the floating cart bar
-            if (!parentCheckoutBar) {
-                console.warn("Floating cart bar not found in parent window for animation target.");
+            // Target the cart icon within the floatingCartBar in the parent window
+            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon'); 
+            
+            if (!parentCartIcon) {
+                console.warn("Cart icon not found in parent window for animation target.");
                 document.body.removeChild(img); // Clean up if target not found
                 return;
             }
-            const endRect = parentCheckoutBar.getBoundingClientRect();
+            const endRect = parentCartIcon.getBoundingClientRect();
 
             img.style.left = `${startRect.left}px`;
             img.style.top = `${startRect.top}px`;
@@ -358,77 +362,82 @@
 
         // --- Function to close the popup (send message to parent) ---
         function closePopup() {
-            const popupPanel = document.getElementById('popupPanel');
-            if (popupPanel) {
-                popupPanel.classList.add('hide-popup');
-                setTimeout(() => {
-                    window.parent.postMessage({ type: 'closePopup' }, '*');
-                }, 300);
-            }
+            // Send a specific message type to the parent to close this product detail popup
+            window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
         }
 
         // --- Function to update cart quantity in Firebase ---
         async function updateCartInFirestore(quantity) {
             if (!currentUserId || !selectedProduct) {
                 console.warn("User not logged in or product not found.");
+                showToast("Anda harus login untuk menambahkan item ke keranjang.");
+                return;
+            }
+
+            // Ensure both variants are selected before proceeding
+            if (!selectedVariants.bumbu || !selectedVariants.kacang) {
+                showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
                 return;
             }
 
             const productId = selectedProduct.id;
-            const customKey = `${selectedVariants.bumbu || 'no_bumbu'}_${selectedVariants.kacang || 'no_kacang'}`; // Use placeholders if null
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
+            const bumbuVariant = selectedVariants.bumbu || 'none'; // Use 'none' if variant is null
+            const kacangVariant = selectedVariants.kacang || 'none'; // Use 'none' if variant is null
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`; // Unique key for product + variants
+
+            // Reference to the specific cart item document
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             try {
                 if (quantity > 0) {
-                    await cartDocRef.set({
+                    await cartItemDocRef.set({
                         id: productId,
                         name: selectedProduct.name,
                         image: selectedProduct.image,
                         price: selectedProduct.price,
-                        custom: selectedVariants,
+                        custom: {
+                            bumbu: bumbuVariant,
+                            kacang: kacangVariant
+                        },
                         quantity: quantity
                     }, { merge: true });
                 } else {
-                    await cartDocRef.delete();
+                    await cartItemDocRef.delete(); // Remove item if quantity is 0
                 }
 
-                // Get total cart after update to send to parent
-                const itemsCollectionRef = db.collection('carts').doc(currentUserId).collection('items');
-                const snapshot = await itemsCollectionRef.get();
-                let totalItem = 0;
-                let totalPrice = 0;
-
-                snapshot.forEach(d => {
-                    const data = d.data();
-                    totalItem += data.quantity || 0;
-                    totalPrice += (data.quantity || 0) * (data.price || 0);
-                });
-
-                // Send data to parent window
-                window.parent.postMessage({ type: 'cartUpdate', itemCount: totalItem, totalPrice: totalPrice }, '*');
+                // Send a message to the parent window indicating cart update
+                // This is the KEY change: parent will then call its updateCartUI()
+                window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
+                showToast("Keranjang berhasil diperbarui!"); // User feedback
 
             } catch (error) {
                 console.error("❌ Failed to update cart:", error);
-                // Using alert() is discouraged in iframes, but keeping it for now as per original code structure
-                // Consider replacing with a custom modal or toast for better UX.
-                alert("Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.");
+                showToast("Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.");
             }
         }
 
         // --- Function to load current product quantity from Firestore ---
         async function loadProductQuantityFromFirestore() {
-            if (!currentUserId || !selectedProduct || !selectedVariants.bumbu || !selectedVariants.kacang) {
-                // Only load if user, product, and both variants are selected
+            if (!currentUserId || !selectedProduct) {
+                productQuantityInput.value = 0;
+                return;
+            }
+
+            // Only load if both variants are selected
+            if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                 productQuantityInput.value = 0;
                 return;
             }
 
             const productId = selectedProduct.id;
-            const customKey = `${selectedVariants.bumbu}_${selectedVariants.kacang}`;
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
+            
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             try {
-                const doc = await cartDocRef.get();
+                const doc = await cartItemDocRef.get();
                 if (doc.exists) {
                     const data = doc.data();
                     productQuantityInput.value = data.quantity || 0;
@@ -445,46 +454,47 @@
         function checkAndEnableIncreaseButton() {
             if (selectedVariants.bumbu && selectedVariants.kacang) {
                 increaseButton.disabled = false;
+                loadProductQuantityFromFirestore(); // Load quantity after variants are fully selected
             } else {
                 increaseButton.disabled = true;
+                productQuantityInput.value = 0; // Reset quantity if variants are not complete
             }
         }
 
         // --- Event listener when DOM is ready ---
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
-            increaseButton = document.getElementById('increaseQuantity'); // Get reference to the button
+            increaseButton = document.getElementById('increaseQuantity');
 
-            // Initially disable the increase button
-            increaseButton.disabled = true;
+            increaseButton.disabled = true; // Initially disabled
 
             // --- Firebase Authentication Listener ---
             auth.onAuthStateChanged(async user => {
                 if (user) {
                     currentUserId = user.uid;
                     userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
-                    // After user is authenticated, load product quantity if product is already selected
-                    if (selectedProduct) {
+                    // Only load product quantity if a product is selected AND variants are selected
+                    if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
                         await loadProductQuantityFromFirestore();
                     }
                 } else {
-                    // Attempt to sign in with custom token if available (from parent)
+                    // This section handles authentication if the iframe loads before the parent authenticates.
+                    // It tries to use initialAuthToken (if passed by parent), or signs in anonymously.
                     if (initialAuthToken) {
                         try {
                             const userCredential = await auth.signInWithCustomToken(initialAuthToken);
                             currentUserId = userCredential.user.uid;
                             userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`;
-                            if (selectedProduct) {
+                            if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
                                 await loadProductQuantityFromFirestore();
                             }
                         } catch (error) {
                             console.error("productdetail: Error signing in with custom token:", error);
-                            // Fallback to anonymous if custom token fails
                             try {
                                 const anonUserCredential = await auth.signInAnonymously();
                                 currentUserId = anonUserCredential.user.uid;
                                 userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}... (Anon)`;
-                                if (selectedProduct) {
+                                if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
                                     await loadProductQuantityFromFirestore();
                                 }
                             } catch (anonError) {
@@ -493,12 +503,11 @@
                             }
                         }
                     } else {
-                        // If no custom token, sign in anonymously
                         try {
                             const anonUserCredential = await auth.signInAnonymously();
                             currentUserId = anonUserCredential.user.uid;
                             userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}... (Anon)`;
-                            if (selectedProduct) {
+                            if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
                                 await loadProductQuantityFromFirestore();
                             }
                         } catch (anonError) {
@@ -515,22 +524,16 @@
                 const variantType = group.dataset.variant;
                 group.querySelectorAll('.variant-option').forEach(option => {
                     option.addEventListener('click', () => {
-                        // Remove 'active' from all options in this group
                         group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                        // Add 'active' to the clicked option
                         option.classList.add('active');
-                        // Update the selected variant
                         selectedVariants[variantType] = option.dataset.value;
                         
-                        // Check if both variants are now selected and enable/disable the button
-                        checkAndEnableIncreaseButton();
-
-                        // Load quantity from Firestore for the newly selected variant combination
-                        loadProductQuantityFromFirestore();
+                        checkAndEnableIncreaseButton(); // Call this after a variant is selected
                     });
                 });
             });
 
+            // Load product data from sessionStorage
             selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
 
             if (selectedProduct) {
@@ -543,8 +546,14 @@
                 
                 // Event for '-' button
                 decreaseButton.addEventListener('click', () => {
+                    // Check if variants are selected before decreasing
+                    if (!selectedVariants.bumbu || !selectedVariants.kacang) {
+                        showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
+                        return;
+                    }
+
                     let qty = parseInt(productQuantityInput.value);
-                    if (qty > 0) { // Ensure quantity doesn't go below 0
+                    if (qty > 0) {
                         qty--;
                         productQuantityInput.value = qty;
                         updateCartInFirestore(qty);
@@ -556,12 +565,12 @@
                     // Check if both variants are selected before proceeding
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
-                        return; // Stop execution if variants are not selected
+                        return; 
                     }
 
                     let qty = parseInt(productQuantityInput.value);
                     
-                    // Show notification if quantity was 0 before adding (now only after variants are selected)
+                    // Show notification if quantity was 0 before adding
                     if (qty === 0) {
                         const message = `Pilihan varian Anda: ${selectedVariants.bumbu} dan ${selectedVariants.kacang}.`;
                         showToast(message);
@@ -574,12 +583,11 @@
                 });
 
             } else {
-                // If product not found, show alert and close popup
                 alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-                window.parent.postMessage({ type: 'closePopup' }, '*');
+                window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
             }
 
-            // Event listener for back button and swipe bar
+            // Event listeners for back button and swipe bar
             const btnBackDetail = document.getElementById('btnBackDetail');
             if (btnBackDetail) {
                 btnBackDetail.addEventListener('click', closePopup);
