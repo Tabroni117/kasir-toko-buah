@@ -513,67 +513,58 @@
         }
         #floatingCartBar .checkout-button:hover {
             background-color: #facc15; /* Darker yellow on hover */
-/* Popup Panel (Overlay) */
-#popupPanel {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex; /* Tetap flex agar konten bisa diatur posisinya */
-    justify-content: center;
-    align-items: flex-end; /* Konten popup muncul dari bawah */
-    z-index: 9999;
+        }
 
-    /* --- PENTING: Gunakan visibility dan opacity untuk transisi FADE IN/OUT --- */
-    visibility: hidden; /* Sembunyikan secara default */
-    opacity: 0; /* Untuk efek fade */
-    transition: opacity 0.35s ease, visibility 0.35s ease; /* Tambah transisi */
-}
+        /* Popup Panel */
+        #popupPanel {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            justify-content: center;
+            align-items: flex-end; /* Appears from bottom */
+            z-index: 9999;
+        }
 
-#popupPanel.show {
-    visibility: visible;
-    opacity: 1;
-}
+        #popupPanel.show {
+            display: flex;
+        }
 
-/* Konten Popup (Box Putih) */
-/* Saya menggabungkan dua blok .popup-content yang Anda miliki menjadi satu yang lebih rapi */
-.popup-content {
-    width: 100%;
-    max-width: 460px;
-    height: 90vh;
-    background-color: white;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
+        .popup-content {
+            width: 100%;
+            max-width: 460px;
+            height: 90vh;
+            background-color: white;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%);
+            animation: slideUp 0.35s ease-out forwards;
+        }
 
-    /* --- Properti transform ini akan diatur oleh kelas .show untuk SLIDE UP/DOWN --- */
-    transform: translateY(100%); /* Awalnya di luar layar bawah */
-    transition: transform 0.35s ease-out; /* Transisi untuk geser naik/turun */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0%); }
+        }
 
-    position: relative; /* Penting untuk positioning tombol btn-tutup-hijau */
-    /* --- PENTING: Tambahkan padding-bottom agar tombol tidak menutupi konten iframe --- */
-    padding-bottom: 70px; /* Beri ruang di bawah untuk tombol Tutup */
-}
+        #popupFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
 
-/* Ini adalah kondisi saat popup terlihat dan kontennya sudah bergeser ke atas */
-#popupPanel.show .popup-content {
-    transform: translateY(0%); /* Geser ke posisi akhir (terlihat penuh) */
-}
-
-/* @keyframes slideUp yang lama dihapus karena sudah digantikan oleh transisi pada `transform`
-   saat kelas `.show` ditambahkan atau dihapus. Ini lebih efisien. */
-
-/* --- Popup Checkout Bar (Jembatan antara halaman utama dan detail produk) --- */
+      
 #popupCheckoutBar {
     /* --- Properti Posisi & Layout --- */
     position: fixed;
-    bottom: 35px; /* Tetap 35px dari bawah */
+    bottom: 35px; /* Tetap 25px dari bawah, sesuaikan jika perlu */
     left: 50%;
     transform: translateX(-50%); /* Menjaga posisi di tengah horizontal */
-    width: 75%; /* Lebar bar menjadi 75% dari lebar layar */
-    max-width: 320px; /* Batas lebar maksimum dikurangi secara signifikan */
+    width: 75%; /* **INI DIUBAH!** Lebar bar menjadi 75% dari lebar layar */
+    max-width: 320px; /* **INI DIUBAH!** Batas lebar maksimum dikurangi secara signifikan */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -582,7 +573,7 @@
     /* --- Properti Tampilan --- */
     background: linear-gradient(135deg, #00C853, #64DD17); /* Warna latar belakang gradien */
     color: white; /* Warna teks utama pada bar */
-    padding: 8px 10px; /* Padding horizontal dikurangi lagi */
+    padding: 8px 10px; /* **INI DIUBAH!** Padding horizontal dikurangi lagi */
     border: none;
     border-radius: 15px;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
@@ -618,20 +609,36 @@
     background-color: #f0f0f0;
     color: #00B04C;
 }
+/* Styling untuk Konten Popup (Box Putih) */
+.popup-content {
+    width: 100%;
+    max-width: 460px;
+    height: 90vh;
+    background-color: white;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    animation: slideUp 0.35s ease-out forwards;
+    
+    /* --- PENTING: Tambahkan ini untuk posisi tombol --- */
+    position: relative; /* Membuat posisi absolut anak elemen bekerja relatif terhadapnya */
+    /* ------------------------------------------------ */
+}
 
 /* Styling untuk Tombol Tutup Hijau */
 .btn-tutup-hijau {
-    /* --- PENTING: Ubah/Tambahkan ini untuk posisi tombol di bawah --- */
+    /* --- PENTING: Tambahkan/Ubah ini untuk posisi tombol --- */
     position: absolute; /* Memposisikan tombol secara absolut */
-    bottom: 15px; /* Jarak dari tepi bawah popup-content (sesuaikan) */
-    left: 50%; /* Mulai dari tengah horizontal */
-    transform: translateX(-50%); /* Geser ke kiri 50% dari lebar tombol untuk menengahkan */
-    top: auto; /* Pastikan properti 'top' sebelumnya tidak berlaku */
-    right: auto; /* Pastikan properti 'right' sebelumnya tidak berlaku */
-
+    top: 15px; /* Jarak dari tepi atas popup-content */
+    left: 15px; /* Jarak dari tepi kiri popup-content */
     z-index: 10; /* Pastikan tombol ada di atas iframe dan konten lain */
+    /* ----------------------------------------------------- */
 
-    padding: 10px 20px; /* Tambahkan padding horizontal agar tombol lebih lebar */
+    padding: 10px;
     border: none;
     background-color: #22c55e; /* green */
     color: white;
@@ -639,11 +646,22 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s;
+    /* Anda mungkin ingin mengubah bentuk tombol dari persegi panjang menjadi lingkaran/ikon jika itu tombol 'x' */
+    /* Contoh jika ingin jadi lingkaran kecil dengan ikon 'x': */
+    /* width: 36px; */
+    /* height: 36px; */
+    /* border-radius: 50%; */
+    /* display: flex; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    /* font-size: 20px; */
+    /* text-align: center; */
+    /* line-height: 1; */
 }
-
 .btn-tutup-hijau:hover {
     background-color: #16a34a; /* darker green on hover */
 }
+        
     </style>
 </head>
 <body>
@@ -1011,186 +1029,33 @@
             });
         });
 
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-// Deklarasikan bridgeTutupBtn jika belum ada
-// const bridgeTutupBtn = document.getElementById('bridgeTutupBtn'); // Contoh: jika ada tombol tutup dengan ID ini
-
-// --- Popup Open/Close Functions ---
+      // --- Popup Open/Close Functions ---
 function bukaPopup(url) {
     popupFrame.src = url;
     popupPanel.classList.add('show');
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-
+    
+    // Logika untuk menyembunyikan popupCheckoutBar jika URL adalah 'cart.html'
     if (url === 'cart.html') {
-        popupCheckoutBar.style.display = 'none';
+        popupCheckoutBar.style.display = 'none'; // Sembunyikan bar jika halaman keranjang dimuat
     } else {
-        popupCheckoutBar.style.display = 'flex';
+        popupCheckoutBar.style.display = 'flex'; // Tampilkan bar untuk halaman lain (misalnya product-detail.html)
     }
-
-    floatingCartBar.style.display = 'none';
-    updateCartDisplay();
-
-    // Pastikan kita tidak mendorong state yang sama berulang kali jika popup sudah terbuka
-    if (window.location.hash !== '#popup-open') {
-        history.pushState({ popupOpen: true }, '', '#popup-open');
-    }
+    
+    floatingCartBar.style.display = 'none'; // Sembunyikan floatingCartBar saat pop-up muncul
+    updateCartDisplay(); // Pastikan data di popupCheckoutBar selalu terbarui
 }
-
-// --- Fungsi untuk menutup popup secara manual (dari tombol "Tutup") ---
-// Fungsi ini yang bertanggung jawab untuk 'mundur' di riwayat browser
-function tutupPopupManual() { // NAMANYA DIUBAH AGAR LEBIH JELAS
-    popupPanel.classList.remove('show');
-    popupFrame.src = '';
-    popupCheckoutBar.style.display = 'none';
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-
-    const mainContainer = document.querySelector('.container');
-    if (mainContainer) {
-        mainContainer.style.display = 'block'; // Atau 'flex'
-        mainContainer.style.visibility = 'visible';
-        mainContainer.style.opacity = '1';
-    }
-
-    updateCartDisplay();
-
-    // PENTING: Hanya panggil history.back() jika hash saat ini adalah '#popup-open'
-    // Ini memastikan kita hanya mundur dari state popup kita
-    if (window.location.hash === '#popup-open') {
-        history.back(); // Panggil history.back() hanya dari penutupan manual
-    }
-}
-
-// --- Fungsi khusus untuk menutup popup yang dipicu oleh event popstate (tombol Back HP) ---
-// Fungsi ini TIDAK memanggil history.back() karena popstate adalah hasil dari aksi 'back' itu sendiri
-function tutupPopupDariPopstate() { // NAMANYA DIUBAH AGAR LEBIH JELAS
-    popupPanel.classList.remove('show');
-    popupFrame.src = '';
-    popupCheckoutBar.style.display = 'none';
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
-
-    const mainContainer = document.querySelector('.container');
-    if (mainContainer) {
-        mainContainer.style.display = 'block'; // Atau 'flex'
-        mainContainer.style.visibility = 'visible';
-        mainContainer.style.opacity = '1';
-    }
-
-    updateCartDisplay();
-}
-
-// --- Listener for Checkout Button in popupCheckoutBar ---
-bridgeCheckoutBtn.addEventListener('click', () => {
-    bukaPopup('cart.html');
-});
-
-// --- Listener untuk tombol Tutup di dalam Popup (jika ada) ---
-// ASUMSI: Anda punya tombol tutup dengan ID 'bridgeTutupBtn' atau kelas 'btn-tutup-hijau'
-// Sesuaikan selector di bawah dengan ID/kelas tombol tutup Anda yang sebenarnya.
-// Pastikan ini diarahkan ke fungsi tutupPopupManual
-const closeButtonInPopup = document.querySelector('.btn-tutup-hijau'); // Atau id: '#bridgeTutupBtn'
-if (closeButtonInPopup) {
-    closeButtonInPopup.addEventListener('click', tutupPopupManual);
-}
-
-
-// --- Event Listener Global untuk Tombol 'Back' HP / Perubahan Riwayat Browser ---
-window.addEventListener('popstate', (event) => {
-    // Event ini terpicu ketika tombol 'Back' browser/HP diklik,
-    // atau ketika history.back()/forward() dipanggil secara programatis.
-
-    // Periksa apakah state yang kita kembali ke dalamnya BUKAN state popup
-    // Artinya, kita bergerak mundur keluar dari state popup
-    if (!event.state || !event.state.popupOpen) {
-        // Hanya tutup jika popup sedang terlihat
-        if (popupPanel.classList.contains('show')) {
-            tutupPopupDariPopstate(); // Panggil fungsi khusus untuk popstate
+        function tutupPopup() {
+            popupPanel.classList.remove('show');
+            popupFrame.src = ''; // Clear iframe src
+            popupCheckoutBar.style.display = 'none'; // Hide popupCheckoutBar
+            updateCartDisplay(); // Call to re-evaluate floatingCartBar display
         }
-    }
-    // Jika event.state ada dan popupOpen true, berarti kita maju/tetap di dalam state popup,
-    // jadi jangan lakukan apa-apa (jangan tutup).
-});
 
+        // --- Listener for Checkout Button in popupCheckoutBar ---
+        bridgeCheckoutBtn.addEventListener('click', () => {
+            window.location.href = 'cart.html';
+        });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-
-        
-
-
-
-
-        
    // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
 // --- Function to Update Cart Display from Firebase (Visual Only on Main Page) ---
 function updateCartDisplay() {
