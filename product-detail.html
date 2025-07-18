@@ -6,7 +6,6 @@
     <title>Detail Produk - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
-    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -31,7 +30,8 @@
             background: white;
             min-height: 100vh;
             position: relative;
-            padding-bottom: 70px; /* Space for the add to cart button */
+            /* ▼▼▼ MODIFIKASI CSS ▼▼▼ */
+            padding-bottom: 150px; /* Space for the add to cart button AND summary bar */
         }
 
         /* Header Styling */
@@ -77,46 +77,46 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
-            padding: 0; /* Override previous padding */
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
         .product-name-detail {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #333;
-            margin: 0;
-            max-width: 60%;
-            word-break: break-word;
+            flex: 1;
+            margin-right: 10px;
         }
 
         /* Quantity Selector */
         .quantity-selector {
             display: flex;
             align-items: center;
-            gap: 6px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
         }
 
         .quantity-button {
-            background-color: #00c853;
+            background-color: #00C853;
             color: white;
             border: none;
-            padding: 6px 10px;
+            padding: 8px 12px;
             font-size: 16px;
-            border-radius: 6px;
             cursor: pointer;
-            transition: opacity 0.3s ease; /* Add transition for opacity */
+            transition: opacity 0.3s ease;
         }
-
-        /* Style for disabled button */
+        
         .quantity-button:disabled {
-            background-color: #a5d6a7; /* Lighter green for disabled */
+            background-color: #a5d6a7;
             cursor: not-allowed;
             opacity: 0.7;
         }
 
         .quantity-input {
-            width: 30px;
+            width: 40px;
             text-align: center;
             border: none;
             background: transparent;
@@ -124,31 +124,30 @@
         }
 
         /* Product Description & Price */
-        .product-description-detail {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 8px;
-            line-height: 1.5;
-        }
-
         .product-price-detail {
             font-size: 18px;
-            font-weight: bold;
-            color: #22c55e;
-            margin-bottom: 16px;
+            color: #00C853;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+        
+        .product-description-detail {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 15px;
+            line-height: 1.5;
         }
 
         /* Variant Section */
         .variant-group {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .variant-label {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
             display: block;
-            color: #333;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #444;
         }
 
         .variant-options {
@@ -158,27 +157,28 @@
         }
 
         .variant-option {
-            background-color: #f3f4f6;
-            color: #333;
+            background-color: #f2f2f2;
             padding: 8px 14px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 13px;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .variant-option:hover {
-            background-color: #e0f2f1;
+            border: 1px solid #ccc;
+            transition: 0.2s;
+            font-size: 14px;
         }
 
         .variant-option.active {
-            background-color: #22c55e;
+            background-color: #00C853;
             color: white;
-            border: 1px solid #15803d;
-            font-weight: bold;
+            border-color: #00C853;
         }
 
+        .selected-variant-text {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        
         /* Fly to Cart Animation */
         .fly-to-cart {
             position: fixed;
@@ -199,7 +199,7 @@
 
         #popupPanel.hide-popup {
             opacity: 0;
-            transform: translateY(50px); /* Move down slowly while fading */
+            transform: translateY(50px);
             pointer-events: none;
         }
 
@@ -224,7 +224,7 @@
             padding: 10px;
             border-radius: 8px;
             font-size: 14px;
-            margin-bottom: 15px; /* Add space below */
+            margin-bottom: 15px;
             text-align: center;
             transition: opacity 0.3s ease;
             opacity: 0;
@@ -234,105 +234,56 @@
             display: block;
             opacity: 1;
         }
-
-
-
-
-
-.product-header-detail {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-
-.product-name-detail {
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-    flex: 1;
-    margin-right: 10px;
-}
-
-.quantity-selector {
-    display: flex;
-    align-items: center;
-    background-color: #f1f1f1;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.quantity-button {
-    background-color: #00C853;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    font-size: 16px;
-    cursor: pointer;
-}
-
-.quantity-input {
-    width: 40px;
-    text-align: center;
-    border: none;
-    background: transparent;
-    font-size: 16px;
-}
-
-.product-price-detail {
-    font-size: 18px;
-    color: #00C853;
-    font-weight: 600;
-    margin: 8px 0;
-}
-
-.product-description-detail {
-    font-size: 14px;
-    color: #777;
-    margin-bottom: 15px;
-}
-
-.variant-group {
-    margin-bottom: 12px;
-}
-
-.variant-label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #444;
-}
-
-.variant-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.variant-option {
-    background-color: #f2f2f2;
-    padding: 8px 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    transition: 0.2s;
-    font-size: 14px;
-}
-
-.variant-option.active {
-    background-color: #00C853;
-    color: white;
-    border-color: #00C853;
-}
-.selected-variant-text {
-    font-size: 14px;
-    color: #666;
-    margin-top: 4px;
-    font-style: italic;
-}
         
+        /* ▼▼▼ MODIFIKASI: CSS UNTUK SUMMARY BAR BARU ▼▼▼ */
+        .cart-summary-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 480px; /* Samakan dengan .container */
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            z-index: 200;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .summary-item-count {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .summary-total-price {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .summary-checkout-button {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 </head>
 
@@ -344,7 +295,7 @@
                 <div class="header-title">Detail Produk</div>
             </div>
             <div id="swipeBarClose" style="width: 35px; height: 4px; background: #ffffffa0; border-radius: 10px; cursor: pointer;"></div>
-            <div id="userIdDisplay">Loading User ID...</div>        </header>
+            <div id="userIdDisplay">Loading User ID...</div>      </header>
 
         <img src="" alt="Gambar Produk" class="product-image-detail" id="productImage">
         <div class="product-info-detail">
@@ -353,15 +304,14 @@
                 <div class="quantity-selector">
                     <button class="quantity-button" id="decreaseQuantity">-</button>
                     <input type="number" class="quantity-input" id="productQuantity" value="0" min="0" readonly>
-                    <button class="quantity-button" id="increaseQuantity" disabled>+</button> <!-- Disabled by default -->
-                </div>
+                    <button class="quantity-button" id="increaseQuantity" disabled>+</button> </div>
             </div>
 
             <div id="variantAlert"></div>
 
-        <p class="product-price-detail" id="productPrice"></p>
-<p id="selectedVariantDisplay" style="font-weight: 600; font-size: 14px; color: #444; margin: 4px 0;"></p>
-<p class="product-description-detail" id="productDescription"></p>
+            <p class="product-price-detail" id="productPrice"></p>
+            <p id="selectedVariantDisplay" style="font-weight: 600; font-size: 14px; color: #444; margin: 4px 0;"></p>
+            <p class="product-description-detail" id="productDescription"></p>
 
             <div class="variant-group">
                 <label class="variant-label">Pilih Bumbu:</label>
@@ -381,10 +331,19 @@
             </div>
         </div>
     </div>
+    
+    <div id="cart-summary-bar" class="cart-summary-bar" style="display: none;">
+        <div class="summary-info">
+            <span class="summary-item-count">0 Item</span>
+            <span class="summary-total-price">Rp 0</span>
+        </div>
+        <button class="summary-checkout-button">
+            Lihat Keranjang <i class="fas fa-shopping-bag"></i>
+        </button>
+    </div>
 
-   <script>
+    <script>
         // --- Firebase Configuration ---
-        // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
@@ -401,20 +360,54 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const cartsCollection = db.collection('carts'); // Referensi ke koleksi 'carts'
+        const cartsCollection = db.collection('carts');
 
         // Global variables to store variant selections
-        const selectedVariants = {
-            bumbu: null, // No default selection
-            kacang: null // No default selection
-        };
-
+        const selectedVariants = { bumbu: null, kacang: null };
         let selectedProduct = null;
-        let productQuantityInput = null; // Will be initialized in DOMContentLoaded
+        let productQuantityInput = null;
         const userIdDisplay = document.getElementById('userIdDisplay');
-        let currentUserId = null; // To store the UID of the logged-in user
-        let increaseButton = null; // Reference to the '+' button
+        let currentUserId = null;
+        let increaseButton = null;
 
+        // ▼▼▼ MODIFIKASI: FUNGSI BARU UNTUK REAL-TIME SUMMARY BAR ▼▼▼
+        function listenToCartUpdates(userId) {
+            const summaryBar = document.getElementById('cart-summary-bar');
+            if (!summaryBar) return; // Exit if element not found
+
+            const itemCountEl = summaryBar.querySelector('.summary-item-count');
+            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
+            const checkoutButton = summaryBar.querySelector('.summary-checkout-button');
+
+            // Menggunakan onSnapshot untuk real-time updates
+            cartsCollection.doc(userId).collection('items').onSnapshot(snapshot => {
+                let totalItems = 0;
+                let totalPrice = 0;
+
+                if (snapshot.empty) {
+                    summaryBar.style.display = 'none'; // Sembunyikan jika keranjang kosong
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    totalItems += item.quantity;
+                    totalPrice += item.price * item.quantity;
+                });
+
+                // Update tampilan
+                itemCountEl.textContent = `${totalItems} Item`;
+                totalPriceEl.textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+                summaryBar.style.display = 'flex'; // Tampilkan bar
+            });
+            
+            // Tambahkan event listener untuk tombol lihat keranjang
+            checkoutButton.addEventListener('click', () => {
+                // Mengirim pesan ke parent window untuk membuka halaman keranjang
+                window.parent.postMessage({ type: 'navigateToCart' }, '*');
+            });
+        }
+        
         // --- Function to display toast message ---
         function showToast(message) {
             const toast = document.getElementById('variantAlert');
@@ -423,7 +416,7 @@
                 toast.classList.add('show');
                 setTimeout(() => {
                     toast.classList.remove('show');
-                }, 3000); // Message disappears after 3 seconds
+                }, 3000);
             }
         }
 
@@ -432,29 +425,22 @@
             const img = document.createElement('img');
             img.src = imgSrc;
             img.classList.add('fly-to-cart');
-
             const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
-            // Target the cart icon within the floatingCartBar in the parent window
-            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon'); 
+            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon');  
             
             if (!parentCartIcon) {
                 console.warn("Cart icon not found in parent window for animation target.");
-                document.body.removeChild(img); // Clean up if target not found
                 return;
             }
             const endRect = parentCartIcon.getBoundingClientRect();
-
             img.style.left = `${startRect.left}px`;
             img.style.top = `${startRect.top}px`;
             img.style.opacity = 1;
-
             document.body.appendChild(img);
-
             requestAnimationFrame(() => {
                 img.style.transform = `translate(${endRect.left - startRect.left}px, ${endRect.top - startRect.top}px) scale(0.2)`;
                 img.style.opacity = 0;
             });
-
             setTimeout(() => {
                 document.body.removeChild(img);
             }, 700);
@@ -462,30 +448,24 @@
 
         // --- Function to close the popup (send message to parent) ---
         function closePopup() {
-            // Send a specific message type to the parent to close this product detail popup
             window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
         }
 
         // --- Function to update cart quantity in Firebase ---
         async function updateCartInFirestore(quantity) {
             if (!currentUserId || !selectedProduct) {
-                console.warn("User not logged in or product not found.");
-                showToast("Anda harus login untuk menambahkan item ke keranjang.");
+                showToast("Anda harus login untuk menambahkan item.");
                 return;
             }
-
-            // Ensure both variants are selected before proceeding
             if (!selectedVariants.bumbu || !selectedVariants.kacang) {
-                showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
+                showToast("Pilih varian bumbu dan kacang dahulu.");
                 return;
             }
 
             const productId = selectedProduct.id;
-            const bumbuVariant = selectedVariants.bumbu || 'none'; // Use 'none' if variant is null
-            const kacangVariant = selectedVariants.kacang || 'none'; // Use 'none' if variant is null
-            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`; // Unique key for product + variants
-
-            // Reference to the specific cart item document
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
             const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             try {
@@ -502,127 +482,107 @@
                         quantity: quantity
                     }, { merge: true });
                 } else {
-                    await cartItemDocRef.delete(); // Remove item if quantity is 0
+                    await cartItemDocRef.delete();
                 }
-
-                // Send a message to the parent window indicating cart update
-                // This is the KEY change: parent will then call its updateCartUI()
                 window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
-                showToast("Keranjang berhasil diperbarui!"); // User feedback
-
+                // Tidak perlu memanggil update summary bar manual karena sudah ada onSnapshot
             } catch (error) {
                 console.error("❌ Failed to update cart:", error);
-                showToast("Terjadi kesalahan saat memperbarui keranjang. Silakan coba lagi.");
+                showToast("Gagal memperbarui keranjang.");
             }
         }
 
-     async function loadProductQuantityFromFirestore() {
-    if (!currentUserId || !selectedProduct) {
-        productQuantityInput.value = 0;
-        return;
-    }
+        async function loadProductQuantityFromFirestore() {
+            if (!currentUserId || !selectedProduct || !selectedVariants.bumbu || !selectedVariants.kacang) {
+                productQuantityInput.value = 0;
+                return;
+            }
+            const productId = selectedProduct.id;
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
-    if (!selectedVariants.bumbu || !selectedVariants.kacang) {
-        productQuantityInput.value = 0;
-        return;
-    }
-
-    const productId = selectedProduct.id;
-    const bumbuVariant = selectedVariants.bumbu || 'none';
-    const kacangVariant = selectedVariants.kacang || 'none';
-    const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
-
-    const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
-
-    try {
-        const doc = await cartItemDocRef.get();
-        if (doc.exists) {
-            const data = doc.data();
-            productQuantityInput.value = data.quantity || 0;
-
-            // ✅ Tambahkan baris ini:
-            document.getElementById('productName').textContent =
-                selectedProduct.name + (data.quantity > 0 ? ` (${data.quantity})` : '');
-        } else {
-            productQuantityInput.value = 0;
-
-            // ✅ Pastikan tampilkan nama produk tanpa quantity
-            document.getElementById('productName').textContent = selectedProduct.name;
+            try {
+                const doc = await cartItemDocRef.get();
+                productQuantityInput.value = doc.exists ? doc.data().quantity : 0;
+            } catch (error) {
+                console.error("❌ Failed to load Firestore data for product quantity:", error);
+                productQuantityInput.value = 0;
+            }
         }
-    } catch (error) {
-        console.error("❌ Failed to load Firestore data for product quantity:", error);
-        productQuantityInput.value = 0;
-        document.getElementById('productName').textContent = selectedProduct.name;
-    }
-}
-        // --- Function to check if both variants are selected and enable/disable button ---
+
         function checkAndEnableIncreaseButton() {
             if (selectedVariants.bumbu && selectedVariants.kacang) {
                 increaseButton.disabled = false;
-                loadProductQuantityFromFirestore(); // Load quantity after variants are fully selected
+                loadProductQuantityFromFirestore();
             } else {
                 increaseButton.disabled = true;
-                productQuantityInput.value = 0; // Reset quantity if variants are not complete
+                productQuantityInput.value = 0;
             }
+        }
+        
+        function updateSelectedVariantDisplay() {
+            const name = selectedProduct?.name || '';
+            const bumbu = selectedVariants.bumbu;
+            const kacang = selectedVariants.kacang;
+            let display = name;
+            if (bumbu || kacang) {
+                const parts = [];
+                if (bumbu) parts.push(bumbu);
+                if (kacang) parts.push(kacang);
+                display += ' - ' + parts.join(', ');
+            }
+            document.getElementById('selectedVariantDisplay').textContent = display;
         }
 
         // --- Event listener when DOM is ready ---
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
             increaseButton = document.getElementById('increaseQuantity');
-
-            increaseButton.disabled = true; // Initially disabled
+            increaseButton.disabled = true;
 
             // --- Firebase Authentication Listener ---
             auth.onAuthStateChanged(async user => {
+                let finalUserId = null;
                 if (user) {
-                    currentUserId = user.uid;
-                    userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
-                    // Only load product quantity if a product is selected AND variants are selected
-                    if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
-                        await loadProductQuantityFromFirestore();
+                    finalUserId = user.uid;
+                } else if (initialAuthToken) {
+                    try {
+                        const userCredential = await auth.signInWithCustomToken(initialAuthToken);
+                        finalUserId = userCredential.user.uid;
+                    } catch (error) {
+                        console.error("productdetail: Error signing in with custom token:", error);
+                        try {
+                           const anonUserCredential = await auth.signInAnonymously();
+                           finalUserId = anonUserCredential.user.uid;
+                        } catch(anonError) {
+                            console.error("productdetail: Error signing in anonymously:", anonError);
+                        }
                     }
                 } else {
-                    // This section handles authentication if the iframe loads before the parent authenticates.
-                    // It tries to use initialAuthToken (if passed by parent), or signs in anonymously.
-                    if (initialAuthToken) {
-                        try {
-                            const userCredential = await auth.signInWithCustomToken(initialAuthToken);
-                            currentUserId = userCredential.user.uid;
-                            userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`;
-                            if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
-                                await loadProductQuantityFromFirestore();
-                            }
-                        } catch (error) {
-                            console.error("productdetail: Error signing in with custom token:", error);
-                            try {
-                                const anonUserCredential = await auth.signInAnonymously();
-                                currentUserId = anonUserCredential.user.uid;
-                                userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}... (Anon)`;
-                                if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
-                                    await loadProductQuantityFromFirestore();
-                                }
-                            } catch (anonError) {
-                                console.error("productdetail: Error signing in anonymously:", anonError);
-                                userIdDisplay.textContent = `User ID: N/A`;
-                            }
-                        }
-                    } else {
-                        try {
-                            const anonUserCredential = await auth.signInAnonymously();
-                            currentUserId = anonUserCredential.user.uid;
-                            userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}... (Anon)`;
-                            if (selectedProduct && selectedVariants.bumbu && selectedVariants.kacang) {
-                                await loadProductQuantityFromFirestore();
-                            }
-                        } catch (anonError) {
-                            console.error("productdetail: Error signing in anonymously:", anonError);
-                            userIdDisplay.textContent = `User ID: N/A`;
-                        }
+                     try {
+                        const anonUserCredential = await auth.signInAnonymously();
+                        finalUserId = anonUserCredential.user.uid;
+                     } catch(anonError) {
+                         console.error("productdetail: Error signing in anonymously:", anonError);
+                     }
+                }
+                
+                if (finalUserId) {
+                    currentUserId = finalUserId;
+                    userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`;
+                    
+                    // ▼▼▼ MODIFIKASI: PANGGIL FUNGSI LISTEN DI SINI ▼▼▼
+                    listenToCartUpdates(currentUserId);
+                    
+                    if (selectedProduct) {
+                         checkAndEnableIncreaseButton();
                     }
+                } else {
+                    userIdDisplay.textContent = `User ID: N/A`;
                 }
             });
-            // --- End Firebase Authentication Listener ---
 
             // Handle clicks on variants
             document.querySelectorAll('.variant-options').forEach(group => {
@@ -632,31 +592,26 @@
                         group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
                         option.classList.add('active');
                         selectedVariants[variantType] = option.dataset.value;
-                        
-                        checkAndEnableIncreaseButton(); // Call this after a variant is selected
+                        updateSelectedVariantDisplay();
+                        checkAndEnableIncreaseButton();
                     });
                 });
             });
 
             // Load product data from sessionStorage
             selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
-
             if (selectedProduct) {
                 document.getElementById('productImage').src = selectedProduct.image;
                 document.getElementById('productName').textContent = selectedProduct.name;
                 document.getElementById('productDescription').textContent = selectedProduct.description;
                 document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
+                updateSelectedVariantDisplay();
 
-                const decreaseButton = document.getElementById('decreaseQuantity');
-                
-                // Event for '-' button
-                decreaseButton.addEventListener('click', () => {
-                    // Check if variants are selected before decreasing
+                document.getElementById('decreaseQuantity').addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
-                        showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
+                        showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
                     }
-
                     let qty = parseInt(productQuantityInput.value);
                     if (qty > 0) {
                         qty--;
@@ -665,22 +620,12 @@
                     }
                 });
 
-                // Event for '+' button
-                increaseButton.addEventListener('click', () => {
-                    // Check if both variants are selected before proceeding
+                document.getElementById('increaseQuantity').addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
-                        showToast("Pilih varian bumbu dan kacang terlebih dahulu.");
+                        showToast("Pilih varian bumbu dan kacang dahulu.");
                         return; 
                     }
-
                     let qty = parseInt(productQuantityInput.value);
-                    
-                    // Show notification if quantity was 0 before adding
-                    if (qty === 0) {
-                        const message = `Pilihan varian Anda: ${selectedVariants.bumbu} dan ${selectedVariants.kacang}.`;
-                        showToast(message);
-                    }
-
                     qty++;
                     productQuantityInput.value = qty;
                     updateCartInFirestore(qty);
@@ -688,41 +633,14 @@
                 });
 
             } else {
-                alert('Produk tidak ditemukan. Kembali ke halaman utama.');
-                window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
+                alert('Produk tidak ditemukan.');
+                closePopup();
             }
 
             // Event listeners for back button and swipe bar
-            const btnBackDetail = document.getElementById('btnBackDetail');
-            if (btnBackDetail) {
-                btnBackDetail.addEventListener('click', closePopup);
-            }
-
-            const swipeBar = document.getElementById('swipeBarClose');
-            if (swipeBar) {
-                swipeBar.addEventListener('click', closePopup);
-            }
+            document.getElementById('btnBackDetail')?.addEventListener('click', closePopup);
+            document.getElementById('swipeBarClose')?.addEventListener('click', closePopup);
         });
-
-function updateSelectedVariantDisplay() {
-    const name = selectedProduct?.name || '';
-    const bumbu = selectedVariants.bumbu;
-    const kacang = selectedVariants.kacang;
-
-    let display = name;
-
-    if (bumbu || kacang) {
-        const parts = [];
-        if (bumbu) parts.push(bumbu);
-        if (kacang) parts.push(kacang);
-        display += ' - ' + parts.join(', ');
-    }
-
-    document.getElementById('selectedVariantDisplay').textContent = display;
-}
-
-
-       
     </script>
 </body>
 </html>
