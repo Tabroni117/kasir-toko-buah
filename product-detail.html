@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Detail Produk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Produk</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
@@ -36,7 +37,6 @@
             flex-grow: 1;
             padding: 20px;
             padding-bottom: 80px; /* Space for fixed cart summary bar */
-            /* Tambahkan max-width dan margin auto untuk centering di layar lebar */
             max-width: 600px; /* Lebar maksimum yang nyaman untuk mobile/tablet */
             margin: 0 auto;
             box-sizing: border-box; /* Pastikan padding tidak menambah lebar total */
@@ -46,20 +46,29 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            padding: 15px 20px; /* Jaga padding vertikal, tapi perhatikan horizontal */
             background-color: var(--primary-color);
             color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-sizing: border-box; /* Penting untuk header */
-            width: 100%; /* Pastikan header mengambil seluruh lebar */
+            box-sizing: border-box;
+            width: 100vw; /* Mengambil 100% lebar viewport */
+            left: 0; /* Pastikan menempel di kiri */
+            right: 0; /* Pastikan menempel di kanan */
+            margin: 0; /* Hilangkan margin default */
         }
-
-        .header-bar .left, .header-bar .right {
-            display: flex;
-            align-items: center;
+        
+        /* Tambahan untuk memastikan header tidak punya margin atau efek lain yang membuatnya melebar */
+        .header-bar > * {
+            flex-shrink: 0; /* Mencegah elemen anak menyusut jika tidak perlu */
+        }
+        .header-bar .left {
+            margin-right: auto; /* Mendorong elemen kanan ke ujung */
+        }
+        .header-bar .right {
+            margin-left: auto; /* Mendorong elemen kiri ke ujung */
         }
 
         .header-bar .back-btn {
@@ -75,6 +84,9 @@
         .header-bar .title {
             font-size: 18px;
             font-weight: 600;
+            white-space: nowrap; /* Mencegah judul pecah baris */
+            overflow: hidden; /* Sembunyikan jika terlalu panjang */
+            text-overflow: ellipsis; /* Tambahkan elipsis jika tersembunyi */
         }
 
         .header-bar .swipe-bar {
@@ -86,7 +98,7 @@
         }
 
         .product-image-container {
-            width: 100%; /* Pastikan 100% dari parent container */
+            width: 100%;
             padding-top: 100%; /* 1:1 Aspect Ratio */
             position: relative;
             background-color: white;
@@ -110,7 +122,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box; /* Pastikan padding tidak menambah lebar */
+            box-sizing: border-box;
         }
 
         .product-name-detail {
@@ -199,7 +211,7 @@
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            box-sizing: border-box; /* Penting untuk padding */
+            box-sizing: border-box;
         }
 
         .variant-label {
@@ -225,7 +237,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            flex-shrink: 0; /* Mencegah item varian menyusut terlalu kecil */
+            flex-shrink: 0;
             box-sizing: border-box;
         }
 
@@ -259,7 +271,7 @@
             z-index: 1001;
             font-size: 14px;
             white-space: nowrap;
-            max-width: 90%; /* Batasi lebar agar tidak melebihi layar */
+            max-width: 90%;
             text-align: center;
         }
 
@@ -286,7 +298,7 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%;
+            width: 100vw; /* Mengambil 100% lebar viewport */
             background-color: white;
             box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
             display: flex;
@@ -296,33 +308,43 @@
             box-sizing: border-box;
             z-index: 999;
             transform: translateY(100%);
-            transition: transform 0.3s ease-out;
-            /* display: none; */ /* Dihapus, akan dikelola oleh JS untuk transisi */
-            opacity: 0; /* Mulai dengan opacity 0 */
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Transisi untuk opacity juga */
+            opacity: 0;
             pointer-events: none; /* Jangan bisa diklik saat tersembunyi */
+            margin: 0; /* Hilangkan margin default */
+            /* Pastikan elemen anak tidak menyebabkan overflow */
+            flex-wrap: nowrap; /* Mencegah wrapping yang tidak diinginkan */
+            overflow: hidden; /* Sembunyikan konten jika terlalu lebar */
         }
 
         .cart-summary-bar.show {
             transform: translateY(0);
             opacity: 1;
-            pointer-events: auto; /* Bisa diklik saat muncul */
+            pointer-events: auto;
         }
 
         .summary-info {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            /* Tambahkan flex-shrink untuk mencegah informasi menyusut berlebihan */
+            flex-shrink: 1;
+            min-width: 0; /* Memungkinkan text to wrap/ellipsis jika terlalu panjang */
         }
 
         .summary-item-count {
             font-size: 12px;
             color: var(--dark-gray);
+            white-space: nowrap;
         }
 
         .summary-total-price {
             font-size: 18px;
             font-weight: 700;
             color: var(--primary-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .summary-checkout-button {
@@ -330,7 +352,7 @@
             color: white;
             border: none;
             border-radius: 25px;
-            padding: 10px 20px;
+            padding: 10px 15px; /* Kurangi padding horizontal sedikit jika perlu */
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -338,6 +360,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0; /* Pastikan tombol tidak menyusut */
+            white-space: nowrap; /* Pastikan teks tombol tidak pecah */
         }
 
         .summary-checkout-button:hover {
@@ -356,7 +380,7 @@
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            box-sizing: border-box; /* Penting untuk padding */
+            box-sizing: border-box;
         }
 
         #currentProductSummary h3 {
