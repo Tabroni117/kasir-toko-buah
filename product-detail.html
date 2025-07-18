@@ -59,7 +59,7 @@
             right: 0;
             margin: 0;
         }
-        
+
         .header-bar > * {
             flex-shrink: 0;
         }
@@ -96,16 +96,27 @@
             cursor: grab;
         }
 
-        /* PERUBAHAN UTAMA DI SINI untuk gambar produk */
+        /* Tata letak baru untuk gambar dan info berdampingan */
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr; /* Gambar lebar tetap (150px), info sisa ruang */
+            gap: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 15px;
+            box-sizing: border-box;
+            align-items: center; /* Agar konten vertikal sejajar */
+        }
+
         .product-image-container {
             width: 100%;
-            padding-top: 100%; /* Menjaga aspek rasio 1:1 (persegi) */
+            aspect-ratio: 1 / 1; /* Mempertahankan aspek rasio 1:1 */
             position: relative;
-            background-color: white; /* Latar belakang putih akan terlihat jika ada spasi kosong */
+            background-color: var(--light-gray); /* Sebagai fallback jika gambar transparan */
             border-radius: 8px;
-            overflow: hidden; /* Penting untuk memotong bagian gambar yang 'keluar' dari wadah jika object-fit:cover digunakan */
-            margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
             box-sizing: border-box;
         }
 
@@ -115,7 +126,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain; /* INI YANG BERUBAH: Memastikan seluruh gambar terlihat */
+            object-fit: contain; /* Memastikan seluruh gambar terlihat */
             display: block;
             /* Opsional: Tambahkan padding ke gambar jika ingin ada sedikit ruang di dalam container
                Ini akan membuat gambar terlihat lebih kecil dari wadahnya.
@@ -123,25 +134,37 @@
         }
 
         .product-info {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            /* Tidak perlu lebar spesifik lagi karena diatur oleh grid */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 8px; /* Spasi antar item info */
             box-sizing: border-box;
         }
 
         .product-name-detail {
-            font-size: 24px;
+            font-size: 18px; /* Ukuran lebih kecil untuk tata letak ini */
             font-weight: 700;
-            margin-bottom: 10px;
             color: var(--primary-color);
+            margin-bottom: 0; /* Hilangkan margin bawah default */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product-price-detail {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 5px;
         }
 
         .quantity-control {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* Sedikit dikurangi */
         }
 
         .quantity-control button {
@@ -149,15 +172,18 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
+            width: 30px; /* Lebih kecil */
+            height: 30px; /* Lebih kecil */
+            font-size: 16px; /* Lebih kecil */
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.2s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0; /* Hilangkan padding default */
+            margin-right: 5px;
+            margin-left: 0;
         }
 
         .quantity-control button:hover:not(:disabled) {
@@ -176,13 +202,13 @@
         }
 
         .quantity-control input {
-            width: 60px;
+            width: 40px; /* Lebih kecil */
             text-align: center;
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 8px 0;
-            margin: 0 10px;
-            font-size: 16px;
+            padding: 5px 0; /* Lebih kecil */
+            margin: 0 5px;
+            font-size: 14px; /* Lebih kecil */
             font-weight: 600;
             color: var(--text-color);
             -moz-appearance: textfield;
@@ -194,25 +220,61 @@
             margin: 0;
         }
 
-        .product-price-detail {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-top: 10px;
-            margin-bottom: 15px;
-        }
-
         .product-description-detail {
-            font-size: 14px;
+            font-size: 13px; /* Lebih kecil */
             color: var(--dark-gray);
-            line-height: 1.6;
-            margin-bottom: 20px;
+            line-height: 1.4; /* Lebih rapat */
+            margin-bottom: 10px; /* Lebih sedikit margin */
         }
 
-        /* Varian Options */
+        /* Style for currentProductSummary (dalam tata letak baru) */
+        #currentProductSummary {
+            margin-top: 10px; /* Lebih sedikit margin atas */
+            padding: 10px; /* Lebih sedikit padding */
+            background-color: var(--light-gray);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        #currentProductSummary h3 {
+            font-size: 13px; /* Lebih kecil */
+            color: #333;
+            margin-bottom: 5px; /* Lebih sedikit margin bawah */
+            font-weight: 600;
+        }
+
+        #currentProductItemsList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #currentProductItemsList li {
+            margin-bottom: 2px; /* Lebih sedikit margin bawah */
+            font-size: 12px; /* Lebih kecil */
+            color: #555;
+            line-height: 1.2; /* Lebih rapat */
+            word-break: break-word;
+        }
+
+        #currentProductItemsList li strong {
+            color: var(--primary-color);
+            font-size: 12px; /* Lebih kecil */
+        }
+
+        #noCurrentProductItems {
+            color: #777;
+            font-size: 11px; /* Lebih kecil */
+            text-align: center;
+            margin-top: 5px; /* Lebih sedikit margin atas */
+            font-style: italic;
+        }
+
+        /* Varian Options (tetap di bawah untuk sekarang) */
         .variant-group {
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 15px; /* Sedikit dikurangi */
+            padding: 10px; /* Sedikit dikurangi */
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -221,24 +283,24 @@
 
         .variant-label {
             display: block;
-            font-size: 16px;
+            font-size: 14px; /* Lebih kecil */
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px; /* Lebih sedikit margin bawah */
             color: var(--text-color);
         }
 
         .variant-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px; /* Lebih kecil */
         }
 
         .variant-option {
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 20px;
-            padding: 8px 15px;
-            font-size: 14px;
+            padding: 5px 10px; /* Lebih kecil */
+            font-size: 12px; /* Lebih kecil */
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -259,7 +321,7 @@
             font-weight: 500;
         }
 
-        /* Toast / Alert Message */
+        /* Toast / Alert Message (tetap) */
         .variant-alert {
             position: fixed;
             bottom: 90px;
@@ -285,7 +347,7 @@
             visibility: visible;
         }
 
-        /* Fly to Cart Animation */
+        /* Fly to Cart Animation (tetap) */
         .fly-to-cart {
             position: fixed;
             z-index: 10000;
@@ -298,7 +360,7 @@
             opacity: 1;
         }
 
-        /* Cart Summary Bar at Bottom */
+        /* Cart Summary Bar at Bottom (tetap) */
         .cart-summary-bar {
             position: fixed;
             bottom: 0;
@@ -375,50 +437,6 @@
             font-size: 10px;
             color: rgba(255, 255, 255, 0.7);
         }
-
-        /* Style for currentProductSummary */
-        #currentProductSummary {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: var(--light-gray);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
-        }
-
-        #currentProductSummary h3 {
-            font-size: 14px;
-            color: #333;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        #currentProductItemsList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #currentProductItemsList li {
-            margin-bottom: 3px;
-            font-size: 13px;
-            color: #555;
-            line-height: 1.3;
-            word-break: break-word;
-        }
-
-        #currentProductItemsList li strong {
-            color: var(--primary-color);
-            font-size: 13px;
-        }
-
-        #noCurrentProductItems {
-            color: #777;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 10px;
-            font-style: italic;
-        }
     </style>
 </head>
 <body>
@@ -433,49 +451,48 @@
     </div>
 
     <div class="container">
-        <div class="product-image-container">
-            <img id="productImage" src="placeholder.jpg" alt="Product Image">
+        <div class="product-detail-grid">
+            <div class="product-image-container">
+                <img id="productImage" src="placeholder.jpg" alt="Product Image">
+            </div>
+            <div class="product-info">
+                <h1 class="product-name-detail" id="productName">Nama Produk</h1>
+                <p class="product-price-detail" id="productPrice">Rp 0</p>
+                <p id="activeVariantPreview" style="font-weight: 500; font-size: 13px; color: #444; margin: 2px 0;"></p>
+                <div class="quantity-control">
+                    <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
+                    <input type="number" id="productQuantity" value="0" min="0" readonly>
+                    <button id="increaseQuantity"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
         </div>
 
-        <div class="product-info">
-            <h1 class="product-name-detail" id="productName">Nama Produk</h1>
+        <div id="currentProductSummary">
+            <h3>Item Rujak Buah di Keranjang Anda:</h3>
+            <ul id="currentProductItemsList">
+                </ul>
+            <p id="noCurrentProductItems">
+                Pilih varian dan tambahkan item untuk melihat ringkasan.
+            </p>
+        </div>
 
-            <div class="quantity-control">
-                <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
-                <input type="number" id="productQuantity" value="0" min="0" readonly>
-                <button id="increaseQuantity"><i class="fas fa-plus"></i></button>
+        <p class="product-description-detail" id="productDescription">Deskripsi produk akan muncul di sini.</p>
+
+        <div class="variant-group">
+            <label class="variant-label">Pilih Bumbu:</label>
+            <div class="variant-options" data-variant="bumbu">
+                <div class="variant-option" data-value="Pedas">Pedas</div>
+                <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
+                <div class="variant-option" data-value="Manis">Manis</div>
             </div>
+        </div>
 
-            <p class="product-price-detail" id="productPrice">Rp 0</p>
-            <p id="activeVariantPreview" style="font-weight: 600; font-size: 14px; color: #444; margin: 4px 0;"></p>
-            <p class="product-description-detail" id="productDescription">Deskripsi produk akan muncul di sini.</p>
-
-            <div id="currentProductSummary">
-                <h3>Item Rujak Buah di Keranjang Anda:</h3>
-                <ul id="currentProductItemsList">
-                    </ul>
-                <p id="noCurrentProductItems">
-                    Pilih varian dan tambahkan item untuk melihat ringkasan.
-                </p>
+        <div class="variant-group">
+            <label class="variant-label">Pilih Kacang:</label>
+            <div class="variant-options" data-variant="kacang">
+                <div class="variant-option" data-value="Dengan Kacang">Dengan Kacang</div>
+                <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
             </div>
-
-            <div class="variant-group">
-                <label class="variant-label">Pilih Bumbu:</label>
-                <div class="variant-options" data-variant="bumbu">
-                    <div class="variant-option" data-value="Pedas">Pedas</div>
-                    <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
-                    <div class="variant-option" data-value="Manis">Manis</div>
-                </div>
-            </div>
-
-            <div class="variant-group">
-                <label class="variant-label">Pilih Kacang:</label>
-                <div class="variant-options" data-variant="kacang">
-                    <div class="variant-option" data-value="Dengan Kacang">Dengan Kacang</div>
-                    <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
-                </div>
-            </div>
-
         </div>
     </div>
 
