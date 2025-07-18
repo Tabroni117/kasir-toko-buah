@@ -693,6 +693,17 @@
         const productNameInSummary = document.getElementById('productNameInSummary');
         const productImageElement = document.getElementById('productImage'); // Product Image Element
 
+        const productDetailGrid = document.querySelector('.product-detail-grid'); // Get the fixed product detail element
+        const productDetailPlaceholder = document.getElementById('productDetailPlaceholder'); // Get the placeholder element
+
+        // Function to update the placeholder height
+        function updatePlaceholderHeight() {
+            if (productDetailGrid && productDetailPlaceholder) {
+                // Set the placeholder's height to the fixed element's height
+                productDetailPlaceholder.style.height = `${productDetailGrid.offsetHeight}px`;
+                console.log("Placeholder height set to:", productDetailGrid.offsetHeight);
+            }
+        }
 
         // --- Firebase Authentication Listener ---
         // Move onAuthStateChanged inside DOMContentLoaded so DOM elements are available
@@ -774,6 +785,9 @@
                 productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Error';
                 if (increaseButton) increaseButton.disabled = true;
                 if (decreaseButton) decreaseButton.disabled = true;
+            } finally {
+                // Always update placeholder height after content might have changed
+                updatePlaceholderHeight();
             }
         }
 
@@ -797,6 +811,7 @@
                             updateActiveVariantPreview();
                             // Update quantity input based on newly selected variant from cart
                             await updateProductQuantityInputFromCart();
+                            updatePlaceholderHeight(); // Update placeholder height after variant selection
                         });
                         option._hasClickListener = true; // Mark that listener has been added
                     }
@@ -826,6 +841,7 @@
                 productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
             }
+            updatePlaceholderHeight(); // Update placeholder height after variant preview changes
         }
 
         // Update quantity input based on item in cart for specific variant
@@ -853,6 +869,7 @@
             }
             // After updating quantity input, also update local summary bar
             updateLocalSummaryBar(parseInt(productQuantityInput.value));
+            updatePlaceholderHeight(); // Update placeholder height after cart quantity changes
         }
 
 
@@ -920,7 +937,7 @@
                     noCurrentProductItemsMessage.style.display = 'block';
                     if (summaryActionButtons) summaryActionButtons.style.display = 'none';
                 }
-
+                updatePlaceholderHeight(); // Update placeholder height after summary rendering
             } catch (error) {
                 console.error("❌ Failed to load product items summary in cart:", error);
                 currentProductItemsList.innerHTML = '';
@@ -969,6 +986,7 @@
                 renderCurrentProductItemsSummary();
                 // Call updateProductQuantityInputFromCart to ensure quantity input matches cart
                 updateProductQuantityInputFromCart();
+                updatePlaceholderHeight(); // Update placeholder height on any cart change
             }, error => {
                 console.error("Error listening to cart updates:", error);
             });
@@ -1126,6 +1144,7 @@
                 if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                 if (increaseButton) increaseButton.disabled = false;
                 if (decreaseButton) decreaseButton.disabled = false;
+                updatePlaceholderHeight(); // Update placeholder height after cart update
             }
         }
 
@@ -1178,6 +1197,7 @@
                 if (decreaseButton) decreaseButton.disabled = false;
                 if (editProductSummaryBtn) editProductSummaryBtn.disabled = false;
                 if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = false;
+                updatePlaceholderHeight(); // Update placeholder height after deletion
             }
         }
         // --- End Delete Function ---
@@ -1205,6 +1225,7 @@
                 productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
             }
+            updatePlaceholderHeight(); // Update placeholder height after quantity load
         }
 
         function updateActiveVariantPreview() {
@@ -1228,6 +1249,7 @@
                 productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
             }
+            updatePlaceholderHeight(); // Update placeholder height after variant preview changes
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -1289,6 +1311,7 @@
                     if (userIdDisplay) userIdDisplay.textContent = `User ID: N/A`;
                     renderCurrentProductItemsSummary();
                 }
+                updatePlaceholderHeight(); // Initial update after auth state is known
             });
 
             document.querySelectorAll('.variant-options').forEach(group => {
@@ -1372,6 +1395,11 @@
 
             document.getElementById('btnBackDetail')?.addEventListener('click', closePopup);
             document.getElementById('swipeBarClose')?.addEventListener('click', closePopup);
+
+            // Initial update of placeholder height
+            updatePlaceholderHeight();
+            // Update placeholder height on window resize
+            window.addEventListener('resize', updatePlaceholderHeight);
         });
 
         document.addEventListener('DOMContentLoaded', () => {
