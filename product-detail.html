@@ -4,395 +4,1239 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Produk</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Menggunakan versi Firebase SDK yang lebih baru dan kompatibel -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            margin: 0;
-            background-color: #f8f8f8;
-            color: #333;
-            padding-bottom: 80px; /* Ruang untuk floating add to cart */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #FFC107; /* Amber */
+            --text-color: #333;
+            --light-gray: #f4f4f4;
+            --dark-gray: #555;
+            --border-color: #ddd;
+            --red-alert: #e74c3c;
         }
-        .header {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 15px;
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            overflow-x: hidden;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex-grow: 1;
+            padding: 20px;
+            padding-bottom: 80px;
+            max-width: 650px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .header-bar {
+            display: flex;
             justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 1000;
+            box-sizing: border-box;
+            width: 100vw;
+            left: 0;
+            right: 0;
+            margin: 0;
         }
-        .header h1 {
-            font-size: 1.2em;
-            margin: 0 auto; /* Tengah di antara tombol */
+
+        .header-bar > * {
+            flex-shrink: 0;
         }
-        .back-button {
+        .header-bar .left {
+            margin-right: auto;
+        }
+        .header-bar .right {
+            margin-left: auto;
+        }
+
+        .header-bar .back-btn {
+            background: none;
+            border: none;
             color: white;
-            font-size: 1.5em;
+            font-size: 24px;
             cursor: pointer;
-            z-index: 1; /* Agar bisa diklik meskipun ada h1 di tengah */
+            margin-right: 15px;
+            padding: 5px;
         }
+
+        .header-bar .title {
+            font-size: 18px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-bar .swipe-bar {
+            width: 30px;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 2px;
+            cursor: grab;
+        }
+
+        /* Tata letak gambar dan info berdampingan */
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 15px;
+            box-sizing: border-box;
+            align-items: center;
+        }
+
         .product-image-container {
             width: 100%;
-            height: 250px; /* Ukuran gambar yang lebih besar */
-            background-color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            background-color: var(--light-gray);
+            border-radius: 8px;
             overflow: hidden;
+            box-sizing: border-box;
         }
-        #productImage {
+
+        .product-image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Memastikan gambar mengisi area tanpa terdistorsi */
+            object-fit: contain;
             display: block;
         }
-        .product-details {
-            padding: 15px;
-            background-color: white;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
-            margin-bottom: 10px;
+
+        .product-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 8px;
+            box-sizing: border-box;
         }
-        #productName {
-            font-size: 1.6em;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #22c55e; /* Warna hijau */
+
+        .product-name-detail {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        #productPrice {
-            font-size: 1.4em;
-            color: #f59e0b; /* Warna oranye */
-            font-weight: bold;
-            margin-bottom: 15px;
+
+        .product-price-detail {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 5px;
         }
-        #productDescription {
-            font-size: 1em;
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
+
         .quantity-control {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center; /* Tengah elemen */
+            justify-content: flex-start;
+            margin-bottom: 10px;
+            position: relative; /* Untuk positioning loading indicator */
         }
-        .quantity-button {
-            background-color: #22c55e;
+
+        .quantity-control button {
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 1.5em;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background-color 0.2s, transform 0.2s;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 0;
+            margin-right: 5px;
+            margin-left: 0;
         }
-        .quantity-button:hover {
-            background-color: #16a34a;
+
+        .quantity-control button:hover:not(:disabled) {
+            background-color: #388e3c;
             transform: scale(1.05);
         }
-        #productQuantity {
-            font-size: 1.4em;
-            font-weight: bold;
-            width: 50px;
+
+        .quantity-control button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .quantity-control button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .quantity-control input {
+            width: 40px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 5px 0;
+            margin: 0 5px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+            -moz-appearance: textfield;
+        }
+
+        .quantity-control input::-webkit-outer-spin-button,
+        .quantity-control input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* --- Loading Indicator Styles --- */
+        .quantity-loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none; /* Sembunyikan secara default */
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        .quantity-loading-indicator.show {
+            display: block; /* Tampilkan saat dibutuhkan */
+        }
+        /* --- End Loading Indicator Styles --- */
+
+
+        .product-description-detail {
+            font-size: 13px;
+            color: var(--dark-gray);
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        /* Style for currentProductSummary */
+        #currentProductSummary {
+            margin-top: 10px;
+            padding: 12px;
+            background-color: white; /* Changed from light-gray to white for consistency */
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            position: relative; /* Untuk positioning action buttons */
+        }
+
+        #currentProductSummary h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        #currentProductItemsList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 10px; /* Tambahkan margin bawah agar ada ruang untuk tombol */
+        }
+
+        #currentProductItemsList li {
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.3;
+            word-break: break-word;
+            padding-left: 0;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+        
+        #currentProductItemsList li .item-number {
+            flex-shrink: 0;
+            width: 20px; /* Lebar tetap untuk penomoran (sesuaikan jika perlu) */
+            text-align: right;
+            margin-right: 5px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        #currentProductItemsList li .item-name-variants {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #currentProductItemsList li strong {
+            color: var(--primary-color);
+            font-size: 12px;
+        }
+
+        #currentProductItemsList li .item-quantity {
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 40px;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        #noCurrentProductItems {
+            color: #777;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        /* --- Action Buttons for Summary --- */
+        .summary-actions {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-top: 15px; /* Jarak dari daftar item */
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color); /* Garis pemisah */
+        }
+
+        .summary-actions button {
+            flex: 1; /* Agar tombol mengisi ruang yang sama */
+            padding: 8px 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-actions button.edit-btn {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .summary-actions button.edit-btn:hover {
+            background-color: #e0a800; /* Darker amber */
+            transform: translateY(-1px);
+        }
+
+        .summary-actions button.delete-btn {
+            background-color: var(--red-alert);
+            color: white;
+        }
+
+        .summary-actions button.delete-btn:hover {
+            background-color: #c0392b; /* Darker red */
+            transform: translateY(-1px);
+        }
+
+        .summary-actions button:active {
+            transform: translateY(0);
+        }
+        /* --- End Action Buttons --- */
+
+        /* Varian Options */
+        .variant-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: white; /* Changed from light-gray to white for consistency */
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        .variant-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .variant-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .variant-option {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .variant-option:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .variant-option.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-weight: 500;
+        }
+
+        /* Toast / Alert Message */
+        .variant-alert {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--red-alert);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 1001;
+            font-size: 14px;
+            white-space: nowrap;
+            max-width: 90%;
             text-align: center;
         }
-        .add-to-cart-bar {
+
+        .variant-alert.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Fly to Cart Animation */
+        .fly-to-cart {
+            position: fixed;
+            z-index: 10000;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            pointer-events: none;
+            transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+            opacity: 1;
+        }
+
+        /* Cart Summary Bar at Bottom */
+        .cart-summary-bar {
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%;
-            background-color: #22c55e;
-            color: white;
-            padding: 15px;
+            width: 100vw;
+            background-color: white;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            z-index: 100;
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
-        }
-        .add-to-cart-bar button {
-            background-color: #fde047;
-            color: #22c55e;
             padding: 10px 20px;
+            box-sizing: border-box;
+            z-index: 999;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            pointer-events: none;
+            margin: 0;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+
+        .cart-summary-bar.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .summary-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .summary-item-count {
+            font-size: 12px;
+            color: var(--dark-gray);
+            white-space: nowrap;
+        }
+
+        .summary-total-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .summary-checkout-button {
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
+            border-radius: 25px;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
-        .add-to-cart-bar button:hover {
-            background-color: #facc15;
-            transform: translateY(-2px);
+
+        .summary-checkout-button:hover {
+            background-color: #388e3c;
         }
-        .total-price-text {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .error-message {
-            text-align: center;
-            padding: 20px;
-            color: #ef4444; /* red */
-            font-weight: bold;
-            display: none;
+
+        .user-id-display {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <i class="fas fa-arrow-left back-button" onclick="goBack()"></i>
-        <h1>Detail Produk</h1>
-        <span></span> </div>
-
-    <div class="product-image-container">
-        <img id="productImage" src="https://placehold.co/400x250/cccccc/333333?text=Memuat+Gambar..." alt="Product Image">
-    </div>
-
-    <div class="product-details">
-        <h2 id="productName">Memuat Nama Produk...</h2>
-        <p id="productPrice">Rp 0</p>
-        <p id="productDescription">Memuat deskripsi produk...</p>
-
-        <div class="quantity-control">
-            <button class="quantity-button" onclick="changeQuantity(-1)">-</button>
-            <span id="productQuantity">1</span>
-            <button class="quantity-button" onclick="changeQuantity(1)">+</button>
+    <div class="header-bar">
+        <div class="left">
+            <button class="back-btn" id="btnBackDetail"><i class="fas fa-arrow-left"></i></button>
+            <span class="title">Detail Produk</span>
+        </div>
+        <div class="right">
+            <div class="swipe-bar" id="swipeBarClose"></div>
         </div>
     </div>
 
-    <div class="add-to-cart-bar">
-        <span class="total-price-text" id="totalProductPrice">Total: Rp 0</span>
-        <button id="addToCartButton">Tambah ke Keranjang</button>
+    <div class="container">
+        <div class="product-detail-grid">
+            <div class="product-image-container">
+                <img id="productImage" src="https://placehold.co/150x150/cccccc/333333?text=Memuat+Gambar..." alt="Product Image">
+            </div>
+            <div class="product-info">
+                <h1 class="product-name-detail" id="productName">Memuat Nama Produk...</h1>
+                <p class="product-price-detail" id="productPrice">Rp 0</p>
+                <p id="activeVariantPreview" style="font-weight: 500; font-size: 13px; color: #444; margin: 2px 0;"></p>
+                <div class="quantity-control">
+                    <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
+                    <input type="number" id="productQuantity" value="0" min="0" readonly>
+                    <button id="increaseQuantity"><i class="fas fa-plus"></i></button>
+                    <div class="quantity-loading-indicator" id="quantityLoadingIndicator">
+                        Memperbarui...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="currentProductSummary">
+            <h3>Item <span id="productNameInSummary"></span> di Keranjang Anda:</h3>
+            <ul id="currentProductItemsList">
+            </ul>
+            <p id="noCurrentProductItems">
+                Pilih varian dan tambahkan item untuk melihat ringkasan.
+            </p>
+            <div class="summary-actions" id="summaryActionButtons">
+                <button class="edit-btn" id="editProductSummaryBtn">
+                    <i class="fas fa-edit"></i> Edit Item
+                </button>
+                <button class="delete-btn" id="deleteProductSummaryBtn">
+                    <i class="fas fa-trash-alt"></i> Hapus Item
+                </button>
+            </div>
+        </div>
+
+        <p class="product-description-detail" id="productDescription">Memuat deskripsi produk...</p>
+
+        <div class="variant-group">
+            <label class="variant-label">Pilih Bumbu:</label>
+            <div class="variant-options" data-variant="bumbu">
+                <div class="variant-option" data-value="Pedas">Pedas</div>
+                <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
+                <div class="variant-option" data-value="Manis">Manis</div>
+            </div>
+        </div>
+
+        <div class="variant-group">
+            <label class="variant-label">Pilih Kacang:</label>
+            <div class="variant-options" data-variant="kacang">
+                <div class="variant-option" data-value="Dengan Kacang">Dengan Kacang</div>
+                <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
+            </div>
+        </div>
     </div>
 
-    <div id="errorMessage" class="error-message"></div>
+    <div class="variant-alert" id="variantAlert"></div>
 
-<script>
-    // --- Firebase Configuration ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-        authDomain: "tokobuahkasir.firebaseapp.com",
-        projectId: "tokobuahkasir",
-        storageBucket: "tokobuahkasir.firebasestorage.app",
-        messagingSenderId: "731011133713",
-        appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-        measurementId: "G-7CPE2DB2BV"
-    };
+    <div style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; padding: 5px 10px; border-radius: 5px; font-size: 10px;">
+        <span id="userIdDisplay">User ID: N/A</span>
+    </div>
 
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
-    // Pastikan ini mengarah ke koleksi 'buah'
-    const productsCollection = db.collection('buah'); 
-    const cartsCollection = db.collection('carts'); // Koleksi keranjang
+    <div class="cart-summary-bar" id="cart-summary-bar">
+        <div class="summary-info">
+            <span class="summary-item-count">0 Item</span>
+            <span class="summary-total-price">Rp 0</span>
+        </div>
+        <button class="summary-checkout-button">
+            Lihat Keranjang <i class="fas fa-shopping-bag"></i>
+        </button>
+    </div>
 
-    // --- Elemen DOM ---
-    const productImageElement = document.getElementById('productImage');
-    const productNameElement = document.getElementById('productName');
-    const productPriceElement = document.getElementById('productPrice');
-    const productDescriptionElement = document.getElementById('productDescription');
-    const productQuantityElement = document.getElementById('productQuantity');
-    const totalProductPriceElement = document.getElementById('totalProductPrice');
-    const addToCartButton = document.getElementById('addToCartButton');
-    const errorMessageElement = document.getElementById('errorMessage');
+    <script>
+        // --- Firebase Configuration ---
+        // Variabel global __app_id, __firebase_config, __initial_auth_token
+        // akan disuntikkan oleh lingkungan Canvas/Immersive.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    let selectedProduct = null;
-    let currentQuantity = 1;
-    let currentUserId = null; // Akan diisi saat menerima auth data
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const cartsCollection = db.collection('carts');
+        // KOREKSI PENTING: Menggunakan koleksi 'buah' sesuai permintaan Anda
+        const productsCollection = db.collection('buah'); 
 
-    // --- Fungsi Format Rupiah ---
-    function formatRupiah(amount) {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0
-        }).format(amount);
-    }
+        // --- Variabel Global untuk Elemen DOM dan Data ---
+        const selectedVariants = { bumbu: null, kacang: null };
+        let selectedProduct = null;
+        let productQuantityInput = null;
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        let currentUserId = null;
+        let increaseButton = null;
+        let decreaseButton = null;
+        let quantityLoadingIndicator = null;
+        let editProductSummaryBtn = null;
+        let deleteProductSummaryBtn = null;
+        let summaryActionButtons = null;
+        const productImageElement = document.getElementById('productImage'); // Elemen Gambar Produk
 
-    // --- Fungsi untuk memperbarui tampilan harga total ---
-    function updateTotalPrice() {
-        if (selectedProduct) {
-            const totalPrice = selectedProduct.price * currentQuantity;
-            totalProductPriceElement.textContent = `Total: ${formatRupiah(totalPrice)}`;
-        } else {
-            totalProductPriceElement.textContent = `Total: ${formatRupiah(0)}`;
-        }
-    }
+        const currentProductItemsList = document.getElementById('currentProductItemsList');
+        const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
+        const productNameInSummary = document.getElementById('productNameInSummary');
 
-    // --- Fungsi untuk mengubah kuantitas ---
-    function changeQuantity(change) {
-        currentQuantity += change;
-        if (currentQuantity < 1) {
-            currentQuantity = 1;
-        }
-        productQuantityElement.textContent = currentQuantity;
-        updateTotalPrice();
-    }
+        // --- Listener Otentikasi Firebase ---
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUserId = user.uid;
+                userIdDisplay.textContent = `User ID: ${currentUserId}`;
+                console.log("User terautentikasi:", currentUserId);
+                // Setelah user terautentikasi, baru mulai listen ke keranjang
+                listenToCartUpdates(currentUserId);
+                if (selectedProduct) { // Jika detail produk sudah dimuat sebelum login
+                    await updateProductQuantityInputFromCart(); // Pastikan kuantitas input sesuai keranjang
+                    renderCurrentProductItemsSummary();
+                }
+            } else {
+                currentUserId = null;
+                userIdDisplay.textContent = `User ID: N/A`;
+                console.log("User tidak terautentikasi.");
+                // Jika tidak login, hentikan listener keranjang
+                if (unsubscribeCartListener) {
+                    unsubscribeCartListener();
+                }
+                // Bersihkan tampilan keranjang jika tidak login
+                updateLocalSummaryBar(0); // Ini akan menyembunyikan bar
+                renderCurrentProductItemsSummary(); // Kosongkan ringkasan item produk ini
+                productQuantityInput.value = 0; // Reset kuantitas di input
+            }
+        });
 
-    // --- Fungsi untuk memuat detail produk dari Firebase ---
-    async function loadProductDetails(productId) {
-        console.log("Memuat detail produk untuk ID:", productId);
-        errorMessageElement.style.display = 'none'; // Sembunyikan pesan error sebelumnya
+        /**
+         * Fungsi untuk memuat detail produk dari Firestore dan mengisi elemen HTML.
+         * Ini adalah bagian kunci yang memastikan gambar dan data produk tampil.
+         */
+        async function loadProductDetails(productId) {
+            console.log("Memuat detail produk untuk ID:", productId);
+            // Reset tampilan ke status loading
+            productNameInSummary.textContent = ''; // Kosongkan nama produk di ringkasan
+            productNameElement.textContent = 'Memuat Nama Produk...';
+            productPriceElement.textContent = 'Rp 0';
+            productDescriptionElement.textContent = 'Memuat deskripsi produk...';
+            productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Memuat+Gambar...';
+            productQuantityInput.value = 0;
+            updateActiveVariantPreview(); // Reset preview varian
+            noCurrentProductItemsMessage.style.display = 'block'; // Tampilkan pesan default
+            summaryActionButtons.style.display = 'none'; // Sembunyikan tombol aksi
+            increaseButton.disabled = true; // Nonaktifkan tombol sementara
+            decreaseButton.disabled = true;
 
-        try {
-            const productDoc = await productsCollection.doc(productId).get();
-            if (productDoc.exists) {
-                selectedProduct = { id: productDoc.id, ...productDoc.data() };
-                console.log("Data Produk Ditemukan:", selectedProduct);
+            try {
+                // Mengambil dokumen produk dari koleksi 'buah'
+                const productDoc = await productsCollection.doc(productId).get();
+                if (productDoc.exists) {
+                    selectedProduct = { id: productDoc.id, ...productDoc.data() };
+                    console.log("Data Produk Ditemukan:", selectedProduct);
 
-                productNameElement.textContent = selectedProduct.nama || 'Nama Tidak Tersedia';
-                productPriceElement.textContent = formatRupiah(selectedProduct.harga || 0);
-                productDescriptionElement.textContent = selectedProduct.deskripsi || 'Tidak ada deskripsi untuk produk ini.';
+                    // Mengisi detail produk ke DOM
+                    productNameElement.textContent = selectedProduct.nama || 'Nama Tidak Tersedia';
+                    productPriceElement.textContent = formatRupiah(selectedProduct.harga || 0);
+                    productDescriptionElement.textContent = selectedProduct.deskripsi || 'Tidak ada deskripsi untuk produk ini.';
+                    productNameInSummary.textContent = selectedProduct.nama || 'Produk Ini'; // Update nama produk di ringkasan
 
-                // --- BAGIAN PENTING UNTUK GAMBAR ---
-                if (selectedProduct.imageUrl) { // PASTIKAN properti di Firestore adalah 'imageUrl'
-                    productImageElement.src = selectedProduct.imageUrl;
-                    console.log("Gambar dimuat dari URL:", selectedProduct.imageUrl);
+                    // --- BAGIAN UTAMA UNTUK MENAMPILKAN GAMBAR ---
+                    // Menggunakan 'imageUrl' sesuai dengan properti yang ada di APL05.html
+                    if (selectedProduct.imageUrl) {
+                        productImageElement.src = selectedProduct.imageUrl;
+                        console.log("Gambar dimuat dari URL:", selectedProduct.imageUrl);
+                    } else {
+                        // Gambar fallback jika tidak ada URL gambar dari Firebase
+                        productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Gambar+Tidak+Tersedia';
+                        console.warn("URL gambar tidak ditemukan untuk produk:", selectedProduct.nama);
+                    }
+                    // --- AKHIR BAGIAN UTAMA GAMBAR ---
+
+                    // Inisialisasi pilihan varian (jika ada) dan update kuantitas input
+                    initializeVariantSelections();
+                    updateActiveVariantPreview(); // Tampilkan preview varian awal
+
+                    // Jika user sudah login, update tampilan dan mulai listen
+                    if (currentUserId) {
+                        await updateProductQuantityInputFromCart();
+                        renderCurrentProductItemsSummary();
+                    }
+                    increaseButton.disabled = false; // Aktifkan kembali tombol
+                    decreaseButton.disabled = false;
+
                 } else {
-                    productImageElement.src = 'https://placehold.co/400x250/cccccc/333333?text=Gambar+Tidak+Tersedia';
-                    console.warn("URL gambar tidak ditemukan untuk produk ini.");
+                    console.error("❌ Produk tidak ditemukan dengan ID:", productId);
+                    showToast("Produk tidak ditemukan.");
+                    productNameElement.textContent = 'Produk Tidak Ditemukan';
+                    productPriceElement.textContent = 'Rp 0';
+                    productDescriptionElement.textContent = 'Maaf, detail produk tidak dapat dimuat.';
+                    productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Produk+Tidak+Ada';
+                    increaseButton.disabled = true;
+                    decreaseButton.disabled = true;
+                }
+            } catch (error) {
+                console.error("❌ Gagal memuat detail produk:", error);
+                showToast("Gagal memuat detail produk.");
+                productNameElement.textContent = 'Error Memuat Produk';
+                productPriceElement.textContent = 'Rp 0';
+                productDescriptionElement.textContent = 'Terjadi kesalahan saat memuat detail produk. Silakan coba lagi.';
+                productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Error';
+                increaseButton.disabled = true;
+                decreaseButton.disabled = true;
+            }
+        }
+
+
+        // Fungsi untuk menginisialisasi listener pada opsi varian
+        function initializeVariantSelections() {
+            document.querySelectorAll('.variant-group').forEach(group => {
+                group.querySelectorAll('.variant-option').forEach(option => {
+                    // Pastikan listener hanya ditambahkan sekali
+                    if (!option._hasClickListener) {
+                        option.addEventListener('click', async function() {
+                            const variantType = this.closest('.variant-options').dataset.variant;
+                            const variantValue = this.dataset.value;
+
+                            // Hapus kelas 'active' dari semua opsi di grup ini
+                            this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                            // Tambahkan kelas 'active' ke opsi yang diklik
+                            this.classList.add('active');
+
+                            selectedVariants[variantType] = variantValue;
+                            updateActiveVariantPreview();
+                            // Perbarui kuantitas input berdasarkan varian yang baru dipilih dari keranjang
+                            await updateProductQuantityInputFromCart();
+                        });
+                        option._hasClickListener = true; // Tandai bahwa listener sudah ditambahkan
+                    }
+                });
+            });
+        }
+
+        // Memperbarui preview varian yang aktif
+        function updateActiveVariantPreview() {
+            const previewEl = document.getElementById('activeVariantPreview');
+            const bumbu = selectedVariants.bumbu || 'Belum dipilih';
+            const kacang = selectedVariants.kacang || 'Belum dipilih';
+            previewEl.textContent = `Bumbu: ${bumbu}, Kacang: ${kacang}`;
+        }
+
+        // Memperbarui input kuantitas berdasarkan item yang ada di keranjang untuk varian tertentu
+        async function updateProductQuantityInputFromCart() {
+            if (!currentUserId || !selectedProduct) {
+                productQuantityInput.value = 0;
+                return;
+            }
+
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${selectedProduct.id}_${bumbuVariant}_${kacangVariant}`;
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+
+            try {
+                const doc = await cartItemDocRef.get();
+                if (doc.exists) {
+                    productQuantityInput.value = doc.data().quantity;
+                } else {
+                    productQuantityInput.value = 0;
+                }
+            } catch (error) {
+                console.error("Error fetching cart item quantity:", error);
+                productQuantityInput.value = 0;
+            }
+            // Setelah memperbarui input kuantitas, perbarui juga bar ringkasan lokal
+            updateLocalSummaryBar(parseInt(productQuantityInput.value));
+        }
+
+
+        async function renderCurrentProductItemsSummary() {
+            if (!currentUserId || !selectedProduct) {
+                currentProductItemsList.innerHTML = '';
+                noCurrentProductItemsMessage.style.display = 'block';
+                summaryActionButtons.style.display = 'none';
+                return;
+            }
+
+            try {
+                const snapshot = await cartsCollection.doc(currentUserId).collection('items')
+                    .where('id', '==', selectedProduct.id)
+                    .get();
+
+                currentProductItemsList.innerHTML = '';
+                
+                let hasItems = false;
+                let itemCounter = 1;
+
+                if (!snapshot.empty) {
+                    const items = [];
+                    snapshot.forEach(doc => items.push(doc.data()));
+                    
+                    // Urutkan item berdasarkan varian untuk tampilan yang konsisten
+                    items.sort((a, b) => {
+                        const aCustom = `${a.custom?.bumbu || ''}${a.custom?.kacang || ''}`;
+                        const bCustom = `${b.custom?.bumbu || ''}${b.custom?.kacang || ''}`;
+                        return aCustom.localeCompare(bCustom);
+                    });
+
+                    items.forEach(item => {
+                        hasItems = true;
+                        let variantString = '';
+                        if (item.custom) {
+                            const customParts = [];
+                            if (item.custom.bumbu && item.custom.bumbu !== 'none') {
+                                customParts.push(item.custom.bumbu);
+                            }
+                            if (item.custom.kacang && item.custom.kacang !== 'none') {
+                                customParts.push(item.custom.kacang);
+                            }
+                            if (customParts.length > 0) {
+                                variantString = ` - ${customParts.join(', ')}`;
+                            }
+                        }
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span class="item-number">${itemCounter}.</span>
+                            <span class="item-name-variants">
+                                <strong>${item.name}${variantString}</strong>
+                            </span>
+                            <span class="item-quantity">(${item.quantity} item)</span>
+                        `;
+                        currentProductItemsList.appendChild(listItem);
+                        itemCounter++;
+                    });
                 }
 
-                currentQuantity = 1; // Reset kuantitas
-                productQuantityElement.textContent = currentQuantity;
-                updateTotalPrice(); // Perbarui total harga awal
-                addToCartButton.disabled = false; // Aktifkan tombol tambah ke keranjang
+                if (hasItems) {
+                    noCurrentProductItemsMessage.style.display = 'none';
+                    summaryActionButtons.style.display = 'flex';
+                } else {
+                    noCurrentProductItemsMessage.style.display = 'block';
+                    summaryActionButtons.style.display = 'none';
+                }
 
-            } else {
-                console.error("Produk dengan ID", productId, "tidak ditemukan.");
-                productNameElement.textContent = 'Produk Tidak Ditemukan';
-                productPriceElement.textContent = 'Rp 0';
-                productDescriptionElement.textContent = 'Maaf, detail produk tidak dapat dimuat.';
-                productImageElement.src = 'https://placehold.co/400x250/cccccc/333333?text=Produk+Tidak+Ada';
-                addToCartButton.disabled = true;
-                errorMessageElement.textContent = 'Produk tidak ditemukan.';
-                errorMessageElement.style.display = 'block';
+            } catch (error) {
+                console.error("❌ Gagal memuat ringkasan item produk di keranjang:", error);
+                currentProductItemsList.innerHTML = '';
+                noCurrentProductItemsMessage.style.display = 'block';
+                summaryActionButtons.style.display = 'none';
             }
-        } catch (error) {
-            console.error("❌ Gagal memuat detail produk:", error);
-            productNameElement.textContent = 'Error Memuat Produk';
-            productPriceElement.textContent = 'Rp 0';
-            productDescriptionElement.textContent = 'Terjadi kesalahan saat memuat detail produk. Silakan coba lagi.';
-            productImageElement.src = 'https://placehold.co/400x250/cccccc/333333?text=Error';
-            addToCartButton.disabled = true;
-            errorMessageElement.textContent = 'Terjadi kesalahan saat memuat data.';
-            errorMessageElement.style.display = 'block';
-        }
-    }
-
-    // --- Fungsi untuk menambahkan produk ke keranjang ---
-    async function addToCart() {
-        if (!selectedProduct || !currentUserId) {
-            console.error("Produk belum dipilih atau User ID tidak tersedia.");
-            alert("Tidak bisa menambahkan ke keranjang. Data produk/user belum lengkap.");
-            return;
         }
 
-        try {
-            const cartItemRef = cartsCollection.doc(currentUserId)
-                                                .collection('items')
-                                                .doc(selectedProduct.id); // Dokumen item keranjang per product ID
 
-            const doc = await cartItemRef.get();
+        let unsubscribeCartListener = null;
 
-            if (doc.exists) {
-                // Item sudah ada, update kuantitas
-                const existingQuantity = doc.data().quantity;
-                await cartItemRef.update({
-                    quantity: existingQuantity + currentQuantity,
-                    totalPrice: (existingQuantity + currentQuantity) * selectedProduct.harga
+        function listenToCartUpdates(userId) {
+            const summaryBar = document.getElementById('cart-summary-bar');
+            if (!summaryBar) return;
+
+            const itemCountEl = summaryBar.querySelector('.summary-item-count');
+            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
+            const checkoutButton = summaryBar.querySelector('.summary-checkout-button');
+
+            // Hentikan listener sebelumnya jika ada
+            if (unsubscribeCartListener) {
+                unsubscribeCartListener();
+            }
+
+            // Mulai listener baru untuk seluruh keranjang pengguna
+            unsubscribeCartListener = cartsCollection.doc(userId).collection('items').onSnapshot(snapshot => {
+                let totalItemsInCart = 0;
+                let totalPriceInCart = 0;
+
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    totalItemsInCart += item.quantity;
+                    totalPriceInCart += item.price * item.quantity;
                 });
-                console.log("Kuantitas produk di keranjang diperbarui!");
-            } else {
-                // Item belum ada, tambahkan baru
-                await cartItemRef.set({
-                    productId: selectedProduct.id,
-                    name: selectedProduct.nama,
-                    price: selectedProduct.harga,
-                    imageUrl: selectedProduct.imageUrl || '', // Simpan URL gambar juga
-                    quantity: currentQuantity,
-                    totalPrice: currentQuantity * selectedProduct.harga,
-                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+
+                // Perbarui tampilan bar ringkasan di bagian bawah
+                if (totalItemsInCart > 0) {
+                    itemCountEl.textContent = `${totalItemsInCart} Item`;
+                    totalPriceEl.textContent = `Rp ${totalPriceInCart.toLocaleString('id-ID')}`;
+                    summaryBar.classList.add('show');
+                } else {
+                    summaryBar.classList.remove('show');
+                }
+                
+                // Panggil renderCurrentProductItemsSummary untuk memperbarui ringkasan produk spesifik ini
+                renderCurrentProductItemsSummary();
+                // Panggil updateProductQuantityInputFromCart untuk memastikan input kuantitas sesuai dengan keranjang
+                updateProductQuantityInputFromCart();
+            }, error => {
+                console.error("Error listening to cart updates:", error);
+            });
+
+            // Tambahkan event listener untuk tombol checkout sekali saja
+            if (!checkoutButton._hasClickListener) {
+                checkoutButton.addEventListener('click', () => {
+                    // Beri tahu parent window untuk navigasi ke halaman keranjang
+                    window.parent.postMessage({ type: 'navigateToCart' }, '*');
                 });
-                console.log("Produk berhasil ditambahkan ke keranjang!");
+                checkoutButton._hasClickListener = true;
+            }
+        }
+
+        // Fungsi ini sebenarnya tidak digunakan untuk global summary bar karena ada listener Firebase
+        // Tapi bisa dipakai untuk update sementara UI jika diperlukan, atau jika listener Firebase tidak aktif.
+        function updateLocalSummaryBar(quantity) {
+            const summaryBar = document.getElementById('cart-summary-bar');
+            const itemCountEl = summaryBar.querySelector('.summary-item-count');
+            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
+
+            // Logika ini sekarang sebagian besar ditangani oleh listenToCartUpdates.
+            // Biarkan saja sebagai placeholder jika ingin menampilkan kuantitas produk ini saja.
+            // Biasanya, summary bar menampilkan total keseluruhan keranjang.
+            if (quantity > 0 && selectedProduct) {
+                // Ini akan menunjukkan kuantitas HANYA untuk produk ini.
+                // Jika ingin global, biarkan listenToCartUpdates yang bekerja.
+                // itemCountEl.textContent = `${quantity} Item (Produk Ini)`;
+                // totalPriceEl.textContent = `Rp ${(selectedProduct.price * quantity).toLocaleString('id-ID')}`;
+                // summaryBar.classList.add('show');
+            } else {
+                // summaryBar.classList.remove('show'); // Ditangani oleh listener
+            }
+        }
+
+
+        function showToast(message) {
+            const toast = document.getElementById('variantAlert');
+            if (toast) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        function lemparKeKeranjang(imgSrc) {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.classList.add('fly-to-cart');
+            const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+            // Asumsi ikon keranjang ada di parent window dengan ID 'floatingCartBar' dan class 'cart-icon'
+            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon');
+
+            if (!parentCartIcon) {
+                console.warn("Ikon keranjang di jendela utama tidak ditemukan untuk animasi. Lewati animasi.");
+                if (document.body.contains(img)) { // Pastikan elemen img ada sebelum dihapus
+                    document.body.removeChild(img);
+                }
+                return;
+            }
+            const endRect = parentCartIcon.getBoundingClientRect();
+            img.style.left = `${startRect.left}px`;
+            img.style.top = `${startRect.top}px`;
+            img.style.opacity = 1;
+            document.body.appendChild(img);
+            requestAnimationFrame(() => {
+                // Hitung posisi relatif ke viewport parent
+                const parentOffsetTop = window.parent.scrollY || window.parent.document.documentElement.scrollTop;
+                const parentOffsetLeft = window.parent.scrollX || window.parent.document.documentElement.scrollLeft;
+
+                const targetX = endRect.left - startRect.left;
+                const targetY = (endRect.top + parentOffsetTop) - (startRect.top + window.scrollY); // Sesuaikan dengan scroll
+                
+                img.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.2)`;
+                img.style.opacity = 0;
+            });
+            setTimeout(() => {
+                if (document.body.contains(img)) { // Pastikan elemen masih ada sebelum dihapus
+                    document.body.removeChild(img);
+                }
+            }, 700);
+        }
+
+        function closePopup() {
+            if (unsubscribeCartListener) {
+                unsubscribeCartListener(); // Hentikan listener saat menutup
+            }
+            window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
+        }
+
+        async function updateCartInFirestore(quantity, isIncrease = false) {
+            if (!currentUserId) {
+                showToast("Anda harus login untuk menambahkan item ke keranjang.");
+                // Reset kuantitas input ke nilai yang ada di keranjang (atau 0 jika belum ada)
+                await updateProductQuantityInputFromCart(); 
+                return;
+            }
+            if (!selectedProduct) {
+                showToast("Detail produk belum dimuat.");
+                // Reset kuantitas input
+                await updateProductQuantityInputFromCart(); 
+                return;
+            }
+            if (selectedVariants.bumbu === null || selectedVariants.kacang === null) {
+                showToast("Pilih varian bumbu dan kacang dahulu.");
+                // Reset kuantitas input ke nilai yang ada di keranjang untuk varian default/sebelumnya
+                await updateProductQuantityInputFromCart(); 
+                return;
             }
 
-            alert(`${currentQuantity} ${selectedProduct.nama} berhasil ditambahkan ke keranjang!`);
-            
-            // Beri tahu halaman parent (APL05) untuk memperbarui tampilan keranjang
-            if (window.parent) {
-                window.parent.postMessage({ type: 'cartUpdated' }, '*');
-                console.log("Pesan 'cartUpdated' dikirim ke parent.");
+            // Tampilkan loading indicator
+            quantityLoadingIndicator.classList.add('show');
+            increaseButton.disabled = true;
+            decreaseButton.disabled = true;
+
+            const productId = selectedProduct.id;
+            const bumbuVariant = selectedVariants.bumbu;
+            const kacangVariant = selectedVariants.kacang;
+            // Gunakan kombinasi ID produk dan varian sebagai ID dokumen unik di sub-koleksi 'items'
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+
+            try {
+                if (quantity > 0) {
+                    await cartItemDocRef.set({
+                        id: productId,
+                        name: selectedProduct.nama, // Menggunakan 'nama' sesuai APL05.html
+                        // Menggunakan 'imageUrl' sesuai APL05.html
+                        image: selectedProduct.imageUrl || 'placeholder.jpg', 
+                        price: selectedProduct.harga, // Menggunakan 'harga' sesuai APL05.html
+                        custom: {
+                            bumbu: bumbuVariant,
+                            kacang: kacangVariant
+                        },
+                        quantity: quantity
+                    }, { merge: true }); // Gunakan merge agar tidak menimpa field lain jika ada
+                    if (isIncrease && selectedProduct.imageUrl) { // Periksa imageUrl untuk animasi
+                        lemparKeKeranjang(selectedProduct.imageUrl);
+                    }
+                } else {
+                    // Jika kuantitas 0, hapus item dari keranjang
+                    await cartItemDocRef.delete();
+                }
+                // Setelah berhasil, perbarui tampilan ringkasan dan input kuantitas
+                // Ini akan dipicu oleh listener onSnapshot, tapi memastikan update visual segera
+                // updateProductQuantityInputFromCart() akan dipanggil oleh listenToCartUpdates
+                // window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*'); // Ini sudah dipanggil oleh listenToCartUpdates
+            } catch (error) {
+                console.error("❌ Gagal memperbarui keranjang di Firestore:", error);
+                showToast("Gagal memperbarui keranjang.");
+            } finally {
+                // Sembunyikan loading indicator dan aktifkan kembali tombol
+                quantityLoadingIndicator.classList.remove('show');
+                increaseButton.disabled = false;
+                decreaseButton.disabled = false;
+            }
+        }
+
+
+        // Event Listeners setelah DOM dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            productQuantityInput = document.getElementById('productQuantity');
+            increaseButton = document.getElementById('increaseQuantity');
+            decreaseButton = document.getElementById('decreaseQuantity');
+            quantityLoadingIndicator = document.getElementById('quantityLoadingIndicator');
+            editProductSummaryBtn = document.getElementById('editProductSummaryBtn');
+            deleteProductSummaryBtn = document.getElementById('deleteProductSummaryBtn');
+            summaryActionButtons = document.getElementById('summaryActionButtons');
+
+            // Tombol kembali dan geser
+            document.getElementById('btnBackDetail').addEventListener('click', closePopup);
+            document.getElementById('swipeBarClose').addEventListener('click', closePopup);
+
+            // Tombol kuantitas
+            increaseButton.addEventListener('click', async () => {
+                let currentQty = parseInt(productQuantityInput.value);
+                currentQty++;
+                // Jangan langsung update productQuantityInput.value, biarkan updateCartInFirestore
+                // dan listener Firebase yang menangani agar sinkron dengan Firebase
+                await updateCartInFirestore(currentQty, true);
+            });
+
+            decreaseButton.addEventListener('click', async () => {
+                let currentQty = parseInt(productQuantityInput.value);
+                if (currentQty > 0) {
+                    currentQty--;
+                    // Jangan langsung update productQuantityInput.value
+                    await updateCartInFirestore(currentQty, false);
+                }
+            });
+
+            // Tombol Edit dan Hapus di ringkasan produk
+            if (editProductSummaryBtn) {
+                editProductSummaryBtn.addEventListener('click', () => {
+                    showToast("Fungsi Edit Item belum diimplementasikan.");
+                    // Implementasi logika edit item di sini (misal: membuka popup edit varian)
+                });
             }
 
-        } catch (error) {
-            console.error("❌ Gagal menambahkan produk ke keranjang:", error);
-            alert("Gagal menambahkan produk ke keranjang. Coba lagi.");
-        }
-    }
-
-    // --- Listener untuk pesan dari halaman induk (APL05) ---
-    window.addEventListener('message', async (event) => {
-        // Hanya proses pesan dari origin yang diharapkan jika memungkinkan,
-        // atau gunakan '*' jika origin dinamis/tidak diketahui
-        // if (event.origin !== "http://localhost:8000") return; // Ganti dengan origin asli Anda
-
-        console.log("Pesan diterima di detailproduk.html:", event.data);
-
-        if (event.data.type === 'openProductDetail' && event.data.productId) {
-            const productId = event.data.productId;
-            await loadProductDetails(productId);
-            // Beri tahu parent bahwa detail produk berhasil dimuat
-            if (window.parent) {
-                window.parent.postMessage({ type: 'productDetailLoaded' }, '*');
+            if (deleteProductSummaryBtn) {
+                deleteProductSummaryBtn.addEventListener('click', async () => {
+                    // Mengganti alert dengan konfirmasi modal yang lebih baik jika ini bukan iframe
+                    // Untuk saat ini, asumsikan konfirmasi sederhana
+                    if (confirm("Apakah Anda yakin ingin menghapus semua item produk ini dari keranjang?")) {
+                        if (currentUserId && selectedProduct) {
+                            try {
+                                const snapshot = await cartsCollection.doc(currentUserId).collection('items')
+                                    .where('id', '==', selectedProduct.id)
+                                    .get();
+                                const batch = db.batch();
+                                snapshot.forEach(doc => {
+                                    batch.delete(doc.ref);
+                                });
+                                await batch.commit();
+                                showToast("Semua item produk ini berhasil dihapus dari keranjang.");
+                                // Ini akan memicu listenToCartUpdates yang akan memperbarui UI
+                            } catch (error) {
+                                console.error("Gagal menghapus semua item produk dari keranjang:", error);
+                                showToast("Gagal menghapus item.");
+                            }
+                        }
+                    }
+                });
             }
-        } else if (event.data.type === 'receiveAuthData' && event.data.uid) {
-            currentUserId = event.data.uid;
-            console.log("User ID diterima:", currentUserId);
+
+
+            // Setel kondisi awal untuk ringkasan dan tombol aksi
+            noCurrentProductItemsMessage.style.display = 'block';
+            summaryActionButtons.style.display = 'none';
+
+            // Minta data produk dan user ID dari parent window
+            // Ini sangat penting jika halaman ini dibuka sebagai iframe
+            window.parent.postMessage({ type: 'requestProductDetailData' }, '*');
+            console.log("Meminta data produk dan autentikasi dari parent.");
+        });
+
+
+        // Listener untuk pesan dari parent window (misal: saat membuka popup detail produk)
+        window.addEventListener('message', async (event) => {
+            // Pastikan event.data ada dan memiliki properti type
+            if (!event.data || !event.data.type) {
+                return;
+            }
+
+            console.log("Pesan diterima di detailproduk.html:", event.data.type);
+
+            // Menerima product ID dari parent untuk memuat detail produk
+            if (event.data.type === 'openProductDetail' && event.data.productId) {
+                const productId = event.data.productId;
+                await loadProductDetails(productId);
+                // Beri tahu parent bahwa detail produk berhasil dimuat (opsional, untuk sinkronisasi)
+                // if (window.parent) {
+                //     window.parent.postMessage({ type: 'productDetailLoaded', productId: productId }, '*');
+                // }
+            }
+            // Menerima User ID setelah otentikasi siap
+            else if (event.data.type === 'authReady' && event.data.userId) {
+                // Set currentUserId di sini jika belum diatur oleh onAuthStateChanged
+                // atau jika Anda ingin memastikan user ID dari parent lebih diutamakan
+                if (currentUserId !== event.data.userId) {
+                    currentUserId = event.data.userId;
+                    userIdDisplay.textContent = `User ID: ${currentUserId}`;
+                    console.log("User ID diterima dari parent:", currentUserId);
+                    // Jika produk sudah dimuat, perbarui ringkasan dan mulai listener keranjang
+                    if (selectedProduct) {
+                        await updateProductQuantityInputFromCart();
+                        renderCurrentProductItemsSummary();
+                        listenToCartUpdates(currentUserId);
+                    }
+                }
+            }
+            // Menerima token otentikasi awal (jika digunakan untuk login pasif)
+            else if (event.data.type === 'initialAuthToken' && event.data.token) {
+                 // Anda bisa menggunakan token ini untuk signInWithCustomToken jika diperlukan
+                 // atau cukup menunggu onAuthStateChanged yang sudah ada
+                console.log("Menerima token otentikasi awal dari parent.");
+            }
+        });
+
+        // Fungsi pembantu untuk format Rupiah
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
         }
-    });
 
-    // --- Event Listener untuk tombol "Tambah ke Keranjang" ---
-    addToCartButton.addEventListener('click', addToCart);
-
-    // --- Fungsi untuk kembali ke halaman sebelumnya (APL05) ---
-    function goBack() {
-        // Mengirim pesan ke parent untuk menutup popup
-        if (window.parent) {
-            window.parent.postMessage({ type: 'closePopup' }, '*');
-        }
-    }
-
-    // --- Inisialisasi: Minta data dari parent setelah DOMContentLoaded ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Minta data autentikasi (UID) dari parent
-        if (window.parent) {
-            window.parent.postMessage({ type: 'requestAuthData' }, '*');
-            console.log("Meminta data autentikasi dari parent.");
-        }
-        // Jika detailproduk.html dibuka langsung (bukan dari iframe),
-        // atau jika pesan 'openProductDetail' tidak terkirim tepat waktu,
-        // Anda mungkin perlu logika fallback di sini (misal: ambil productId dari URL)
-        // Untuk saat ini, kita mengandalkan postMessage.
-    });
-
-</script>
+    </script>
 </body>
 </html>
