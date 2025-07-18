@@ -128,13 +128,9 @@
             height: 100%;
             object-fit: contain; /* Memastikan seluruh gambar terlihat */
             display: block;
-            /* Opsional: Tambahkan padding ke gambar jika ingin ada sedikit ruang di dalam container
-               Ini akan membuat gambar terlihat lebih kecil dari wadahnya.
-               Misal: padding: 10px; */
         }
 
         .product-info {
-            /* Tidak perlu lebar spesifik lagi karena diatur oleh grid */
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -227,10 +223,10 @@
             margin-bottom: 10px; /* Lebih sedikit margin */
         }
 
-        /* Style for currentProductSummary (dalam tata letak baru) */
+        /* Style for currentProductSummary */
         #currentProductSummary {
             margin-top: 10px; /* Lebih sedikit margin atas */
-            padding: 10px; /* Lebih sedikit padding */
+            padding: 12px; /* Ditingkatkan sedikit untuk ruang bernapas */
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
@@ -238,9 +234,9 @@
         }
 
         #currentProductSummary h3 {
-            font-size: 13px; /* Lebih kecil */
+            font-size: 14px; /* Sedikit lebih besar dari sebelumnya */
             color: #333;
-            margin-bottom: 5px; /* Lebih sedikit margin bawah */
+            margin-bottom: 8px; /* Lebih sedikit margin bawah */
             font-weight: 600;
         }
 
@@ -251,27 +247,44 @@
         }
 
         #currentProductItemsList li {
-            margin-bottom: 2px; /* Lebih sedikit margin bawah */
-            font-size: 12px; /* Lebih kecil */
+            margin-bottom: 4px; /* Sedikit spasi antar item */
+            font-size: 13px; /* Sedikit lebih besar dari sebelumnya */
             color: #555;
-            line-height: 1.2; /* Lebih rapat */
-            word-break: break-word;
+            line-height: 1.3; /* Lebih rapat */
+            word-break: break-word; /* Memastikan teks panjang mem-wrap */
+            padding-left: 5px; /* Sedikit indentasi untuk estetika */
+            position: relative; /* Untuk penomoran */
+        }
+        
+        /* Menambahkan penomoran otomatis */
+        #currentProductItemsList li:before {
+            content: counter(list-item) ". ";
+            counter-increment: list-item;
+            color: var(--primary-color);
+            font-weight: 600;
+            position: absolute;
+            left: 0;
+            top: 0;
+            transform: translateX(-100%); /* Geser ke kiri dari teks */
+            width: 20px; /* Ruang untuk nomor */
+            text-align: right;
+            margin-right: 5px; /* Jarak antara nomor dan teks */
         }
 
         #currentProductItemsList li strong {
             color: var(--primary-color);
-            font-size: 12px; /* Lebih kecil */
+            font-size: 13px; /* Sama dengan li */
         }
 
         #noCurrentProductItems {
             color: #777;
-            font-size: 11px; /* Lebih kecil */
+            font-size: 12px; /* Sedikit lebih besar */
             text-align: center;
-            margin-top: 5px; /* Lebih sedikit margin atas */
+            margin-top: 10px; /* Lebih sedikit margin atas */
             font-style: italic;
         }
 
-        /* Varian Options (tetap di bawah untuk sekarang) */
+        /* Varian Options */
         .variant-group {
             margin-bottom: 15px; /* Sedikit dikurangi */
             padding: 10px; /* Sedikit dikurangi */
@@ -321,7 +334,7 @@
             font-weight: 500;
         }
 
-        /* Toast / Alert Message (tetap) */
+        /* Toast / Alert Message */
         .variant-alert {
             position: fixed;
             bottom: 90px;
@@ -347,7 +360,7 @@
             visibility: visible;
         }
 
-        /* Fly to Cart Animation (tetap) */
+        /* Fly to Cart Animation */
         .fly-to-cart {
             position: fixed;
             z-index: 10000;
@@ -360,7 +373,7 @@
             opacity: 1;
         }
 
-        /* Cart Summary Bar at Bottom (tetap) */
+        /* Cart Summary Bar at Bottom */
         .cart-summary-bar {
             position: fixed;
             bottom: 0;
@@ -559,6 +572,9 @@
                 let hasItems = false;
                 let itemCounter = 1;
 
+                // Reset counter before starting
+                currentProductItemsList.style.counterReset = 'list-item'; 
+
                 if (!snapshot.empty) {
                     snapshot.forEach(doc => {
                         const item = doc.data();
@@ -578,7 +594,8 @@
                                 }
                             }
                             const listItem = document.createElement('li');
-                            listItem.innerHTML = `<strong>${itemCounter}. ${item.name}${variantString}</strong> (${item.quantity} item)`;
+                            // Tidak perlu itemCounter di sini karena CSS yang akan handle
+                            listItem.innerHTML = `<strong>${item.name}${variantString}</strong> (${item.quantity} item)`;
                             currentProductItemsList.appendChild(listItem);
                             itemCounter++;
                         }
