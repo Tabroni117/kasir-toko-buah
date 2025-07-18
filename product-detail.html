@@ -248,7 +248,8 @@
 
         #currentProductItemsList li {
             margin-bottom: 4px;
-            font-size: 13px;
+            /* Ukuran font utama untuk list item */
+            font-size: 12px; /* Dikecilkan dari 13px */
             color: #555;
             line-height: 1.3;
             word-break: break-word;
@@ -258,7 +259,8 @@
         
         #currentProductItemsList li strong {
             color: var(--primary-color);
-            font-size: 13px;
+            /* Ukuran font untuk teks tebal di dalam list item */
+            font-size: 12px; /* Dikecilkan dari 13px, agar konsisten dengan li */
         }
 
         #noCurrentProductItems {
@@ -535,7 +537,7 @@
         let productQuantityInput = null;
         const userIdDisplay = document.getElementById('userIdDisplay');
         let currentUserId = null;
-        let increaseButton = null; // Definisi untuk tombol plus (+)
+        let increaseButton = null;
 
         const currentProductItemsList = document.getElementById('currentProductItemsList');
         const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
@@ -798,18 +800,6 @@
             }
         }
 
-        // --- Fungsi ini TIDAK diperlukan lagi karena tombol plus akan selalu aktif ---
-        // function checkAndEnableIncreaseButton() {
-        //     if (selectedVariants.bumbu && selectedVariants.kacang) {
-        //         increaseButton.disabled = false;
-        //         loadProductQuantityFromFirestore();
-        //     } else {
-        //         increaseButton.disabled = true;
-        //         productQuantityInput.value = 0;
-        //         updateLocalSummaryBar(0);
-        //     }
-        // }
-
         function updateActiveVariantPreview() {
             const name = selectedProduct?.name || '';
             const bumbu = selectedVariants.bumbu;
@@ -822,7 +812,6 @@
                 display += ' - ' + parts.join(', ');
             }
             document.getElementById('activeVariantPreview').textContent = display;
-            // Panggil loadProductQuantityFromFirestore di sini setelah varian dipilih
             if (selectedVariants.bumbu && selectedVariants.kacang) {
                 loadProductQuantityFromFirestore();
             } else {
@@ -834,8 +823,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
             increaseButton = document.getElementById('increaseQuantity');
-            // !!! HAPUS BARIS INI agar tombol plus tidak disabled secara default !!!
-            // increaseButton.disabled = true; 
+            // increaseButton.disabled = true; // Baris ini sudah dihapus di perbaikan sebelumnya
 
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
@@ -870,11 +858,7 @@
 
                     if (selectedProduct) {
                         productNameInSummary.textContent = selectedProduct.name;
-                        // !!! HAPUS PANGGILAN checkAndEnableIncreaseButton() di sini !!!
-                        // checkAndEnableIncreaseButton(); 
-                        // Panggil loadProductQuantityFromFirestore() langsung jika perlu,
-                        // atau biarkan updateActiveVariantPreview yang memanggilnya setelah varian dipilih
-                        if (selectedVariants.bumbu && selectedVariants.kacang) { // Hanya muat jika varian sudah dipilih sebelumnya
+                        if (selectedVariants.bumbu && selectedVariants.kacang) {
                             loadProductQuantityFromFirestore();
                         }
                         renderCurrentProductItemsSummary();
@@ -893,8 +877,6 @@
                         option.classList.add('active');
                         selectedVariants[variantType] = option.dataset.value;
                         updateActiveVariantPreview();
-                        // !!! HAPUS PANGGILAN checkAndEnableIncreaseButton() di sini !!!
-                        // checkAndEnableIncreaseButton();
                     });
                 });
             });
@@ -924,7 +906,6 @@
                 });
 
                 document.getElementById('increaseQuantity').addEventListener('click', () => {
-                    // !!! Tambahkan pemeriksaan varian di sini juga !!!
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
