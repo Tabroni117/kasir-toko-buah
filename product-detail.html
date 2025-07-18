@@ -123,7 +123,7 @@
         /* Placeholder untuk elemen fixed agar konten di bawahnya tidak tumpang tindih */
         #productDetailPlaceholder {
             height: 0; /* Tinggi akan diatur oleh JavaScript */
-            margin-bottom: 100px; /* Jarak yang terakhir kita atur (DIUBAH) */
+            margin-bottom: 35px; /* Jarak yang terakhir kita atur (DIUBAH) */
         }
 
         .product-image-container {
@@ -788,18 +788,20 @@
 
         // Function to initialize listeners on variant options
         function initializeVariantSelections() {
-            document.querySelectorAll('.variant-options').forEach(group => {
-                const variantType = group.dataset.variant;
+            document.querySelectorAll('.variant-group').forEach(group => {
                 group.querySelectorAll('.variant-option').forEach(option => {
                     // Ensure listener is added only once
                     if (!option._hasClickListener) {
                         option.addEventListener('click', async function() {
+                            const variantType = this.closest('.variant-options').dataset.variant;
+                            const variantValue = this.dataset.value;
+
                             // Remove 'active' class from all options in this group
                             this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
                             // Add 'active' class to the clicked option
                             this.classList.add('active');
 
-                            selectedVariants[variantType] = this.dataset.value;
+                            selectedVariants[variantType] = variantValue;
                             updateActiveVariantPreview();
                             // Update quantity input based on newly selected variant from cart
                             await updateProductQuantityInputFromCart();
