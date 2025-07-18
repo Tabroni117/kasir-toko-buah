@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Produk</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Detail Produk</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
@@ -27,7 +26,7 @@
             padding: 0;
             background-color: var(--light-gray);
             color: var(--text-color);
-            overflow-x: hidden;
+            overflow-x: hidden; /* Mencegah scroll horizontal yang tidak diinginkan */
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -37,6 +36,10 @@
             flex-grow: 1;
             padding: 20px;
             padding-bottom: 80px; /* Space for fixed cart summary bar */
+            /* Tambahkan max-width dan margin auto untuk centering di layar lebar */
+            max-width: 600px; /* Lebar maksimum yang nyaman untuk mobile/tablet */
+            margin: 0 auto;
+            box-sizing: border-box; /* Pastikan padding tidak menambah lebar total */
         }
 
         .header-bar {
@@ -50,6 +53,8 @@
             position: sticky;
             top: 0;
             z-index: 1000;
+            box-sizing: border-box; /* Penting untuk header */
+            width: 100%; /* Pastikan header mengambil seluruh lebar */
         }
 
         .header-bar .left, .header-bar .right {
@@ -81,7 +86,7 @@
         }
 
         .product-image-container {
-            width: 100%;
+            width: 100%; /* Pastikan 100% dari parent container */
             padding-top: 100%; /* 1:1 Aspect Ratio */
             position: relative;
             background-color: white;
@@ -105,6 +110,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box; /* Pastikan padding tidak menambah lebar */
         }
 
         .product-name-detail {
@@ -117,7 +123,7 @@
         .quantity-control {
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* Align to start */
+            justify-content: flex-start;
             margin-bottom: 15px;
         }
 
@@ -138,7 +144,7 @@
         }
 
         .quantity-control button:hover:not(:disabled) {
-            background-color: #388e3c; /* Darker green */
+            background-color: #388e3c;
             transform: scale(1.05);
         }
 
@@ -162,7 +168,7 @@
             font-size: 16px;
             font-weight: 600;
             color: var(--text-color);
-            -moz-appearance: textfield; /* Hide arrows in Firefox */
+            -moz-appearance: textfield;
         }
 
         .quantity-control input::-webkit-outer-spin-button,
@@ -193,6 +199,7 @@
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            box-sizing: border-box; /* Penting untuk padding */
         }
 
         .variant-label {
@@ -218,6 +225,8 @@
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0; /* Mencegah item varian menyusut terlalu kecil */
+            box-sizing: border-box;
         }
 
         .variant-option:hover {
@@ -236,7 +245,7 @@
         /* Toast / Alert Message */
         .variant-alert {
             position: fixed;
-            bottom: 90px; /* Above the cart summary bar */
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
             background-color: var(--red-alert);
@@ -249,7 +258,9 @@
             transition: opacity 0.3s ease, visibility 0.3s ease;
             z-index: 1001;
             font-size: 14px;
-            white-space: nowrap; /* Prevent text wrapping */
+            white-space: nowrap;
+            max-width: 90%; /* Batasi lebar agar tidak melebihi layar */
+            text-align: center;
         }
 
         .variant-alert.show {
@@ -261,7 +272,7 @@
         .fly-to-cart {
             position: fixed;
             z-index: 10000;
-            width: 50px; /* Initial size */
+            width: 50px;
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
@@ -284,13 +295,17 @@
             padding: 10px 20px;
             box-sizing: border-box;
             z-index: 999;
-            transform: translateY(100%); /* Start off-screen */
+            transform: translateY(100%);
             transition: transform 0.3s ease-out;
-            display: none; /* Hidden by default via JS */
+            /* display: none; */ /* Dihapus, akan dikelola oleh JS untuk transisi */
+            opacity: 0; /* Mulai dengan opacity 0 */
+            pointer-events: none; /* Jangan bisa diklik saat tersembunyi */
         }
 
         .cart-summary-bar.show {
-            transform: translateY(0); /* Slide up */
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto; /* Bisa diklik saat muncul */
         }
 
         .summary-info {
@@ -341,6 +356,7 @@
             background-color: var(--light-gray);
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            box-sizing: border-box; /* Penting untuk padding */
         }
 
         #currentProductSummary h3 {
@@ -580,9 +596,9 @@
                      if (totalItems > 0) {
                          itemCountEl.textContent = `${totalItems} Item`;
                          totalPriceEl.textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
-                         summaryBar.style.display = 'flex';
+                         summaryBar.classList.add('show');
                      } else {
-                         summaryBar.style.display = 'none';
+                         summaryBar.classList.remove('show');
                      }
                  }
             });
@@ -607,11 +623,7 @@
                 const currentProductPrice = selectedProduct.price * quantity;
                 itemCountEl.textContent = `${quantity} Item (Produk Ini)`; // Menambahkan keterangan "Produk Ini"
                 totalPriceEl.textContent = `Rp ${currentProductPrice.toLocaleString('id-ID')}`;
-                summaryBar.style.display = 'flex';
-                // Tambahkan kelas untuk transisi jika belum ada
-                if (!summaryBar.classList.contains('show')) {
-                    summaryBar.classList.add('show');
-                }
+                summaryBar.classList.add('show');
             } else {
                 // Jika kuantitas lokal 0, cek total item di keranjang global
                 // Ini akan memicu listenerToCartUpdates untuk memperbarui bar,
@@ -629,21 +641,15 @@
                         if (totalGlobalItems > 0) {
                             itemCountEl.textContent = `${totalGlobalItems} Item`;
                             totalPriceEl.textContent = `Rp ${totalGlobalPrice.toLocaleString('id-ID')}`;
-                            summaryBar.style.display = 'flex';
-                            if (!summaryBar.classList.contains('show')) {
-                                summaryBar.classList.add('show');
-                            }
+                            summaryBar.classList.add('show');
                         } else {
-                            summaryBar.style.display = 'none';
                             summaryBar.classList.remove('show');
                         }
                      }).catch(error => {
                         console.error("Gagal mendapatkan total keranjang global:", error);
-                        summaryBar.style.display = 'none';
                         summaryBar.classList.remove('show');
                      });
                 } else {
-                    summaryBar.style.display = 'none';
                     summaryBar.classList.remove('show');
                 }
             }
