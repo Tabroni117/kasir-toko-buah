@@ -161,6 +161,7 @@
             align-items: center;
             justify-content: flex-start;
             margin-bottom: 10px;
+            position: relative; /* Untuk positioning loading indicator */
         }
 
         .quantity-control button {
@@ -216,6 +217,30 @@
             margin: 0;
         }
 
+        /* --- Loading Indicator Styles --- */
+        .quantity-loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none; /* Sembunyikan secara default */
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        .quantity-loading-indicator.show {
+            display: block; /* Tampilkan saat dibutuhkan */
+        }
+        /* --- End Loading Indicator Styles --- */
+
+
         .product-description-detail {
             font-size: 13px;
             color: var(--dark-gray);
@@ -254,19 +279,26 @@
             word-break: break-word;
             padding-left: 0;
             position: relative;
-
-            /* --- PENTING: Tambahkan Flexbox di sini --- */
             display: flex;
-            justify-content: space-between; /* Menjauhkan item dari kuantitas */
-            align-items: baseline; /* Menjaga teks sejajar di garis dasar */
-            gap: 8px; /* Memberikan sedikit celah antara nama item dan kuantitas */
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
         }
         
+        #currentProductItemsList li .item-number {
+            flex-shrink: 0;
+            width: 20px; /* Lebar tetap untuk penomoran (sesuaikan jika perlu) */
+            text-align: right;
+            margin-right: 5px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
         #currentProductItemsList li .item-name-variants {
-            flex-grow: 1; /* Biarkan nama item mengisi ruang yang tersedia */
-            overflow: hidden; /* Sembunyikan jika terlalu panjang */
-            text-overflow: ellipsis; /* Tampilkan ... jika terlalu panjang */
-            white-space: nowrap; /* Pastikan tetap dalam satu baris */
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         #currentProductItemsList li strong {
@@ -275,13 +307,12 @@
         }
 
         #currentProductItemsList li .item-quantity {
-            flex-shrink: 0; /* Pastikan kuantitas tidak mengecil */
-            text-align: right; /* Rata kanan untuk kuantitas */
-            min-width: 40px; /* Beri lebar minimum agar konsisten */
-            font-weight: 600; /* Agar lebih menonjol */
-            color: var(--dark-gray); /* Warna sedikit berbeda */
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 40px;
+            font-weight: 600;
+            color: var(--dark-gray);
         }
-
 
         #noCurrentProductItems {
             color: #777;
@@ -483,7 +514,10 @@
                     <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
                     <input type="number" id="productQuantity" value="0" min="0" readonly>
                     <button id="increaseQuantity"><i class="fas fa-plus"></i></button>
-                </div>
+                    <div class="quantity-loading-indicator" id="quantityLoadingIndicator">
+                        Memperbarui...
+                    </div>
+                    </div>
             </div>
         </div>
 
@@ -558,6 +592,8 @@
         const userIdDisplay = document.getElementById('userIdDisplay');
         let currentUserId = null;
         let increaseButton = null;
+        let decreaseButton = null; // Tambahkan ini
+        let quantityLoadingIndicator = null; // Tambahkan ini
 
         const currentProductItemsList = document.getElementById('currentProductItemsList');
         const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
@@ -608,7 +644,6 @@
                             }
                         }
                         const listItem = document.createElement('li');
-                        // --- PENTING: Struktur HTML baru di sini ---
                         listItem.innerHTML = `
                             <span class="item-number">${itemCounter}.</span>
                             <span class="item-name-variants">
@@ -762,7 +797,7 @@
             window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
         }
 
-        async function updateCartInFirestore(quantity) {
+        async function updateCartInFirestore(quantity, isIncrease = false) { // Tambah parameter isIncrease
             if (!currentUserId || !selectedProduct) {
                 showToast("Anda harus login untuk menambahkan item.");
                 return;
@@ -771,6 +806,11 @@
                 showToast("Pilih varian bumbu dan kacang dahulu.");
                 return;
             }
+
+            // Tampilkan loading indicator
+            quantityLoadingIndicator.classList.add('show');
+            increaseButton.disabled = true; // Nonaktifkan tombol saat loading
+            decreaseButton.disabled = true; // Nonaktifkan tombol saat loading
 
             const productId = selectedProduct.id;
             const bumbuVariant = selectedVariants.bumbu || 'none';
@@ -794,12 +834,24 @@
                 } else {
                     await cartItemDocRef.delete();
                 }
+                
+                // Jika ini adalah aksi penambahan, baru lempar ke keranjang
+                if (isIncrease) {
+                    lemparKeKeranjang(selectedProduct.image);
+                }
+
                 window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
                 updateLocalSummaryBar(quantity);
                 renderCurrentProductItemsSummary();
+                
             } catch (error) {
                 console.error("❌ Gagal memperbarui keranjang:", error);
                 showToast("Gagal memperbarui keranjang.");
+            } finally {
+                // Sembunyikan loading indicator dan aktifkan kembali tombol
+                quantityLoadingIndicator.classList.remove('show');
+                increaseButton.disabled = false;
+                decreaseButton.disabled = false;
             }
         }
 
@@ -850,6 +902,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
             increaseButton = document.getElementById('increaseQuantity');
+            decreaseButton = document.getElementById('decreaseQuantity'); // Inisialisasi tombol minus
+            quantityLoadingIndicator = document.getElementById('quantityLoadingIndicator'); // Inisialisasi loading indicator
 
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
@@ -918,7 +972,7 @@
                 renderCurrentProductItemsSummary();
                 updateLocalSummaryBar(0);
 
-                document.getElementById('decreaseQuantity').addEventListener('click', () => {
+                decreaseButton.addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
@@ -927,11 +981,11 @@
                     if (qty > 0) {
                         qty--;
                         productQuantityInput.value = qty;
-                        updateCartInFirestore(qty);
+                        updateCartInFirestore(qty, false); // Parameter false untuk isIncrease
                     }
                 });
 
-                document.getElementById('increaseQuantity').addEventListener('click', () => {
+                increaseButton.addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
@@ -939,8 +993,7 @@
                     let qty = parseInt(productQuantityInput.value);
                     qty++;
                     productQuantityInput.value = qty;
-                    updateCartInFirestore(qty);
-                    lemparKeKeranjang(selectedProduct.image);
+                    updateCartInFirestore(qty, true); // Parameter true untuk isIncrease
                 });
 
             } else {
