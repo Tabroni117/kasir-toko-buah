@@ -106,25 +106,24 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            /* margin-bottom: 20px; <-- Removed, as it's fixed now */
             padding: 15px;
             box-sizing: border-box;
             align-items: center;
 
-            /* PERBAIKAN: Membuat elemen fixed */
+            /* PROPERTI UNTUK MEMBUAT FIXED */
             position: fixed;
             top: var(--header-height); /* Posisikan tepat di bawah header */
             left: 50%; /* Pusatkan secara horizontal */
             transform: translateX(-50%); /* Pusatkan secara horizontal */
             width: calc(100% - 40px); /* Sesuaikan lebar dengan padding container (20px kiri + 20px kanan) */
-            max-width: 400px; /* Lebar maksimum tetap 400px */
+            max-width: 400px; /* Lebar maksimum yang disesuaikan terakhir */
             z-index: 950; /* Pastikan di atas konten yang discroll, di bawah header/cart bar */
         }
 
         /* Placeholder untuk elemen fixed agar konten di bawahnya tidak tumpang tindih */
         #productDetailPlaceholder {
             height: 0; /* Tinggi akan diatur oleh JavaScript */
-            margin-bottom: 200px; /* Jarak tetap 200px seperti permintaan sebelumnya */
+            margin-bottom: 200px; /* Jarak yang terakhir kita atur */
         }
 
         .product-image-container {
@@ -264,7 +263,7 @@
             color: var(--dark-gray);
             line-height: 1.4;
             margin-bottom: 10px;
-            font-style: italic; /* Make text italic */
+            font-style: italic; /* Membuat teks miring */
         }
 
         /* Style for currentProductSummary */
@@ -399,7 +398,6 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             box-sizing: border-box;
-            display: none; /* Sembunyikan secara default */
         }
 
         .variant-label {
@@ -595,11 +593,11 @@
                     <div class="quantity-loading-indicator" id="quantityLoadingIndicator">
                         Memperbarui...
                     </div>
-                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Placeholder for fixed element so content below doesn't overlap -->
+        <!-- Placeholder untuk elemen fixed agar konten di bawahnya tidak tumpang tindih -->
         <div id="productDetailPlaceholder"></div>
 
         <div id="currentProductSummary">
@@ -615,29 +613,24 @@
                     <i class="fas fa-trash-alt"></i> Hapus Item
                 </button>
             </div>
-            </div>
+        </div>
 
         <p class="product-description-detail" id="productDescription">Deskripsi produk akan muncul di sini.</p>
 
-        <!-- PERBAIKAN: Menambahkan ID unik untuk setiap variant-group -->
-        <div class="variant-group" id="variantGroupBumbu">
+        <div class="variant-group">
             <label class="variant-label">Pilih Bumbu:</label>
             <div class="variant-options" data-variant="bumbu">
-                <!-- Opsi akan diisi oleh JavaScript -->
+                <div class="variant-option" data-value="Pedas">Pedas</div>
+                <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
+                <div class="variant-option" data-value="Manis">Manis</div>
             </div>
         </div>
 
-        <div class="variant-group" id="variantGroupPilihBuah">
-            <label class="variant-label">Pilih Buah:</label>
-            <div class="variant-options" data-variant="pilih_buah">
-                <!-- Opsi akan diisi oleh JavaScript -->
-            </div>
-        </div>
-
-        <div class="variant-group" id="variantGroupKacang">
+        <div class="variant-group">
             <label class="variant-label">Pilih Kacang:</label>
             <div class="variant-options" data-variant="kacang">
-                <!-- Opsi akan diisi oleh JavaScript -->
+                <div class="variant-option" data-value="Dengan Kacang">Dengan Kacang</div>
+                <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
             </div>
         </div>
     </div>
@@ -671,6 +664,7 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
+        // Fix: Initialize initialAuthToken correctly
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         // Initialize Firebase
@@ -678,10 +672,11 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         const cartsCollection = db.collection('carts');
+        // IMPORTANT CORRECTION: Using 'buah' collection as requested
         const productsCollection = db.collection('buah'); 
 
         // --- Global Variables for DOM Elements and Data ---
-        const selectedVariants = { bumbu: null, kacang: null, pilih_buah: null }; 
+        const selectedVariants = { bumbu: null, kacang: null };
         let selectedProduct = null;
         let productQuantityInput = null;
         const userIdDisplay = document.getElementById('userIdDisplay');
@@ -689,114 +684,80 @@
         let increaseButton = null;
         let decreaseButton = null;
         let quantityLoadingIndicator = null;
-        let editProductSummaryBtn = null; 
-        let deleteProductSummaryBtn = null; 
-        let summaryActionButtons = null; 
+        let editProductSummaryBtn = null; // This variable is kept as requested
+        let deleteProductSummaryBtn = null; // This variable is kept
+        let summaryActionButtons = null; // This variable is kept
 
         const currentProductItemsList = document.getElementById('currentProductItemsList');
         const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
         const productNameInSummary = document.getElementById('productNameInSummary');
-        const productImageElement = document.getElementById('productImage');
+        const productImageElement = document.getElementById('productImage'); // Product Image Element
+        let productDetailPlaceholder = null; // Variabel untuk placeholder
 
-        const allVariantGroups = {
-            bumbu: document.getElementById('variantGroupBumbu'),
-            pilih_buah: document.getElementById('variantGroupPilihBuah'),
-            kacang: document.getElementById('variantGroupKacang')
-        };
 
-        // Variabel untuk placeholder
-        let productDetailPlaceholder = null;
-
+        // --- Firebase Authentication Listener ---
+        // Move onAuthStateChanged inside DOMContentLoaded so DOM elements are available
+        // and to avoid potential race conditions with variable initialization
+        // that depend on the DOM.
 
         /**
          * Function to load product details from Firestore and populate HTML elements.
+         * This is a key part that ensures product images and data are displayed.
          */
         async function loadProductDetails(productId) {
             console.log("Loading product details for ID:", productId);
             // Reset display to loading status
-            productNameInSummary.textContent = '';
+            productNameInSummary.textContent = ''; // Clear product name in summary
             document.getElementById('productName').textContent = 'Memuat Nama Produk...';
             document.getElementById('productPrice').textContent = 'Rp 0';
             document.getElementById('productDescription').textContent = 'Memuat deskripsi produk...';
             productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Memuat+Gambar...';
-            if (productQuantityInput) productQuantityInput.value = 0;
-            // Reset selected variants and hide all variant groups initially
+            if (productQuantityInput) productQuantityInput.value = 0; // Ensure productQuantityInput is initialized
+            // Reset selected variants for the new product
             for (const key in selectedVariants) {
                 selectedVariants[key] = null;
             }
-            for (const key in allVariantGroups) {
-                if (allVariantGroups[key]) allVariantGroups[key].style.display = 'none';
-            }
-            updateActiveVariantPreview();
-            noCurrentProductItemsMessage.style.display = 'block';
-            if (summaryActionButtons) summaryActionButtons.style.display = 'none';
-            if (increaseButton) increaseButton.disabled = true;
+            updateActiveVariantPreview(); // Reset variant preview
+            noCurrentProductItemsMessage.style.display = 'block'; // Show default message
+            if (summaryActionButtons) summaryActionButtons.style.display = 'none'; // Hide action buttons
+            if (increaseButton) increaseButton.disabled = true; // Disable buttons temporarily
             if (decreaseButton) decreaseButton.disabled = true;
 
             try {
+                // Retrieve product document from 'buah' collection
                 const productDoc = await productsCollection.doc(productId).get();
                 if (productDoc.exists) {
                     selectedProduct = { id: productDoc.id, ...productDoc.data() };
                     console.log("Data Produk Ditemukan:", selectedProduct);
-                    // --- DEBUGGING: Log the product data ---
-                    console.log("DEBUG: selectedProduct:", selectedProduct);
-                    console.log("DEBUG: selectedProduct.variantTypeIds:", selectedProduct.variantTypeIds);
-                    console.log("DEBUG: selectedProduct.variants:", selectedProduct.variants);
-                    // --- END DEBUGGING ---
 
+                    // Populate product details into DOM
                     document.getElementById('productName').textContent = selectedProduct.nama || 'Nama Tidak Tersedia';
                     document.getElementById('productPrice').textContent = formatRupiah(selectedProduct.harga || 0);
                     document.getElementById('productDescription').textContent = selectedProduct.deskripsi || 'Tidak ada deskripsi untuk produk ini.';
-                    productNameInSummary.textContent = selectedProduct.nama || 'Produk Ini';
+                    productNameInSummary.textContent = selectedProduct.nama || 'Produk Ini'; // Update product name in summary
 
+                    // --- MAIN SECTION FOR DISPLAYING IMAGE ---
+                    // Using 'imageUrl' consistent with the property in APL05.html
                     if (selectedProduct.imageUrl) {
                         productImageElement.src = selectedProduct.imageUrl;
+                        console.log("Gambar dimuat dari URL:", selectedProduct.imageUrl);
                     } else {
+                        // Fallback image if no image URL from Firebase
                         productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Gambar+Tidak+Tersedia';
                         console.warn("URL gambar tidak ditemukan untuk produk:", selectedProduct.nama);
                     }
+                    // --- END OF MAIN IMAGE SECTION ---
 
-                    // Logika untuk menampilkan dan mengisi varian secara dinamis
-                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
-                        selectedProduct.variantTypeIds.forEach(variantType => {
-                            const variantGroupDiv = allVariantGroups[variantType];
-                            const variantOptionsDiv = variantGroupDiv ? variantGroupDiv.querySelector('.variant-options') : null;
-                            const variantLabel = variantGroupDiv ? variantGroupDiv.querySelector('.variant-label') : null;
+                    // Initialize variant selections (if any) and update quantity input
+                    initializeVariantSelections();
+                    updateActiveVariantPreview(); // Show initial variant preview
 
-                            if (variantGroupDiv && variantOptionsDiv && selectedProduct.variants && selectedProduct.variants[variantType]) {
-                                variantGroupDiv.style.display = 'block'; // Tampilkan grup varian
-                                variantOptionsDiv.innerHTML = ''; // Kosongkan opsi lama
-                                
-                                // Set label sesuai nama varian (opsional, jika ingin lebih dinamis)
-                                if (variantLabel) {
-                                    const labelText = variantType.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
-                                    variantLabel.textContent = `Pilih ${labelText}:`;
-                                }
-
-                                selectedProduct.variants[variantType].forEach(optionValue => {
-                                    const optionDiv = document.createElement('div');
-                                    optionDiv.classList.add('variant-option');
-                                    optionDiv.dataset.value = optionValue;
-                                    optionDiv.textContent = optionValue;
-                                    variantOptionsDiv.appendChild(optionDiv);
-                                });
-                                // Inisialisasi listener untuk opsi yang baru dibuat
-                                initializeVariantOptionsListeners(variantOptionsDiv);
-                            } else {
-                                console.warn(`DEBUG: Varian '${variantType}' tidak ditemukan di selectedProduct.variants atau elemen HTML tidak ada.`);
-                            }
-                        });
-                    } else {
-                        console.log("DEBUG: selectedProduct.variantTypeIds tidak ada atau bukan array. Tidak ada varian yang akan ditampilkan.");
-                    }
-
-                    updateActiveVariantPreview();
-
+                    // If user is logged in, update display and start listening
                     if (currentUserId) {
                         await updateProductQuantityInputFromCart();
                         renderCurrentProductItemsSummary();
                     }
-                    if (increaseButton) increaseButton.disabled = false;
+                    if (increaseButton) increaseButton.disabled = false; // Re-enable buttons
                     if (decreaseButton) decreaseButton.disabled = false;
 
                 } else {
@@ -825,61 +786,47 @@
         }
 
 
-        // Fungsi terpisah untuk menginisialisasi listener pada opsi varian yang baru dibuat
-        function initializeVariantOptionsListeners(variantOptionsContainer) {
-            variantOptionsContainer.querySelectorAll('.variant-option').forEach(option => {
-                if (!option._hasClickListener) { // Pastikan listener hanya ditambahkan sekali
-                    option.addEventListener('click', async function() {
-                        const variantType = this.closest('.variant-options').dataset.variant;
-                        const variantValue = this.dataset.value;
+        // Fungsi untuk menginisialisasi listener pada opsi varian
+        function initializeVariantSelections() {
+            document.querySelectorAll('.variant-options').forEach(group => {
+                const variantType = group.dataset.variant;
+                group.querySelectorAll('.variant-option').forEach(option => {
+                    // Pastikan listener hanya ditambahkan sekali
+                    if (!option._hasClickListener) {
+                        option.addEventListener('click', async function() {
+                            // Hapus kelas 'active' dari semua opsi dalam grup ini
+                            this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                            // Tambahkan kelas 'active' ke opsi yang diklik
+                            this.classList.add('active');
 
-                        // Remove 'active' class from all options in this group
-                        this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                        // Add 'active' class to the clicked option
-                        this.classList.add('active');
-
-                        selectedVariants[variantType] = variantValue;
-                        updateActiveVariantPreview();
-                        await updateProductQuantityInputFromCart();
-                    });
-                    option._hasClickListener = true; // Mark that listener has been added
-                }
+                            selectedVariants[variantType] = this.dataset.value;
+                            updateActiveVariantPreview();
+                            // Perbarui input kuantitas berdasarkan varian yang baru dipilih dari keranjang
+                            await updateProductQuantityInputFromCart();
+                        });
+                        option._hasClickListener = true; // Tandai bahwa listener telah ditambahkan
+                    }
+                });
             });
         }
 
+        // Perbarui preview varian aktif
         function updateActiveVariantPreview() {
+            // Menggunakan selectedProduct.nama karena itu adalah properti dalam data Firestore
             const name = selectedProduct?.nama || ''; 
-            const variantParts = [];
-
-            // Iterasi melalui semua kemungkinan tipe varian
-            for (const type in selectedVariants) {
-                // Hanya tambahkan ke preview jika varian tersebut ada di variantTypeIds produk
-                if (selectedProduct && selectedProduct.variantTypeIds && selectedProduct.variantTypeIds.includes(type)) {
-                    if (selectedVariants[type] && selectedVariants[type] !== 'none' && selectedVariants[type] !== 'Belum dipilih') {
-                        variantParts.push(selectedVariants[type]);
-                    }
+            const bumbu = selectedVariants.bumbu || 'Belum dipilih'; // Nilai default jika null
+            const kacang = selectedVariants.kacang || 'Belum dipilih'; // Nilai default jika null
+            let display = name;
+            if (bumbu !== 'Belum dipilih' || kacang !== 'Belum dipilih') { // Hanya tambahkan jika varian benar-benar dipilih
+                const parts = [];
+                if (bumbu !== 'Belum dipilih') parts.push(bumbu);
+                if (kacang !== 'Belum dipilih') parts.push(kacang);
+                if (parts.length > 0) {
+                    display += ' - ' + parts.join(', ');
                 }
             }
-            
-            let display = name;
-            if (variantParts.length > 0) {
-                display += ' - ' + variantParts.join(', ');
-            }
             document.getElementById('activeVariantPreview').textContent = display;
-
-            // Cek apakah semua varian yang relevan sudah dipilih
-            let allRelevantVariantsSelected = true;
-            if (selectedProduct && selectedProduct.variantTypeIds) {
-                selectedProduct.variantTypeIds.forEach(type => {
-                    if (!selectedVariants[type]) { // Jika ada varian yang diperlukan tapi belum dipilih
-                        allRelevantVariantsSelected = false;
-                    }
-                });
-            } else { // Jika tidak ada variantTypeIds, berarti tidak ada varian yang perlu dipilih
-                allRelevantVariantsSelected = true;
-            }
-
-            if (allRelevantVariantsSelected && productQuantityInput) {
+            if (selectedVariants.bumbu && selectedVariants.kacang && productQuantityInput) { // Periksa productQuantityInput
                 loadProductQuantityFromFirestore();
             } else if (productQuantityInput) {
                 productQuantityInput.value = 0;
@@ -887,69 +834,300 @@
             }
         }
 
+        // Perbarui input kuantitas berdasarkan item di keranjang untuk varian tertentu
+        async function updateProductQuantityInputFromCart() {
+            if (!currentUserId || !selectedProduct || !productQuantityInput) { // Periksa productQuantityInput
+                if (productQuantityInput) productQuantityInput.value = 0;
+                return;
+            }
+
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${selectedProduct.id}_${bumbuVariant}_${kacangVariant}`;
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+
+            try {
+                const doc = await cartItemDocRef.get();
+                if (doc.exists) {
+                    productQuantityInput.value = doc.data().quantity;
+                } else {
+                    productQuantityInput.value = 0;
+                }
+            } catch (error) {
+                console.error("Error mengambil kuantitas item keranjang:", error);
+                productQuantityInput.value = 0;
+            }
+            // Setelah memperbarui input kuantitas, perbarui juga bilah ringkasan lokal
+            updateLocalSummaryBar(parseInt(productQuantityInput.value));
+        }
+
+
+        async function renderCurrentProductItemsSummary() {
+            if (!currentUserId || !selectedProduct) {
+                currentProductItemsList.innerHTML = '';
+                noCurrentProductItemsMessage.style.display = 'block';
+                if (summaryActionButtons) summaryActionButtons.style.display = 'none';
+                return;
+            }
+
+            try {
+                const snapshot = await cartsCollection.doc(currentUserId).collection('items')
+                    .where('id', '==', selectedProduct.id)
+                    .get();
+
+                currentProductItemsList.innerHTML = '';
+                
+                let hasItems = false;
+                let itemCounter = 1;
+
+                if (!snapshot.empty) {
+                    const items = [];
+                    snapshot.forEach(doc => items.push(doc.data()));
+                    
+                    // Urutkan item berdasarkan varian untuk tampilan yang konsisten
+                    items.sort((a, b) => {
+                        const aCustom = `${a.custom?.bumbu || ''}${a.custom?.kacang || ''}`;
+                        const bCustom = `${b.custom?.bumbu || ''}${b.custom?.kacang || ''}`;
+                        return aCustom.localeCompare(bCustom);
+                    });
+
+                    items.forEach(item => {
+                        hasItems = true;
+                        let variantString = '';
+                        if (item.custom) {
+                            const customParts = [];
+                            if (item.custom.bumbu && item.custom.bumbu !== 'none') {
+                                customParts.push(item.custom.bumbu);
+                            }
+                            if (item.custom.kacang && item.custom.kacang !== 'none') {
+                                customParts.push(item.custom.kacang);
+                            }
+                            if (customParts.length > 0) {
+                                variantString = ` - ${customParts.join(', ')}`;
+                            }
+                        }
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span class="item-number">${itemCounter}.</span>
+                            <span class="item-name-variants">
+                                <strong>${item.name}${variantString}</strong>
+                            </span>
+                            <span class="item-quantity">(${item.quantity} item)</span>
+                        `;
+                        currentProductItemsList.appendChild(listItem);
+                        itemCounter++;
+                    });
+                }
+
+                if (hasItems) {
+                    noCurrentProductItemsMessage.style.display = 'none';
+                    if (summaryActionButtons) summaryActionButtons.style.display = 'flex';
+                } else {
+                    noCurrentProductItemsMessage.style.display = 'block';
+                    if (summaryActionButtons) summaryActionButtons.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error("❌ Gagal memuat ringkasan item produk di keranjang:", error);
+                currentProductItemsList.innerHTML = '';
+                noCurrentProductItemsMessage.style.display = 'block';
+                if (summaryActionButtons) summaryActionButtons.style.display = 'none';
+            }
+        }
+
+
+        let unsubscribeCartListener = null;
+
+        function listenToCartUpdates(userId) {
+            const summaryBar = document.getElementById('cart-summary-bar');
+            if (!summaryBar) return;
+
+            const itemCountEl = summaryBar.querySelector('.summary-item-count');
+            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
+            const checkoutButton = summaryBar.querySelector('.summary-checkout-button');
+
+            // Hentikan listener sebelumnya jika ada
+            if (unsubscribeCartListener) {
+                unsubscribeCartListener();
+            }
+
+            // Mulai listener baru untuk seluruh keranjang pengguna
+            unsubscribeCartListener = cartsCollection.doc(userId).collection('items').onSnapshot(snapshot => {
+                let totalItemsInCart = 0;
+                let totalPriceInCart = 0;
+
+                snapshot.forEach(doc => {
+                    const item = doc.data();
+                    totalItemsInCart += item.quantity;
+                    totalPriceInCart += item.price * item.quantity;
+                });
+
+                // Perbarui tampilan bilah ringkasan di bagian bawah
+                if (totalItemsInCart > 0) {
+                    itemCountEl.textContent = `${totalItemsInCart} Item`;
+                    totalPriceEl.textContent = `Rp ${totalPriceInCart.toLocaleString('id-ID')}`;
+                    summaryBar.classList.add('show');
+                } else {
+                    summaryBar.classList.remove('show');
+                }
+                
+                // Panggil renderCurrentProductItemsSummary untuk memperbarui ringkasan produk tertentu
+                renderCurrentProductItemsSummary();
+                // Panggil updateProductQuantityInputFromCart untuk memastikan input kuantitas cocok dengan keranjang
+                updateProductQuantityInputFromCart();
+            }, error => {
+                console.error("Error mendengarkan pembaruan keranjang:", error);
+            });
+
+            // Tambahkan event listener untuk tombol checkout sekali
+            if (checkoutButton && !checkoutButton._hasClickListener) { // Periksa apakah tombol ada
+                checkoutButton.addEventListener('click', () => {
+                    // Beri tahu jendela induk untuk menavigasi ke halaman keranjang
+                    window.parent.postMessage({ type: 'navigateToCart' }, '*');
+                });
+                checkoutButton._hasClickListener = true;
+            }
+        }
+
+        // Fungsi ini sebenarnya tidak digunakan untuk bilah ringkasan global karena ada listener Firebase
+        // Tetapi dapat digunakan untuk pembaruan UI sementara jika diperlukan, atau jika listener Firebase tidak aktif.
+        function updateLocalSummaryBar(quantity) {
+            const summaryBar = document.getElementById('cart-summary-bar');
+            const itemCountEl = summaryBar.querySelector('.summary-item-count');
+            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
+
+            // Logika ini sekarang sebagian besar ditangani oleh listenToCartUpdates.
+            // Biarkan sebagai placeholder jika Anda hanya ingin menampilkan kuantitas produk ini.
+            // Biasanya, bilah ringkasan menampilkan total keranjang.
+            if (quantity > 0 && selectedProduct) {
+                // Ini akan menampilkan kuantitas HANYA untuk produk ini.
+                // Jika global, biarkan listenToCartUpdates menanganinya.
+                // itemCountEl.textContent = `${quantity} Item (Produk Ini)`;
+                // totalPriceEl.textContent = `Rp ${(selectedProduct.harga * quantity).toLocaleString('id-ID')}`;
+                // summaryBar.classList.add('show');
+            } else {
+                // summaryBar.classList.remove('show'); // Ditangani oleh listener
+            }
+        }
+
+
+        function showToast(message) {
+            const toast = document.getElementById('variantAlert');
+            if (toast) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        function lemparKeKeranjang(imgSrc) {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.classList.add('fly-to-cart');
+            const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
+            // Asumsikan ikon keranjang ada di jendela induk dengan ID 'floatingCartBar' dan kelas 'cart-icon'
+            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon');
+
+            if (!parentCartIcon) {
+                console.warn("Ikon keranjang di jendela utama tidak ditemukan untuk animasi. Melewatkan animasi.");
+                if (document.body.contains(img)) { // Pastikan elemen img ada sebelum dihapus
+                    document.body.removeChild(img);
+                }
+                return;
+            }
+            const endRect = parentCartIcon.getBoundingClientRect();
+            img.style.left = `${startRect.left}px`;
+            img.style.top = `${startRect.top}px`;
+            img.style.opacity = 1;
+            document.body.appendChild(img);
+            requestAnimationFrame(() => {
+                // Hitung posisi relatif terhadap viewport induk
+                const parentOffsetTop = window.parent.scrollY || window.parent.document.documentElement.scrollTop;
+                const parentOffsetLeft = window.parent.scrollX || window.parent.document.documentElement.scrollLeft;
+
+                const targetX = endRect.left - startRect.left;
+                const targetY = (endRect.top + parentOffsetTop) - (startRect.top + window.scrollY); // Sesuaikan untuk gulir
+                
+                img.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.2)`;
+                img.style.opacity = 0;
+            });
+            setTimeout(() => {
+                if (document.body.contains(img)) { // Pastikan elemen masih ada sebelum dihapus
+                    document.body.removeChild(img);
+                }
+            }, 700);
+        }
+
+        function closePopup() {
+            if (unsubscribeCartListener) {
+                unsubscribeCartListener(); // Hentikan listener saat menutup
+            }
+            window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
+        }
+
         async function updateCartInFirestore(quantity, isIncrease = false) {
             if (!currentUserId) {
-                showToast("You must be logged in to add items to cart.");
+                showToast("Anda harus masuk untuk menambahkan item ke keranjang.");
+                // Setel ulang input kuantitas ke nilai keranjang saat ini (atau 0 jika tidak ada)
                 await updateProductQuantityInputFromCart(); 
                 return;
             }
             if (!selectedProduct) {
-                showToast("Product details not loaded.");
+                showToast("Detail produk tidak dimuat.");
+                // Setel ulang input kuantitas
                 await updateProductQuantityInputFromCart(); 
                 return;
             }
-            
-            // Cek apakah semua varian yang dibutuhkan sudah dipilih
-            let allRequiredVariantsSelected = true;
-            const customVariantData = {};
-            if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
-                selectedProduct.variantTypeIds.forEach(type => {
-                    if (!selectedVariants[type]) {
-                        allRequiredVariantsSelected = false;
-                    }
-                    customVariantData[type] = selectedVariants[type] || 'none'; // Simpan varian yang dipilih, atau 'none' jika belum dipilih
-                });
-            }
-
-            if (!allRequiredVariantsSelected) {
-                showToast("Pilih semua varian yang diperlukan dahulu.");
-                await updateProductQuantityInputFromCart();
+            if (selectedVariants.bumbu === null || selectedVariants.kacang === null) {
+                showToast("Silakan pilih varian bumbu dan kacang terlebih dahulu.");
+                // Setel ulang input kuantitas ke nilai keranjang saat ini untuk varian default/sebelumnya
+                await updateProductQuantityInputFromCart(); 
                 return;
             }
 
-            // Bangun customKey berdasarkan semua varian yang dipilih
-            let customKeyParts = [selectedProduct.id];
-            for (const type in customVariantData) {
-                customKeyParts.push(customVariantData[type]);
-            }
-            const customKey = customKeyParts.join('_');
-            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
-
-            // Show loading indicator
+            // Tampilkan indikator loading
             if (quantityLoadingIndicator) quantityLoadingIndicator.classList.add('show');
             if (increaseButton) increaseButton.disabled = true;
             if (decreaseButton) decreaseButton.disabled = true;
 
+            const productId = selectedProduct.id;
+            const bumbuVariant = selectedVariants.bumbu;
+            const kacangVariant = selectedVariants.kacang;
+            // Gunakan kombinasi ID produk dan varian sebagai ID dokumen unik di sub-koleksi 'items'
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
+
             try {
                 if (quantity > 0) {
                     await cartItemDocRef.set({
-                        id: selectedProduct.id,
-                        name: selectedProduct.nama, 
-                        image: selectedProduct.imageUrl || 'placeholder.jpg', 
-                        price: selectedProduct.harga, 
-                        custom: customVariantData, // Gunakan objek varian kustom yang dinamis
+                        id: productId,
+                        name: selectedProduct.nama, // Menggunakan 'nama' dari data produk
+                        image: selectedProduct.imageUrl || 'placeholder.jpg', // Menggunakan 'imageUrl' dari data produk
+                        price: selectedProduct.harga, // Menggunakan 'harga' dari data produk
+                        custom: {
+                            bumbu: bumbuVariant,
+                            kacang: kacangVariant
+                        },
                         quantity: quantity
-                    }, { merge: true });
-                    if (isIncrease && selectedProduct.imageUrl) {
+                    }, { merge: true }); // Gunakan merge agar tidak menimpa field lain jika ada
+                    if (isIncrease && selectedProduct.imageUrl) { // Periksa gambar untuk animasi
                         lemparKeKeranjang(selectedProduct.imageUrl);
                     }
                 } else {
+                    // Jika kuantitas 0, hapus item dari keranjang
                     await cartItemDocRef.delete();
                 }
+                // Setelah berhasil, perbarui tampilan ringkasan dan input kuantitas
+                // Ini akan dipicu oleh listener onSnapshot, tetapi memastikan pembaruan visual segera
+                // updateProductQuantityInputFromCart() akan dipanggil oleh listenToCartUpdates
+                // window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*'); // Ini sudah dipanggil oleh listenToCartUpdates
             } catch (error) {
-                console.error("❌ Failed to update cart in Firestore:", error);
-                showToast("Failed to update cart.");
+                console.error("❌ Gagal memperbarui keranjang di Firestore:", error);
+                showToast("Gagal memperbarui keranjang.");
             } finally {
+                // Sembunyikan indikator loading dan aktifkan kembali tombol
                 if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                 if (increaseButton) increaseButton.disabled = false;
                 if (decreaseButton) decreaseButton.disabled = false;
@@ -957,22 +1135,23 @@
         }
 
 
+        // --- Fungsi untuk Menghapus Semua Varian Produk dari Keranjang ---
         async function deleteThisProductFromCart() {
             if (!currentUserId || !selectedProduct) {
-                showToast("No items to delete or you are not logged in.");
+                showToast("Tidak ada item untuk dihapus atau Anda tidak masuk.");
                 return;
             }
 
-            if (!confirm(`Are you sure you want to delete all variants of ${selectedProduct.nama} from the cart?`)) { 
+            if (!confirm(`Apakah Anda yakin ingin menghapus semua varian ${selectedProduct.nama} dari keranjang?`)) { // Menggunakan selectedProduct.nama
                 return;
             }
 
-            // Show loading indicator
+            // Tampilkan indikator loading
             if (quantityLoadingIndicator) quantityLoadingIndicator.classList.add('show');
             if (increaseButton) increaseButton.disabled = true;
             if (decreaseButton) decreaseButton.disabled = true;
-            if (editProductSummaryBtn) editProductSummaryBtn.disabled = true; 
-            if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = true; 
+            if (editProductSummaryBtn) editProductSummaryBtn.disabled = true; // Periksa apakah elemen ada
+            if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = true; // Periksa apakah elemen ada
 
             try {
                 const snapshot = await cartsCollection.doc(currentUserId).collection('items')
@@ -980,24 +1159,25 @@
                     .get();
                 
                 if (snapshot.empty) {
-                    showToast(`${selectedProduct.nama} is not in the cart.`);
+                    showToast(`${selectedProduct.nama} tidak ada di keranjang.`); // Menggunakan selectedProduct.nama
                 } else {
                     const batch = db.batch();
                     snapshot.forEach(doc => {
                         batch.delete(doc.ref);
                     });
                     await batch.commit();
-                    showToast(`${selectedProduct.nama} successfully removed from cart.`);
+                    showToast(`${selectedProduct.nama} berhasil dihapus dari keranjang.`); // Menggunakan selectedProduct.nama
                     
-                    if (productQuantityInput) productQuantityInput.value = 0;
-                    updateLocalSummaryBar(0);
-                    renderCurrentProductItemsSummary();
+                    if (productQuantityInput) productQuantityInput.value = 0; // Setel ulang tampilan kuantitas
+                    updateLocalSummaryBar(0); // Perbarui bilah ringkasan
+                    renderCurrentProductItemsSummary(); // Segarkan daftar ringkasan
                     window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
                 }
             } catch (error) {
-                console.error("❌ Failed to delete product from cart:", error);
-                showToast("Failed to delete product from cart.");
+                console.error("❌ Gagal menghapus produk dari keranjang:", error);
+                showToast("Gagal menghapus produk dari keranjang.");
             } finally {
+                // Sembunyikan indikator loading dan aktifkan kembali tombol
                 if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                 if (increaseButton) increaseButton.disabled = false;
                 if (decreaseButton) decreaseButton.disabled = false;
@@ -1005,25 +1185,19 @@
                 if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = false;
             }
         }
+        // --- Akhir Fungsi Hapus ---
 
 
         async function loadProductQuantityFromFirestore() {
-            if (!currentUserId || !selectedProduct || !productQuantityInput) {
+            if (!currentUserId || !selectedProduct || selectedVariants.bumbu === null || selectedVariants.kacang === null || !productQuantityInput) {
                 if (productQuantityInput) productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
                 return;
             }
-
-            // Bangun customKey berdasarkan semua varian yang dipilih
-            let customKeyParts = [selectedProduct.id];
-            if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
-                selectedProduct.variantTypeIds.forEach(type => {
-                    customKeyParts.push(selectedVariants[type] || 'none');
-                });
-            } else {
-                customKeyParts.push('no_variant');
-            }
-            const customKey = customKeyParts.join('_');
+            const productId = selectedProduct.id;
+            const bumbuVariant = selectedVariants.bumbu || 'none';
+            const kacangVariant = selectedVariants.kacang || 'none';
+            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
             const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             try {
@@ -1032,12 +1206,11 @@
                 productQuantityInput.value = qty;
                 updateLocalSummaryBar(qty);
             } catch (error) {
-                console.error("❌ Failed to load Firestore data for product quantity:", error);
+                console.error("❌ Gagal memuat data Firestore untuk kuantitas produk:", error);
                 productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
             }
         }
-
 
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
@@ -1047,8 +1220,11 @@
             editProductSummaryBtn = document.getElementById('editProductSummaryBtn'); 
             deleteProductSummaryBtn = document.getElementById('deleteProductSummaryBtn'); 
             summaryActionButtons = document.getElementById('summaryActionButtons'); 
-            productDetailPlaceholder = document.getElementById('productDetailPlaceholder'); // Initialize placeholder
+            productDetailPlaceholder = document.getElementById('productDetailPlaceholder'); // Inisialisasi placeholder
 
+            // Pindahkan onAuthStateChanged di dalam DOMContentLoaded agar elemen DOM tersedia
+            // dan untuk menghindari kondisi balapan potensial dengan inisialisasi variabel
+            // yang bergantung pada DOM.
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
                 if (user) {
@@ -1058,108 +1234,102 @@
                         const userCredential = await auth.signInWithCustomToken(initialAuthToken);
                         finalUserId = userCredential.user.uid;
                     } catch (error) {
-                        console.error("productdetail: Error signing in with custom token:", error);
+                        console.error("productdetail: Error masuk dengan token kustom:", error);
+                        // Fallback ke anonim jika token kustom gagal
                         try {
                             const anonUserCredential = await auth.signInAnonymously();
                             finalUserId = anonUserCredential.user.uid;
                         } catch(anonError) {
-                            console.error("productdetail: Error signing in anonymously:", anonError);
+                            console.error("productdetail: Error masuk secara anonim:", anonError);
                         }
                     }
                 } else {
+                    // Jika tidak ada token, coba login anonim
                     try {
                         const anonUserCredential = await auth.signInAnonymously();
                         finalUserId = anonUserCredential.user.uid;
                         } catch(anonError) {
-                            console.error("productdetail: Error signing in anonymously:", anonError);
+                            console.error("productdetail: Error masuk secara anonim:", anonError);
                         }
                 }
 
                 if (finalUserId) {
                     currentUserId = finalUserId;
+                    // Tampilkan sebagian ID Pengguna untuk privasi, tetapi tetap unik
                     if (userIdDisplay) userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`; 
                     listenToCartUpdates(currentUserId);
 
+                    // Jika selectedProduct sudah dimuat melalui postMessage sebelum otentikasi siap
                     if (selectedProduct) {
+                        // Menggunakan selectedProduct.nama karena itu adalah properti dalam data Firestore
                         if (productNameInSummary) productNameInSummary.textContent = selectedProduct.nama; 
-                        updateActiveVariantPreview(); 
+                        if (selectedVariants.bumbu && selectedVariants.kacang) {
+                            loadProductQuantityFromFirestore();
+                        }
                         renderCurrentProductItemsSummary();
                     }
                 } else {
-                    if (userIdDisplay) userId.textContent = `User ID: N/A`;
+                    if (userIdDisplay) userIdDisplay.textContent = `User ID: N/A`;
                     renderCurrentProductItemsSummary();
                 }
             });
 
-            // Initial load from sessionStorage (for direct access or first load)
+            // Inisialisasi listener untuk opsi varian
+            initializeVariantSelections();
+
+            // Ambil produk dari sessionStorage (jika ada) - ini bisa menjadi fallback
             selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
             if (selectedProduct) {
                 loadProductDetails(selectedProduct.id); 
             } else {
-                showToast('Produk tidak ditemukan. Menunggu data dari halaman utama.');
+                showToast('Produk tidak ditemukan di sessionStorage. Menunggu data dari halaman utama.');
             }
 
-            // Listener for messages from parent window
+            // Listener untuk pesan dari jendela induk
             window.addEventListener('message', async (event) => {
-                // Ensure the message is from a trusted origin in a real application
+                // Pastikan pesan berasal dari asal yang tepercaya dalam aplikasi nyata
                 // if (event.origin !== 'your-parent-domain.com') return;
 
                 if (event.data && event.data.type === 'loadProduct' && event.data.productData) {
                     console.log("Menerima pesan loadProduct dari induk:", event.data.productData);
                     selectedProduct = event.data.productData;
-                    sessionStorage.setItem('selectedProduct', JSON.stringify(selectedProduct)); // Update sessionStorage
-                    await loadProductDetails(selectedProduct.id); // Load new product details
+                    // Simpan ke sessionStorage untuk konsistensi dan jika halaman dimuat ulang
+                    sessionStorage.setItem('selectedProduct', JSON.stringify(selectedProduct)); 
+                    await loadProductDetails(selectedProduct.id); // Muat detail produk baru
                 }
             });
             
             if (decreaseButton) {
-                decreaseButton.addEventListener('click', async () => {
-                    let allRequiredVariantsSelected = true;
-                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
-                        selectedProduct.variantTypeIds.forEach(type => {
-                            if (!selectedVariants[type]) {
-                                allRequiredVariantsSelected = false;
-                            }
-                        });
-                    }
-                    if (!allRequiredVariantsSelected) {
-                        showToast("Pilih semua varian yang diperlukan dahulu.");
+                decreaseButton.addEventListener('click', async () => { // Jadikan async
+                    if (selectedVariants.bumbu === null || selectedVariants.kacang === null) { // Gunakan perbandingan ketat untuk null
+                        showToast("Silakan pilih varian bumbu dan kacang terlebih dahulu.");
                         return;
                     }
-
                     let qty = parseInt(productQuantityInput.value);
                     if (qty > 0) {
                         qty--;
-                        await updateCartInFirestore(qty, false);
+                        await updateCartInFirestore(qty, false); // Tunggu panggilan
                     }
                 });
             }
 
             if (increaseButton) {
-                increaseButton.addEventListener('click', async () => {
-                    let allRequiredVariantsSelected = true;
-                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
-                        selectedProduct.variantTypeIds.forEach(type => {
-                            if (!selectedVariants[type]) {
-                                allRequiredVariantsSelected = false;
-                            }
-                        });
-                    }
-                    if (!allRequiredVariantsSelected) {
-                        showToast("Pilih semua varian yang diperlukan dahulu.");
+                increaseButton.addEventListener('click', async () => { // Jadikan async
+                    if (selectedVariants.bumbu === null || selectedVariants.kacang === null) { // Gunakan perbandingan ketat untuk null
+                        showToast("Silakan pilih varian bumbu dan kacang terlebih dahulu.");
                         return;
                     }
-
                     let qty = parseInt(productQuantityInput.value);
                     qty++;
-                    await updateCartInFirestore(qty, true);
+                    await updateCartInFirestore(qty, true); // Tunggu panggilan
                 });
             }
 
             if (editProductSummaryBtn) {
                 editProductSummaryBtn.addEventListener('click', () => {
+                    // Di sini kita akan mengirim pesan ke induk untuk menavigasi ke halaman produk utama
                     window.parent.postMessage({ type: 'navigateToProductList' }, '*');
-                    closePopup();
+                    closePopup(); // Tutup popup detail produk
                 });
             }
 
