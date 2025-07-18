@@ -161,6 +161,7 @@
             align-items: center;
             justify-content: flex-start;
             margin-bottom: 10px;
+            position: relative; /* Untuk positioning loading indicator */
         }
 
         .quantity-control button {
@@ -216,6 +217,30 @@
             margin: 0;
         }
 
+        /* --- Loading Indicator Styles --- */
+        .quantity-loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none; /* Sembunyikan secara default */
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        .quantity-loading-indicator.show {
+            display: block; /* Tampilkan saat dibutuhkan */
+        }
+        /* --- End Loading Indicator Styles --- */
+
+
         .product-description-detail {
             font-size: 13px;
             color: var(--dark-gray);
@@ -231,6 +256,7 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             box-sizing: border-box;
+            position: relative; /* Untuk positioning action buttons */
         }
 
         #currentProductSummary h3 {
@@ -244,6 +270,7 @@
             list-style: none;
             padding: 0;
             margin: 0;
+            margin-bottom: 10px; /* Tambahkan margin bawah agar ada ruang untuk tombol */
         }
 
         #currentProductItemsList li {
@@ -254,19 +281,26 @@
             word-break: break-word;
             padding-left: 0;
             position: relative;
-
-            /* --- PENTING: Tambahkan Flexbox di sini --- */
             display: flex;
-            justify-content: space-between; /* Menjauhkan item dari kuantitas */
-            align-items: baseline; /* Menjaga teks sejajar di garis dasar */
-            gap: 8px; /* Memberikan sedikit celah antara nama item dan kuantitas */
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
         }
         
+        #currentProductItemsList li .item-number {
+            flex-shrink: 0;
+            width: 20px; /* Lebar tetap untuk penomoran (sesuaikan jika perlu) */
+            text-align: right;
+            margin-right: 5px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
         #currentProductItemsList li .item-name-variants {
-            flex-grow: 1; /* Biarkan nama item mengisi ruang yang tersedia */
-            overflow: hidden; /* Sembunyikan jika terlalu panjang */
-            text-overflow: ellipsis; /* Tampilkan ... jika terlalu panjang */
-            white-space: nowrap; /* Pastikan tetap dalam satu baris */
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         #currentProductItemsList li strong {
@@ -275,13 +309,12 @@
         }
 
         #currentProductItemsList li .item-quantity {
-            flex-shrink: 0; /* Pastikan kuantitas tidak mengecil */
-            text-align: right; /* Rata kanan untuk kuantitas */
-            min-width: 40px; /* Beri lebar minimum agar konsisten */
-            font-weight: 600; /* Agar lebih menonjol */
-            color: var(--dark-gray); /* Warna sedikit berbeda */
+            flex-shrink: 0;
+            text-align: right;
+            min-width: 40px;
+            font-weight: 600;
+            color: var(--dark-gray);
         }
-
 
         #noCurrentProductItems {
             color: #777;
@@ -290,6 +323,53 @@
             margin-top: 10px;
             font-style: italic;
         }
+
+        /* --- Action Buttons for Summary --- */
+        .summary-actions {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-top: 15px; /* Jarak dari daftar item */
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color); /* Garis pemisah */
+        }
+
+        .summary-actions button {
+            flex: 1; /* Agar tombol mengisi ruang yang sama */
+            padding: 8px 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-actions button.edit-btn {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .summary-actions button.edit-btn:hover {
+            background-color: #e0a800; /* Darker amber */
+            transform: translateY(-1px);
+        }
+
+        .summary-actions button.delete-btn {
+            background-color: var(--red-alert);
+            color: white;
+        }
+
+        .summary-actions button.delete-btn:hover {
+            background-color: #c0392b; /* Darker red */
+            transform: translateY(-1px);
+        }
+
+        .summary-actions button:active {
+            transform: translateY(0);
+        }
+        /* --- End Action Buttons --- */
 
         /* Varian Options */
         .variant-group {
@@ -483,7 +563,10 @@
                     <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
                     <input type="number" id="productQuantity" value="0" min="0" readonly>
                     <button id="increaseQuantity"><i class="fas fa-plus"></i></button>
-                </div>
+                    <div class="quantity-loading-indicator" id="quantityLoadingIndicator">
+                        Memperbarui...
+                    </div>
+                    </div>
             </div>
         </div>
 
@@ -494,7 +577,15 @@
             <p id="noCurrentProductItems">
                 Pilih varian dan tambahkan item untuk melihat ringkasan.
             </p>
-        </div>
+            <div class="summary-actions" id="summaryActionButtons">
+                <button class="edit-btn" id="editProductSummaryBtn">
+                    <i class="fas fa-edit"></i> Edit Item
+                </button>
+                <button class="delete-btn" id="deleteProductSummaryBtn">
+                    <i class="fas fa-trash-alt"></i> Hapus Item
+                </button>
+            </div>
+            </div>
 
         <p class="product-description-detail" id="productDescription">Deskripsi produk akan muncul di sini.</p>
 
@@ -558,6 +649,11 @@
         const userIdDisplay = document.getElementById('userIdDisplay');
         let currentUserId = null;
         let increaseButton = null;
+        let decreaseButton = null;
+        let quantityLoadingIndicator = null;
+        let editProductSummaryBtn = null; // Tambahkan ini
+        let deleteProductSummaryBtn = null; // Tambahkan ini
+        let summaryActionButtons = null; // Tambahkan ini
 
         const currentProductItemsList = document.getElementById('currentProductItemsList');
         const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
@@ -568,6 +664,7 @@
             if (!currentUserId || !selectedProduct) {
                 currentProductItemsList.innerHTML = '';
                 noCurrentProductItemsMessage.style.display = 'block';
+                summaryActionButtons.style.display = 'none'; // Sembunyikan tombol jika tidak ada item
                 return;
             }
 
@@ -608,7 +705,6 @@
                             }
                         }
                         const listItem = document.createElement('li');
-                        // --- PENTING: Struktur HTML baru di sini ---
                         listItem.innerHTML = `
                             <span class="item-number">${itemCounter}.</span>
                             <span class="item-name-variants">
@@ -623,14 +719,17 @@
 
                 if (hasItems) {
                     noCurrentProductItemsMessage.style.display = 'none';
+                    summaryActionButtons.style.display = 'flex'; // Tampilkan tombol jika ada item
                 } else {
                     noCurrentProductItemsMessage.style.display = 'block';
+                    summaryActionButtons.style.display = 'none'; // Sembunyikan tombol jika tidak ada item
                 }
 
             } catch (error) {
                 console.error("❌ Gagal memuat ringkasan item produk di keranjang:", error);
                 currentProductItemsList.innerHTML = '';
                 noCurrentProductItemsMessage.style.display = 'block';
+                summaryActionButtons.style.display = 'none'; // Sembunyikan tombol jika gagal memuat
             }
         }
 
@@ -762,7 +861,7 @@
             window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
         }
 
-        async function updateCartInFirestore(quantity) {
+        async function updateCartInFirestore(quantity, isIncrease = false) {
             if (!currentUserId || !selectedProduct) {
                 showToast("Anda harus login untuk menambahkan item.");
                 return;
@@ -771,6 +870,11 @@
                 showToast("Pilih varian bumbu dan kacang dahulu.");
                 return;
             }
+
+            // Tampilkan loading indicator
+            quantityLoadingIndicator.classList.add('show');
+            increaseButton.disabled = true;
+            decreaseButton.disabled = true;
 
             const productId = selectedProduct.id;
             const bumbuVariant = selectedVariants.bumbu || 'none';
@@ -794,14 +898,77 @@
                 } else {
                     await cartItemDocRef.delete();
                 }
+                
+                if (isIncrease) {
+                    lemparKeKeranjang(selectedProduct.image);
+                }
+
                 window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
                 updateLocalSummaryBar(quantity);
                 renderCurrentProductItemsSummary();
+                
             } catch (error) {
                 console.error("❌ Gagal memperbarui keranjang:", error);
                 showToast("Gagal memperbarui keranjang.");
+            } finally {
+                quantityLoadingIndicator.classList.remove('show');
+                increaseButton.disabled = false;
+                decreaseButton.disabled = false;
             }
         }
+
+        // --- Fungsi untuk Menghapus Semua Varian Produk Ini dari Keranjang ---
+        async function deleteThisProductFromCart() {
+            if (!currentUserId || !selectedProduct) {
+                showToast("Tidak ada item untuk dihapus atau Anda belum login.");
+                return;
+            }
+
+            if (!confirm(`Apakah Anda yakin ingin menghapus semua varian ${selectedProduct.name} dari keranjang?`)) {
+                return;
+            }
+
+            // Tampilkan loading indicator
+            quantityLoadingIndicator.classList.add('show');
+            increaseButton.disabled = true;
+            decreaseButton.disabled = true;
+            editProductSummaryBtn.disabled = true;
+            deleteProductSummaryBtn.disabled = true;
+
+            try {
+                const snapshot = await cartsCollection.doc(currentUserId).collection('items')
+                    .where('id', '==', selectedProduct.id)
+                    .get();
+                
+                if (snapshot.empty) {
+                    showToast(`${selectedProduct.name} tidak ada di keranjang.`);
+                } else {
+                    const batch = db.batch();
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    showToast(`${selectedProduct.name} berhasil dihapus dari keranjang.`);
+                    
+                    productQuantityInput.value = 0; // Reset quantity display
+                    updateLocalSummaryBar(0); // Update summary bar
+                    renderCurrentProductItemsSummary(); // Refresh summary list
+                    window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
+                }
+            } catch (error) {
+                console.error("❌ Gagal menghapus produk dari keranjang:", error);
+                showToast("Gagal menghapus produk dari keranjang.");
+            } finally {
+                // Sembunyikan loading indicator dan aktifkan kembali tombol
+                quantityLoadingIndicator.classList.remove('show');
+                increaseButton.disabled = false;
+                decreaseButton.disabled = false;
+                editProductSummaryBtn.disabled = false;
+                deleteProductSummaryBtn.disabled = false;
+            }
+        }
+        // --- Akhir Fungsi Hapus ---
+
 
         async function loadProductQuantityFromFirestore() {
             if (!currentUserId || !selectedProduct || !selectedVariants.bumbu || !selectedVariants.kacang) {
@@ -850,6 +1017,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
             increaseButton = document.getElementById('increaseQuantity');
+            decreaseButton = document.getElementById('decreaseQuantity');
+            quantityLoadingIndicator = document.getElementById('quantityLoadingIndicator');
+            editProductSummaryBtn = document.getElementById('editProductSummaryBtn'); // Inisialisasi
+            deleteProductSummaryBtn = document.getElementById('deleteProductSummaryBtn'); // Inisialisasi
+            summaryActionButtons = document.getElementById('summaryActionButtons'); // Inisialisasi
 
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
@@ -918,7 +1090,7 @@
                 renderCurrentProductItemsSummary();
                 updateLocalSummaryBar(0);
 
-                document.getElementById('decreaseQuantity').addEventListener('click', () => {
+                decreaseButton.addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
@@ -927,11 +1099,11 @@
                     if (qty > 0) {
                         qty--;
                         productQuantityInput.value = qty;
-                        updateCartInFirestore(qty);
+                        updateCartInFirestore(qty, false);
                     }
                 });
 
-                document.getElementById('increaseQuantity').addEventListener('click', () => {
+                increaseButton.addEventListener('click', () => {
                     if (!selectedVariants.bumbu || !selectedVariants.kacang) {
                         showToast("Pilih varian bumbu dan kacang dahulu.");
                         return;
@@ -939,8 +1111,19 @@
                     let qty = parseInt(productQuantityInput.value);
                     qty++;
                     productQuantityInput.value = qty;
-                    updateCartInFirestore(qty);
-                    lemparKeKeranjang(selectedProduct.image);
+                    updateCartInFirestore(qty, true);
+                });
+
+                // Event listener untuk tombol Edit
+                editProductSummaryBtn.addEventListener('click', () => {
+                    // Di sini kita akan mengirim pesan ke parent untuk menavigasi ke halaman produk utama
+                    window.parent.postMessage({ type: 'navigateToProductList' }, '*');
+                    closePopup(); // Tutup popup detail produk
+                });
+
+                // Event listener untuk tombol Hapus
+                deleteProductSummaryBtn.addEventListener('click', () => {
+                    deleteThisProductFromCart();
                 });
 
             } else {
