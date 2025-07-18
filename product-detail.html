@@ -248,20 +248,40 @@
 
         #currentProductItemsList li {
             margin-bottom: 4px;
-            /* Ukuran font utama untuk list item */
-            font-size: 12px; /* Dikecilkan dari 13px */
+            font-size: 12px;
             color: #555;
             line-height: 1.3;
             word-break: break-word;
             padding-left: 0;
             position: relative;
+
+            /* --- PENTING: Tambahkan Flexbox di sini --- */
+            display: flex;
+            justify-content: space-between; /* Menjauhkan item dari kuantitas */
+            align-items: baseline; /* Menjaga teks sejajar di garis dasar */
+            gap: 8px; /* Memberikan sedikit celah antara nama item dan kuantitas */
         }
         
+        #currentProductItemsList li .item-name-variants {
+            flex-grow: 1; /* Biarkan nama item mengisi ruang yang tersedia */
+            overflow: hidden; /* Sembunyikan jika terlalu panjang */
+            text-overflow: ellipsis; /* Tampilkan ... jika terlalu panjang */
+            white-space: nowrap; /* Pastikan tetap dalam satu baris */
+        }
+
         #currentProductItemsList li strong {
             color: var(--primary-color);
-            /* Ukuran font untuk teks tebal di dalam list item */
-            font-size: 12px; /* Dikecilkan dari 13px, agar konsisten dengan li */
+            font-size: 12px;
         }
+
+        #currentProductItemsList li .item-quantity {
+            flex-shrink: 0; /* Pastikan kuantitas tidak mengecil */
+            text-align: right; /* Rata kanan untuk kuantitas */
+            min-width: 40px; /* Beri lebar minimum agar konsisten */
+            font-weight: 600; /* Agar lebih menonjol */
+            color: var(--dark-gray); /* Warna sedikit berbeda */
+        }
+
 
         #noCurrentProductItems {
             color: #777;
@@ -588,7 +608,14 @@
                             }
                         }
                         const listItem = document.createElement('li');
-                        listItem.innerHTML = `${itemCounter}. <strong>${item.name}${variantString}</strong> (${item.quantity} item)`;
+                        // --- PENTING: Struktur HTML baru di sini ---
+                        listItem.innerHTML = `
+                            <span class="item-number">${itemCounter}.</span>
+                            <span class="item-name-variants">
+                                <strong>${item.name}${variantString}</strong>
+                            </span>
+                            <span class="item-quantity">(${item.quantity} item)</span>
+                        `;
                         currentProductItemsList.appendChild(listItem);
                         itemCounter++;
                     });
@@ -823,7 +850,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
             increaseButton = document.getElementById('increaseQuantity');
-            // increaseButton.disabled = true; // Baris ini sudah dihapus di perbaikan sebelumnya
 
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
