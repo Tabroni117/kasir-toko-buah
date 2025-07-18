@@ -106,10 +106,25 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            /* margin-bottom: 20px; <-- Removed, as it's fixed now */
             padding: 15px;
             box-sizing: border-box;
             align-items: center;
+
+            /* PERBAIKAN: Membuat elemen fixed */
+            position: fixed;
+            top: var(--header-height); /* Posisikan tepat di bawah header */
+            left: 50%; /* Pusatkan secara horizontal */
+            transform: translateX(-50%); /* Pusatkan secara horizontal */
+            width: calc(100% - 40px); /* Sesuaikan lebar dengan padding container (20px kiri + 20px kanan) */
+            max-width: 400px; /* Lebar maksimum tetap 400px */
+            z-index: 950; /* Pastikan di atas konten yang discroll, di bawah header/cart bar */
+        }
+
+        /* Placeholder untuk elemen fixed agar konten di bawahnya tidak tumpang tindih */
+        #productDetailPlaceholder {
+            height: 0; /* Tinggi akan diatur oleh JavaScript */
+            margin-bottom: 200px; /* Jarak tetap 200px seperti permintaan sebelumnya */
         }
 
         .product-image-container {
@@ -249,7 +264,7 @@
             color: var(--dark-gray);
             line-height: 1.4;
             margin-bottom: 10px;
-            font-style: italic; /* PERBAIKAN: Membuat teks miring */
+            font-style: italic; /* Make text italic */
         }
 
         /* Style for currentProductSummary */
@@ -384,6 +399,7 @@
             border-radius: 8px;
             border: 1px solid var(--border-color);
             box-sizing: border-box;
+            display: none; /* Sembunyikan secara default */
         }
 
         .variant-label {
@@ -570,8 +586,8 @@
             </div>
             <div class="product-info">
                 <h1 class="product-name-detail" id="productName">Nama Produk</h1>
-                <p class="product-price-detail" id="productPrice">Rp 0</p>
                 <p id="activeVariantPreview" style="font-weight: 500; font-size: 13px; color: #444; margin: 2px 0;"></p>
+                <p class="product-price-detail" id="productPrice">Rp 0</p>
                 <div class="quantity-control">
                     <button id="decreaseQuantity"><i class="fas fa-minus"></i></button>
                     <input type="number" id="productQuantity" value="0" min="0" readonly>
@@ -582,6 +598,9 @@
                     </div>
             </div>
         </div>
+
+        <!-- Placeholder for fixed element so content below doesn't overlap -->
+        <div id="productDetailPlaceholder"></div>
 
         <div id="currentProductSummary">
             <h3>Item <span id="productNameInSummary"></span> di Keranjang Anda:</h3>
@@ -600,20 +619,25 @@
 
         <p class="product-description-detail" id="productDescription">Deskripsi produk akan muncul di sini.</p>
 
-        <div class="variant-group">
+        <!-- PERBAIKAN: Menambahkan ID unik untuk setiap variant-group -->
+        <div class="variant-group" id="variantGroupBumbu">
             <label class="variant-label">Pilih Bumbu:</label>
             <div class="variant-options" data-variant="bumbu">
-                <div class="variant-option" data-value="Pedas">Pedas</div>
-                <div class="variant-option" data-value="Extra Pedas">Extra Pedas</div>
-                <div class="variant-option" data-value="Manis">Manis</div>
+                <!-- Opsi akan diisi oleh JavaScript -->
             </div>
         </div>
 
-        <div class="variant-group">
+        <div class="variant-group" id="variantGroupPilihBuah">
+            <label class="variant-label">Pilih Buah:</label>
+            <div class="variant-options" data-variant="pilih_buah">
+                <!-- Opsi akan diisi oleh JavaScript -->
+            </div>
+        </div>
+
+        <div class="variant-group" id="variantGroupKacang">
             <label class="variant-label">Pilih Kacang:</label>
             <div class="variant-options" data-variant="kacang">
-                <div class="variant-option" data-value="Dengan Kacang">Dengan Kacang</div>
-                <div class="variant-option" data-value="Tanpa Kacang">Tanpa Kacang</div>
+                <!-- Opsi akan diisi oleh JavaScript -->
             </div>
         </div>
     </div>
@@ -647,7 +671,6 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
-        // Fix: Initialize initialAuthToken correctly
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         // Initialize Firebase
@@ -655,11 +678,10 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         const cartsCollection = db.collection('carts');
-        // IMPORTANT CORRECTION: Using 'buah' collection as requested
         const productsCollection = db.collection('buah'); 
 
         // --- Global Variables for DOM Elements and Data ---
-        const selectedVariants = { bumbu: null, kacang: null };
+        const selectedVariants = { bumbu: null, kacang: null, pilih_buah: null }; 
         let selectedProduct = null;
         let productQuantityInput = null;
         const userIdDisplay = document.getElementById('userIdDisplay');
@@ -667,143 +689,197 @@
         let increaseButton = null;
         let decreaseButton = null;
         let quantityLoadingIndicator = null;
-        let editProductSummaryBtn = null; // This variable is kept as requested
-        let deleteProductSummaryBtn = null; // This variable is kept
-        let summaryActionButtons = null; // This variable is kept
+        let editProductSummaryBtn = null; 
+        let deleteProductSummaryBtn = null; 
+        let summaryActionButtons = null; 
 
         const currentProductItemsList = document.getElementById('currentProductItemsList');
         const noCurrentProductItemsMessage = document.getElementById('noCurrentProductItems');
         const productNameInSummary = document.getElementById('productNameInSummary');
-        const productImageElement = document.getElementById('productImage'); // Product Image Element
+        const productImageElement = document.getElementById('productImage');
 
+        const allVariantGroups = {
+            bumbu: document.getElementById('variantGroupBumbu'),
+            pilih_buah: document.getElementById('variantGroupPilihBuah'),
+            kacang: document.getElementById('variantGroupKacang')
+        };
 
-        // --- Firebase Authentication Listener ---
-        // Move onAuthStateChanged inside DOMContentLoaded so DOM elements are available
-        // and to avoid potential race conditions with variable initialization
-        // that depend on the DOM.
+        // Variabel untuk placeholder
+        let productDetailPlaceholder = null;
+
 
         /**
          * Function to load product details from Firestore and populate HTML elements.
-         * This is a key part that ensures product images and data are displayed.
          */
         async function loadProductDetails(productId) {
             console.log("Loading product details for ID:", productId);
             // Reset display to loading status
-            productNameInSummary.textContent = ''; // Clear product name in summary
-            document.getElementById('productName').textContent = 'Loading Product Name...';
+            productNameInSummary.textContent = '';
+            document.getElementById('productName').textContent = 'Memuat Nama Produk...';
             document.getElementById('productPrice').textContent = 'Rp 0';
-            document.getElementById('productDescription').textContent = 'Loading product description...';
-            productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Loading+Image...';
-            if (productQuantityInput) productQuantityInput.value = 0; // Ensure productQuantityInput is initialized
-            updateActiveVariantPreview(); // Reset variant preview
-            noCurrentProductItemsMessage.style.display = 'block'; // Show default message
-            if (summaryActionButtons) summaryActionButtons.style.display = 'none'; // Hide action buttons
-            if (increaseButton) increaseButton.disabled = true; // Disable buttons temporarily
+            document.getElementById('productDescription').textContent = 'Memuat deskripsi produk...';
+            productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Memuat+Gambar...';
+            if (productQuantityInput) productQuantityInput.value = 0;
+            // Reset selected variants and hide all variant groups initially
+            for (const key in selectedVariants) {
+                selectedVariants[key] = null;
+            }
+            for (const key in allVariantGroups) {
+                if (allVariantGroups[key]) allVariantGroups[key].style.display = 'none';
+            }
+            updateActiveVariantPreview();
+            noCurrentProductItemsMessage.style.display = 'block';
+            if (summaryActionButtons) summaryActionButtons.style.display = 'none';
+            if (increaseButton) increaseButton.disabled = true;
             if (decreaseButton) decreaseButton.disabled = true;
 
             try {
-                // Retrieve product document from 'buah' collection
                 const productDoc = await productsCollection.doc(productId).get();
                 if (productDoc.exists) {
                     selectedProduct = { id: productDoc.id, ...productDoc.data() };
-                    console.log("Product Data Found:", selectedProduct);
+                    console.log("Data Produk Ditemukan:", selectedProduct);
+                    // --- DEBUGGING: Log the product data ---
+                    console.log("DEBUG: selectedProduct:", selectedProduct);
+                    console.log("DEBUG: selectedProduct.variantTypeIds:", selectedProduct.variantTypeIds);
+                    console.log("DEBUG: selectedProduct.variants:", selectedProduct.variants);
+                    // --- END DEBUGGING ---
 
-                    // Populate product details into DOM
-                    document.getElementById('productName').textContent = selectedProduct.nama || 'Name Not Available';
+                    document.getElementById('productName').textContent = selectedProduct.nama || 'Nama Tidak Tersedia';
                     document.getElementById('productPrice').textContent = formatRupiah(selectedProduct.harga || 0);
-                    document.getElementById('productDescription').textContent = selectedProduct.deskripsi || 'No description available for this product.';
-                    productNameInSummary.textContent = selectedProduct.nama || 'This Product'; // Update product name in summary
+                    document.getElementById('productDescription').textContent = selectedProduct.deskripsi || 'Tidak ada deskripsi untuk produk ini.';
+                    productNameInSummary.textContent = selectedProduct.nama || 'Produk Ini';
 
-                    // --- MAIN SECTION FOR DISPLAYING IMAGE ---
-                    // Using 'imageUrl' consistent with the property in APL05.html
                     if (selectedProduct.imageUrl) {
                         productImageElement.src = selectedProduct.imageUrl;
-                        console.log("Image loaded from URL:", selectedProduct.imageUrl);
                     } else {
-                        // Fallback image if no image URL from Firebase
-                        productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Image+Not+Available';
-                        console.warn("Image URL not found for product:", selectedProduct.nama);
+                        productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Gambar+Tidak+Tersedia';
+                        console.warn("URL gambar tidak ditemukan untuk produk:", selectedProduct.nama);
                     }
-                    // --- END OF MAIN IMAGE SECTION ---
 
-                    // Initialize variant selections (if any) and update quantity input
-                    initializeVariantSelections();
-                    updateActiveVariantPreview(); // Show initial variant preview
+                    // Logika untuk menampilkan dan mengisi varian secara dinamis
+                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
+                        selectedProduct.variantTypeIds.forEach(variantType => {
+                            const variantGroupDiv = allVariantGroups[variantType];
+                            const variantOptionsDiv = variantGroupDiv ? variantGroupDiv.querySelector('.variant-options') : null;
+                            const variantLabel = variantGroupDiv ? variantGroupDiv.querySelector('.variant-label') : null;
 
-                    // If user is logged in, update display and start listening
+                            if (variantGroupDiv && variantOptionsDiv && selectedProduct.variants && selectedProduct.variants[variantType]) {
+                                variantGroupDiv.style.display = 'block'; // Tampilkan grup varian
+                                variantOptionsDiv.innerHTML = ''; // Kosongkan opsi lama
+                                
+                                // Set label sesuai nama varian (opsional, jika ingin lebih dinamis)
+                                if (variantLabel) {
+                                    const labelText = variantType.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+                                    variantLabel.textContent = `Pilih ${labelText}:`;
+                                }
+
+                                selectedProduct.variants[variantType].forEach(optionValue => {
+                                    const optionDiv = document.createElement('div');
+                                    optionDiv.classList.add('variant-option');
+                                    optionDiv.dataset.value = optionValue;
+                                    optionDiv.textContent = optionValue;
+                                    variantOptionsDiv.appendChild(optionDiv);
+                                });
+                                // Inisialisasi listener untuk opsi yang baru dibuat
+                                initializeVariantOptionsListeners(variantOptionsDiv);
+                            } else {
+                                console.warn(`DEBUG: Varian '${variantType}' tidak ditemukan di selectedProduct.variants atau elemen HTML tidak ada.`);
+                            }
+                        });
+                    } else {
+                        console.log("DEBUG: selectedProduct.variantTypeIds tidak ada atau bukan array. Tidak ada varian yang akan ditampilkan.");
+                    }
+
+                    updateActiveVariantPreview();
+
                     if (currentUserId) {
                         await updateProductQuantityInputFromCart();
                         renderCurrentProductItemsSummary();
                     }
-                    if (increaseButton) increaseButton.disabled = false; // Re-enable buttons
+                    if (increaseButton) increaseButton.disabled = false;
                     if (decreaseButton) decreaseButton.disabled = false;
 
                 } else {
-                    console.error("❌ Product not found with ID:", productId);
-                    showToast("Product not found.");
-                    document.getElementById('productName').textContent = 'Product Not Found';
+                    console.error("❌ Produk tidak ditemukan dengan ID:", productId);
+                    showToast("Produk tidak ditemukan.");
+                    document.getElementById('productName').textContent = 'Produk Tidak Ditemukan';
                     document.getElementById('productPrice').textContent = 'Rp 0';
-                    document.getElementById('productDescription').textContent = 'Sorry, product details could not be loaded.';
-                    productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Product+Not+Exist';
+                    document.getElementById('productDescription').textContent = 'Maaf, detail produk tidak dapat dimuat.';
+                    productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Produk+Tidak+Ada';
                     if (increaseButton) increaseButton.disabled = true;
                     if (decreaseButton) decreaseButton.disabled = true;
                 }
             } catch (error) {
-                console.error("❌ Failed to load product details:", error);
-                showToast("Failed to load product details.");
-                document.getElementById('productName').textContent = 'Error Loading Product';
+                console.error("❌ Gagal memuat detail produk:", error);
+                showToast("Gagal memuat detail produk.");
+                document.getElementById('productName').textContent = 'Error Memuat Produk';
                 document.getElementById('productPrice').textContent = 'Rp 0';
-                document.getElementById('productDescription').textContent = 'An error occurred while loading product details. Please try again.';
+                document.getElementById('productDescription').textContent = 'Terjadi kesalahan saat memuat detail produk. Silakan coba lagi.';
                 productImageElement.src = 'https://placehold.co/150x150/cccccc/333333?text=Error';
                 if (increaseButton) increaseButton.disabled = true;
                 if (decreaseButton) decreaseButton.disabled = true;
+            } finally {
+                // Panggil adjustPlaceholderHeight setelah semuanya dimuat dan dirender
+                adjustPlaceholderHeight();
             }
         }
 
 
-        // Function to initialize listeners on variant options
-        function initializeVariantSelections() {
-            document.querySelectorAll('.variant-group').forEach(group => {
-                group.querySelectorAll('.variant-option').forEach(option => {
-                    // Ensure listener is added only once
-                    if (!option._hasClickListener) {
-                        option.addEventListener('click', async function() {
-                            const variantType = this.closest('.variant-options').dataset.variant;
-                            const variantValue = this.dataset.value;
+        // Fungsi terpisah untuk menginisialisasi listener pada opsi varian yang baru dibuat
+        function initializeVariantOptionsListeners(variantOptionsContainer) {
+            variantOptionsContainer.querySelectorAll('.variant-option').forEach(option => {
+                if (!option._hasClickListener) { // Pastikan listener hanya ditambahkan sekali
+                    option.addEventListener('click', async function() {
+                        const variantType = this.closest('.variant-options').dataset.variant;
+                        const variantValue = this.dataset.value;
 
-                            // Remove 'active' class from all options in this group
-                            this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                            // Add 'active' class to the clicked option
-                            this.classList.add('active');
+                        // Remove 'active' class from all options in this group
+                        this.parentNode.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
+                        // Add 'active' class to the clicked option
+                        this.classList.add('active');
 
-                            selectedVariants[variantType] = variantValue;
-                            updateActiveVariantPreview();
-                            // Update quantity input based on newly selected variant from cart
-                            await updateProductQuantityInputFromCart();
-                        });
-                        option._hasClickListener = true; // Mark that listener has been added
-                    }
-                });
+                        selectedVariants[variantType] = variantValue;
+                        updateActiveVariantPreview();
+                        await updateProductQuantityInputFromCart();
+                    });
+                    option._hasClickListener = true; // Mark that listener has been added
+                }
             });
         }
 
-        // Update active variant preview
         function updateActiveVariantPreview() {
-            // Using selectedProduct.nama because it's the property in Firestore data
             const name = selectedProduct?.nama || ''; 
-            const bumbu = selectedVariants.bumbu || 'Not selected'; // Default value if null
-            const kacang = selectedVariants.kacang || 'Not selected'; // Default value if null
-            let display = name;
-            if (bumbu !== 'Not selected' || kacang !== 'Not selected') { // Only add if a variant is actually selected
-                const parts = [];
-                if (bumbu !== 'Not selected') parts.push(bumbu);
-                if (kacang !== 'Not selected') parts.push(kacang);
-                if (parts.length > 0) {
-                    display += ' - ' + parts.join(', ');
+            const variantParts = [];
+
+            // Iterasi melalui semua kemungkinan tipe varian
+            for (const type in selectedVariants) {
+                // Hanya tambahkan ke preview jika varian tersebut ada di variantTypeIds produk
+                if (selectedProduct && selectedProduct.variantTypeIds && selectedProduct.variantTypeIds.includes(type)) {
+                    if (selectedVariants[type] && selectedVariants[type] !== 'none' && selectedVariants[type] !== 'Belum dipilih') {
+                        variantParts.push(selectedVariants[type]);
+                    }
                 }
             }
+            
+            let display = name;
+            if (variantParts.length > 0) {
+                display += ' - ' + variantParts.join(', ');
+            }
             document.getElementById('activeVariantPreview').textContent = display;
-            if (selectedVariants.bumbu && selectedVariants.kacang && productQuantityInput) { // Check productQuantityInput
+
+            // Cek apakah semua varian yang relevan sudah dipilih
+            let allRelevantVariantsSelected = true;
+            if (selectedProduct && selectedProduct.variantTypeIds) {
+                selectedProduct.variantTypeIds.forEach(type => {
+                    if (!selectedVariants[type]) { // Jika ada varian yang diperlukan tapi belum dipilih
+                        allRelevantVariantsSelected = false;
+                    }
+                });
+            } else { // Jika tidak ada variantTypeIds, berarti tidak ada varian yang perlu dipilih
+                allRelevantVariantsSelected = true;
+            }
+
+            if (allRelevantVariantsSelected && productQuantityInput) {
                 loadProductQuantityFromFirestore();
             } else if (productQuantityInput) {
                 productQuantityInput.value = 0;
@@ -811,301 +887,69 @@
             }
         }
 
-        // Update quantity input based on item in cart for specific variant
-        async function updateProductQuantityInputFromCart() {
-            if (!currentUserId || !selectedProduct || !productQuantityInput) { // Check productQuantityInput
-                if (productQuantityInput) productQuantityInput.value = 0;
-                return;
-            }
-
-            const bumbuVariant = selectedVariants.bumbu || 'none';
-            const kacangVariant = selectedVariants.kacang || 'none';
-            const customKey = `${selectedProduct.id}_${bumbuVariant}_${kacangVariant}`;
-            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
-
-            try {
-                const doc = await cartItemDocRef.get();
-                if (doc.exists) {
-                    productQuantityInput.value = doc.data().quantity;
-                } else {
-                    productQuantityInput.value = 0;
-                }
-            } catch (error) {
-                console.error("Error fetching cart item quantity:", error);
-                productQuantityInput.value = 0;
-            }
-            // After updating quantity input, also update local summary bar
-            updateLocalSummaryBar(parseInt(productQuantityInput.value));
-        }
-
-
-        async function renderCurrentProductItemsSummary() {
-            if (!currentUserId || !selectedProduct) {
-                currentProductItemsList.innerHTML = '';
-                noCurrentProductItemsMessage.style.display = 'block';
-                if (summaryActionButtons) summaryActionButtons.style.display = 'none';
-                return;
-            }
-
-            try {
-                const snapshot = await cartsCollection.doc(currentUserId).collection('items')
-                    .where('id', '==', selectedProduct.id)
-                    .get();
-
-                currentProductItemsList.innerHTML = '';
-                
-                let hasItems = false;
-                let itemCounter = 1;
-
-                if (!snapshot.empty) {
-                    const items = [];
-                    snapshot.forEach(doc => items.push(doc.data()));
-                    
-                    // Sort items by variant for consistent display
-                    items.sort((a, b) => {
-                        const aCustom = `${a.custom?.bumbu || ''}${a.custom?.kacang || ''}`;
-                        const bCustom = `${b.custom?.bumbu || ''}${b.custom?.kacang || ''}`;
-                        return aCustom.localeCompare(bCustom);
-                    });
-
-                    items.forEach(item => {
-                        hasItems = true;
-                        let variantString = '';
-                        if (item.custom) {
-                            const customParts = [];
-                            if (item.custom.bumbu && item.custom.bumbu !== 'none') {
-                                customParts.push(item.custom.bumbu);
-                            }
-                            if (item.custom.kacang && item.custom.kacang !== 'none') {
-                                customParts.push(item.custom.kacang);
-                            }
-                            if (customParts.length > 0) {
-                                variantString = ` - ${customParts.join(', ')}`;
-                            }
-                        }
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <span class="item-number">${itemCounter}.</span>
-                            <span class="item-name-variants">
-                                <strong>${item.name}${variantString}</strong>
-                            </span>
-                            <span class="item-quantity">(${item.quantity} item)</span>
-                        `;
-                        currentProductItemsList.appendChild(listItem);
-                        itemCounter++;
-                    });
-                }
-
-                if (hasItems) {
-                    noCurrentProductItemsMessage.style.display = 'none';
-                    if (summaryActionButtons) summaryActionButtons.style.display = 'flex';
-                } else {
-                    noCurrentProductItemsMessage.style.display = 'block';
-                    if (summaryActionButtons) summaryActionButtons.style.display = 'none';
-                }
-
-            } catch (error) {
-                console.error("❌ Failed to load product items summary in cart:", error);
-                currentProductItemsList.innerHTML = '';
-                noCurrentProductItemsMessage.style.display = 'block';
-                if (summaryActionButtons) summaryActionButtons.style.display = 'none';
-            }
-        }
-
-
-        let unsubscribeCartListener = null;
-
-        function listenToCartUpdates(userId) {
-            const summaryBar = document.getElementById('cart-summary-bar');
-            if (!summaryBar) return;
-
-            const itemCountEl = summaryBar.querySelector('.summary-item-count');
-            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
-            const checkoutButton = summaryBar.querySelector('.summary-checkout-button');
-
-            // Stop previous listener if any
-            if (unsubscribeCartListener) {
-                unsubscribeCartListener();
-            }
-
-            // Start new listener for the entire user's cart
-            unsubscribeCartListener = cartsCollection.doc(userId).collection('items').onSnapshot(snapshot => {
-                let totalItemsInCart = 0;
-                let totalPriceInCart = 0;
-
-                snapshot.forEach(doc => {
-                    const item = doc.data();
-                    totalItemsInCart += item.quantity;
-                    totalPriceInCart += item.price * item.quantity;
-                });
-
-                // Update summary bar display at the bottom
-                if (totalItemsInCart > 0) {
-                    itemCountEl.textContent = `${totalItemsInCart} Item`;
-                    totalPriceEl.textContent = `Rp ${totalPriceInCart.toLocaleString('id-ID')}`;
-                    summaryBar.classList.add('show');
-                } else {
-                    summaryBar.classList.remove('show');
-                }
-                
-                // Call renderCurrentProductItemsSummary to update specific product summary
-                renderCurrentProductItemsSummary();
-                // Call updateProductQuantityInputFromCart to ensure quantity input matches cart
-                updateProductQuantityInputFromCart();
-            }, error => {
-                console.error("Error listening to cart updates:", error);
-            });
-
-            // Add event listener for checkout button once
-            if (checkoutButton && !checkoutButton._hasClickListener) { // Check if button exists
-                checkoutButton.addEventListener('click', () => {
-                    // Notify parent window to navigate to cart page
-                    window.parent.postMessage({ type: 'navigateToCart' }, '*');
-                });
-                checkoutButton._hasClickListener = true;
-            }
-        }
-
-        // This function is actually not used for the global summary bar because there's a Firebase listener
-        // But it can be used for temporary UI updates if needed, or if the Firebase listener is not active.
-        function updateLocalSummaryBar(quantity) {
-            const summaryBar = document.getElementById('cart-summary-bar');
-            const itemCountEl = summaryBar.querySelector('.summary-item-count');
-            const totalPriceEl = summaryBar.querySelector('.summary-total-price');
-
-            // This logic is now mostly handled by listenToCartUpdates.
-            // Keep it as a placeholder if you only want to display this product's quantity.
-            // Usually, the summary bar displays the total cart.
-            if (quantity > 0 && selectedProduct) {
-                // This will show quantity ONLY for this product.
-                // If global, let listenToCartUpdates handle it.
-                // itemCountEl.textContent = `${quantity} Item (This Product)`;
-                // totalPriceEl.textContent = `Rp ${(selectedProduct.price * quantity).toLocaleString('id-ID')}`;
-                // summaryBar.classList.add('show');
-            } else {
-                // summaryBar.classList.remove('show'); // Handled by listener
-            }
-        }
-
-
-        function showToast(message) {
-            const toast = document.getElementById('variantAlert');
-            if (toast) {
-                toast.textContent = message;
-                toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3000);
-            }
-        }
-
-        function lemparKeKeranjang(imgSrc) {
-            const img = document.createElement('img');
-            img.src = imgSrc;
-            img.classList.add('fly-to-cart');
-            const startRect = document.getElementById('increaseQuantity').getBoundingClientRect();
-            // Assume cart icon is in parent window with ID 'floatingCartBar' and class 'cart-icon'
-            const parentCartIcon = window.parent.document.querySelector('#floatingCartBar .cart-icon');
-
-            if (!parentCartIcon) {
-                console.warn("Cart icon in main window not found for animation. Skipping animation.");
-                if (document.body.contains(img)) { // Ensure img element exists before removal
-                    document.body.removeChild(img);
-                }
-                return;
-            }
-            const endRect = parentCartIcon.getBoundingClientRect();
-            img.style.left = `${startRect.left}px`;
-            img.style.top = `${startRect.top}px`;
-            img.style.opacity = 1;
-            document.body.appendChild(img);
-            requestAnimationFrame(() => {
-                // Calculate position relative to parent viewport
-                const parentOffsetTop = window.parent.scrollY || window.parent.document.documentElement.scrollTop;
-                const parentOffsetLeft = window.parent.scrollX || window.parent.document.documentElement.scrollLeft;
-
-                const targetX = endRect.left - startRect.left;
-                const targetY = (endRect.top + parentOffsetTop) - (startRect.top + window.scrollY); // Adjust for scroll
-                
-                img.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.2)`;
-                img.style.opacity = 0;
-            });
-            setTimeout(() => {
-                if (document.body.contains(img)) { // Ensure element still exists before removal
-                    document.body.removeChild(img);
-                }
-            }, 700);
-        }
-
-        function closePopup() {
-            if (unsubscribeCartListener) {
-                unsubscribeCartListener(); // Stop listener when closing
-            }
-            window.parent.postMessage({ type: 'closeProductDetailPopup' }, '*');
-        }
-
         async function updateCartInFirestore(quantity, isIncrease = false) {
             if (!currentUserId) {
                 showToast("You must be logged in to add items to cart.");
-                // Reset quantity input to current cart value (or 0 if not exist)
                 await updateProductQuantityInputFromCart(); 
                 return;
             }
             if (!selectedProduct) {
                 showToast("Product details not loaded.");
-                // Reset quantity input
                 await updateProductQuantityInputFromCart(); 
                 return;
             }
-            if (selectedVariants.bumbu === null || selectedVariants.kacang === null) {
-                showToast("Please select seasoning and nut variants first.");
-                // Reset quantity input to current cart value for default/previous variant
-                await updateProductQuantityInputFromCart(); 
+            
+            // Cek apakah semua varian yang dibutuhkan sudah dipilih
+            let allRequiredVariantsSelected = true;
+            const customVariantData = {};
+            if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
+                selectedProduct.variantTypeIds.forEach(type => {
+                    if (!selectedVariants[type]) {
+                        allRequiredVariantsSelected = false;
+                    }
+                    customVariantData[type] = selectedVariants[type] || 'none'; // Simpan varian yang dipilih, atau 'none' jika belum dipilih
+                });
+            }
+
+            if (!allRequiredVariantsSelected) {
+                showToast("Pilih semua varian yang diperlukan dahulu.");
+                await updateProductQuantityInputFromCart();
                 return;
             }
+
+            // Bangun customKey berdasarkan semua varian yang dipilih
+            let customKeyParts = [selectedProduct.id];
+            for (const type in customVariantData) {
+                customKeyParts.push(customVariantData[type]);
+            }
+            const customKey = customKeyParts.join('_');
+            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             // Show loading indicator
             if (quantityLoadingIndicator) quantityLoadingIndicator.classList.add('show');
             if (increaseButton) increaseButton.disabled = true;
             if (decreaseButton) decreaseButton.disabled = true;
 
-            const productId = selectedProduct.id;
-            const bumbuVariant = selectedVariants.bumbu;
-            const kacangVariant = selectedVariants.kacang;
-            // Use combination of product ID and variant as unique document ID in 'items' sub-collection
-            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
-            const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
-
             try {
                 if (quantity > 0) {
                     await cartItemDocRef.set({
-                        id: productId,
-                        name: selectedProduct.name, // Using 'name' from sessionStorage
-                        // Using 'image' from sessionStorage
-                        image: selectedProduct.image || 'placeholder.jpg', 
-                        price: selectedProduct.price, // Using 'price' from sessionStorage
-                        custom: {
-                            bumbu: bumbuVariant,
-                            kacang: kacangVariant
-                        },
+                        id: selectedProduct.id,
+                        name: selectedProduct.nama, 
+                        image: selectedProduct.imageUrl || 'placeholder.jpg', 
+                        price: selectedProduct.harga, 
+                        custom: customVariantData, // Gunakan objek varian kustom yang dinamis
                         quantity: quantity
-                    }, { merge: true }); // Use merge so it doesn't overwrite other fields if any
-                    if (isIncrease && selectedProduct.image) { // Check image for animation
-                        lemparKeKeranjang(selectedProduct.image);
+                    }, { merge: true });
+                    if (isIncrease && selectedProduct.imageUrl) {
+                        lemparKeKeranjang(selectedProduct.imageUrl);
                     }
                 } else {
-                    // If quantity is 0, delete item from cart
                     await cartItemDocRef.delete();
                 }
-                // After success, update summary display and quantity input
-                // This will be triggered by onSnapshot listener, but ensures immediate visual update
-                // updateProductQuantityInputFromCart() will be called by listenToCartUpdates
-                // window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*'); // This is already called by listenToCartUpdates
             } catch (error) {
                 console.error("❌ Failed to update cart in Firestore:", error);
                 showToast("Failed to update cart.");
             } finally {
-                // Hide loading indicator and re-enable buttons
                 if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                 if (increaseButton) increaseButton.disabled = false;
                 if (decreaseButton) decreaseButton.disabled = false;
@@ -1113,14 +957,13 @@
         }
 
 
-        // --- Function to Delete All Product Variants from Cart ---
         async function deleteThisProductFromCart() {
             if (!currentUserId || !selectedProduct) {
                 showToast("No items to delete or you are not logged in.");
                 return;
             }
 
-            if (!confirm(`Are you sure you want to delete all variants of ${selectedProduct.name} from the cart?`)) { // Using selectedProduct.name
+            if (!confirm(`Are you sure you want to delete all variants of ${selectedProduct.nama} from the cart?`)) { 
                 return;
             }
 
@@ -1128,8 +971,8 @@
             if (quantityLoadingIndicator) quantityLoadingIndicator.classList.add('show');
             if (increaseButton) increaseButton.disabled = true;
             if (decreaseButton) decreaseButton.disabled = true;
-            if (editProductSummaryBtn) editProductSummaryBtn.disabled = true; // Check if element exists
-            if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = true; // Check if element exists
+            if (editProductSummaryBtn) editProductSummaryBtn.disabled = true; 
+            if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = true; 
 
             try {
                 const snapshot = await cartsCollection.doc(currentUserId).collection('items')
@@ -1137,25 +980,24 @@
                     .get();
                 
                 if (snapshot.empty) {
-                    showToast(`${selectedProduct.name} is not in the cart.`); // Using selectedProduct.name
+                    showToast(`${selectedProduct.nama} is not in the cart.`);
                 } else {
                     const batch = db.batch();
                     snapshot.forEach(doc => {
                         batch.delete(doc.ref);
                     });
                     await batch.commit();
-                    showToast(`${selectedProduct.name} successfully removed from cart.`); // Using selectedProduct.name
+                    showToast(`${selectedProduct.nama} successfully removed from cart.`);
                     
-                    if (productQuantityInput) productQuantityInput.value = 0; // Reset quantity display
-                    updateLocalSummaryBar(0); // Update summary bar
-                    renderCurrentProductItemsSummary(); // Refresh summary list
+                    if (productQuantityInput) productQuantityInput.value = 0;
+                    updateLocalSummaryBar(0);
+                    renderCurrentProductItemsSummary();
                     window.parent.postMessage({ type: 'cartUpdatedFromProductDetail' }, '*');
                 }
             } catch (error) {
                 console.error("❌ Failed to delete product from cart:", error);
                 showToast("Failed to delete product from cart.");
             } finally {
-                // Hide loading indicator and re-enable buttons
                 if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                 if (increaseButton) increaseButton.disabled = false;
                 if (decreaseButton) decreaseButton.disabled = false;
@@ -1163,19 +1005,25 @@
                 if (deleteProductSummaryBtn) deleteProductSummaryBtn.disabled = false;
             }
         }
-        // --- End Delete Function ---
 
 
         async function loadProductQuantityFromFirestore() {
-            if (!currentUserId || !selectedProduct || !selectedVariants.bumbu || !selectedVariants.kacang || !productQuantityInput) {
+            if (!currentUserId || !selectedProduct || !productQuantityInput) {
                 if (productQuantityInput) productQuantityInput.value = 0;
                 updateLocalSummaryBar(0);
                 return;
             }
-            const productId = selectedProduct.id;
-            const bumbuVariant = selectedVariants.bumbu || 'none';
-            const kacangVariant = selectedVariants.kacang || 'none';
-            const customKey = `${productId}_${bumbuVariant}_${kacangVariant}`;
+
+            // Bangun customKey berdasarkan semua varian yang dipilih
+            let customKeyParts = [selectedProduct.id];
+            if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
+                selectedProduct.variantTypeIds.forEach(type => {
+                    customKeyParts.push(selectedVariants[type] || 'none');
+                });
+            } else {
+                customKeyParts.push('no_variant');
+            }
+            const customKey = customKeyParts.join('_');
             const cartItemDocRef = cartsCollection.doc(currentUserId).collection('items').doc(customKey);
 
             try {
@@ -1190,28 +1038,6 @@
             }
         }
 
-        function updateActiveVariantPreview() {
-            // Using selectedProduct.name because it's the property in sessionStorage data
-            const name = selectedProduct?.name || ''; 
-            const bumbu = selectedVariants.bumbu || 'Not selected'; // Default value if null
-            const kacang = selectedVariants.kacang || 'Not selected'; // Default value if null
-            let display = name;
-            if (bumbu !== 'Not selected' || kacang !== 'Not selected') { // Only add if a variant is actually selected
-                const parts = [];
-                if (bumbu !== 'Not selected') parts.push(bumbu);
-                if (kacang !== 'Not selected') parts.push(kacang);
-                if (parts.length > 0) {
-                    display += ' - ' + parts.join(', ');
-                }
-            }
-            document.getElementById('activeVariantPreview').textContent = display;
-            if (selectedVariants.bumbu && selectedVariants.kacang && productQuantityInput) { // Check productQuantityInput
-                loadProductQuantityFromFirestore();
-            } else if (productQuantityInput) {
-                productQuantityInput.value = 0;
-                updateLocalSummaryBar(0);
-            }
-        }
 
         document.addEventListener('DOMContentLoaded', function () {
             productQuantityInput = document.getElementById('productQuantity');
@@ -1221,10 +1047,8 @@
             editProductSummaryBtn = document.getElementById('editProductSummaryBtn'); 
             deleteProductSummaryBtn = document.getElementById('deleteProductSummaryBtn'); 
             summaryActionButtons = document.getElementById('summaryActionButtons'); 
+            productDetailPlaceholder = document.getElementById('productDetailPlaceholder'); // Initialize placeholder
 
-            // Move onAuthStateChanged inside DOMContentLoaded so DOM elements are available
-            // and to avoid potential race conditions with variable initialization
-            // that depend on the DOM.
             auth.onAuthStateChanged(async user => {
                 let finalUserId = null;
                 if (user) {
@@ -1235,7 +1059,6 @@
                         finalUserId = userCredential.user.uid;
                     } catch (error) {
                         console.error("productdetail: Error signing in with custom token:", error);
-                        // Fallback to anonymous if custom token fails
                         try {
                             const anonUserCredential = await auth.signInAnonymously();
                             finalUserId = anonUserCredential.user.uid;
@@ -1244,7 +1067,6 @@
                         }
                     }
                 } else {
-                    // If no token, try anonymous login
                     try {
                         const anonUserCredential = await auth.signInAnonymously();
                         finalUserId = anonUserCredential.user.uid;
@@ -1255,107 +1077,112 @@
 
                 if (finalUserId) {
                     currentUserId = finalUserId;
-                    // Display part of User ID for privacy, but still unique
                     if (userIdDisplay) userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`; 
                     listenToCartUpdates(currentUserId);
 
-                    // If selectedProduct is already loaded via postMessage before auth is ready
                     if (selectedProduct) {
-                        // Using selectedProduct.name because it's the property in sessionStorage data
-                        if (productNameInSummary) productNameInSummary.textContent = selectedProduct.name; 
-                        if (selectedVariants.bumbu && selectedVariants.kacang) {
-                            loadProductQuantityFromFirestore();
-                        }
+                        if (productNameInSummary) productNameInSummary.textContent = selectedProduct.nama; 
+                        updateActiveVariantPreview(); 
                         renderCurrentProductItemsSummary();
                     }
                 } else {
-                    if (userIdDisplay) userIdDisplay.textContent = `User ID: N/A`;
+                    if (userIdDisplay) userId.textContent = `User ID: N/A`;
                     renderCurrentProductItemsSummary();
                 }
             });
 
-            document.querySelectorAll('.variant-options').forEach(group => {
-                const variantType = group.dataset.variant;
-                group.querySelectorAll('.variant-option').forEach(option => {
-                    option.addEventListener('click', () => {
-                        group.querySelectorAll('.variant-option').forEach(opt => opt.classList.remove('active'));
-                        option.classList.add('active');
-                        selectedVariants[variantType] = option.dataset.value;
-                        updateActiveVariantPreview();
-                    });
-                });
-            });
-
-            // Retrieve product from sessionStorage (if any) - this can be a fallback
+            // Initial load from sessionStorage (for direct access or first load)
             selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct'));
             if (selectedProduct) {
-                // Ensure these elements exist before accessing them
-                if (productImageElement) productImageElement.src = selectedProduct.image || 'https://placehold.co/150x150/cccccc/333333?text=No+Image';
-                if (document.getElementById('productName')) document.getElementById('productName').textContent = selectedProduct.name;
-                if (document.getElementById('productDescription')) document.getElementById('productDescription').textContent = selectedProduct.description;
-                if (document.getElementById('productPrice')) document.getElementById('productPrice').textContent = `Rp ${selectedProduct.price.toLocaleString('id-ID')}`;
-                if (productNameInSummary) productNameInSummary.textContent = selectedProduct.name;
-                updateActiveVariantPreview();
-                renderCurrentProductItemsSummary();
-                // updateLocalSummaryBar(0); // This will be handled by listenToCartUpdates
-
-                // Event listener for quantity buttons
-                if (decreaseButton) {
-                    decreaseButton.addEventListener('click', async () => { // Make it async
-                        if (selectedVariants.bumbu === null || selectedVariants.kacang === null) { // Use strict comparison for null
-                            showToast("Please select seasoning and nut variants first.");
-                            return;
-                        }
-                        let qty = parseInt(productQuantityInput.value);
-                        if (qty > 0) {
-                            qty--;
-                            // productQuantityInput.value = qty; // Let updateCartInFirestore trigger UI update
-                            await updateCartInFirestore(qty, false); // Await the call
-                        }
-                    });
-                }
-
-                if (increaseButton) {
-                    increaseButton.addEventListener('click', async () => { // Make it async
-                        if (selectedVariants.bumbu === null || selectedVariants.kacang === null) { // Use strict comparison for null
-                            showToast("Please select seasoning and nut variants first.");
-                            return;
-                        }
-                        let qty = parseInt(productQuantityInput.value);
-                        qty++;
-                            // productQuantityInput.value = qty; // Let updateCartInFirestore trigger UI update
-                        await updateCartInFirestore(qty, true); // Await the call
-                    });
-                }
-
-                // Event listener for Edit button (still present in JS, but HTML button removed)
-                if (editProductSummaryBtn) {
-                    editProductSummaryBtn.addEventListener('click', () => {
-                        // Here we will send a message to the parent to navigate to the main product page
-                        window.parent.postMessage({ type: 'navigateToProductList' }, '*');
-                        closePopup(); // Close product detail popup
-                    });
-                }
-
-                // Event listener for Delete button
-                if (deleteProductSummaryBtn) {
-                    deleteProductSummaryBtn.addEventListener('click', () => {
-                        deleteThisProductFromCart();
-                    });
-                }
-
+                loadProductDetails(selectedProduct.id); 
             } else {
-                // If no product in sessionStorage, this might mean
-                // the page was opened directly or there's a communication issue.
-                // loadProductDetails will be called by postMessage from parent.
-                alert('Product not found in sessionStorage. Waiting for data from main page.');
-                // Do not closePopup immediately, let the page wait for postMessage
-                // closePopup(); 
+                showToast('Produk tidak ditemukan. Menunggu data dari halaman utama.');
+            }
+
+            // Listener for messages from parent window
+            window.addEventListener('message', async (event) => {
+                // Ensure the message is from a trusted origin in a real application
+                // if (event.origin !== 'your-parent-domain.com') return;
+
+                if (event.data && event.data.type === 'loadProduct' && event.data.productData) {
+                    console.log("Menerima pesan loadProduct dari induk:", event.data.productData);
+                    selectedProduct = event.data.productData;
+                    sessionStorage.setItem('selectedProduct', JSON.stringify(selectedProduct)); // Update sessionStorage
+                    await loadProductDetails(selectedProduct.id); // Load new product details
+                }
+            });
+            
+            if (decreaseButton) {
+                decreaseButton.addEventListener('click', async () => {
+                    let allRequiredVariantsSelected = true;
+                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
+                        selectedProduct.variantTypeIds.forEach(type => {
+                            if (!selectedVariants[type]) {
+                                allRequiredVariantsSelected = false;
+                            }
+                        });
+                    }
+                    if (!allRequiredVariantsSelected) {
+                        showToast("Pilih semua varian yang diperlukan dahulu.");
+                        return;
+                    }
+
+                    let qty = parseInt(productQuantityInput.value);
+                    if (qty > 0) {
+                        qty--;
+                        await updateCartInFirestore(qty, false);
+                    }
+                });
+            }
+
+            if (increaseButton) {
+                increaseButton.addEventListener('click', async () => {
+                    let allRequiredVariantsSelected = true;
+                    if (selectedProduct.variantTypeIds && Array.isArray(selectedProduct.variantTypeIds)) {
+                        selectedProduct.variantTypeIds.forEach(type => {
+                            if (!selectedVariants[type]) {
+                                allRequiredVariantsSelected = false;
+                            }
+                        });
+                    }
+                    if (!allRequiredVariantsSelected) {
+                        showToast("Pilih semua varian yang diperlukan dahulu.");
+                        return;
+                    }
+
+                    let qty = parseInt(productQuantityInput.value);
+                    qty++;
+                    await updateCartInFirestore(qty, true);
+                });
+            }
+
+            if (editProductSummaryBtn) {
+                editProductSummaryBtn.addEventListener('click', () => {
+                    window.parent.postMessage({ type: 'navigateToProductList' }, '*');
+                    closePopup();
+                });
+            }
+
+            if (deleteProductSummaryBtn) {
+                deleteProductSummaryBtn.addEventListener('click', () => {
+                    deleteThisProductFromCart();
+                });
             }
 
             document.getElementById('btnBackDetail')?.addEventListener('click', closePopup);
             document.getElementById('swipeBarClose')?.addEventListener('click', closePopup);
+
+            // Tambahkan listener resize untuk menyesuaikan placeholder
+            window.addEventListener('resize', adjustPlaceholderHeight);
         });
+
+        // Fungsi untuk menyesuaikan tinggi placeholder
+        function adjustPlaceholderHeight() {
+            const productDetailGrid = document.querySelector('.product-detail-grid');
+            if (productDetailGrid && productDetailPlaceholder) {
+                productDetailPlaceholder.style.height = productDetailGrid.offsetHeight + 'px';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const tombolKeranjang = document.querySelector('.summary-checkout-button');
