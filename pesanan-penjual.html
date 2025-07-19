@@ -822,9 +822,9 @@
 
         // --- Fungsi Utama: Muat Data Pesanan ---
         async function loadData() { // Removed statusFilter param as it's handled by activeFilterStatus
-            orderListDiv.innerHTML = '<div class="spinner"></div><p class="text-center text-gray-500 mt-2">Memuat pesanan...</p>';
+            daftar.innerHTML = '<div class="spinner"></div><p class="text-center text-gray-500 mt-2">Memuat pesanan...</p>';
             try {
-                let query = pesananCollection.orderBy("waktu", "desc");
+                let query = db.collection("pesanan").orderBy("waktu", "desc"); // Changed from pesananCollection to db.collection("pesanan") for consistency
 
                 const searchTxt = searchQueryInput.value.trim().toUpperCase();
                 const filterDateVal = filterDateInput.value;
@@ -851,7 +851,7 @@
                     docs = docs.filter(doc => doc.data().status === activeFilterStatus);
                 }
 
-                orderListDiv.innerHTML = docs.length
+                daftar.innerHTML = docs.length
                     ? ''
                     : '<p class="text-center text-gray-500">Tidak ada pesanan.</p>';
 
@@ -859,7 +859,7 @@
                     const data = doc.data();
                     const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
                     const html = `
-                        <div class="order-item" data-order-id="${doc.id}">
+                        <div class="order-item-upgrade" onclick='tampilkanDetail("${doc.id}")'> <!-- Changed class and added onclick to match original structure -->
                             <div class="order-id">${orderId}</div>
                             <div class="customer-info-item">👤 ${data.customer?.fullName || '-'}</div>
                             <div class="customer-info-item">📍 ${data.customer?.address || '-'}</div>
@@ -867,70 +867,151 @@
                             <div class="status ${getStatusClass(data.status)}">${data.status || '-'}</div>
                         </div>
                     `;
-                    orderListDiv.innerHTML += html;
+                    daftar.innerHTML += html; // Changed from orderListDiv to daftar
                 });
 
-                document.querySelectorAll('.order-item').forEach(item => {
-                    item.addEventListener('click', () => showOrderDetail(item.dataset.orderId));
-                });
+                // No need for document.querySelectorAll('.order-item').forEach(item => { ... })
+                // because onclick is directly on the element now.
 
             } catch (err) {
                 console.error("Load error:", err);
-                orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>';
+                daftar.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>'; // Changed from orderListDiv to daftar
             }
         }
 
-        async function showOrderDetail(docId) {
+        async function tampilkanDetail(docId) { // Renamed from showOrderDetail to tampilkanDetail to match original
+            currentOrderIdForDetail = docId; // Set currentOrderIdForDetail
+            const docRef = db.collection("pesanan").doc(docId); // Use docRef directly
+            const uid = auth.currentUser?.uid || "Unknown"; // Get current user UID
+            const nama = auth.currentUser?.email || "Tanpa Nama"; // Get current user email
+
             try {
-                const doc = await pesananCollection.doc(docId).get();
-                if (doc.exists) {
-                    const data = doc.data();
-                    const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                await db.runTransaction(async (transaction) => {
+                    const snapshot = await transaction.get(docRef);
+                    if (!snapshot.exists) throw "Pesanan tidak ditemukan.";
+                    const d = snapshot.data();
+                    if (!d.dibukaOlehUid) {
+                        transaction.update(docRef, {
+                            dibukaOlehUid: uid,
+                            dibukaOlehNama: nama,
+                            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
 
-                    modalOrderId.textContent = `Detail Pesanan: ${orderId}`;
-                    modalOrderTime.textContent = formatDate(data.waktu);
-                    modalCustomerName.textContent = data.customer?.fullName || '-';
-                    modalCustomerPhone.textContent = data.customer?.phoneNumber || '-';
-                    modalCustomerAddress.textContent = data.customer?.address || '-';
-                    modalTotalAmount.textContent = formatCurrency(data.totalAmount || 0);
-                    modalStatus.textContent = data.status || '-';
-                    modalStatus.className = `status ${getStatusClass(data.status)}`;
-
-                    // Updated to display variants
-                    modalProductItems.innerHTML = (data.items || []).map(item => { // Changed from 'products' to 'items' to match cart.html structure
-                        const variantDisplay = getVariantDisplayString(item.custom);
-                        return `
-                            <div class="modal-product-item">
-                                <span>${item.name}</span>
-                                <span>${item.quantity}x</span>
-                                <span>${formatCurrency(item.price * item.quantity)}</span>
-                                <br><small style="font-size:0.8em; color:#777;">Varian: ${variantDisplay}</small>
-                            </div>
-                        `;
-                    }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
-
-                    orderDetailModal.classList.add('active');
-                } else {
+                // After transaction, get the latest data
+                const doc = await docRef.get();
+                if (!doc.exists) {
                     await showCustomAlert('Pesanan tidak ditemukan.');
+                    return;
                 }
+
+                const data = doc.data();
+                const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                const customer = data.customer || {};
+                const waktu = data.waktu?.toDate?.() || new Date(0);
+                const items = data.items || [];
+
+                document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                document.getElementById("popupOrderId").textContent = orderId;
+                document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                document.getElementById("popupAlamat").textContent = customer.address || "-";
+                document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+
+                const popupStatusEl = document.getElementById("popupStatus");
+                const currentStatus = data.status || "Pending";
+                popupStatusEl.textContent = currentStatus;
+                popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+                const statusUpdater = document.getElementById("statusUpdater");
+                statusUpdater.value = currentStatus;
+
+                document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                // Display info about who opened and modified
+                const dibukaOleh = data.dibukaOlehNama || "-";
+                const waktuDibuka = data.waktuDibuka?.toDate?.();
+                document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
+                document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+                const diubahOleh = data.diubahOlehNama || "-";
+                const waktuDiubah = data.waktuDiubah?.toDate?.();
+                document.getElementById("popupDiubahOleh").textContent = diubahOleh;
+                document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+
+                // Detail Item (Updated to display variants)
+                document.getElementById("popupItems").innerHTML = (items || []).map(item => {
+                    const variantDisplay = getVariantDisplayString(item.custom);
+                    return `
+                        <div style="margin-bottom:5px;">
+                            - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency((item.price || 0) * (item.quantity || 0))}
+                            <br><small style="color:#777;">Varian: ${variantDisplay}</small>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
+
+                document.getElementById("popupDetail").style.display = "flex";
+
             } catch (err) {
-                await showCustomAlert('Gagal menampilkan detail pesanan.');
-                console.error(err);
+                await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
+                console.error("Error showing order detail:", err);
             }
         }
 
-        closeModalBtn.onclick = () => orderDetailModal.classList.remove('active');
-        orderDetailModal.onclick = e => {
-            if (e.target === orderDetailModal) orderDetailModal.classList.remove('active');
-        };
+        function tutupDetail() {
+            document.getElementById("popupDetail").style.display = "none";
+            currentOrderIdForDetail = null; 
+            loadData(); // Refresh data setelah menutup detail, untuk melihat status terbaru
+        }
 
-        searchQueryInput.addEventListener('input', loadData);
-        filterDateInput.addEventListener('change', loadData);
-        resetFiltersBtn.onclick = () => {
-            searchQueryInput.value = '';
-            filterDateInput.value = '';
-            loadData();
-        };
+        document.getElementById("statusUpdater").addEventListener("change", async function () {
+            const newStatus = this.value;
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${newStatus}"?`);
+            if (currentOrderIdForDetail && confirmChange) {
+                try {
+                    const user = auth.currentUser;
+                    const userName = user?.email || "Admin Anonim"; 
+
+                    await db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                        status: newStatus,
+                        diubahOlehNama: userName, 
+                        waktuDiubah: firebase.firestore.FieldValue.serverTimestamp() 
+                    });
+
+                    const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+                    const data = docSnap.data();
+                    const userId = data.userId;
+
+                    if (userId) {
+                        await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
+                            status: newStatus
+                        }, { merge: true });
+                    } else {
+                        console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
+                    }
+                    
+                    await showCustomAlert("Status pesanan berhasil diperbarui!"); 
+                    tutupDetail(); 
+                } catch (error) {
+                    console.error("Error updating order status:", error);
+                    await showCustomAlert("Gagal memperbarui status pesanan."); 
+                }
+            }
+        });
+
+        // --- Event Listeners untuk Tombol Filter ---
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                activeFilterStatus = status; // Update active filter status
+                loadData(); // Reload data with new filter
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
 
         // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Implementasi Terbaru) ---
         const sound = document.getElementById("notifSound");
@@ -1095,7 +1176,7 @@
 
             if (finalUser) {
                 // Check user role
-                usersCollection.doc(finalUser.uid).get().then(doc => {
+                db.collection('users').doc(finalUser.uid).get().then(doc => { // Changed from usersCollection to db.collection('users')
                     if (doc.exists && doc.data().role === 'penjual') {
                         localStorage.setItem("userUid", finalUser.uid);
                         localStorage.setItem("userEmail", finalUser.email || "Anonim"); 
