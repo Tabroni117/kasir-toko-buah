@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pesanan Penjual</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <!-- Firebase SDK v9 Compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -246,6 +246,22 @@
             margin-bottom: 0;
         }
 
+        /* NEW: Styles for product images in order list */
+        .product-images-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap; /* Allow images to wrap */
+        }
+        .order-product-thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
         /* Loading Spinner */
         #loadingSpinner {
             position: fixed;
@@ -427,6 +443,20 @@
             font-size: 13px;
             color: #333;
         }
+        /* NEW: Styles for product images in popup detail */
+        #popupItems div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #popupItems img {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
         #popupDetail button {
             background-color: #4CAF50;
             color: white;
@@ -482,77 +512,112 @@
             animation: pulse 1s infinite;
         }
 
+        /* Custom Confirmation Modal (replacing window.confirm) */
+        #customConfirmModal {
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-color:rgba(0,0,0,0.5);
+            z-index:9998;
+            justify-content:center;
+            align-items:center;
+        }
+        #customConfirmModal > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customConfirmModal button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        #customConfirmModal button:last-child {
+            background-color: #f44336;
+        }
+
+        /* Custom Alert Modal (for simple messages) */
+        #customAlertDialog {
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background-color:rgba(0,0,0,0.5);
+            z-index:9997;
+            justify-content:center;
+            align-items:center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
         /* Modal Verifikasi Password */
         #modalVerifikasi {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background-color:rgba(0,0,0,0.5);
+            z-index:9999;
+            align-items:center;
+            justify-content:center;
         }
         #modalVerifikasi > div {
             background:white;
             padding:20px;
             border-radius:8px;
-            width: calc(100% - 40px);
-            max-width:300px;
-            box-shadow:0 0 10px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-        #modalVerifikasi h3 {
-            margin-top: 0;
-            color: #333;
-            font-size: 18px;
-        }
-        #modalVerifikasi p {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 15px;
+            width:300px;
+            box-shadow:0 0 10px rgba(0 0 0 / 30%);
         }
         #modalVerifikasi input[type="password"] {
-            width: calc(100% - 20px);
+            width:100%;
             padding:8px;
             margin-top:10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
         }
         #modalVerifikasi .button-group-modal {
-            margin-top:15px;
+            margin-top:10px;
             text-align:right;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
         }
         #modalVerifikasi .button-group-modal button {
+            margin-left:10px;
             padding: 8px 15px;
-            border: none;
-            border-radius: 20px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: background-color 0.2s;
         }
         #modalVerifikasi .button-group-modal button:first-child {
             background-color: #ccc;
-            color: #333;
-        }
-        #modalVerifikasi .button-group-modal button:first-child:hover {
-            background-color: #bbb;
         }
         #modalVerifikasi .button-group-modal button:last-child {
-            background-color: #f44336; /* Red for delete */
+            background-color: #f44336;
             color: white;
         }
-        #modalVerifikasi .button-group-modal button:last-child:hover {
-            background-color: #d32f2f;
-        }
-
     </style>
 </head>
 <body>
@@ -663,6 +728,14 @@
             <p id="customConfirmMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
             <button id="customConfirmYes" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Ya</button>
             <button id="customConfirmNo" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Tidak</button>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal (for simple messages) -->
+    <div id="customAlertDialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9997; justify-content:center; align-items:center;">
+        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+            <p id="customAlertMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <button id="customAlertOk" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">OK</button>
         </div>
     </div>
 
@@ -792,6 +865,26 @@
             });
         }
 
+        // Custom Alert Modal (for simple messages, replacing window.alert)
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customAlertDialog');
+                const msgEl = document.getElementById('customAlertMessage');
+                const okBtn = document.getElementById('customAlertOk');
+
+                msgEl.textContent = message;
+                modal.style.display = 'flex';
+
+                const handleOk = () => {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', handleOk);
+                    resolve();
+                };
+
+                okBtn.addEventListener('click', handleOk);
+            });
+        }
+
         // --- Fungsi Utama: Muat Data Pesanan ---
         function loadData(statusFilter = activeFilterStatus) {
             showLoading();
@@ -853,16 +946,22 @@
                             const customerPhone = data.customer?.phoneNumber || "-";
                             const currentStatus = data.status || "Pending";
 
+                            // HTML untuk daftar item di ringkasan pesanan
                             const itemsHtml = (data.items || []).map(item => {
                                 const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                                const variantDisplay = getVariantDisplayString(item.custom); // NEW: Get variant display string
+                                const variantDisplay = getVariantDisplayString(item.custom);
                                 return `
                                     <div style="margin-bottom: 5px;">
                                         🍉 ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency(itemTotalPrice)}
-                                        <br><small style="color:#777;">Varian: ${variantDisplay}</small> <!-- NEW: Display variants -->
+                                        <br><small style="color:#777;">Varian: ${variantDisplay}</small>
                                     </div>
                                 `;
                             }).join("");
+
+                            // HTML untuk baris gambar produk di ringkasan pesanan
+                            const productImagesRowHtml = (data.items || []).map(item => `
+                                <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Img'}" alt="${item.name || 'Product'}" class="order-product-thumbnail" onerror="this.onerror=null;this.src='https://placehold.co/50x50/cccccc/333333?text=No+Img';">
+                            `).join('');
 
                             daftar.innerHTML += `
                                 <div class='order-item-upgrade animate-slidein' onclick='tampilkanDetail("${orderId}")'>
@@ -881,6 +980,7 @@
                                     </div>
                                     <div class='order-row-bottom'>
                                         <div class='time'><i class='fas fa-clock'></i><span>${formatDate(waktu)}</span></div>
+                                        <div class='product-images-row'>${productImagesRowHtml}</div> <!-- NEW: Display product images row -->
                                         <div class='items'>${itemsHtml}</div>
                                     </div>
                                 </div>
@@ -902,92 +1002,92 @@
                 });
         }
 
-        function tampilkanDetail(orderId) {
+        async function tampilkanDetail(orderId) {
             currentOrderIdForDetail = orderId;
             const docRef = db.collection("pesanan").doc(orderId);
-            const uid = localStorage.getItem("userUid") || "Unknown";
-            const nama = localStorage.getItem("userEmail") || "Tanpa Nama";
+            const uid = auth.currentUser?.uid || "Unknown"; // Menggunakan auth.currentUser untuk UID
+            const nama = auth.currentUser?.email || "Tanpa Nama"; // Menggunakan auth.currentUser untuk email
 
-            db.runTransaction(async (transaction) => {
-                const snapshot = await transaction.get(docRef);
-                if (!snapshot.exists) throw "Pesanan tidak ditemukan.";
-                const d = snapshot.data();
-                if (!d.dibukaOlehUid) {
-                    transaction.update(docRef, {
-                        dibukaOlehUid: uid,
-                        dibukaOlehNama: nama,
-                        waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-            })
-            .catch(err => {
-                console.warn("Gagal update data pembuka:", err);
-            })
-            .finally(() => {
-                // Ambil ulang data terbaru setelah transaksi
-                docRef.get().then(doc => {
-                    if (!doc.exists) {
-                        alert("Pesanan tidak ditemukan."); // Should be custom toast
-                        return;
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const snapshot = await transaction.get(docRef);
+                    if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan."); // Menggunakan Error object
+                    const d = snapshot.data();
+                    if (!d.dibukaOlehUid) {
+                        transaction.update(docRef, {
+                            dibukaOlehUid: uid,
+                            dibukaOlehNama: nama,
+                            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                        });
                     }
-
-                    const data = doc.data();
-                    const customer = data.customer || {};
-                    const waktu = data.waktu?.toDate?.() || new Date(0);
-                    const items = data.items || [];
-
-                    document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
-                    const displayId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-                    document.getElementById("popupOrderId").textContent = displayId;
-                    document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
-                    document.getElementById("popupAlamat").textContent = customer.address || "-";
-                    document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
-                    document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
-                    document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
-
-                    const popupStatusEl = document.getElementById("popupStatus");
-                    const currentStatus = data.status || "Pending";
-                    popupStatusEl.textContent = currentStatus;
-                    popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
-
-                    const statusUpdater = document.getElementById("statusUpdater");
-                    statusUpdater.value = currentStatus;
-
-                    document.getElementById("popupWaktu").textContent = formatDate(waktu);
-
-                    // ⬇️ Daftar Item (Diperbarui untuk Varian Dinamis)
-                    const popupItemsHtml = items.map(item => {
-                        const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
-                        const variantDisplay = getVariantDisplayString(item.custom); // NEW: Get variant display string
-                        return `
-                            <div style="margin-bottom:5px;">
-                                - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency(itemTotalPrice)}
-                                <br><small style="color:#777;">Varian: ${variantDisplay}</small> <!-- NEW: Display variants -->
-                            </div>
-                        `;
-                    }).join("");
-                    document.getElementById("popupItems").innerHTML = popupItemsHtml;
-
-                    // ✅ Tampilkan info siapa yang membuka
-                    const dibukaOleh = data.dibukaOlehNama || "-";
-                    const waktuDibuka = data.waktuDibuka?.toDate?.();
-                    document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
-                    document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
-
-                    // ✅ Info pengubah status
-                    const diubahOleh = data.diubahOlehNama || "-";
-                    const waktuDiubah = data.waktuDiubah?.toDate?.();
-                    document.getElementById("popupDiubahOleh").textContent = diubahOgah;
-                    document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
-
-                    // ✅ Tampilkan Popup
-                    document.getElementById("popupDetail").style.display = "flex";
-
-                }).catch(error => {
-                    console.error("Gagal ambil ulang detail:", error);
-                    alert("Gagal menampilkan detail pesanan."); // Should be custom toast
                 });
-            });
+
+                // Ambil ulang data terbaru setelah transaksi (atau jika tidak ada transaksi)
+                const doc = await docRef.get();
+                if (!doc.exists) {
+                    await showCustomAlert("Pesanan tidak ditemukan.");
+                    return;
+                }
+
+                const data = doc.data();
+                const customer = data.customer || {};
+                const waktu = data.waktu?.toDate?.() || new Date(0);
+                const items = data.items || [];
+
+                document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                const displayId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                document.getElementById("popupOrderId").textContent = displayId;
+                document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                document.getElementById("popupAlamat").textContent = customer.address || "-";
+                document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+
+                const popupStatusEl = document.getElementById("popupStatus");
+                const currentStatus = data.status || "Pending";
+                popupStatusEl.textContent = currentStatus;
+                popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+                const statusUpdater = document.getElementById("statusUpdater");
+                statusUpdater.value = currentStatus;
+
+                document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                // ⬇️ Daftar Item (Diperbarui untuk Varian Dinamis dan Gambar)
+                const popupItemsHtml = items.map(item => {
+                    const itemTotalPrice = (item.price || 0) * (item.quantity || 0);
+                    const variantDisplay = getVariantDisplayString(item.custom);
+                    return `
+                        <div style="margin-bottom:5px;">
+                            <img src="${item.image || 'https://placehold.co/40x40/cccccc/333333?text=No+Img'}" alt="${item.name || 'Product'}" style="width:40px; height:40px; border-radius:5px; object-fit:cover;">
+                            <div>
+                                - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency(itemTotalPrice)}
+                                <br><small style="color:#777;">Varian: ${variantDisplay}</small>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+                document.getElementById("popupItems").innerHTML = popupItemsHtml;
+
+                // ✅ Tampilkan info siapa yang membuka
+                const dibukaOleh = data.dibukaOlehNama || "-";
+                const waktuDibuka = data.waktuDibuka?.toDate?.();
+                document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
+                document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+                // ✅ Info pengubah status
+                const diubahOleh = data.diubahOlehNama || "-";
+                const waktuDiubah = data.waktuDiubah?.toDate?.();
+                document.getElementById("popupDiubahOleh").textContent = diubahOleh; // Perbaikan: ganti diubahOgah menjadi diubahOleh
+                document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+                // ✅ Tampilkan Popup
+                document.getElementById("popupDetail").style.display = "flex";
+
+            } catch (error) {
+                console.error("Gagal ambil ulang detail atau transaksi:", error);
+                await showCustomAlert("Gagal menampilkan detail pesanan: " + error.message);
+            }
         }
         
         function tutupDetail() {
@@ -1026,11 +1126,11 @@
                         console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
                     }
                     
-                    alert("Status pesanan berhasil diperbarui!"); // Should be custom toast
+                    await showCustomAlert("Status pesanan berhasil diperbarui!"); 
                     tutupDetail(); // Menutup popup dan refresh daftar
                 } catch (error) {
                     console.error("Error updating order status:", error);
-                    alert("Gagal memperbarui status pesanan."); // Should be custom toast
+                    await showCustomAlert("Gagal memperbarui status pesanan."); 
                 }
             }
         });
@@ -1187,21 +1287,47 @@
         }
 
         auth.onAuthStateChanged(async function(user) {
-            if (!user) {
-                // Menggunakan custom modal UI sebagai pengganti alert()
-                await showCustomConfirm("Silakan login terlebih dahulu.");
-                window.location.href = "index.html"; 
-            } else {
-                // If user is logged in, use their UID for tracking who opened/modified orders
-                localStorage.setItem("userUid", user.uid);
-                localStorage.setItem("userEmail", user.email || "Anonim"); // Store email or default
+            let finalUser = user;
+            if (!finalUser) {
+                if (initialAuthToken) {
+                    try {
+                        const userCredential = await auth.signInWithCustomToken(initialAuthToken);
+                        finalUser = userCredential.user;
+                    } catch (error) {
+                        console.error("Admin: Error signing in with custom token:", error);
+                        await showCustomAlert("Gagal login otomatis. Silakan login manual.");
+                        // window.location.href = 'index.html'; // Removed direct navigation
+                    }
+                } else {
+                    await showCustomAlert("Silakan login terlebih dahulu.");
+                    // window.location.href = "index.html"; // Removed direct navigation
+                }
+            }
+
+            if (finalUser) {
+                // Check user role
+                db.collection('users').doc(finalUser.uid).get().then(doc => { 
+                    if (doc.exists && doc.data().role === 'penjual') {
+                        localStorage.setItem("userUid", finalUser.uid);
+                        localStorage.setItem("userEmail", finalUser.email || "Anonim"); 
+                        loadData();
+                        cekPesananBaru();
+                    } else {
+                        showCustomAlert("Anda tidak memiliki akses sebagai penjual.");
+                        // window.location.href = "index.html"; // Removed direct navigation
+                    }
+                }).catch(err => {
+                    console.error("Error fetching user role:", err);
+                    showCustomAlert("Gagal memverifikasi peran pengguna. Silakan coba lagi.");
+                    // window.location.href = "index.html"; // Removed direct navigation
+                });
             }
         });
 
         // --- Jalankan saat halaman selesai dimuat ---
         window.addEventListener("DOMContentLoaded", () => {
-            loadData('All');
-            cekPesananBaru(); 
+            // Initial load and notification check are now handled within auth.onAuthStateChanged
+            // to ensure user is authenticated before data operations.
 
             // Event listener untuk tombol navigasi "Pesanan"
             navPesanan.addEventListener("click", function () {
@@ -1238,7 +1364,7 @@
             if (modal) {
                 modal.style.display = 'flex';
             } else {
-                alert("❌ Modal verifikasi tidak ditemukan di halaman."); // Should be custom toast
+                await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman."); 
             }
         };
 
@@ -1246,13 +1372,13 @@
         window.verifikasiPasswordDanHapus = async function () {
             const user = firebase.auth().currentUser;
             if (!user) {
-                alert("⚠️ Anda belum login."); // Should be custom toast
+                await showCustomAlert("⚠️ Anda belum login."); 
                 return;
             }
 
             const passwordInput = document.getElementById('inputPassword');
             if (!passwordInput || !passwordInput.value) {
-                alert("⚠️ Masukkan password terlebih dahulu."); // Should be custom toast
+                await showCustomAlert("⚠️ Masukkan password terlebih dahulu."); 
                 return;
             }
 
@@ -1272,11 +1398,12 @@
 
                 await batch.commit();
 
-                alert("✅ Semua pesanan berhasil dihapus."); // Should be custom toast
-                location.reload();
+                await showCustomAlert("✅ Semua pesanan berhasil dihapus."); 
+                // location.reload(); // Removed direct reload
+                loadData(); // Reload data instead of full page reload
             } catch (error) {
                 console.error("❌ Gagal re-auth:", error);
-                alert("❌ Password salah atau gagal autentikasi."); // Should be custom toast
+                await showCustomAlert("❌ Password salah atau gagal autentikasi."); 
             }
         };
 
