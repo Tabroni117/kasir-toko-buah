@@ -2,272 +2,211 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Menu - Rujak Buah Indonesia</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manajemen Produk - Penjual</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
     <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <style>
-        /* Variabel Warna Utama (Disesuaikan dengan Kode Anda) */
+        /* General Styling */
         :root {
-            /* Warna dari kode header Anda */
-            --header-green-start: #4CAF50;
-            --header-green-end: #2E8B57;
-            /* Warna dari kode navbar Anda */
-            --navbar-green: #388E3C;
-
-            /* Warna untuk konten utama (dari desain sebelumnya) */
-            --text-dark: #212121;
-            --text-medium: #555555;
-            --text-light: #9E9E9E;
-            --bg-light: #F5F5F5;
-            --card-bg: #FFFFFF;
-            --border-color: #EEEEEE;
-            --shadow-subtle: rgba(0, 0, 0, 0.05);
+            --header-green-start: #4CAF50; /* Green */
+            --header-green-end: #8BC34A; /* Light Green */
+            --primary-button-bg: #4CAF50;
+            --primary-button-hover: #388E3C;
+            --secondary-button-bg: #f0f0f0;
+            --secondary-button-hover: #e0e0e0;
+            --danger-button-bg: #e74c3c;
+            --danger-button-hover: #c0392b;
+            --text-dark: #333;
+            --text-light: #777;
+            --border-color: #ddd;
+            --bg-light: #f9f9f9;
+            --card-bg: #fff;
             --shadow-light: rgba(0, 0, 0, 0.1);
             --shadow-medium: rgba(0, 0, 0, 0.15);
-            --shadow-strong: rgba(0, 0, 0, 0.2);
         }
 
-        /* --- Global Styles --- */
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--bg-light);
             color: var(--text-dark);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
         .app-container {
-            background-color: var(--card-bg);
-            border-radius: 0;
-            box-shadow: 0 0 20px var(--shadow-light);
-            width: 100%;
-            max-width: 420px;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 0 15px var(--shadow-light);
             position: relative;
+            padding-bottom: 70px; /* Space for fixed navbar */
         }
 
-        /* --- Header (Dari kode Anda) --- */
+        /* Header */
         .header {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 420px;
-            background: linear-gradient(to right, var(--header-green-start), var(--header-green-end));
+            background: linear-gradient(135deg, var(--header-green-start), var(--header-green-end));
             color: white;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            z-index: 1000;
-            box-sizing: border-box;
+            padding: 15px 20px 10px;
+            box-shadow: 0 2px 5px var(--shadow-medium);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
         }
 
         .header-content-wrapper {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            margin-bottom: 5px;
         }
 
         .header h1 {
+            font-size: 20px;
             margin: 0;
-            font-size: 17px;
             display: flex;
             align-items: center;
-            margin-bottom: 2px;
             font-weight: 600;
         }
 
         .leaf-icon {
-            margin-right: 5px;
-            font-size: 20px;
-            transform: rotate(180deg);
+            margin-right: 10px;
+            font-size: 24px;
         }
 
         .app-description {
-            font-size: 14px;
+            font-size: 12px;
             font-style: italic;
             color: rgba(255, 255, 255, 0.9);
+            text-align: left;
+            margin-left: 35px; /* Align with app title */
+            margin-top: -5px;
         }
 
         .logout-button {
-            background: rgba(255, 255, 255, 0.15);
+            background-color: rgba(255, 255, 255, 0.2);
             color: white;
-            border: 1px solid white;
-            padding: 6px 14px;
-            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 8px 15px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 13px;
-            margin-left: 10px;
-            backdrop-filter: blur(3px);
-            transition: background-color 0.3s, transform 0.1s;
+            font-size: 0.9em;
+            transition: background-color 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .logout-button:hover {
-            background: rgba(46, 125, 50, 0.9);
-            transform: translateY(-1px);
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
-        .logout-button i {
-            font-size: 14px;
-        }
-
-        /* --- Search Bar --- */
+        /* Search Bar */
         .search-bar-container {
+            padding: 15px 20px 10px;
             background-color: var(--card-bg);
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 15;
-            box-shadow: 0 1px 5px var(--shadow-subtle);
-            margin-top: 80px; /* Sesuaikan dengan tinggi header */
-            position: fixed; /* Fixed position */
-            width: 100%;
-            max-width: 420px;
-            left: 50%;
-            transform: translateX(-50%);
+            box-shadow: 0 2px 5px var(--shadow-light);
+            z-index: 50;
+            position: sticky;
+            top: 90px; /* Below header */
         }
+
         .search-bar {
             display: flex;
             align-items: center;
             background-color: var(--bg-light);
-            border-radius: 12px;
-            padding: 10px 15px;
+            border-radius: 25px;
+            padding: 8px 15px;
             border: 1px solid var(--border-color);
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
-        }
-        .search-bar:focus-within {
-            border-color: var(--header-green-start);
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-        }
-        .search-bar .material-icons {
-            font-size: 22px;
-            color: var(--text-light);
-            margin-right: 12px;
-        }
-        .search-bar input {
-            border: none;
-            background: none;
-            outline: none;
-            flex-grow: 1;
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-            color: var(--text-dark);
-            width: calc(100% - 34px);
-        }
-        .search-bar input::placeholder {
-            color: var(--text-light);
         }
 
-        /* --- Category Tabs --- */
+        .search-bar input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            padding: 5px 10px;
+            font-size: 14px;
+            background: transparent;
+            color: var(--text-dark);
+        }
+
+        .search-bar .material-icons {
+            color: var(--text-light);
+            margin-right: 8px;
+        }
+
+        /* Category Tabs */
         .category-tabs {
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
             background-color: var(--card-bg);
             border-bottom: 1px solid var(--border-color);
-            position: fixed; /* Fixed position */
-            top: 150px; /* Sesuaikan dengan tinggi header + search bar */
-            z-index: 10;
-            box-shadow: 0 1px 5px var(--shadow-subtle);
-            width: 100%;
-            max-width: 420px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: sticky;
+            top: 150px; /* Below search bar */
+            z-index: 50;
+            box-shadow: 0 2px 5px var(--shadow-light);
         }
+
         .tab-item {
-            flex: 1;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text-medium);
+            padding: 12px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
             cursor: pointer;
-            position: relative;
-            transition: color 0.3s ease, font-weight 0.3s ease;
+            transition: color 0.3s, border-bottom 0.3s;
+            border-bottom: 3px solid transparent;
+            flex-grow: 1;
+            text-align: center;
         }
+
         .tab-item.active {
             color: var(--header-green-start);
-            font-weight: 600;
-        }
-        .tab-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 3px;
-            background-color: var(--header-green-start);
-            border-radius: 2px;
+            border-bottom-color: var(--header-green-start);
         }
 
-        /* --- Main Content Area (Scrollable) --- */
+        /* Menu List Container (main scrollable area) */
         .menu-list-container {
-            flex-grow: 1;
-            overflow-y: auto;
             padding: 20px;
-            background-color: var(--bg-light);
-            padding-top: 180px; /* Space for fixed header, search, and tabs */
-            padding-bottom: 80px; /* Space for bottom nav and FAB */
-        }
-        .menu-list-container::-webkit-scrollbar {
-            display: none;
-        }
-        .menu-list-container {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            padding-bottom: 80px; /* For navbar */
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for this container */
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Content Groups */
-        .content-group {
-            display: none; /* Hidden by default, shown by JS */
-        }
-        .content-group.active {
-            display: block;
-        }
-
-        /* Forms (Add/Edit Menu & Variant) */
+        /* Form Sections */
         .form-section {
             background-color: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: 0 4px 12px var(--shadow-light);
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px var(--shadow-medium);
             margin-bottom: 20px;
             display: none; /* Hidden by default */
         }
+
         .form-section.active {
             display: block;
         }
 
         .form-section h2 {
+            font-size: 18px;
+            color: var(--header-green-start);
             margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
-            color: var(--text-dark);
-            border-bottom: none;
-            padding-bottom: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
         }
 
         .form-group {
@@ -276,188 +215,208 @@
 
         .form-group label {
             display: block;
+            font-size: 13px;
+            color: var(--text-dark);
             margin-bottom: 5px;
             font-weight: 500;
-            color: var(--text-medium);
-            font-size: 14px;
         }
 
         .form-group input[type="text"],
         .form-group input[type="number"],
-        .form-group textarea {
-            width: 100%;
-            padding: 10px 12px;
+        .form-group textarea,
+        .form-group select {
+            width: calc(100% - 20px);
+            padding: 10px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 5px;
+            font-size: 14px;
             color: var(--text-dark);
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group input[type="text"]:focus,
-        .form-group input[type="number"]:focus,
-        .form-group textarea:focus {
-            border-color: var(--header-green-start);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+            box-sizing: border-box;
         }
 
         .form-group textarea {
-            min-height: 80px;
             resize: vertical;
+            min-height: 80px;
         }
 
         .checkbox-group {
             display: flex;
             align-items: center;
-            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         .checkbox-group input[type="checkbox"] {
             margin-right: 10px;
-            width: 18px;
-            height: 18px;
-            accent-color: var(--header-green-start);
+            transform: scale(1.2); /* Make checkbox slightly larger */
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0; /* Override default label margin */
+            font-size: 14px;
+            font-weight: normal;
         }
 
         .button-group {
             display: flex;
             gap: 10px;
             margin-top: 20px;
-            justify-content: flex-end; /* Align buttons to the right */
+            justify-content: flex-end;
         }
 
         .btn {
-            padding: 10px 18px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
+            border-radius: 25px;
+            font-size: 14px;
             font-weight: 600;
-            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 5px var(--shadow-light);
         }
 
         .btn-primary {
-            background-color: var(--header-green-start);
+            background-color: var(--primary-button-bg);
             color: white;
         }
+
         .btn-primary:hover {
-            background-color: var(--header-green-end);
-            transform: translateY(-2px);
+            background-color: var(--primary-button-hover);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background-color: #B0BEC5; /* Light grey blue */
-            color: white;
+            background-color: var(--secondary-button-bg);
+            color: var(--text-dark);
         }
+
         .btn-secondary:hover {
-            background-color: #90A4AE;
-            transform: translateY(-2px);
+            background-color: var(--secondary-button-hover);
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background-color: #EF5350; /* Red */
+            background-color: var(--danger-button-bg);
             color: white;
         }
+
         .btn-danger:hover {
-            background-color: #E53935;
+            background-color: var(--danger-button-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 20px;
+        }
+
+        /* Content Groups (Menu List, Variant List) */
+        .content-group {
+            display: none;
+        }
+
+        .content-group.active {
+            display: block;
+        }
+
+        .category-section {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px var(--shadow-light);
+            margin-bottom: 20px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--header-green-start);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .item-count {
+            background-color: var(--header-green-start);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        /* Menu Item Card */
+        .menu-item-card {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .menu-item-card:hover {
             transform: translateY(-2px);
         }
 
-        /* Menu List Styling */
-        .category-section {
-            margin-bottom: 30px;
-        }
-        .category-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-        .category-header .item-count {
-            color: var(--text-light);
-            font-size: 14px;
-            font-weight: 500;
-            margin-left: 8px;
-        }
-        .category-header .material-icons {
-            font-size: 22px;
-            color: var(--text-light);
-            cursor: pointer;
-            transition: color 0.2s ease;
-        }
-        .category-header .material-icons:hover {
-            color: var(--text-medium);
-        }
-
-        /* --- Menu Item Card --- */
-        .menu-item-card {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: 0 4px 12px var(--shadow-light);
-            margin-bottom: 15px;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .menu-item-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px var(--shadow-medium);
-        }
         .menu-item-image {
             width: 70px;
             height: 70px;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
-            margin-right: 20px;
+            margin-right: 15px;
             flex-shrink: 0;
-            background-color: #f0f0f0;
-            border: 1px solid var(--border-color);
+            background-color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
         .menu-item-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
-        }
-        .menu-item-details {
-            flex-grow: 1;
-            overflow: hidden;
-        }
-        .menu-item-details h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin: 0 0 6px 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .menu-item-details .price {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--header-green-start);
         }
 
-        /* --- Toggle Switch for Menu Item --- */
+        .menu-item-details {
+            flex-grow: 1;
+        }
+
+        .menu-item-details h3 {
+            font-size: 15px;
+            margin: 0 0 5px;
+            color: var(--header-green-start);
+            font-weight: 600;
+        }
+
+        .menu-item-details .price {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
         .item-toggle-switch {
             position: relative;
             display: inline-block;
-            width: 48px;
-            height: 28px;
+            width: 40px;
+            height: 24px;
             flex-shrink: 0;
-            margin-left: 20px;
         }
+
         .item-toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
+
         .item-slider {
             position: absolute;
             cursor: pointer;
@@ -465,184 +424,184 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #E0E0E0;
-            transition: .3s;
-            border-radius: 34px;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
         }
+
         .item-slider:before {
             position: absolute;
             content: "";
-            height: 22px;
-            width: 22px;
-            left: 3px;
-            bottom: 3px;
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
             background-color: white;
-            transition: .3s;
+            transition: .4s;
             border-radius: 50%;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-        }
-        .item-toggle-switch input:checked + .item-slider {
-            background-color: var(--header-green-start);
-        }
-        .item-toggle-switch input:checked + .item-slider:before {
-            transform: translateX(20px);
         }
 
-        /* --- Kategori Varian Item (Kotak Info dengan Tombol Plus) --- */
-        .variant-category-item {
-            background-color: var(--card-bg);
-            border-radius: 15px;
-            box-shadow: 0 4px 12px var(--shadow-light);
-            margin-bottom: 15px;
-            padding: 15px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px; /* Jarak antar elemen di dalam kartu */
+        input:checked + .item-slider {
+            background-color: var(--header-green-start);
         }
+
+        input:checked + .item-slider:before {
+            transform: translateX(16px);
+        }
+
+        /* Variant Category Item */
+        .variant-category-item {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
         .variant-category-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            color: var(--text-dark);
+            color: var(--header-green-start);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed var(--border-color);
         }
-        .variant-category-item-count {
-            color: var(--text-light);
-            font-size: 14px;
-            font-weight: 500;
-        }
+
         .variant-category-content {
-            font-size: 14px;
-            color: var(--text-medium);
-            line-height: 1.4;
+            font-size: 13px;
+            color: var(--text-dark);
+            line-height: 1.5;
         }
+
+        .variant-category-content span {
+            background-color: #e0f2f1; /* Light teal */
+            color: #00796B; /* Darker teal */
+            padding: 3px 8px;
+            border-radius: 15px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        
+        /* Add Variant Button (for editing variant type) */
         .add-variant-button {
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: var(--header-green-start);
-            color: white;
-            border-radius: 10px; /* Lebih kotak */
+            gap: 8px;
             padding: 10px 15px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            text-decoration: none; /* Hilangkan garis bawah link */
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 15px;
+            background-color: var(--primary-button-bg); /* Default green */
+            color: white;
+            box-shadow: 0 2px 5px var(--shadow-light);
         }
+
         .add-variant-button:hover {
-            background-color: var(--header-green-end);
-            transform: translateY(-2px);
+            background-color: var(--primary-button-hover);
+            transform: translateY(-1px);
         }
+
         .add-variant-button .material-icons {
-            margin-right: 5px;
             font-size: 20px;
         }
 
-
-        /* --- Floating Action Button (FAB) for Add Menu --- */
+        /* Floating Action Button (FAB) */
         .add-menu-fab {
             position: fixed;
-            bottom: 85px; /* Di atas navbar */
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 80px; /* Above navbar */
+            right: 20px;
             background-color: var(--header-green-start);
             color: white;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            width: 65px;
-            height: 65px;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 2.2em;
-            box-shadow: 0 6px 18px var(--shadow-strong);
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 4px 8px var(--shadow-medium);
             cursor: pointer;
-            z-index: 25;
-            text-decoration: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .add-menu-fab:hover {
-            transform: translateX(-50%) translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-        }
-        .add-menu-fab:active {
-            transform: translateX(-50%) translateY(0);
-            box-shadow: 0 4px 10px var(--shadow-light);
+            transition: background-color 0.3s, transform 0.2s;
+            z-index: 100;
+            text-decoration: none; /* Remove underline */
         }
 
-        /* --- Bottom Navigation Bar (Dari kode Anda) --- */
+        .add-menu-fab:hover {
+            background-color: var(--header-green-end);
+            transform: translateY(-2px);
+        }
+
+        /* Navbar */
         .navbar {
             position: fixed;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
             width: 100%;
-            max-width: 420px;
-            background-color: var(--navbar-green);
-            color: white;
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            box-shadow: 0 -2px 8px var(--shadow-light);
             display: flex;
             justify-content: space-around;
-            padding: 4px 20px;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            z-index: 1000;
-            box-sizing: border-box;
+            padding: 8px 0;
+            z-index: 100;
         }
 
         .nav-item {
-            text-align: center;
-            padding: 5px;
-            transition: background-color 0.3s;
-            flex: 1;
-        }
-
-        .nav-item:hover {
-            background-color: #2E7D32;
-            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-light);
+            font-size: 12px;
+            transition: color 0.3s;
+            padding: 5px 0;
+            flex-grow: 1;
         }
 
         .nav-item .icon {
-            font-size: 22px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
 
-        .nav-item .label {
-            font-size: 10px;
+        .nav-item.active {
+            color: var(--header-green-start);
         }
 
-        .nav-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        /* Spacer to ensure content doesn't get hidden behind fixed elements */
-        .spacer-for-fixed-elements {
-            height: 80px; /* Tinggi header fixed */
-        }
-        .spacer-for-bottom-nav {
-            height: 80px; /* Tinggi navbar fixed + sedikit ruang untuk FAB */
+        .nav-item:hover {
+            color: var(--header-green-end);
         }
 
         /* Toast Notification */
         .toast-notification {
             position: fixed;
-            bottom: 150px; /* Above FAB and Navbar */
+            bottom: 90px; /* Above FAB */
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: #333;
             color: white;
             padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 1000;
+            border-radius: 5px;
+            font-size: 14px;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 1000;
             white-space: nowrap;
         }
 
         .toast-notification.show {
             opacity: 1;
+            visibility: visible;
         }
     </style>
 </head>
@@ -657,9 +616,6 @@
             </div>
             <div class="app-description">Aplikasi Penjual</div>
         </header>
-
-        <!-- Spacers are no longer needed as padding is applied to menu-list-container -->
-        <!-- <div class="spacer-for-fixed-elements"></div> -->
 
         <div class="search-bar-container">
             <div class="search-bar">
@@ -727,12 +683,31 @@
                 <form id="variantTypeForm">
                     <input type="hidden" id="variantTypeId">
                     <div class="form-group">
-                        <label for="variantTypeName">Nama Kategori Varian (Contoh: Bumbu, Kacang, Buah):</label>
-                        <input type="text" id="variantTypeName" required>
+                        <label for="variantTypeLabel">Label Kategori Varian (Tampilan di Aplikasi Pelanggan, Contoh: Pilih Bumbu):</label>
+                        <input type="text" id="variantTypeLabel" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="variantTypeName">ID Kategori Varian (Internal, Contoh: bumbu, kacang, pilih_buah):</label>
+                        <input type="text" id="variantTypeName" required pattern="[a-z0-9_]+" title="Hanya huruf kecil, angka, dan underscore.">
                     </div>
                     <div class="form-group">
                         <label for="variantTypeOptions">Opsi Varian (Pisahkan dengan koma, Contoh: Pedas,Extra Pedas,Manis):</label>
                         <input type="text" id="variantTypeOptions" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="variantTypeSelectType">Tipe Pilihan:</label>
+                        <select id="variantTypeSelectType" required>
+                            <option value="single-select">Pilih Satu (Single Select)</option>
+                            <option value="multi-select">Pilih Banyak (Multi Select)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="variantTypeMinSelection">Minimal Pilihan (untuk Multi Select):</label>
+                        <input type="number" id="variantTypeMinSelection" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="variantTypeMaxSelection">Maksimal Pilihan (untuk Multi Select):</label>
+                        <input type="number" id="variantTypeMaxSelection" min="0" value="0">
                     </div>
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary" id="saveVariantTypeBtn">Simpan Kategori</button>
@@ -746,20 +721,18 @@
                     <div class="category-header">
                         <span>Daftar Menu</span>
                         <span class="item-count" id="menuCount">0/0</span>
-                        <!-- <span class="material-icons">keyboard_arrow_up</span> -->
                     </div>
                     <div class="menu-items" id="menuList">
                         <p>Memuat daftar menu...</p>
                     </div>
                 </div>
-            </div> 
+            </div>
             
             <div class="content-group kategori-varian-group">
                 <div class="category-section">
                     <div class="category-header">
                         <span>Daftar Kategori Varian</span>
                         <span class="item-count" id="variantTypeCount">0/0</span>
-                        <!-- <span class="material-icons">keyboard_arrow_up</span> -->
                     </div>
                     <div class="variant-type-items" id="variantTypeList">
                         <p>Memuat tipe varian...</p>
@@ -769,10 +742,8 @@
                         <span style="color: var(--header-green-start);">Tambahkan Kategori Varian Baru</span>
                     </a>
                 </div>
-            </div> 
+            </div>
         </div>
-
-        <!-- <div class="spacer-for-bottom-nav"></div> -->
 
         <a href="#" class="add-menu-fab" id="addMenuFab">
             <span class="material-icons">add</span>
@@ -854,8 +825,12 @@
         const variantTypeFormTitle = document.getElementById('variantTypeFormTitle');
         const variantTypeForm = document.getElementById('variantTypeForm');
         const variantTypeIdInput = document.getElementById('variantTypeId');
+        const variantTypeLabelInput = document.getElementById('variantTypeLabel'); // NEW
         const variantTypeNameInput = document.getElementById('variantTypeName');
         const variantTypeOptionsInput = document.getElementById('variantTypeOptions');
+        const variantTypeSelectTypeInput = document.getElementById('variantTypeSelectType'); // NEW
+        const variantTypeMinSelectionInput = document.getElementById('variantTypeMinSelection'); // NEW
+        const variantTypeMaxSelectionInput = document.getElementById('variantTypeMaxSelection'); // NEW
         const saveVariantTypeBtn = document.getElementById('saveVariantTypeBtn');
         const cancelVariantTypeFormBtn = document.getElementById('cancelVariantTypeFormBtn');
         const variantTypeListDiv = document.getElementById('variantTypeList');
@@ -968,7 +943,7 @@
         async function loadVariantTypeCheckboxes(selectedVariantTypeIds = []) {
             productVariantCheckboxesDiv.innerHTML = '<p>Memuat tipe varian...</p>';
             try {
-                const snapshot = await variantTypesCollection.orderBy('name').get();
+                const snapshot = await variantTypesCollection.orderBy('label').get(); // Order by label for consistency
                 if (snapshot.empty) {
                     productVariantCheckboxesDiv.innerHTML = '<p>Belum ada tipe varian. Tambahkan di tab "Kategori Varian".</p>';
                     return;
@@ -978,12 +953,12 @@
                 snapshot.forEach(doc => {
                     const type = doc.data();
                     const checkboxId = `variantType-${doc.id}`;
-                    const isChecked = selectedVariantTypeIds.includes(doc.id); // Check if this variant type is selected for the product
+                    const isChecked = selectedVariantTypeIds.includes(doc.id); 
                     const div = document.createElement('div');
                     div.classList.add('checkbox-group');
                     div.innerHTML = `
                         <input type="checkbox" id="${checkboxId}" value="${doc.id}" ${isChecked ? 'checked' : ''}>
-                        <label for="${checkboxId}">${type.name} (${type.options.join(', ')})</label>
+                        <label for="${checkboxId}">${type.label || type.name} (${type.options.join(', ')})</label>
                     `;
                     productVariantCheckboxesDiv.appendChild(div);
                 });
@@ -998,11 +973,11 @@
             menuListDiv.innerHTML = '<p>Memuat daftar menu...</p>';
             try {
                 const snapshot = await menuCollection.orderBy('nama').get();
-                allMenuItems = []; // Clear cache
+                allMenuItems = []; 
                 snapshot.forEach(doc => {
                     allMenuItems.push({ id: doc.id, ...doc.data() });
                 });
-                renderMenuItems(allMenuItems); // Render all initially
+                renderMenuItems(allMenuItems); 
             } catch (error) {
                 console.error("Error loading menu items:", error);
                 showToast("Gagal memuat daftar menu.");
@@ -1022,7 +997,7 @@
             itemsToRender.forEach(menu => {
                 const card = document.createElement('div');
                 card.classList.add('menu-item-card');
-                card.dataset.id = menu.id; // Store ID for easy access
+                card.dataset.id = menu.id; 
                 card.innerHTML = `
                     <div class="menu-item-image">
                         <img src="${menu.imageUrl || 'https://placehold.co/70x70/cccccc/333333?text=No+Image'}" alt="${menu.nama}">
@@ -1054,7 +1029,7 @@
                     } catch (error) {
                         console.error("Error updating menu availability:", error);
                         showToast("Gagal memperbarui ketersediaan menu.");
-                        event.target.checked = !isAvailable; // Revert checkbox if error
+                        event.target.checked = !isAvailable; 
                     }
                 });
             });
@@ -1078,16 +1053,23 @@
 
         function showMenuForm(menuData = null) {
             menuFormSection.classList.add('active');
-            document.querySelector('.menu-utama-group').classList.remove('active'); // Hide menu list
-            addMenuFab.style.display = 'none'; // Hide FAB
+            document.querySelector('.menu-utama-group').classList.remove('active'); 
+            addMenuFab.style.display = 'none'; 
 
             // Reset form
             menuForm.reset();
             menuIdInput.value = '';
-            menuFormTitle.textContent = 'Tambah Menu Baru';
-            saveMenuBtn.textContent = 'Simpan Menu';
+            namaProdukInput.value = ''; // Clear fields explicitly
+            deskripsiProdukInput.value = '';
+            hargaProdukInput.value = '';
+            imageUrlProdukInput.value = '';
+            ratingProdukInput.value = '4.5'; // Default value
+            deliveryTimeProdukInput.value = '15-30 menit'; // Default value
             isAvailableProdukInput.checked = true; // Default to available
 
+            menuFormTitle.textContent = 'Tambah Menu Baru';
+            saveMenuBtn.textContent = 'Simpan Menu';
+            
             if (menuData) {
                 menuIdInput.value = menuData.id;
                 namaProdukInput.value = menuData.nama;
@@ -1099,11 +1081,15 @@
                 isAvailableProdukInput.checked = menuData.isAvailable;
                 menuFormTitle.textContent = 'Edit Menu';
                 saveMenuBtn.textContent = 'Update Menu';
-                loadVariantTypeCheckboxes(menuData.variantTypeIds || []); // Load checkboxes with selected ones
+                loadVariantTypeCheckboxes(menuData.variantTypeIds || []); 
             } else {
-                loadVariantTypeCheckboxes([]); // Load empty checkboxes for new menu
+                loadVariantTypeCheckboxes([]); 
             }
-            menuListContainer.scrollTop = 0; // Scroll to top of container
+            // Scroll to top of container, if it exists
+            const menuListContainer = document.querySelector('.menu-list-container');
+            if (menuListContainer) {
+                menuListContainer.scrollTop = 0; 
+            }
         }
 
         // Edit Menu Item (called from card click)
@@ -1126,7 +1112,7 @@
             e.preventDefault();
             const id = menuIdInput.value;
             const selectedVariantTypeIds = Array.from(productVariantCheckboxesDiv.querySelectorAll('input[type="checkbox"]:checked'))
-                                            .map(cb => cb.value);
+                                                .map(cb => cb.value);
 
             const menuData = {
                 nama: namaProdukInput.value,
@@ -1136,7 +1122,7 @@
                 rating: parseFloat(ratingProdukInput.value),
                 deliveryTime: deliveryTimeProdukInput.value,
                 isAvailable: isAvailableProdukInput.checked,
-                variantTypeIds: selectedVariantTypeIds
+                variantTypeIds: selectedVariantTypeIds // This now correctly saves the IDs
             };
 
             try {
@@ -1184,12 +1170,12 @@
         async function loadVariantTypes() {
             variantTypeListDiv.innerHTML = '<p>Memuat tipe varian...</p>';
             try {
-                const snapshot = await variantTypesCollection.orderBy('name').get();
-                allVariantTypes = []; // Clear cache
+                const snapshot = await variantTypesCollection.orderBy('label').get(); // Order by label for display
+                allVariantTypes = []; 
                 snapshot.forEach(doc => {
                     allVariantTypes.push({ id: doc.id, ...doc.data() });
                 });
-                renderVariantTypes(allVariantTypes); // Render all initially
+                renderVariantTypes(allVariantTypes); 
                 loadVariantTypeCheckboxes(); // Also update checkboxes for menu form
             } catch (error) {
                 console.error("Error loading variant types:", error);
@@ -1210,21 +1196,23 @@
             typesToRender.forEach(type => {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('variant-category-item');
-                itemDiv.dataset.id = type.id; // Store ID
+                itemDiv.dataset.id = type.id; 
                 itemDiv.innerHTML = `
                     <div class="variant-category-item-header">
-                        <span>${type.name}</span>
+                        <span>${type.label || type.name}</span> <!-- Display label, fallback to name -->
                         <div class="menu-item-actions">
                             <button class="btn btn-primary btn-sm" onclick="editVariantType('${type.id}')">Edit</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteVariantType('${type.id}')">Hapus</button>
                         </div>
                     </div>
                     <div class="variant-category-content">
-                        Opsi: ${type.options.map(opt => `<span>${opt}</span>`).join('')}
+                        Opsi: ${type.options.map(opt => `<span>${opt}</span>`).join('')} <br>
+                        Tipe: <strong>${type.type === 'multi-select' ? 'Pilih Banyak' : 'Pilih Satu'}</strong> <br>
+                        ${type.type === 'multi-select' ? `Minimal: <strong>${type.minSelection || 0}</strong>, Maksimal: <strong>${type.maxSelection || 'Tidak Terbatas'}</strong>` : ''}
                     </div>
                     <a href="#" class="add-variant-button" onclick="editVariantType('${type.id}'); return false;">
                         <span class="material-icons">edit</span>
-                        Edit Opsi Varian
+                        Edit Kategori Varian
                     </a>
                 `;
                 variantTypeListDiv.appendChild(itemDiv);
@@ -1240,23 +1228,38 @@
 
         function showVariantTypeForm(variantTypeData = null) {
             variantTypeFormSection.classList.add('active');
-            document.querySelector('.kategori-varian-group').classList.remove('active'); // Hide list
-            addMenuFab.style.display = 'none'; // Ensure FAB is hidden
+            document.querySelector('.kategori-varian-group').classList.remove('active'); 
+            addMenuFab.style.display = 'none'; 
 
             // Reset form
             variantTypeForm.reset();
             variantTypeIdInput.value = '';
+            variantTypeLabelInput.value = ''; // Clear new fields explicitly
+            variantTypeNameInput.value = '';
+            variantTypeOptionsInput.value = '';
+            variantTypeSelectTypeInput.value = 'single-select'; // Default
+            variantTypeMinSelectionInput.value = '0'; // Default
+            variantTypeMaxSelectionInput.value = '0'; // Default
+
             variantTypeFormTitle.textContent = 'Tambah Kategori Varian Baru';
             saveVariantTypeBtn.textContent = 'Simpan Kategori';
 
             if (variantTypeData) {
                 variantTypeIdInput.value = variantTypeData.id;
-                variantTypeNameInput.value = variantTypeData.name;
+                variantTypeLabelInput.value = variantTypeData.label || ''; // Use label
+                variantTypeNameInput.value = variantTypeData.name; // Use name for ID field
                 variantTypeOptionsInput.value = variantTypeData.options.join(', ');
+                variantTypeSelectTypeInput.value = variantTypeData.type || 'single-select';
+                variantTypeMinSelectionInput.value = variantTypeData.minSelection || 0;
+                variantTypeMaxSelectionInput.value = variantTypeData.maxSelection || 0;
                 variantTypeFormTitle.textContent = 'Edit Kategori Varian';
                 saveVariantTypeBtn.textContent = 'Update Kategori';
             }
-            menuListContainer.scrollTop = 0; // Scroll to top of container
+            // Scroll to top of container, if it exists
+            const menuListContainer = document.querySelector('.menu-list-container');
+            if (menuListContainer) {
+                menuListContainer.scrollTop = 0; 
+            }
         }
 
         // Edit Variant Type (called from button click)
@@ -1278,25 +1281,77 @@
         variantTypeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = variantTypeIdInput.value;
+            const label = variantTypeLabelInput.value.trim(); // NEW
+            const name = variantTypeNameInput.value.trim(); // This will be the ID
             const optionsArray = variantTypeOptionsInput.value.split(',').map(opt => opt.trim()).filter(opt => opt !== '');
+            const type = variantTypeSelectTypeInput.value; // NEW
+            const minSelection = parseInt(variantTypeMinSelectionInput.value) || 0; // NEW
+            const maxSelection = parseInt(variantTypeMaxSelectionInput.value) || 0; // NEW
 
+            if (label === '') {
+                showToast("Label kategori varian tidak boleh kosong.");
+                return;
+            }
+            if (name === '') {
+                showToast("ID kategori varian tidak boleh kosong.");
+                return;
+            }
+            if (!/^[a-z0-9_]+$/.test(name)) {
+                 showToast("ID Kategori Varian hanya boleh berisi huruf kecil, angka, dan underscore.");
+                 return;
+            }
             if (optionsArray.length === 0) {
                 showToast("Opsi varian tidak boleh kosong.");
                 return;
             }
+            if (type === 'multi-select' && minSelection > maxSelection && maxSelection !== 0) { // maxSelection 0 means no limit
+                showToast("Minimal pilihan tidak boleh lebih besar dari maksimal pilihan.");
+                return;
+            }
+            if (type === 'multi-select' && minSelection > optionsArray.length) {
+                showToast(`Minimal pilihan (${minSelection}) tidak boleh lebih dari jumlah opsi yang tersedia (${optionsArray.length}).`);
+                return;
+            }
+            if (type === 'multi-select' && maxSelection !== 0 && maxSelection < minSelection) { // maxSelection 0 means no limit
+                showToast("Maksimal pilihan tidak boleh kurang dari minimal pilihan.");
+                return;
+            }
+            if (type === 'multi-select' && maxSelection !== 0 && maxSelection > optionsArray.length) {
+                showToast(`Maksimal pilihan (${maxSelection}) tidak boleh lebih dari jumlah opsi yang tersedia (${optionsArray.length}).`);
+                return;
+            }
+
 
             const variantTypeData = {
-                name: variantTypeNameInput.value,
-                options: optionsArray
+                label: label, // NEW
+                name: name, // This will be the document ID
+                options: optionsArray,
+                type: type, // NEW
+                minSelection: minSelection, // NEW
+                maxSelection: maxSelection // NEW
             };
 
             try {
                 if (id) {
-                    await variantTypesCollection.doc(id).update(variantTypeData);
-                    showToast("Kategori varian berhasil diperbarui!");
+                    // If editing, check if ID (name) has changed
+                    if (id !== name) {
+                        // If ID changed, delete old document and create new one
+                        await variantTypesCollection.doc(id).delete();
+                        await variantTypesCollection.doc(name).set(variantTypeData);
+                        showToast("Kategori varian berhasil diperbarui (ID berubah)!");
+                    } else {
+                        await variantTypesCollection.doc(id).update(variantTypeData);
+                        showToast("Kategori varian berhasil diperbarui!");
+                    }
                 } else {
-                    const newId = variantTypeNameInput.value.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_]/g, '');
-                    await variantTypesCollection.doc(newId).set(variantTypeData);
+                    // For new variant type, use 'name' as document ID
+                    const docRef = variantTypesCollection.doc(name);
+                    const docSnapshot = await docRef.get();
+                    if (docSnapshot.exists) {
+                        showToast(`ID Kategori Varian '${name}' sudah ada. Gunakan ID lain.`);
+                        return;
+                    }
+                    await docRef.set(variantTypeData);
                     showToast("Kategori varian berhasil ditambahkan!");
                 }
                 loadVariantTypes(); // Reload list
@@ -1316,12 +1371,11 @@
 
         // Delete Variant Type
         async function deleteVariantType(id) {
-            if (confirm("Menghapus kategori varian ini akan menghapusnya dari semua produk yang menggunakannya. Lanjutkan?")) {
+            if (confirm("Apakah Anda yakin ingin menghapus kategori varian ini? Ini akan memengaruhi produk yang menggunakannya.")) {
                 try {
                     await variantTypesCollection.doc(id).delete();
                     showToast("Kategori varian berhasil dihapus!");
                     loadVariantTypes(); // Reload list
-                    loadMenuItems(); // Reload menu items to reflect changes
                 } catch (error) {
                     console.error("Error deleting variant type:", error);
                     showToast("Gagal menghapus kategori varian.");
@@ -1334,57 +1388,59 @@
 
         function applySearchFilter() {
             const query = searchInput.value.toLowerCase();
-            const activeTab = document.querySelector('.category-tabs .tab-item.active').dataset.target;
+            const activeTab = document.querySelector('.tab-item.active').dataset.target;
 
             if (activeTab === 'menu-utama') {
-                const filteredItems = allMenuItems.filter(item =>
-                    item.nama.toLowerCase().includes(query) ||
-                    item.deskripsi.toLowerCase().includes(query) ||
-                    (item.variantTypeIds && item.variantTypeIds.some(vId => vId.toLowerCase().includes(query)))
-                );
+                const filteredItems = allMenuItems.filter(item => {
+                    const matchesName = item.nama.toLowerCase().includes(query);
+                    // Check if any associated variant type ID matches the query
+                    const matchesVariantType = item.variantTypeIds && item.variantTypeIds.some(id => id.toLowerCase().includes(query));
+                    return matchesName || matchesVariantType;
+                });
                 renderMenuItems(filteredItems);
             } else if (activeTab === 'kategori-varian') {
-                const filteredTypes = allVariantTypes.filter(type =>
-                    type.name.toLowerCase().includes(query) ||
-                    type.options.some(opt => opt.toLowerCase().includes(query))
-                );
+                const filteredTypes = allVariantTypes.filter(type => {
+                    const matchesLabel = (type.label || '').toLowerCase().includes(query);
+                    const matchesName = (type.name || '').toLowerCase().includes(query);
+                    const matchesOption = type.options.some(option => option.toLowerCase().includes(query));
+                    return matchesLabel || matchesName || matchesOption;
+                });
                 renderVariantTypes(filteredTypes);
             }
         }
 
         // --- Initial Load ---
-        const menuListContainer = document.querySelector('.menu-list-container');
-
         function loadContent() {
+            // Initial load for active tab
+            const activeTab = document.querySelector('.tab-item.active').dataset.target;
+            showContentForTab(activeTab); // This will hide forms and show correct content group
+
             loadMenuItems();
-            loadVariantTypes();
-            showContentForTab('menu-utama'); // Default to Menu Utama tab
+            loadVariantTypes(); // This will also call loadVariantTypeCheckboxes
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initial setup of tab display
-            showContentForTab('menu-utama');
-
-            // Set the first nav item as active by default
-            const navItems = document.querySelectorAll('.navbar .nav-item');
-            if (navItems.length > 0) {
-                navItems[0].classList.add('active');
-            }
-
-            // Bottom Nav Link Handlers (for changing active state)
-            navItems.forEach(nav => {
-                nav.addEventListener('click', (e) => {
-                    // Only prevent default if it has a data-tab-target (for tab switching)
-                    if (nav.dataset.tabTarget) {
-                        e.preventDefault();
-                        navItems.forEach(item => item.classList.remove('active'));
-                        nav.classList.add('active');
-                        // No need to call showContentForTab here, as tabItems handler does it
-                    }
-                    // For actual links like pesanan-penjual.html, let default behavior happen
-                });
+        // Add event listeners for navbar tabs
+        document.querySelectorAll('.nav-link').forEach(navLink => {
+            navLink.addEventListener('click', function(event) {
+                // Prevent default link behavior if it's a tab switch
+                if (this.dataset.tabTarget) {
+                    event.preventDefault();
+                    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-item').forEach(tab => {
+                        if (tab.dataset.target === this.dataset.tabTarget) {
+                            tab.classList.add('active');
+                        } else {
+                            tab.classList.remove('active');
+                        }
+                    });
+                    showContentForTab(this.dataset.tabTarget);
+                }
+                // If it's a regular link (like pesanan-penjual.html), let default behavior happen
             });
         });
+
     </script>
 </body>
 </html>
