@@ -934,9 +934,9 @@
                                     // Add to selection if not already there
                                     if (!currentSelection.includes(variantValue)) {
                                         // Check maxSelection before adding
-                                        if (variantDef.maxSelection && currentSelection.length >= variantDef.maxSelection) {
+                                        if (variantDef.maxSelection && variantDef.maxSelection !== 0 && currentSelection.length >= variantDef.maxSelection) { // Added check for maxSelection !== 0
                                             this.classList.remove('active'); // Revert active state
-                                            showToast("Informasi", `Maksimal ${variantDef.maxSelection} pilihan untuk ${variantDef.label.replace(':', '')}.`);
+                                            showToast(`Maksimal ${variantDef.maxSelection} pilihan untuk ${variantDef.label.replace(':', '')}.`);
                                             return;
                                         }
                                         currentSelection.push(variantValue);
@@ -1347,7 +1347,18 @@
                             groupElement.classList.add('validation-error');
                         }
                         break; // Stop on first error
-                    } else {
+                    } else if (variantDef.maxSelection && variantDef.maxSelection !== 0 && currentSelectionCount > variantDef.maxSelection) { // Added maxSelection check
+                        isValid = false;
+                        if (showToastMessage) {
+                            showToast(`Anda dapat memilih maksimal ${variantDef.maxSelection} opsi untuk ${variantDef.label.replace('Pilih ', '').replace(':', '')}.`);
+                        }
+                        const groupElement = document.querySelector(`.variant-group[data-variant-type-id="${variantTypeId}"]`);
+                        if (groupElement) {
+                            groupElement.classList.add('validation-error');
+                        }
+                        break; // Stop on first error
+                    }
+                     else {
                         // Remove validation error class if valid
                         const groupElement = document.querySelector(`.variant-group[data-variant-type-id="${variantTypeId}"]`);
                         if (groupElement) {
@@ -1436,7 +1447,7 @@
             }
 
             // Using custom confirmation instead of browser's confirm
-            showToast("Konfirmasi", `Apakah Anda yakin ingin menghapus semua varian ${selectedProduct.nama} dari keranjang?`,
+            showToast("Apakah Anda yakin ingin menghapus semua varian produk ini dari keranjang?", 'confirm',
                 async () => { // On Confirm (Yes)
                     // Tampilkan indikator loading
                     if (quantityLoadingIndicator) quantityLoadingIndicator.classList.add('show');
@@ -1451,14 +1462,14 @@
                             .get();
                         
                         if (snapshot.empty) {
-                            showToast("Informasi", `${selectedProduct.nama} tidak ada di keranjang.`); 
+                            showToast(`${selectedProduct.nama} tidak ada di keranjang.`); 
                         } else {
                             const batch = db.batch();
                             snapshot.forEach(doc => {
                                 batch.delete(doc.ref);
                             });
                             await batch.commit();
-                            showToast("Informasi", `${selectedProduct.nama} berhasil dihapus dari keranjang.`); 
+                            showToast(`${selectedProduct.nama} berhasil dihapus dari keranjang.`); 
                             
                             if (productQuantityInput) productQuantityInput.value = 0; 
                             updateLocalSummaryBar(0); 
@@ -1466,7 +1477,7 @@
                         }
                     } catch (error) {
                         console.error("❌ Gagal menghapus produk dari keranjang:", error);
-                        showToast("Error", "Gagal menghapus produk dari keranjang.");
+                        showToast("Gagal menghapus produk dari keranjang.");
                     } finally {
                         if (quantityLoadingIndicator) quantityLoadingIndicator.classList.remove('show');
                         if (increaseButton) increaseButton.disabled = false;
@@ -1476,7 +1487,7 @@
                     }
                 },
                 () => { // On Cancel (No)
-                    showToast("Informasi", "Penghapusan dibatalkan.");
+                    showToast("Penghapusan dibatalkan.");
                 }
             );
         }
@@ -1509,7 +1520,7 @@
 
             try {
                 const doc = await cartItemDocRef.get();
-                const qty = doc.exists ? doc.data().quantity : 0; // Perubahan di sini: Default ke 0
+                const qty = doc.exists ? doc.data().quantity : 0;
                 productQuantityInput.value = qty;
                 updateLocalSummaryBar(qty);
             } catch (error) {
