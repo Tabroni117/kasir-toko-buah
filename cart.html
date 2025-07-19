@@ -219,7 +219,6 @@
 <body>
     <div class="container">
         <header class="header">
-          
           <div class="header-title">Keranjang Belanja</div>
             <div id="userIdDisplay">Loading User ID...</div> <!-- User ID Display -->
         </header>
@@ -239,14 +238,15 @@
                 <span id="totalPrice">Rp 0</span>
             </div>
             <button class="checkout-button" id="checkoutButton">Lanjutkan ke Pembayaran</button>
-            <button class="remove-item-button" id="clearCartButton" style="background-color: #f44336;">Bersihkan Keranjang</button>
+            <button class="clear-cart-button" id="clearCartButton">Bersihkan Keranjang</button>
         </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase Anda (sama seperti di halaman detail produk)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", 
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
             projectId: "tokobuahkasir",
             storageBucket: "tokobuahkasir.firebasestorage.app",
@@ -254,65 +254,134 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // Inisialisasi Firebase
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Firestore Collections
+        const cartsCollection = db.collection('carts');
+        // We might need variantTypesCollection if we want to display full variant labels,
+        // but for now, we'll rely on the 'custom' object in the cart item.
+        // const variantTypesCollection = db.collection('variantTypes'); 
+
+        // DOM Elements
         const cartItemsContainer = document.getElementById('cartItemsContainer');
         const emptyCartMessage = document.getElementById('emptyCartMessage');
         const totalItemCount = document.getElementById('totalItemCount');
         const totalPriceDisplay = document.getElementById('totalPrice');
         const checkoutButton = document.getElementById('checkoutButton');
         const clearCartButton = document.getElementById('clearCartButton');
-        const backToHomeButton = document.getElementById('backToHome');
-        const userIdDisplay = document.getElementById('userIdDisplay'); // User ID display element
+        const userIdDisplay = document.getElementById('userIdDisplay'); 
 
-        let currentUserId = null; // Untuk menyimpan UID pengguna yang sedang login
+        let currentUserId = null; 
 
-        // Pastikan pengguna login anonim segera
-        auth.signInAnonymously().then(() => {
-            console.log("cart.html: Signed in anonymously.");
-        }).catch((error) => {
-            console.error("cart.html: Error signing in anonymously:", error);
-        });
+        // --- Helper Functions ---
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        /**
+         * Reconstructs the unique document ID (customKey) for a cart item
+         * based on its product ID and custom variants.
+         * This must match the logic in product-detail.html.
+         * @param {string} productId - The ID of the product.
+         * @param {Object} customVariants - The custom variants object (e.g., {bumbu: "Pedas", pilih_buah: ["Mangga", "Nanas"]}).
+         * @returns {string} The unique custom key string.
+         */
+        function buildCustomKey(productId, customVariants) {
+            let customKeyParts = [productId];
+            // Sort keys to ensure consistent customKey generation regardless of iteration order
+            const sortedVariantTypeIds = Object.keys(customVariants || {}).sort(); 
+            for (const variantTypeId of sortedVariantTypeIds) {
+                const selectedValue = customVariants[variantTypeId];
+                if (Array.isArray(selectedValue)) {
+                    // Sort array elements for consistent key, then join
+                    customKeyParts.push(selectedValue.sort().join('-') || 'none'); 
+                } else {
+                    customKeyParts.push(selectedValue || 'none');
+                }
+            }
+            return customKeyParts.join('_');
+        }
+
+        /**
+         * Generates a display string for variants.
+         * @param {Object} customVariants - The custom variants object.
+         * @returns {string} A human-readable string of selected variants.
+         */
+        function getVariantDisplayString(customVariants) {
+            if (!customVariants || Object.keys(customVariants).length === 0) {
+                return 'Tidak ada varian';
+            }
+            const parts = [];
+            const sortedVariantTypeIds = Object.keys(customVariants).sort(); // Sort for consistent display order
+            for (const variantTypeId of sortedVariantTypeIds) {
+                const value = customVariants[variantTypeId];
+                if (Array.isArray(value)) {
+                    if (value.length > 0) {
+                        parts.push(value.join(', '));
+                    }
+                } else if (value && value !== 'none') {
+                    parts.push(value);
+                }
+            }
+            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
+        }
 
         // Fungsi untuk memperbarui tampilan keranjang
         function renderCart(cartItems) {
-            cartItemsContainer.innerHTML = ''; // Bersihkan kontainer sebelumnya
+            cartItemsContainer.innerHTML = ''; 
             let totalItems = 0;
             let overallTotalPrice = 0;
 
             if (cartItems.length === 0) {
                 emptyCartMessage.style.display = 'block';
-                checkoutButton.disabled = true; // Nonaktifkan tombol checkout jika keranjang kosong
+                checkoutButton.disabled = true; 
                 clearCartButton.disabled = true;
             } else {
                 emptyCartMessage.style.display = 'none';
-                checkoutButton.disabled = false; // Aktifkan tombol checkout jika ada item
+                checkoutButton.disabled = false; 
                 clearCartButton.disabled = false;
 
                 cartItems.forEach(item => {
+                    // Reconstruct the customKey for this item based on its data
+                    const itemCustomKey = buildCustomKey(item.id, item.custom);
+
                     const itemElement = document.createElement('div');
                     itemElement.classList.add('cart-item');
                     itemElement.dataset.productId = item.id;
-                    itemElement.dataset.customKey = `${item.custom.bumbu}_${item.custom.kacang}`;
+                    itemElement.dataset.customKey = itemCustomKey; // Store the full custom key
+
+                    // Get human-readable variant string
+                    const variantDisplay = getVariantDisplayString(item.custom);
 
                     itemElement.innerHTML = `
-                        <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                        <img src="${item.image || 'https://placehold.co/80x80/cccccc/333333?text=No+Image'}" alt="${item.name}" class="cart-item-image">
                         <div class="cart-item-details">
                             <div class="cart-item-name">${item.name}</div>
                             <div class="cart-item-variants">
-                                ${item.custom.bumbu}, ${item.custom.kacang}
+                                ${variantDisplay}
                             </div>
-                            <div class="cart-item-price">Rp ${item.price.toLocaleString('id-ID')}</div>
+                            <div class="cart-item-price">${formatRupiah(item.price)}</div>
                         </div>
                         <div class="cart-item-actions">
-                            <button class="quantity-button decrease-qty" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}">-</button>
+                            <button class="quantity-button decrease-qty" 
+                                data-id="${item.id}" 
+                                data-custom-variants='${JSON.stringify(item.custom)}'>-</button>
                             <input type="number" class="quantity-input" value="${item.quantity}" min="1" readonly>
-                            <button class="quantity-button increase-qty" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}">+</button>
-                            <button class="remove-item-button" data-id="${item.id}" data-bumbu="${item.custom.bumbu}" data-kacang="${item.custom.kacang}"><i class="fas fa-trash"></i></button>
+                            <button class="quantity-button increase-qty" 
+                                data-id="${item.id}" 
+                                data-custom-variants='${JSON.stringify(item.custom)}'>+</button>
+                            <button class="remove-item-button" 
+                                data-id="${item.id}" 
+                                data-custom-variants='${JSON.stringify(item.custom)}'><i class="fas fa-trash"></i></button>
                         </div>
                     `;
                     cartItemsContainer.appendChild(itemElement);
@@ -323,23 +392,25 @@
             }
 
             totalItemCount.textContent = totalItems;
-            totalPriceDisplay.textContent = `Rp ${overallTotalPrice.toLocaleString('id-ID')}`;
+            totalPriceDisplay.textContent = formatRupiah(overallTotalPrice);
         }
 
         // Fungsi untuk mengupdate kuantitas di Firestore (dari halaman keranjang)
-        async function updateCartItemQuantity(productId, bumbu, kacang, newQuantity) {
+        async function updateCartItemQuantity(productId, customVariantsData, newQuantity) {
             if (!currentUserId) return;
 
-            const customKey = `${bumbu}_${kacang}`;
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
+            const customVariants = JSON.parse(customVariantsData); // Parse the JSON string back to object
+            const itemCustomKey = buildCustomKey(productId, customVariants); // Rebuild the key
+
+            const cartDocRef = cartsCollection.doc(currentUserId).collection('items').doc(itemCustomKey);
 
             try {
                 if (newQuantity > 0) {
                     await cartDocRef.update({ quantity: newQuantity });
-                    console.log(`Kuantitas produk ${productId} (${customKey}) diupdate menjadi ${newQuantity}`);
+                    console.log(`Kuantitas produk ${productId} (${itemCustomKey}) diupdate menjadi ${newQuantity}`);
                 } else {
                     await cartDocRef.delete();
-                    console.log(`Produk ${productId} (${customKey}) dihapus dari keranjang.`);
+                    console.log(`Produk ${productId} (${itemCustomKey}) dihapus dari keranjang.`);
                 }
             } catch (error) {
                 console.error("Error updating cart item quantity:", error);
@@ -347,15 +418,17 @@
         }
 
         // Fungsi untuk menghapus item dari keranjang
-        async function removeItemFromCart(productId, bumbu, kacang) {
+        async function removeItemFromCart(productId, customVariantsData) {
             if (!currentUserId) return;
 
-            const customKey = `${bumbu}_${kacang}`;
-            const cartDocRef = db.collection('carts').doc(currentUserId).collection('items').doc(`${productId}_${customKey}`);
+            const customVariants = JSON.parse(customVariantsData); // Parse the JSON string back to object
+            const itemCustomKey = buildCustomKey(productId, customVariants); // Rebuild the key
+
+            const cartDocRef = cartsCollection.doc(currentUserId).collection('items').doc(itemCustomKey);
 
             try {
                 await cartDocRef.delete();
-                console.log(`Produk ${productId} (${customKey}) dihapus dari keranjang.`);
+                console.log(`Produk ${productId} (${itemCustomKey}) dihapus dari keranjang.`);
             } catch (error) {
                 console.error("Error removing item from cart:", error);
             }
@@ -365,49 +438,107 @@
         async function clearAllCartItems() {
             if (!currentUserId) return;
 
-            if (confirm("Apakah Anda yakin ingin mengosongkan seluruh keranjang?")) {
-                const itemsCollectionRef = db.collection('carts').doc(currentUserId).collection('items');
-                const snapshot = await itemsCollectionRef.get();
-                const batch = db.batch();
+            // Menggunakan custom modal UI sebagai pengganti confirm()
+            const confirmClear = await showCustomConfirm("Apakah Anda yakin ingin mengosongkan seluruh keranjang?");
+            if (!confirmClear) {
+                return;
+            }
 
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
+            const itemsCollectionRef = db.collection('carts').doc(currentUserId).collection('items');
+            const snapshot = await itemsCollectionRef.get();
+            const batch = db.batch();
 
-                try {
-                    await batch.commit();
-                    console.log("Seluruh keranjang berhasil dikosongkan.");
-                } catch (error) {
-                    console.error("Error clearing cart:", error);
-                }
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            try {
+                await batch.commit();
+                console.log("Seluruh keranjang berhasil dikosongkan.");
+            } catch (error) {
+                console.error("Error clearing cart:", error);
             }
         }
 
         // Fungsi untuk melanjutkan ke pembayaran (sekarang ke checkout.html)
         async function proceedToCheckout() {
             if (!currentUserId) {
-                alert("Anda perlu login untuk melanjutkan pembayaran.");
+                alert("Anda perlu login untuk melanjutkan pembayaran."); // Using alert temporarily, should be custom toast
                 return;
             }
             
             const totalItemsInCart = parseInt(totalItemCount.textContent);
             if (totalItemsInCart === 0) {
-                alert("Keranjang Anda kosong. Tambahkan produk terlebih dahulu.");
+                alert("Keranjang Anda kosong. Tambahkan produk terlebih dahulu."); // Using alert temporarily, should be custom toast
                 return;
             }
 
-            alert("Melanjutkan ke halaman Checkout! Total: " + totalPriceDisplay.textContent);
-            window.location.href = 'checkout.html'; // Mengarahkan ke checkout.html
+            // alert("Melanjutkan ke halaman Checkout! Total: " + totalPriceDisplay.textContent); // Using alert temporarily
+            window.location.href = 'checkout.html'; 
+        }
+
+        // Custom Confirmation Modal (replacing window.confirm)
+        function showCustomConfirm(message) {
+            return new Promise((resolve) => {
+                const modalHtml = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+                            <p style="margin-bottom: 20px; font-size: 16px; color: #333;">${message}</p>
+                            <button id="confirmYes" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Ya</button>
+                            <button id="confirmNo" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Tidak</button>
+                        </div>
+                    </div>
+                `;
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = modalHtml;
+                document.body.appendChild(modalDiv);
+
+                document.getElementById('confirmYes').onclick = () => {
+                    document.body.removeChild(modalDiv);
+                    resolve(true);
+                };
+                document.getElementById('confirmNo').onclick = () => {
+                    document.body.removeChild(modalDiv);
+                    resolve(false);
+                };
+            });
         }
 
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
             // Update User ID display dan mulai listener keranjang setelah user login
-            auth.onAuthStateChanged(user => {
+            auth.onAuthStateChanged(async user => { // Added async
+                let finalUserId = null;
                 if (user) {
-                    currentUserId = user.uid; // Set currentUserId di sini
-                    userIdDisplay.textContent = `User ID: ${user.uid.substring(0, 8)}...`;
+                    finalUserId = user.uid;
+                } else if (initialAuthToken) {
+                    try {
+                        const userCredential = await auth.signInWithCustomToken(initialAuthToken);
+                        finalUserId = userCredential.user.uid;
+                    } catch (error) {
+                        console.error("cart.html: Error signing in with custom token:", error);
+                        // Fallback ke anonim jika token kustom gagal
+                        try {
+                            const anonUserCredential = await auth.signInAnonymously();
+                            finalUserId = anonUserCredential.user.uid;
+                        } catch(anonError) {
+                            console.error("cart.html: Error signing in anonymously:", anonError);
+                        }
+                    }
+                } else {
+                    // Jika tidak ada token, coba login anonim
+                    try {
+                        const anonUserCredential = await auth.signInAnonymously();
+                        finalUserId = anonUserCredential.user.uid;
+                        } catch(anonError) {
+                            console.error("cart.html: Error signing in anonymously:", anonError);
+                        }
+                }
+
+                if (finalUserId) {
+                    currentUserId = finalUserId; 
+                    userIdDisplay.textContent = `User ID: ${currentUserId.substring(0, 8)}...`;
                     
                     // Mulai mendengarkan perubahan keranjang setelah user ID tersedia
                     const cartItemsRef = db.collection('carts').doc(currentUserId).collection('items');
@@ -429,7 +560,6 @@
                 }
             });
 
-      
             // Event untuk tombol Bersihkan Keranjang
             clearCartButton.addEventListener('click', clearAllCartItems);
 
@@ -443,25 +573,28 @@
 
                 if (parentButton) {
                     const productId = parentButton.dataset.id;
-                    const bumbu = parentButton.dataset.bumbu;
-                    const kacang = parentButton.dataset.kacang;
+                    // Get the custom variants data as a JSON string
+                    const customVariantsData = parentButton.dataset.customVariants; 
+                    
                     const quantityInput = parentButton.parentNode.querySelector('.quantity-input');
                     let currentQty = parseInt(quantityInput.value);
 
                     if (parentButton.classList.contains('increase-qty')) {
                         currentQty++;
-                        await updateCartItemQuantity(productId, bumbu, kacang, currentQty);
+                        await updateCartItemQuantity(productId, customVariantsData, currentQty);
                     } else if (parentButton.classList.contains('decrease-qty')) {
                         if (currentQty > 1) {
                             currentQty--;
-                            await updateCartItemQuantity(productId, bumbu, kacang, currentQty);
+                            await updateCartItemQuantity(productId, customVariantsData, currentQty);
                         } else {
                             // Jika kuantitas 1 dan tombol minus ditekan, hapus item
-                            await removeItemFromCart(productId, bumbu, kacang);
+                            await removeItemFromCart(productId, customVariantsData);
                         }
                     } else if (parentButton.classList.contains('remove-item-button')) {
-                        if (confirm("Apakah Anda yakin ingin menghapus item ini dari keranjang?")) {
-                            await removeItemFromCart(productId, bumbu, kacang);
+                        // Menggunakan custom modal UI sebagai pengganti confirm()
+                        const confirmRemove = await showCustomConfirm("Apakah Anda yakin ingin menghapus item ini dari keranjang?");
+                        if (confirmRemove) {
+                            await removeItemFromCart(productId, customVariantsData);
                         }
                     }
                 }
