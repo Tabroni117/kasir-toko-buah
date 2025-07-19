@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pesanan Penjual</title>
+    <title>Dashboard Penjual - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <!-- Firebase SDK v9 Compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -691,13 +691,13 @@
         // --- Firebase Configuration ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
+            apiKey: "YOUR_API_KEY", // Ganti dengan API Key Anda
+            authDomain: "YOUR_AUTH_DOMAIN", // Ganti dengan Auth Domain Anda
+            projectId: "YOUR_PROJECT_ID", // Ganti dengan Project ID Anda
+            storageBucket: "YOUR_STORAGE_BUCKET", // Ganti dengan Storage Bucket Anda
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // Ganti dengan Messaging Sender ID Anda
+            appId: "YOUR_APP_ID", // Ganti dengan App ID Anda
+            measurementId: "YOUR_MEASUREMENT_ID" // Ganti dengan Measurement ID Anda
         };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -821,32 +821,59 @@
         }
 
         // --- Fungsi Utama: Muat Data Pesanan ---
-        async function loadData() { // Removed statusFilter param as it's handled by activeFilterStatus
+        async function loadData() {
+            showLoading(); // Tampilkan spinner saat memuat data
             daftar.innerHTML = '<div class="spinner"></div><p class="text-center text-gray-500 mt-2">Memuat pesanan...</p>';
             try {
-                let query = db.collection("pesanan").orderBy("waktu", "desc"); // Changed from pesananCollection to db.collection("pesanan") for consistency
+                let query = db.collection("pesanan").orderBy("waktu", "desc");
 
-                const searchTxt = searchQueryInput.value.trim().toUpperCase();
-                const filterDateVal = filterDateInput.value;
+                // Filter berdasarkan tanggal (jika ada) - ini harus di-handle di sisi klien karena orderBy tidak bisa digabung dengan range query pada non-index field
+                // Untuk filtering tanggal di Firebase, Anda perlu membuat index di Firestore.
+                // Atau, ambil semua data lalu filter di sisi klien.
+                const searchTxt = document.getElementById('searchQuery')?.value.trim().toUpperCase() || '';
+                const filterDateVal = document.getElementById('filterDate')?.value || '';
 
+                let snapshot;
                 if (filterDateVal) {
                     const selectedDate = new Date(filterDateVal);
                     const start = new Date(selectedDate.setHours(0, 0, 0, 0));
                     const end = new Date(selectedDate.setHours(23, 59, 59, 999));
-                    query = query.where('waktu', '>=', firebase.firestore.Timestamp.fromDate(start))
-                                 .where('waktu', '<=', firebase.firestore.Timestamp.fromDate(end));
+                    // Jika ingin filter tanggal di sisi server, Anda perlu index di Firestore:
+                    // query = query.where('waktu', '>=', firebase.firestore.Timestamp.fromDate(start))
+                    //              .where('waktu', '<=', firebase.firestore.Timestamp.fromDate(end));
+                    // snapshot = await query.get();
+                    // Karena orderBy('waktu') sudah ada, menambahkan where('waktu') akan membutuhkan index.
+                    // Untuk menghindari masalah index, kita ambil semua dan filter di klien.
+                    snapshot = await db.collection("pesanan").orderBy("waktu", "desc").get(); // Ambil semua data jika ada filter tanggal
+                } else {
+                    snapshot = await query.get(); // Ambil dengan orderBy jika tidak ada filter tanggal
                 }
 
-                const snapshot = await query.get();
-                let docs = searchTxt
-                    ? snapshot.docs.filter(doc => {
-                          const data = doc.data();
-                          return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                                 (data.displayOrderId || '').toUpperCase().includes(searchTxt);
-                      })
-                    : snapshot.docs;
+                console.log("Data fetched successfully. Snapshot size:", snapshot.size);
+
+                let docs = snapshot.docs;
                 
-                // Apply status filter after initial fetch and search filter
+                // Apply search filter (client-side)
+                if (searchTxt) {
+                    docs = docs.filter(doc => {
+                        const data = doc.data();
+                        return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                               (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+                    });
+                }
+
+                // Apply date filter (client-side) if it was not applied server-side
+                if (filterDateVal) {
+                    const selectedDate = new Date(filterDateVal);
+                    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
+                    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
+                    docs = docs.filter(doc => {
+                        const waktuTimestamp = doc.data().waktu?.toDate()?.getTime();
+                        return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
+                    });
+                }
+
+                // Apply status filter (client-side)
                 if (activeFilterStatus !== 'All') {
                     docs = docs.filter(doc => doc.data().status === activeFilterStatus);
                 }
@@ -859,38 +886,53 @@
                     const data = doc.data();
                     const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
                     const html = `
-                        <div class="order-item-upgrade" onclick='tampilkanDetail("${doc.id}")'> <!-- Changed class and added onclick to match original structure -->
-                            <div class="order-id">${orderId}</div>
-                            <div class="customer-info-item">👤 ${data.customer?.fullName || '-'}</div>
-                            <div class="customer-info-item">📍 ${data.customer?.address || '-'}</div>
-                            <div class="order-total-item">💰 ${formatCurrency(data.totalAmount || 0)}</div>
-                            <div class="status ${getStatusClass(data.status)}">${data.status || '-'}</div>
+                        <div class="order-item-upgrade" onclick='tampilkanDetail("${doc.id}")'>
+                            <div class="order-row-top">
+                                <div class="customer">
+                                    <div class="avatar">${(data.customer?.fullName || 'P').charAt(0).toUpperCase()}</div>
+                                    <div class="info">
+                                        <div class="name">${data.customer?.fullName || 'Pelanggan Anonim'}</div>
+                                        <div class="phone">${data.customer?.phoneNumber || '-'}</div>
+                                    </div>
+                                </div>
+                                <div class="meta">
+                                    <div class="total">${formatCurrency(data.totalAmount || 0)}</div>
+                                    <div class="status ${getStatusClass(data.status)}">${data.status || '-'}</div>
+                                </div>
+                            </div>
+                            <div class="order-row-bottom">
+                                <div class="time"><i class="far fa-clock"></i> ${formatDate(data.waktu)}</div>
+                                <div class="items">
+                                    ${(data.items || []).map(item => `
+                                        <div>${item.name} (${item.quantity}x)</div>
+                                    `).join('')}
+                                </div>
+                            </div>
                         </div>
                     `;
-                    daftar.innerHTML += html; // Changed from orderListDiv to daftar
+                    daftar.innerHTML += html;
                 });
 
-                // No need for document.querySelectorAll('.order-item').forEach(item => { ... })
-                // because onclick is directly on the element now.
-
             } catch (err) {
-                console.error("Load error:", err);
-                daftar.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>'; // Changed from orderListDiv to daftar
+                console.error("Load error in loadData function:", err);
+                daftar.innerHTML = `<p class="text-center text-red-500">Gagal memuat data: ${err.message}. Pastikan aturan Firebase dan koneksi internet Anda sudah benar.</p>`;
+            } finally {
+                hideLoading(); // Sembunyikan spinner setelah selesai (berhasil atau gagal)
             }
         }
 
-        async function tampilkanDetail(docId) { // Renamed from showOrderDetail to tampilkanDetail to match original
-            currentOrderIdForDetail = docId; // Set currentOrderIdForDetail
-            const docRef = db.collection("pesanan").doc(docId); // Use docRef directly
-            const uid = auth.currentUser?.uid || "Unknown"; // Get current user UID
-            const nama = auth.currentUser?.email || "Tanpa Nama"; // Get current user email
+        async function tampilkanDetail(docId) {
+            currentOrderIdForDetail = docId;
+            const docRef = db.collection("pesanan").doc(docId);
+            const uid = auth.currentUser?.uid || "Unknown";
+            const nama = auth.currentUser?.email || "Tanpa Nama";
 
             try {
                 await db.runTransaction(async (transaction) => {
                     const snapshot = await transaction.get(docRef);
-                    if (!snapshot.exists) throw "Pesanan tidak ditemukan.";
+                    if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
                     const d = snapshot.data();
-                    if (!d.dibukaOlehUid) {
+                    if (!d.dibukaOlehUid) { // Hanya update jika belum pernah dibuka
                         transaction.update(docRef, {
                             dibukaOlehUid: uid,
                             dibukaOlehNama: nama,
@@ -899,7 +941,6 @@
                     }
                 });
 
-                // After transaction, get the latest data
                 const doc = await docRef.get();
                 if (!doc.exists) {
                     await showCustomAlert('Pesanan tidak ditemukan.');
@@ -930,7 +971,6 @@
 
                 document.getElementById("popupWaktu").textContent = formatDate(waktu);
 
-                // Display info about who opened and modified
                 const dibukaOleh = data.dibukaOlehNama || "-";
                 const waktuDibuka = data.waktuDibuka?.toDate?.();
                 document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
@@ -941,8 +981,6 @@
                 document.getElementById("popupDiubahOleh").textContent = diubahOleh;
                 document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
-
-                // Detail Item (Updated to display variants)
                 document.getElementById("popupItems").innerHTML = (items || []).map(item => {
                     const variantDisplay = getVariantDisplayString(item.custom);
                     return `
@@ -1160,44 +1198,88 @@
             let finalUser = user;
             if (!finalUser) {
                 if (initialAuthToken) {
+                    console.log("Attempting sign-in with custom token...");
                     try {
                         const userCredential = await auth.signInWithCustomToken(initialAuthToken);
                         finalUser = userCredential.user;
+                        console.log("Signed in with custom token:", finalUser.uid);
                     } catch (error) {
-                        console.error("Admin: Error signing in with custom token:", error);
+                        console.error("Seller Dashboard: Error signing in with custom token:", error);
                         await showCustomAlert("Gagal login otomatis. Silakan login manual.");
-                        window.location.href = 'index.html';
+                        return; // Stop further execution if sign-in fails
                     }
                 } else {
                     await showCustomAlert("Silakan login terlebih dahulu.");
-                    window.location.href = "index.html"; 
+                    return; // Stop further execution if no user and no token
                 }
             }
 
             if (finalUser) {
+                console.log("User authenticated:", finalUser.uid, "Checking role...");
                 // Check user role
-                db.collection('users').doc(finalUser.uid).get().then(doc => { // Changed from usersCollection to db.collection('users')
+                db.collection('users').doc(finalUser.uid).get().then(doc => {
                     if (doc.exists && doc.data().role === 'penjual') {
+                        console.log("User is a 'penjual'. Loading data.");
                         localStorage.setItem("userUid", finalUser.uid);
                         localStorage.setItem("userEmail", finalUser.email || "Anonim"); 
                         loadData();
                         cekPesananBaru();
                     } else {
+                        console.error("User does not have 'penjual' role or role not found.");
                         showCustomAlert("Anda tidak memiliki akses sebagai penjual.");
-                        window.location.href = "index.html";
                     }
                 }).catch(err => {
                     console.error("Error fetching user role:", err);
-                    showCustomAlert("Gagal memverifikasi peran pengguna. Silakan coba lagi.");
-                    window.location.href = "index.html";
+                    showCustomAlert("Gagal memverifikasi peran pengguna. Silakan coba lagi. Detail: " + err.message);
                 });
             }
         });
 
         // --- Jalankan saat halaman selesai dimuat ---
         window.addEventListener("DOMContentLoaded", () => {
-            // Initial load and notification check are now handled within auth.onAuthStateChanged
-            // to ensure user is authenticated before data operations.
+            // Inisialisasi elemen filter
+            const searchQueryInput = document.createElement('input');
+            searchQueryInput.type = 'text';
+            searchQueryInput.id = 'searchQuery';
+            searchQueryInput.placeholder = 'Cari pesanan...';
+            searchQueryInput.className = 'form-group-input'; // Add a class for styling
+            
+            const filterDateInput = document.createElement('input');
+            filterDateInput.type = 'date';
+            filterDateInput.id = 'filterDate';
+            filterDateInput.className = 'form-group-input'; // Add a class for styling
+
+            const filterSection = document.querySelector('.dashboard-summary').nextElementSibling; // Get the div after dashboard-summary
+            if (filterSection) {
+                const searchGroup = document.createElement('div');
+                searchGroup.className = 'form-group';
+                searchGroup.innerHTML = '<label for="searchQuery">Cari Nomor Pesanan / Nama:</label>';
+                searchGroup.appendChild(searchQueryInput);
+                filterSection.parentNode.insertBefore(searchGroup, filterSection); // Insert before filter-buttons
+
+                const dateGroup = document.createElement('div');
+                dateGroup.className = 'form-group';
+                dateGroup.innerHTML = '<label for="filterDate">Filter Tanggal:</label>';
+                dateGroup.appendChild(filterDateInput);
+                filterSection.parentNode.insertBefore(dateGroup, filterSection); // Insert before filter-buttons
+            }
+
+            searchQueryInput.addEventListener('input', loadData);
+            filterDateInput.addEventListener('change', loadData);
+
+            const resetFiltersBtn = document.createElement('button');
+            resetFiltersBtn.id = 'resetFiltersBtn';
+            resetFiltersBtn.className = 'btn-reset';
+            resetFiltersBtn.innerHTML = '<i class="fas fa-redo mr-1"></i> Reset Filter';
+            if (filterSection) {
+                filterSection.parentNode.insertBefore(resetFiltersBtn, filterSection); // Insert before filter-buttons
+            }
+
+            resetFiltersBtn.onclick = () => {
+                searchQueryInput.value = '';
+                filterDateInput.value = '';
+                loadData();
+            };
 
             // Event listener untuk tombol navigasi "Pesanan"
             navPesanan.addEventListener("click", function () {
@@ -1224,68 +1306,68 @@
                 }
             });
 
-        // ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
-        window.hapusSemuaPesananPenjual = async function () {
-            const konfirmasi = await showCustomConfirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
-            if (!konfirmasi) return;
+            // ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
+            window.hapusSemuaPesananPenjual = async function () {
+                const konfirmasi = await showCustomConfirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+                if (!konfirmasi) return;
 
-            // Tampilkan modal verifikasi password
-            const modal = document.getElementById('modalVerifikasi');
-            if (modal) {
-                modal.style.display = 'flex';
-            } else {
-                await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman."); 
-            }
-        };
+                // Tampilkan modal verifikasi password
+                const modal = document.getElementById('modalVerifikasi');
+                if (modal) {
+                    modal.style.display = 'flex';
+                } else {
+                    await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman."); 
+                }
+            };
 
-        // ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
-        window.verifikasiPasswordDanHapus = async function () {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                await showCustomAlert("⚠️ Anda belum login."); 
-                return;
-            }
+            // ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
+            window.verifikasiPasswordDanHapus = async function () {
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    await showCustomAlert("⚠️ Anda belum login."); 
+                    return;
+                }
 
-            const passwordInput = document.getElementById('inputPassword');
-            if (!passwordInput || !passwordInput.value) {
-                await showCustomAlert("⚠️ Masukkan password terlebih dahulu."); 
-                return;
-            }
+                const passwordInput = document.getElementById('inputPassword');
+                if (!passwordInput || !passwordInput.value) {
+                    await showCustomAlert("⚠️ Masukkan password terlebih dahulu."); 
+                    return;
+                }
 
-            const password = passwordInput.value;
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+                const password = passwordInput.value;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
 
-            try {
-                await user.reauthenticateWithCredential(credential);
+                try {
+                    await user.reauthenticateWithCredential(credential);
 
-                // Lanjutkan hapus pesanan
-                const snapshot = await db.collection("pesanan").get();
-                const batch = db.batch();
+                    // Lanjutkan hapus pesanan
+                    const snapshot = await db.collection("pesanan").get();
+                    const batch = db.batch();
 
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
 
-                await batch.commit();
+                    await batch.commit();
 
-                await showCustomAlert("✅ Semua pesanan berhasil dihapus."); 
-                location.reload();
-            } catch (error) {
-                console.error("❌ Gagal re-auth:", error);
-                await showCustomAlert("❌ Password salah atau gagal autentikasi."); 
-            }
-        };
+                    await showCustomAlert("✅ Semua pesanan berhasil dihapus."); 
+                    location.reload();
+                } catch (error) {
+                    console.error("❌ Gagal re-auth:", error);
+                    await showCustomAlert("❌ Password salah atau gagal autentikasi."); 
+                }
+            };
 
-        // ✅ Tutup modal jika klik "Batal"
-        window.tutupModalVerifikasi = function () {
-            const modal = document.getElementById('modalVerifikasi');
-            if (modal) modal.style.display = 'none';
-        };
+            // ✅ Tutup modal jika klik "Batal"
+            window.tutupModalVerifikasi = function () {
+                const modal = document.getElementById('modalVerifikasi');
+                if (modal) modal.style.display = 'none';
+            };
 
-        // --- Fungsi DUMMY ---
-        window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
-        window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
-        window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
+            // --- Fungsi DUMMY ---
+            window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
+            window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
+            window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
         });
     </script>
 </body>
