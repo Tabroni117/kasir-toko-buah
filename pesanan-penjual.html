@@ -1,434 +1,1211 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Penjual - Rujak Buah Indonesia</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pesanan Penjual</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+        }
+        .container-wrapper {
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f9fafb;
-      color: #1f2937;
-      margin: 0;
-      padding: 16px;
-    }
+        /* Header */
+        .header {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title {
+            flex-grow: 1;
+            text-align: center;
+        }
+        .header .notification-icon {
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            position: relative;
+        }
+        .header .notification-icon.berkedip-kuat {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
 
-    .container {
-      max-width: 700px;
-      margin: 0 auto;
-      height: 100vh;
-      overflow-y: auto;
-    }
+        /* Dashboard Summary */
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px 20px;
+            background-color: #e8f5e9; /* Light green background */
+            border-bottom: 1px solid #c8e6c9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .summary-card h4 {
+            margin: 0 0 5px;
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+        .summary-card p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
 
-    .filter-section {
-      background-color: #e6fce7;
-      border-radius: 10px;
-      padding: 16px;
-      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.03);
-      margin-bottom: 20px;
-    }
+        /* Filter Buttons */
+        .filter-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 15px;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 60px; /* Below header */
+            z-index: 90;
+        }
+        .filter-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+            flex-grow: 1;
+            margin: 0 5px;
+            white-space: nowrap;
+        }
+        .filter-btn:first-child { margin-left: 0; }
+        .filter-btn:last-child { margin-right: 0; }
+        .filter-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .filter-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
+        /* Order List */
+        #daftarPesanan {
+            padding: 15px 20px;
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for order list */
+            -webkit-overflow-scrolling: touch;
+        }
+        .order-item-upgrade {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .order-item-upgrade:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .order-row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        .customer {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .customer .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #FFC107; /* Amber */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .customer .info {
+            flex-grow: 1;
+            min-width: 0; /* Allow text truncation */
+        }
+        .customer .name {
+            font-weight: bold;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .customer .phone {
+            font-size: 12px;
+            color: #777;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .meta {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .meta .total {
+            font-weight: bold;
+            font-size: 16px;
+            color: #4CAF50;
+            margin-bottom: 3px;
+        }
+        .meta .status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status.pending { background-color: #ffe0b2; color: #fb8c00; } /* Orange */
+        .status.diproses { background-color: #c8e6c9; color: #43A047; } /* Green */
+        .status.selesai { background-color: #bbdefb; color: #1976D2; } /* Blue */
+        .status.dibatalkan { background-color: #ffcdd2; color: #e53935; } /* Red */
 
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 1rem;
-    }
+        .order-row-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .order-row-bottom .time {
+            font-size: 12px;
+            color: #777;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .order-row-bottom .items {
+            font-size: 13px;
+            color: #555;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+        }
+        .order-row-bottom .items div {
+            margin-bottom: 3px;
+        }
+        .order-row-bottom .items div:last-child {
+            margin-bottom: 0;
+        }
 
-    .btn-reset {
-      background-color: #d1d5db;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #1f2937;
-      border: none;
-      cursor: pointer;
-    }
+        /* Loading Spinner */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #4CAF50;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-    .btn-reset:hover {
-      background-color: #9ca3af;
-    }
+        /* Notification Modal */
+        #notificationModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #notificationModal.show-notification {
+            display: flex;
+            opacity: 1;
+        }
+        #notificationModalContent {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 320px;
+            width: 90%;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+        }
+        @keyframes slideIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .close-btn-notif {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+        }
+        #notificationModalContent h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+        #notificationModalContent p {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn-action-notif {
+            background-color: #FFC107;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn-action-notif:hover {
+            background-color: #FFA000;
+        }
 
-    .order-item {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      padding: 16px;
-      margin-bottom: 16px;
-      transition: transform 0.2s ease;
-      cursor: pointer;
-    }
+        /* Popup Detail */
+        #popupDetail {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #popupDetail > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #popupDetail h3 {
+            margin-top: 0;
+            color: #4CAF50;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        #popupDetail p {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        #popupDetail p strong {
+            color: #555;
+        }
+        #popupDetail .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+        }
+        #popupDetail .status {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 13px;
+        }
+        .status-dropdown {
+            padding: 5px 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        #popupDetail h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            font-size: 16px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+        #popupItems div {
+            background-color: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+        #popupDetail button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #popupDetail button:hover {
+            background-color: #388E3C;
+        }
 
-    .order-item:hover {
-      transform: scale(1.01);
-    }
+        /* Navigation Bar */
+        .app-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #777;
+            font-size: 12px;
+            transition: color 0.3s;
+            padding: 5px 0;
+            flex-grow: 1;
+        }
+        .nav-btn .fas {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .nav-btn.active {
+            color: #4CAF50;
+        }
+        .nav-btn:hover {
+            color: #8BC34A;
+        }
+        .nav-btn.berkedip-kuat {
+            animation: pulse 1s infinite;
+        }
 
-    .order-id {
-      font-weight: 700;
-      font-size: 1.1rem;
-      color: #16a34a;
-      margin-bottom: 6px;
-    }
+        /* Modal Verifikasi Password */
+        #modalVerifikasi {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #modalVerifikasi > div {
+            background:white;
+            padding:20px;
+            border-radius:8px;
+            width: calc(100% - 40px);
+            max-width:300px;
+            box-shadow:0 0 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        #modalVerifikasi h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        #modalVerifikasi p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        #modalVerifikasi input[type="password"] {
+            width: calc(100% - 20px);
+            padding:8px;
+            margin-top:10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #modalVerifikasi .button-group-modal {
+            margin-top:15px;
+            text-align:right;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        #modalVerifikasi .button-group-modal button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background-color 0.2s;
+        }
+        #modalVerifikasi .button-group-modal button:first-child {
+            background-color: #ccc;
+            color: #333;
+        }
+        #modalVerifikasi .button-group-modal button:first-child:hover {
+            background-color: #bbb;
+        }
+        #modalVerifikasi .button-group-modal button:last-child {
+            background-color: #f44336; /* Red for delete */
+            color: white;
+        }
+        #modalVerifikasi .button-group-modal button:last-child:hover {
+            background-color: #d32f2f;
+        }
 
-    .customer-info-item {
-      font-size: 0.95rem;
-      margin-bottom: 4px;
-      color: #374151;
-    }
-
-    .order-total-item {
-      font-weight: 600;
-      margin-top: 8px;
-      font-size: 1rem;
-      color: #065f46;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 10px;
-      text-transform: uppercase;
-    }
-
-    .status.Pending { background-color: #facc15; color: #92400e; }
-    .status.Diproses { background-color: #3b82f6; color: white; }
-    .status.Selesai { background-color: #22c55e; color: white; }
-    .status.Dibatalkan { background-color: #ef4444; color: white; }
-
-    .spinner {
-      border: 4px solid #d1fae5;
-      border-top: 4px solid #10b981;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-
-    .modal-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #16a34a;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .modal-detail-item {
-      margin-bottom: 10px;
-      font-size: 1rem;
-    }
-
-    .modal-detail-item strong {
-      margin-right: 8px;
-    }
-
-    .modal-product-list h3 {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-top: 15px;
-      color: #065f46;
-    }
-
-    .modal-product-item {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.95rem;
-      border-bottom: 1px dotted #ccc;
-      padding: 4px 0;
-    }
-  </style>
+    </style>
 </head>
 <body>
+    <div class="container-wrapper">
+        <header class="header">
+            <div class="header-title">Pesanan Penjual</div>
+            <i class="fas fa-bell notification-icon" id="notifLonceng"></i>
+        </header>
 
-<button onclick="window.history.back()" style="
-  margin: 16px auto;
-  display: block;
-  background: linear-gradient(to right, #16a34a, #22c55e);
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  cursor: pointer;
-">
-  ← Kembali
-</button>
+        <div class="dashboard-summary">
+            <div class="summary-card">
+                <h4>Total Pesanan</h4>
+                <p id="totalOrders">0</p>
+            </div>
+            <div class="summary-card">
+                <h4>Pendapatan Hari Ini</h4>
+                <p id="todayIncome">Rp0</p>
+            </div>
+            <div class="summary-card">
+                <h4>Rata-rata Pesanan</h4>
+                <p id="avgOrder">Rp0</p>
+            </div>
+            <div class="summary-card">
+                <h4>Pesanan Terakhir</h4>
+                <p id="lastOrder">-</p>
+            </div>
+        </div>
 
-  
-  <div class="container">
-    <div class="filter-section">
-      <div class="form-group">
-        <label for="searchQuery">Cari Nomor Pesanan / Nama:</label>
-        <input type="text" id="searchQuery" placeholder="Cari pesanan...">
-      </div>
-      <div class="form-group">
-        <label for="filterDate">Filter Tanggal:</label>
-        <input type="date" id="filterDate">
-      </div>
-      <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo mr-1"></i> Reset Filter</button>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-status="All">Semua</button>
+            <button class="filter-btn" data-status="Pending">Pending</button>
+            <button class="filter-btn" data-status="Diproses">Diproses</button>
+            <button class="filter-btn" data-status="Selesai">Selesai</button>
+            <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+        </div>
+
+        <div id="loadingSpinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="daftarPesanan">
+            <!-- Order items will be loaded here -->
+            <p style='text-align:center;'>Memuat data pesanan...</p>
+        </div>
+
+        <!-- Tombol hapus semua pesanan (untuk admin) -->
+        <button onclick="hapusSemuaPesananPenjual()" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; margin: 20px auto; display: block;">Hapus Semua Pesanan</button>
     </div>
 
-    <div id="orderList">
-      <div class="spinner"></div>
-      <p class="text-center text-gray-500 mt-2">Memuat pesanan...</p>
+    <!-- Notification Modal -->
+    <div id="notificationModal">
+        <div id="notificationModalContent">
+            <button class="close-btn-notif">&times;</button>
+            <h3><i class="fas fa-bell"></i> Pesanan Baru!</h3>
+            <p id="notificationMessage">Ada pesanan baru dari **[Nama Pelanggan]** dengan total **[Jumlah]**!</p>
+            <button class="btn-action-notif">Lihat Detail Pesanan</button>
+        </div>
     </div>
-  </div>
 
-  <div id="orderDetailModal" class="modal-overlay">
-    <div class="modal-content">
-      <button class="modal-close-btn" id="closeModalBtn">&times;</button>
-      <h2 class="modal-title" id="modalOrderId"></h2>
-      <div class="modal-detail-item"><strong>Waktu:</strong> <span id="modalOrderTime"></span></div>
-      <div class="modal-detail-item"><strong>Nama:</strong> <span id="modalCustomerName"></span></div>
-      <div class="modal-detail-item"><strong>No HP:</strong> <span id="modalCustomerPhone"></span></div>
-      <div class="modal-detail-item"><strong>Alamat:</strong> <span id="modalCustomerAddress"></span></div>
-      <div class="modal-detail-item"><strong>Total:</strong> <span id="modalTotalAmount"></span></div>
-      <div class="modal-detail-item"><strong>Status:</strong> <span id="modalStatus" class="status"></span></div>
+    <!-- Popup Detail Pesanan -->
+    <div id="popupDetail">
+        <div>
+            <button onclick="tutupDetail()" class="close-button">&times;</button>
+            <h3 id="popupNama">Nama Pelanggan</h3>
 
-      <div class="modal-product-list">
-        <h3>Detail Produk:</h3>
-        <div id="modalProductItems"></div>
-      </div>
+            <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
+            <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
+            <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
+            <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
+            <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
+            <p><strong>Catatan:</strong> <span id="popupCatatan">-</span></p>
+
+            <p style="margin-bottom: 10px;">
+                <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+                <select id="statusUpdater" class="status-dropdown">
+                    <option value="Pending">Pending</option>
+                    <option value="Diproses">Diproses</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Dibatalkan">Dibatalkan</option>
+                </select>
+            </p>
+
+            <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
+            <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
+            <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</span></p>
+            <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
+            <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
+
+            <h4>Detail Item:</h4>
+            <div id="popupItems"></div>
+
+            <button onclick="tutupDetail()">Tutup</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.firebasestorage.app",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0"
-    };
+    <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const pesananCollection = db.collection('pesanan');
-    const usersCollection = db.collection('users');
+    <nav class="app-nav">
+        <a href="halaman-penjual.html" class="nav-btn"><i class="fas fa-home"></i><span>Beranda</span></a>
+        <a href="PRODUK.html" class="nav-btn"><i class="fas fa-boxes"></i><span>Inventori</span></a>
+        <a href="pesanan.html" id="navPesanan" class="nav-btn active"><i class="fas fa-receipt"></i><span>Pesanan</span></a>
+        <a href="akun.html" class="nav-btn"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
 
-    const orderListDiv = document.getElementById('orderList');
-    const searchQueryInput = document.getElementById('searchQuery');
-    const filterDateInput = document.getElementById('filterDate');
-    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+    <!-- Custom Confirmation Modal (replacing window.confirm) -->
+    <div id="customConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9998; justify-content:center; align-items:center;">
+        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+            <p id="customConfirmMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <button id="customConfirmYes" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Ya</button>
+            <button id="customConfirmNo" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Tidak</button>
+        </div>
+    </div>
 
-    const orderDetailModal = document.getElementById('orderDetailModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const modalOrderId = document.getElementById('modalOrderId');
-    const modalOrderTime = document.getElementById('modalOrderTime');
-    const modalCustomerName = document.getElementById('modalCustomerName');
-    const modalCustomerPhone = document.getElementById('modalCustomerPhone');
-    const modalCustomerAddress = document.getElementById('modalCustomerAddress');
-    const modalTotalAmount = document.getElementById('modalTotalAmount');
-    const modalStatus = document.getElementById('modalStatus');
-    const modalProductItems = document.getElementById('modalProductItems');
+    <!-- Custom Alert Modal (for simple messages) -->
+    <div id="customAlertDialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9997; justify-content:center; align-items:center;">
+        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+            <p id="customAlertMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <button id="customAlertOk" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">OK</button>
+        </div>
+    </div>
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        usersCollection.doc(user.uid).get().then(doc => {
-          if (doc.exists && doc.data().role === 'penjual') {
+    <!-- 🔐 Modal Verifikasi Password -->
+    <div id="modalVerifikasi" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background-color:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0 0 0 / 30%);">
+            <h3>🔐 Verifikasi Hapus</h3>
+            <p>Masukkan email & password untuk melanjutkan.</p>
+            <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
+            <div class="button-group-modal">
+                <button onclick="tutupModalVerifikasi()">Batal</button>
+                <button onclick="verifikasiPasswordDanHapus()">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
+        const daftar = document.getElementById("daftarPesanan");
+        const totalOrdersEl = document.getElementById("totalOrders");
+        const todayIncomeEl = document.getElementById("todayIncome");
+        const avgOrderEl = document.getElementById("avgOrder");
+        const lastOrderEl = document.getElementById("lastOrder");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
+
+        let currentOrderIdForDetail = null; // Digunakan untuk popup detail
+        let activeFilterStatus = 'All'; // Default filter
+
+        // --- Fungsi Loading Spinner ---
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        // --- Utilitas Format ---
+        function formatCurrency(val) {
+            if (isNaN(val) || val === null || typeof val === 'undefined') {
+                return "Rp0";
+            }
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
+        }
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        }
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'dibatalkan';
+                default: return '';
+            }
+        }
+
+        /**
+         * Generates a display string for variants.
+         * This function is copied from cart.html to ensure consistency.
+         * @param {Object} customVariants - The custom variants object.
+         * @returns {string} A human-readable string of selected variants.
+         */
+        function getVariantDisplayString(customVariants) {
+            if (!customVariants || Object.keys(customVariants).length === 0) {
+                return 'Tidak ada varian';
+            }
+            const parts = [];
+            // Sort keys to ensure consistent display order
+            const sortedVariantTypeIds = Object.keys(customVariants).sort(); 
+            for (const variantTypeId of sortedVariantTypeIds) {
+                const value = customVariants[variantTypeId];
+                if (Array.isArray(value)) {
+                    if (value.length > 0) {
+                        parts.push(value.join(', '));
+                    }
+                } else if (value && value !== 'none') {
+                    parts.push(value);
+                }
+            }
+            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
+        }
+
+        // Custom Confirmation Modal (replacing window.confirm)
+        function showCustomConfirm(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customConfirmModal');
+                const msgEl = document.getElementById('customConfirmMessage');
+                const yesBtn = document.getElementById('customConfirmYes');
+                const noBtn = document.getElementById('customConfirmNo');
+
+                msgEl.textContent = message;
+                modal.style.display = 'flex';
+
+                const handleYes = () => {
+                    modal.style.display = 'none';
+                    yesBtn.removeEventListener('click', handleYes);
+                    noBtn.removeEventListener('click', handleNo);
+                    resolve(true);
+                };
+                const handleNo = () => {
+                    modal.style.display = 'none';
+                    yesBtn.removeEventListener('click', handleYes);
+                    noBtn.removeEventListener('click', handleNo);
+                    resolve(false);
+                };
+
+                yesBtn.addEventListener('click', handleYes);
+                noBtn.addEventListener('click', handleNo);
+            });
+        }
+
+        // Custom Alert Modal (for simple messages, replacing window.alert)
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customAlertDialog');
+                const msgEl = document.getElementById('customAlertMessage');
+                const okBtn = document.getElementById('customAlertOk');
+
+                msgEl.textContent = message;
+                modal.style.display = 'flex';
+
+                const handleOk = () => {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', handleOk);
+                    resolve();
+                };
+
+                okBtn.addEventListener('click', handleOk);
+            });
+        }
+
+        // --- Fungsi Utama: Muat Data Pesanan ---
+        async function loadData() { // Removed statusFilter param as it's handled by activeFilterStatus
+            orderListDiv.innerHTML = '<div class="spinner"></div><p class="text-center text-gray-500 mt-2">Memuat pesanan...</p>';
+            try {
+                let query = pesananCollection.orderBy("waktu", "desc");
+
+                const searchTxt = searchQueryInput.value.trim().toUpperCase();
+                const filterDateVal = filterDateInput.value;
+
+                if (filterDateVal) {
+                    const selectedDate = new Date(filterDateVal);
+                    const start = new Date(selectedDate.setHours(0, 0, 0, 0));
+                    const end = new Date(selectedDate.setHours(23, 59, 59, 999));
+                    query = query.where('waktu', '>=', firebase.firestore.Timestamp.fromDate(start))
+                                 .where('waktu', '<=', firebase.firestore.Timestamp.fromDate(end));
+                }
+
+                const snapshot = await query.get();
+                let docs = searchTxt
+                    ? snapshot.docs.filter(doc => {
+                          const data = doc.data();
+                          return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                                 (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+                      })
+                    : snapshot.docs;
+                
+                // Apply status filter after initial fetch and search filter
+                if (activeFilterStatus !== 'All') {
+                    docs = docs.filter(doc => doc.data().status === activeFilterStatus);
+                }
+
+                orderListDiv.innerHTML = docs.length
+                    ? ''
+                    : '<p class="text-center text-gray-500">Tidak ada pesanan.</p>';
+
+                docs.forEach(doc => {
+                    const data = doc.data();
+                    const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                    const html = `
+                        <div class="order-item" data-order-id="${doc.id}">
+                            <div class="order-id">${orderId}</div>
+                            <div class="customer-info-item">👤 ${data.customer?.fullName || '-'}</div>
+                            <div class="customer-info-item">📍 ${data.customer?.address || '-'}</div>
+                            <div class="order-total-item">💰 ${formatCurrency(data.totalAmount || 0)}</div>
+                            <div class="status ${getStatusClass(data.status)}">${data.status || '-'}</div>
+                        </div>
+                    `;
+                    orderListDiv.innerHTML += html;
+                });
+
+                document.querySelectorAll('.order-item').forEach(item => {
+                    item.addEventListener('click', () => showOrderDetail(item.dataset.orderId));
+                });
+
+            } catch (err) {
+                console.error("Load error:", err);
+                orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>';
+            }
+        }
+
+        async function showOrderDetail(docId) {
+            try {
+                const doc = await pesananCollection.doc(docId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+
+                    modalOrderId.textContent = `Detail Pesanan: ${orderId}`;
+                    modalOrderTime.textContent = formatDate(data.waktu);
+                    modalCustomerName.textContent = data.customer?.fullName || '-';
+                    modalCustomerPhone.textContent = data.customer?.phoneNumber || '-';
+                    modalCustomerAddress.textContent = data.customer?.address || '-';
+                    modalTotalAmount.textContent = formatCurrency(data.totalAmount || 0);
+                    modalStatus.textContent = data.status || '-';
+                    modalStatus.className = `status ${getStatusClass(data.status)}`;
+
+                    // Updated to display variants
+                    modalProductItems.innerHTML = (data.items || []).map(item => { // Changed from 'products' to 'items' to match cart.html structure
+                        const variantDisplay = getVariantDisplayString(item.custom);
+                        return `
+                            <div class="modal-product-item">
+                                <span>${item.name}</span>
+                                <span>${item.quantity}x</span>
+                                <span>${formatCurrency(item.price * item.quantity)}</span>
+                                <br><small style="font-size:0.8em; color:#777;">Varian: ${variantDisplay}</small>
+                            </div>
+                        `;
+                    }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
+
+                    orderDetailModal.classList.add('active');
+                } else {
+                    await showCustomAlert('Pesanan tidak ditemukan.');
+                }
+            } catch (err) {
+                await showCustomAlert('Gagal menampilkan detail pesanan.');
+                console.error(err);
+            }
+        }
+
+        closeModalBtn.onclick = () => orderDetailModal.classList.remove('active');
+        orderDetailModal.onclick = e => {
+            if (e.target === orderDetailModal) orderDetailModal.classList.remove('active');
+        };
+
+        searchQueryInput.addEventListener('input', loadData);
+        filterDateInput.addEventListener('change', loadData);
+        resetFiltersBtn.onclick = () => {
+            searchQueryInput.value = '';
+            filterDateInput.value = '';
             loadData();
-          } else {
-            alert("Anda tidak memiliki akses.");
-            window.location.href = "index.html";
-          }
-        });
-      } else {
-        window.location.href = "index.html";
-      }
-    });
+        };
 
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-      }).format(amount);
-    }
+        // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Implementasi Terbaru) ---
+        const sound = document.getElementById("notifSound");
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalContent = document.getElementById('notificationModalContent');
+        const closeBtnNotif = document.querySelector('.close-btn-notif');
+        const btnActionNotif = document.querySelector('.btn-action-notif');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
+        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah
 
-    function formatDate(timestamp) {
-      if (!timestamp) return '-';
-      const date = timestamp.toDate();
-      return date.toLocaleString('id-ID', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
+        let sedangBerbunyi = false; 
+        let audioSudahDiizinkan = false;
+        let currentNewOrderId = null; 
 
-    function getStatusClass(status) {
-      return status === "Pending" ? "Pending"
-        : status === "Diproses" ? "Diproses"
-        : status === "Selesai" ? "Selesai"
-        : status === "Dibatalkan" ? "Dibatalkan"
-        : "";
-    }
+        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                sound.play().catch(() => {}); 
+                sound.pause();
+                sound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true });
 
-    async function loadData() {
-      orderListDiv.innerHTML = '<div class="spinner"></div>';
-      try {
-        let query = pesananCollection.orderBy("waktu", "desc");
+        // Fungsi tampilkan popup notifikasi baru
+        function showNotificationModal(orderData) {
+            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
+            
+            notificationModal.style.display = 'flex'; 
+            setTimeout(() => {
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
 
-        const searchTxt = searchQueryInput.value.trim().toUpperCase();
-        const filterDateVal = filterDateInput.value;
-
-        if (filterDateVal) {
-          const selectedDate = new Date(filterDateVal);
-          const start = new Date(selectedDate.setHours(0, 0, 0, 0));
-          const end = new Date(selectedDate.setHours(23, 59, 59, 999));
-          query = query.where('waktu', '>=', firebase.firestore.Timestamp.fromDate(start))
-                       .where('waktu', '<=', firebase.firestore.Timestamp.fromDate(end));
+            currentNewOrderId = orderData.id;
         }
 
-        const snapshot = await query.get();
-        let docs = searchTxt
-          ? snapshot.docs.filter(doc => {
-              const data = doc.data();
-              return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                     (data.displayOrderId || '').toUpperCase().includes(searchTxt);
-            })
-          : snapshot.docs;
+        // Fungsi tutup popup notifikasi baru
+        function hideNotificationModal() {
+            notificationModal.classList.remove('show-notification'); 
+            setTimeout(() => {
+                notificationModal.style.display = 'none'; 
+            }, 300); 
 
-        orderListDiv.innerHTML = docs.length
-          ? ''
-          : '<p class="text-center text-gray-500">Tidak ada pesanan.</p>';
+            sound.pause();
+            sound.currentTime = 0;
+            sedangBerbunyi = false; 
 
-        docs.forEach(doc => {
-          const data = doc.data();
-          const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-          const html = `
-            <div class="order-item" data-order-id="${doc.id}">
-              <div class="order-id">${orderId}</div>
-              <div class="customer-info-item">👤 ${data.customer?.fullName || '-'}</div>
-              <div class="customer-info-item">📍 ${data.customer?.address || '-'}</div>
-              <div class="order-total-item">💰 ${formatCurrency(data.totalAmount || 0)}</div>
-              <div class="status ${getStatusClass(data.status)}">${data.status || '-'}</div>
-            </div>
-          `;
-          orderListDiv.innerHTML += html;
-        });
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
 
-        document.querySelectorAll('.order-item').forEach(item => {
-          item.addEventListener('click', () => showOrderDetail(item.dataset.orderId));
-        });
-
-      } catch (err) {
-        console.error("Load error:", err);
-        orderListDiv.innerHTML = '<p class="text-center text-red-500">Gagal memuat data.</p>';
-      }
-    }
-
-    async function showOrderDetail(docId) {
-      try {
-        const doc = await pesananCollection.doc(docId).get();
-        if (doc.exists) {
-          const data = doc.data();
-          const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-
-          modalOrderId.textContent = `Detail Pesanan: ${orderId}`;
-          modalOrderTime.textContent = formatDate(data.waktu);
-          modalCustomerName.textContent = data.customer?.fullName || '-';
-          modalCustomerPhone.textContent = data.customer?.phoneNumber || '-';
-          modalCustomerAddress.textContent = data.customer?.address || '-';
-          modalTotalAmount.textContent = formatCurrency(data.totalAmount || 0);
-          modalStatus.textContent = data.status || '-';
-          modalStatus.className = `status ${getStatusClass(data.status)}`;
-
-          modalProductItems.innerHTML = (data.products || []).map(product => `
-            <div class="modal-product-item">
-              <span>${product.name}</span>
-              <span>${product.quantity}x</span>
-              <span>${formatCurrency(product.price * product.quantity)}</span>
-            </div>
-          `).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
-
-          orderDetailModal.classList.add('active');
+            notifLonceng.classList.remove("berkedip-kuat");
+            navPesanan.classList.remove("berkedip-kuat"); 
         }
-      } catch (err) {
-        alert('Gagal menampilkan detail pesanan');
-        console.error(err);
-      }
-    }
 
-    closeModalBtn.onclick = () => orderDetailModal.classList.remove('active');
-    orderDetailModal.onclick = e => {
-      if (e.target === orderDetailModal) orderDetailModal.classList.remove('active');
-    };
+        // Event listener untuk tombol tutup 'X' di notificationModal
+        closeBtnNotif.addEventListener('click', hideNotificationModal);
 
-    searchQueryInput.addEventListener('input', loadData);
-    filterDateInput.addEventListener('change', loadData);
-    resetFiltersBtn.onclick = () => {
-      searchQueryInput.value = '';
-      filterDateInput.value = '';
-      loadData();
-    };
-  </script>
+        // Event listener untuk klik di luar konten notificationModal (overlay)
+        notificationModal.addEventListener('click', function(event) {
+            if (event.target === notificationModal) { 
+                hideNotificationModal();
+            }
+        });
+
+        // Event listener untuk tombol aksi "Lihat Detail Pesanan" di notificationModal
+        btnActionNotif.addEventListener('click', function() {
+            hideNotificationModal(); 
+            if (currentNewOrderId) {
+                tampilkanDetail(currentNewOrderId); 
+            }
+        });
+
+        // Fungsi utama cek pesanan baru dari Firebase
+        function cekPesananBaru() {
+            // Menggunakan onSnapshot untuk real-time updates
+            db.collection("pesanan").orderBy("waktu", "desc").limit(1)
+                .onSnapshot(snapshot => {
+                    if (!snapshot.empty) {
+                        const doc = snapshot.docs[0];
+                        const data = doc.data();
+                        data.id = doc.id; 
+                        
+                        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+                        const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
+                        const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
+
+                        // KONDISI UNTUK MEMICU NOTIFIKASI
+                        // Notifikasi (popup dan kedip lonceng) akan muncul jika:
+                        // 1. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir ditampilkan (terakhirDitampilkan)
+                        // 2. Waktu pesanan terbaru lebih baru dari waktu terakhir user "membuka" notifikasi (waktuBukaTerakhir)
+                        // 3. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir dibunyikan (idPesananTerakhirDibunyikan)
+                        if (doc.id !== terakhirDitampilkan || (waktuPesanan > waktuBukaTerakhir && doc.id !== idPesananTerakhirDibunyikan)) {
+                            // Update terakhirDitampilkan agar tidak memicu notifikasi visual berulang-ulang dalam satu sesi
+                            terakhirDitampilkan = doc.id; 
+                            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+
+                            // Logic untuk SUARA: Hanya berbunyi jika ID pesanan belum pernah dibunyikan sebelumnya
+                            if (doc.id !== idPesananTerakhirDibunyikan && audioSudahDiizinkan && !sedangBerbunyi) {
+                                sound.play().catch(error => {
+                                    console.warn("Gagal memutar suara notifikasi:", error);
+                                });
+                                sedangBerbunyi = true; 
+                                localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
+                            }
+
+                            // Tampilkan popup notifikasi baru
+                            showNotificationModal(data); 
+
+                            // Aktifkan efek berkedip pada lonceng dan tombol nav
+                            notifLonceng.classList.add("berkedip-kuat");
+                            navPesanan.classList.add("berkedip-kuat");
+
+                        } else {
+                            // KONDISI UNTUK MEMASTIKAN NOTIFIKASI MATI jika tidak ada pesanan baru yang valid
+                            if (!notificationModal.classList.contains('show-notification')) { 
+                                sound.pause();
+                                sound.currentTime = 0;
+                                sedangBerbunyi = false;
+                                notifLonceng.classList.remove("berkedip-kuat");
+                                navPesanan.classList.remove("berkedip-kuat");
+                            }
+                        }
+                    } else {
+                        // Jika tidak ada pesanan sama sekali di Firebase
+                        sound.pause();
+                        sound.currentTime = 0;
+                        sedangBerbunyi = false;
+                        notifLonceng.classList.remove("berkedip-kuat");
+                        navPesanan.classList.remove("berkedip-kuat");
+                    }
+                }, error => {
+                    console.error("Error fetching latest order (onSnapshot):", error);
+                    // Jika ada error dalam mengambil data, matikan juga notifikasi
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sedangBerbunyi = false;
+                    notifLonceng.classList.remove("berkedip-kuat");
+                    navPesanan.classList.remove("berkedip-kuat");
+                });
+        }
+
+        auth.onAuthStateChanged(async function(user) {
+            let finalUser = user;
+            if (!finalUser) {
+                if (initialAuthToken) {
+                    try {
+                        const userCredential = await auth.signInWithCustomToken(initialAuthToken);
+                        finalUser = userCredential.user;
+                    } catch (error) {
+                        console.error("Admin: Error signing in with custom token:", error);
+                        await showCustomAlert("Gagal login otomatis. Silakan login manual.");
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    await showCustomAlert("Silakan login terlebih dahulu.");
+                    window.location.href = "index.html"; 
+                }
+            }
+
+            if (finalUser) {
+                // Check user role
+                usersCollection.doc(finalUser.uid).get().then(doc => {
+                    if (doc.exists && doc.data().role === 'penjual') {
+                        localStorage.setItem("userUid", finalUser.uid);
+                        localStorage.setItem("userEmail", finalUser.email || "Anonim"); 
+                        loadData();
+                        cekPesananBaru();
+                    } else {
+                        showCustomAlert("Anda tidak memiliki akses sebagai penjual.");
+                        window.location.href = "index.html";
+                    }
+                }).catch(err => {
+                    console.error("Error fetching user role:", err);
+                    showCustomAlert("Gagal memverifikasi peran pengguna. Silakan coba lagi.");
+                    window.location.href = "index.html";
+                });
+            }
+        });
+
+        // --- Jalankan saat halaman selesai dimuat ---
+        window.addEventListener("DOMContentLoaded", () => {
+            // Initial load and notification check are now handled within auth.onAuthStateChanged
+            // to ensure user is authenticated before data operations.
+
+            // Event listener untuk tombol navigasi "Pesanan"
+            navPesanan.addEventListener("click", function () {
+                hideNotificationModal(); 
+            });
+
+            // Event listener untuk tombol lonceng notifikasi di header
+            notifLonceng.addEventListener("click", function() {
+                if (notificationModal.classList.contains('show-notification')) {
+                    hideNotificationModal();
+                } else {
+                    console.log("Lonceng diklik, tidak ada notifikasi aktif.");
+                }
+            });
+
+            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Escape") {
+                    if (notificationModal.classList.contains('show-notification')) {
+                        hideNotificationModal();
+                    } else if (document.getElementById("popupDetail").style.display === "flex") {
+                        tutupDetail();
+                    }
+                }
+            });
+
+        // ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
+        window.hapusSemuaPesananPenjual = async function () {
+            const konfirmasi = await showCustomConfirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+            if (!konfirmasi) return;
+
+            // Tampilkan modal verifikasi password
+            const modal = document.getElementById('modalVerifikasi');
+            if (modal) {
+                modal.style.display = 'flex';
+            } else {
+                await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman."); 
+            }
+        };
+
+        // ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
+        window.verifikasiPasswordDanHapus = async function () {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                await showCustomAlert("⚠️ Anda belum login."); 
+                return;
+            }
+
+            const passwordInput = document.getElementById('inputPassword');
+            if (!passwordInput || !passwordInput.value) {
+                await showCustomAlert("⚠️ Masukkan password terlebih dahulu."); 
+                return;
+            }
+
+            const password = passwordInput.value;
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+            try {
+                await user.reauthenticateWithCredential(credential);
+
+                // Lanjutkan hapus pesanan
+                const snapshot = await db.collection("pesanan").get();
+                const batch = db.batch();
+
+                snapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+
+                await showCustomAlert("✅ Semua pesanan berhasil dihapus."); 
+                location.reload();
+            } catch (error) {
+                console.error("❌ Gagal re-auth:", error);
+                await showCustomAlert("❌ Password salah atau gagal autentikasi."); 
+            }
+        };
+
+        // ✅ Tutup modal jika klik "Batal"
+        window.tutupModalVerifikasi = function () {
+            const modal = document.getElementById('modalVerifikasi');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // --- Fungsi DUMMY ---
+        window.loadFruits = function () { console.log('loadFruits (dummy) called - not active on this page.'); };
+        window.editFruit = function (id) { console.log('editFruit (dummy) called for:', id); };
+        window.deleteFruit = function (id) { console.log('deleteFruit (dummy) called for:', id); };
+        });
+    </script>
 </body>
 </html>
