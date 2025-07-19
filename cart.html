@@ -2,217 +2,233 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keranjang Belanja - Rujak Buah Indonesia</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Keranjang Belanja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Firebase SDK (Diperbarui ke versi 9.22.0 untuk konsistensi) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
-        /* General Styling */
-        * {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-
-        body {
-            background-color: #f9f9f9;
+            background-color: #f4f4f4;
             color: #333;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
             min-height: 100vh;
-            padding-bottom: 120px; /* Space for fixed footer */
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
-
-        /* Header Styling */
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding-bottom: 100px; /* Space for fixed summary bar */
+            position: relative;
+            min-height: 100vh;
+        }
         .header {
-            background: linear-gradient(135deg, #00C853, #64DD17);
+            background-color: #4CAF50; /* Green */
             color: white;
             padding: 15px 20px;
             text-align: center;
             font-size: 20px;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .back-button {
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
         .header-title {
-            flex-grow: 1; /* Make title take available space */
+            flex-grow: 1;
             text-align: center;
         }
-
-        /* Cart Items Section */
-        .cart-items {
-            padding: 20px 15px;
+        #userIdDisplay {
+            font-size: 10px;
+            background-color: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 5px;
+            white-space: nowrap;
         }
-
+        .cart-items {
+            padding: 20px;
+        }
         .cart-item {
             display: flex;
             align-items: center;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
             margin-bottom: 15px;
             padding: 10px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
         }
-
         .cart-item-image {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 6px;
             margin-right: 15px;
+            flex-shrink: 0;
         }
-
         .cart-item-details {
             flex-grow: 1;
         }
-
         .cart-item-name {
             font-weight: bold;
             font-size: 16px;
+            color: #4CAF50; /* Green */
             margin-bottom: 5px;
         }
-
         .cart-item-variants {
             font-size: 12px;
             color: #777;
             margin-bottom: 5px;
         }
-
         .cart-item-price {
-            font-size: 14px;
-            color: #00C853;
             font-weight: bold;
+            color: #333;
+            font-size: 14px;
         }
-
         .cart-item-actions {
             display: flex;
             align-items: center;
             gap: 5px;
+            flex-shrink: 0;
+            margin-left: 10px;
         }
-
         .quantity-button {
-            background-color: #00c853;
+            background-color: #4CAF50; /* Green */
             color: white;
             border: none;
-            padding: 5px 9px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .quantity-input {
+            border-radius: 50%;
             width: 30px;
+            height: 30px;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .quantity-button:hover {
+            background-color: #388E3C; /* Darker Green */
+        }
+        .quantity-input {
+            width: 40px;
             text-align: center;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             border-radius: 5px;
             padding: 5px 0;
             font-size: 14px;
+            -moz-appearance: textfield; /* Firefox */
         }
-
+        .quantity-input::-webkit-outer-spin-button,
+        .quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         .remove-item-button {
-            background-color: #dc3545;
+            background-color: #f44336; /* Red */
             color: white;
             border: none;
-            padding: 5px 9px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
             font-size: 14px;
-            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             cursor: pointer;
-            margin-left: 10px;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        /* Cart Summary */
+        .remove-item-button:hover {
+            background-color: #d32f2f; /* Darker Red */
+        }
+        .empty-cart-message {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 50px 20px;
+        }
         .cart-summary {
             position: fixed;
             bottom: 0;
             width: 100%;
             max-width: 480px;
-            background: white;
-            padding: 15px;
+            background-color: #fff;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            padding: 15px 20px;
             border-top-left-radius: 15px;
             border-top-right-radius: 15px;
-            left: 50%;
-            transform: translateX(-50%);
+            box-sizing: border-box;
         }
-
         .summary-row {
             display: flex;
             justify-content: space-between;
-            font-size: 16px;
+            margin-bottom: 8px;
+            font-size: 15px;
         }
-
         .summary-total {
             font-weight: bold;
             font-size: 18px;
-            color: #00C853;
+            color: #4CAF50; /* Green */
+            border-top: 1px dashed #eee;
+            padding-top: 10px;
+            margin-top: 10px;
         }
-
         .checkout-button {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 15px 20px;
-            text-align: center;
+            background-color: #FFC107; /* Amber */
+            color: #333;
             border: none;
-            border-radius: 10px;
-            font-size: 18px;
+            border-radius: 25px;
+            padding: 12px 20px;
+            width: 100%;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            width: 100%;
-            transition: background 0.3s ease;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-
-        .checkout-button:hover {
-            background: linear-gradient(135deg, #00B04C, #5BB914);
+        .checkout-button:hover:not(:disabled) {
+            background-color: #FFA000; /* Darker Amber */
         }
-
         .checkout-button:disabled {
-            background: #cccccc;
+            background-color: #ccc;
             cursor: not-allowed;
+            box-shadow: none;
         }
-
-        .empty-cart-message {
-            text-align: center;
-            padding: 50px 20px;
-            color: #777;
-            font-size: 16px;
-        }
-
-        /* User ID Display for Debugging */
-        #userIdDisplay {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.6);
+        .clear-cart-button { /* Renamed from remove-item-button to avoid conflict */
+            background-color: #f44336; /* Red */
             color: white;
-            font-size: 10px;
-            padding: 3px 6px;
-            border-radius: 5px;
-            z-index: 101;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .clear-cart-button:hover:not(:disabled) {
+            background-color: #d32f2f; /* Darker Red */
+        }
+        .clear-cart-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
         }
     </style>
 </head>
