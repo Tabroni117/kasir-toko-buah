@@ -12,10 +12,12 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <style>
+    /* General Styling */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f9f9f9; color: #333; }
-    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; }
+    body { background: #f9f9f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; align-items: center; }
+    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; width: 100%; }
 
+    /* Header */
     .header-detail {
       background: linear-gradient(135deg, #00C853, #64DD17);
       color: white; padding: 12px 16px;
@@ -23,16 +25,102 @@
       position: sticky; top: 0; z-index: 100;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
     .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
     .header-title { font-size: 18px; font-weight: bold; }
 
+    /* Filter and Search Section */
+    .filter-search-section {
+        padding: 15px 16px 10px;
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 50px; /* Below header */
+        z-index: 90;
+    }
+    .form-group {
+        margin-bottom: 10px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group-input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    .filter-buttons {
+        display: flex;
+        justify-content: space-around;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .filter-btn {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #555;
+        flex-grow: 1;
+        margin: 0 4px;
+        white-space: nowrap;
+    }
+    .filter-btn:first-child { margin-left: 0; }
+    .filter-btn:last-child { margin-right: 0; }
+    .filter-btn.active {
+        background-color: #00C853;
+        color: white;
+        border-color: #00C853;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .filter-btn:hover:not(.active) {
+        background-color: #e0e0e0;
+    }
+    .btn-reset {
+        background-color: #f0f0f0;
+        color: #555;
+        border: 1px solid #ddd;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+    .btn-reset:hover {
+        background-color: #e0e0e0;
+    }
+
+    /* Order List */
     .order-history-content { padding: 16px; }
+    /* Reverted to original order-card style */
     .order-card {
       background: #fff; border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       margin-bottom: 15px; padding: 15px;
       border-left: 5px solid #00C853;
+      cursor: pointer; /* Keep cursor pointer for interactivity */
+      transition: transform 0.2s, box-shadow 0.2s; /* Add transition for hover effect */
+    }
+    .order-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
     .order-header {
@@ -45,30 +133,31 @@
     .order-date { font-size: 13px; color: #777; }
     .order-status { font-weight: bold; font-size: 15px; }
     .order-status.pending { color: #FFC107; }
-    .order-status.completed { color: #28A745; }
-    .order-status.cancelled { color: #DC3545; }
+    .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
+    .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
+    .order-status.dibatalkan { color: #DC3545; }
 
     .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
     .order-item { 
-      display: flex; /* Menggunakan flexbox untuk item */
-      align-items: center; /* Pusatkan secara vertikal */
-      margin-bottom: 10px; /* Spasi antar item */
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 10px; 
       color: #444; 
-      gap: 10px; /* Jarak antara gambar dan teks */
+      gap: 10px; 
       font-size: 14px;
     }
 
     .order-item-image {
-      width: 50px; /* Ukuran gambar */
+      width: 50px; 
       height: 50px;
       object-fit: cover;
       border-radius: 5px;
-      flex-shrink: 0; /* Jangan biarkan gambar menyusut */
-      background-color: #eee; /* Placeholder background */
+      flex-shrink: 0; 
+      background-color: #eee; 
     }
 
     .order-item-details {
-      flex-grow: 1; /* Biarkan detail mengambil sisa ruang */
+      flex-grow: 1; 
       display: flex;
       flex-direction: column;
     }
@@ -83,8 +172,8 @@
     }
     .order-item-total {
       font-weight: bold;
-      white-space: nowrap; /* Pastikan total tidak pecah baris */
-      margin-left: auto; /* Dorong ke kanan */
+      white-space: nowrap; 
+      margin-left: auto; 
     }
 
     .order-summary-footer {
@@ -99,6 +188,210 @@
       text-align: center; padding: 50px 20px; color: #777; font-size: 16px;
     }
     .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 20px; }
+
+    /* Loading Spinner */
+    #loadingSpinner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-size: 24px;
+        color: #00C853;
+    }
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #00C853;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Popup Detail */
+    #popupDetail {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    #popupDetail > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    #popupDetail h3 {
+        margin-top: 0;
+        color: #00C853;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    #popupDetail p {
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    #popupDetail p strong {
+        color: #555;
+    }
+    #popupDetail .close-button {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #777;
+    }
+    #popupDetail .status-dropdown {
+        padding: 5px 8px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 13px;
+    }
+    #popupDetail h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #00C853;
+        font-size: 16px;
+        border-bottom: 1px dashed #eee;
+        padding-bottom: 5px;
+    }
+    #popupItems div {
+        background-color: #f0f0f0;
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #333;
+    }
+    #popupDetail button.popup-close-btn { /* Specific class for the close button in popup */
+        background-color: #00C853;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        margin-top: 20px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #popupDetail button.popup-close-btn:hover {
+        background-color: #388E3C;
+    }
+
+    /* Custom Confirmation Modal */
+    #customConfirmModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 9998;
+        justify-content: center;
+        align-items: center;
+    }
+    #customConfirmModal > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 300px;
+    }
+    #customConfirmModal p {
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #333;
+    }
+    #customConfirmModal button {
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #customConfirmModal button#customConfirmYes {
+        background-color: #00C853;
+        color: white;
+    }
+    #customConfirmModal button#customConfirmYes:hover {
+        background-color: #388E3C;
+    }
+    #customConfirmModal button#customConfirmNo {
+        background-color: #f44336;
+        color: white;
+    }
+    #customConfirmModal button#customConfirmNo:hover {
+        background-color: #d32f2f;
+    }
+
+    /* Custom Alert Modal */
+    #customAlertDialog {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 9997;
+        justify-content: center;
+        align-items: center;
+    }
+    #customAlertDialog > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 300px;
+    }
+    #customAlertDialog p {
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #333;
+    }
+    #customAlertDialog button {
+        background-color: #00C853;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #customAlertDialog button:hover {
+        background-color: #388E3C;
+    }
   </style>
 </head>
 <body>
@@ -108,6 +401,29 @@
       <div class="header-title">Riwayat Semua Pesanan</div>
     </header>
 
+    <div class="filter-search-section">
+        <div class="form-group">
+            <label for="searchQuery">Cari ID Pesanan / Nama Pelanggan:</label>
+            <input type="text" id="searchQuery" class="form-group-input" placeholder="Cari pesanan...">
+        </div>
+        <div class="form-group">
+            <label for="filterDate">Filter Tanggal:</label>
+            <input type="date" id="filterDate" class="form-group-input">
+        </div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-status="All">Semua</button>
+            <button class="filter-btn" data-status="Pending">Pending</button>
+            <button class="filter-btn" data-status="Diproses">Diproses</button>
+            <button class="filter-btn" data-status="Selesai">Selesai</button>
+            <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+        </div>
+        <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
+    </div>
+
+    <div id="loadingSpinner" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
     <div class="order-history-content" id="orderHistoryContent">
       <div class="empty-state" id="emptyOrderState" style="display: none;">
         <i class="fas fa-box-open"></i>
@@ -116,7 +432,61 @@
     </div>
   </div>
 
+  <!-- Popup Detail Pesanan -->
+  <div id="popupDetail">
+      <div>
+          <button onclick="tutupDetail()" class="close-button">&times;</button>
+          <h3 id="popupNama">Nama Pelanggan</h3>
+
+          <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
+          <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
+          <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
+          <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
+          <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
+          <p><strong>Catatan:</strong> <span id="popupCatatan">-</span></p>
+
+          <p style="margin-bottom: 10px;">
+              <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+              <select id="statusUpdater" class="status-dropdown">
+                  <option value="Pending">Pending</option>
+                  <option value="Diproses">Diproses</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Dibatalkan">Dibatalkan</option>
+              </select>
+          </p>
+
+          <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
+          <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
+          <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</span></p>
+          <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
+          <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
+
+          <h4>Detail Item:</h4>
+          <div id="popupItems"></div>
+
+          <button onclick="tutupDetail()" class="popup-close-btn">Tutup</button>
+      </div>
+  </div>
+
+  <!-- Custom Confirmation Modal -->
+  <div id="customConfirmModal">
+      <div>
+          <p id="customConfirmMessage"></p>
+          <button id="customConfirmYes">Ya</button>
+          <button id="customConfirmNo">Tidak</button>
+      </div>
+  </div>
+
+  <!-- Custom Alert Modal -->
+  <div id="customAlertDialog">
+      <div>
+          <p id="customAlertMessage"></p>
+          <button id="customAlertOk">OK</button>
+      </div>
+  </div>
+
   <script>
+    // --- Firebase Configuration ---
     const firebaseConfig = {
       apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
       authDomain: "tokobuahkasir.firebaseapp.com",
@@ -131,10 +501,44 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // DOM Elements
     const orderHistoryContent = document.getElementById('orderHistoryContent');
     const emptyOrderState = document.getElementById('emptyOrderState');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const searchQueryInput = document.getElementById('searchQuery');
+    const filterDateInput = document.getElementById('filterDate');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+    // Popup Detail Elements
+    const popupDetail = document.getElementById('popupDetail');
+    const popupNama = document.getElementById('popupNama');
+    const popupOrderId = document.getElementById('popupOrderId');
+    const popupNomor = document.getElementById('popupNomor');
+    const popupAlamat = document.getElementById('popupAlamat');
+    const popupTotal = document.getElementById('popupTotal');
+    const popupMetodeBayar = document.getElementById('popupMetodeBayar');
+    const popupCatatan = document.getElementById('popupCatatan');
+    const popupStatus = document.getElementById('popupStatus');
+    const statusUpdater = document.getElementById('statusUpdater');
+    const popupWaktu = document.getElementById('popupWaktu');
+    const popupDibukaOleh = document.getElementById('popupDibukaOleh');
+    const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
+    const popupDiubahOleh = document.getElementById('popupDiubahOleh');
+    const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
+    const popupItems = document.getElementById('popupItems');
+
+    let currentOrderIdForDetail = null;
+    let activeFilterStatus = 'All'; // Default filter status
+
+    // --- Helper Functions ---
+    function showLoading() { loadingSpinner.style.display = 'flex'; }
+    function hideLoading() { loadingSpinner.style.display = 'none'; }
 
     function formatRupiah(amount) {
+      if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
+        return "Rp0";
+      }
       return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
@@ -142,59 +546,161 @@
       }).format(amount);
     }
 
+    function formatDate(date) {
+        if (!date) return "-";
+        const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+        if (isNaN(d.getTime())) return "-";
+        return d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function getStatusClass(status) {
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'pending';
+            case 'diproses': return 'diproses';
+            case 'selesai': return 'selesai';
+            case 'dibatalkan': return 'dibatalkan';
+            default: return '';
+        }
+    }
+
+    /**
+     * Generates a display string for variants.
+     * @param {Object} customVariants - The custom variants object.
+     * @returns {string} A human-readable string of selected variants.
+     */
+    function getVariantDisplayString(customVariants) {
+        if (!customVariants || Object.keys(customVariants).length === 0) {
+            return 'Tidak ada varian';
+        }
+        const parts = [];
+        const sortedVariantTypeIds = Object.keys(customVariants).sort(); 
+        for (const variantTypeId of sortedVariantTypeIds) {
+            const value = customVariants[variantTypeId];
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                    parts.push(value.join(', '));
+                }
+            } else if (value && value !== 'none') {
+                parts.push(value);
+            }
+        }
+        return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
+    }
+
+    // Custom Confirmation Modal
+    function showCustomConfirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('customConfirmModal');
+            const msgEl = document.getElementById('customConfirmMessage');
+            const yesBtn = document.getElementById('customConfirmYes');
+            const noBtn = document.getElementById('customConfirmNo');
+
+            msgEl.textContent = message;
+            modal.style.display = 'flex';
+
+            const handleYes = () => {
+                modal.style.display = 'none';
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(true);
+            };
+            const handleNo = () => {
+                modal.style.display = 'none';
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(false);
+            };
+
+            yesBtn.addEventListener('click', handleYes);
+            noBtn.addEventListener('click', handleNo);
+        });
+    }
+
+    // Custom Alert Modal
+    function showCustomAlert(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('customAlertDialog');
+            const msgEl = document.getElementById('customAlertMessage');
+            const okBtn = document.getElementById('customAlertOk');
+
+            msgEl.textContent = message;
+            modal.style.display = 'flex';
+
+            const handleOk = () => {
+                modal.style.display = 'none';
+                okBtn.removeEventListener('click', handleOk);
+                resolve();
+            };
+
+            okBtn.addEventListener('click', handleOk);
+        });
+    }
+
+    // --- Load All Order History (with filters) ---
     async function loadAllOrderHistory() {
+      showLoading();
       orderHistoryContent.innerHTML = '';
       emptyOrderState.style.display = 'none';
 
       try {
-        const snapshot = await db.collection('pesanan')
-          .orderBy('waktu', 'desc')
-          .get();
+        let query = db.collection('pesanan').orderBy('waktu', 'desc');
+        const searchTxt = searchQueryInput.value.trim().toUpperCase();
+        const filterDateVal = filterDateInput.value;
 
-        if (snapshot.empty) {
+        const snapshot = await query.get(); // Fetch all data first, then filter client-side
+
+        let docs = snapshot.docs;
+
+        // Apply search filter (client-side)
+        if (searchTxt) {
+            docs = docs.filter(doc => {
+                const data = doc.data();
+                return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                       (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+            });
+        }
+
+        // Apply date filter (client-side)
+        if (filterDateVal) {
+            const selectedDate = new Date(filterDateVal);
+            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
+            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
+            docs = docs.filter(doc => {
+                const waktuTimestamp = doc.data().waktu?.toDate()?.getTime();
+                return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
+            });
+        }
+
+        // Apply status filter (client-side)
+        if (activeFilterStatus !== 'All') {
+            docs = docs.filter(doc => doc.data().status === activeFilterStatus);
+        }
+
+        if (docs.length === 0) {
           emptyOrderState.style.display = 'block';
           return;
         }
 
-        for (const doc of snapshot.docs) {
+        docs.forEach(doc => {
           const order = doc.data();
           const orderId = doc.id;
           const displayOrderId = order.displayOrderId || ('#' + orderId.substring(0, 6).toUpperCase());
 
-          let buyerName = 'Tidak Diketahui';
-          try {
-            const userSnap = await db.collection('users').doc(order.userId).get();
-            if (userSnap.exists) {
-              buyerName = userSnap.data().fullName || 'Tanpa Nama';
-            }
-          } catch (err) {
-            console.warn('Gagal ambil nama user:', err);
-          }
-
-          const orderDate = order.waktu?.toDate
-            ? order.waktu.toDate().toLocaleString('id-ID', {
-              year: 'numeric', month: 'long', day: 'numeric',
-              hour: '2-digit', minute: '2-digit'
-            })
-            : 'Tanggal tidak tersedia';
-
-          let statusClass = '';
-          switch ((order.status || '').toLowerCase()) {
-            case 'pending': statusClass = 'pending'; break;
-            case 'completed': statusClass = 'completed'; break;
-            case 'cancelled': statusClass = 'cancelled'; break;
-          }
+          let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
+          let buyerPhone = order.customer?.phoneNumber || '-';
 
           const orderCard = document.createElement('div');
-          orderCard.classList.add('order-card');
+          orderCard.classList.add('order-card'); /* Reverted to order-card class */
+          orderCard.setAttribute('onclick', `tampilkanDetail("${doc.id}")`); /* Make card clickable */
+          
           orderCard.innerHTML = `
             <div class="order-header">
               <span class="order-id">Pesanan: ${displayOrderId}</span>
-              <span class="order-date">${orderDate}</span>
+              <span class="order-date">${formatDate(order.waktu)}</span>
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(order.status)}">${order.status}</span></p>
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
               <ul class="order-item-list">
@@ -216,22 +722,172 @@
             </div>
           `;
           orderHistoryContent.appendChild(orderCard);
-        }
+        });
 
       } catch (error) {
         console.error('Gagal memuat semua pesanan:', error);
         orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data.</p>';
+      } finally {
+          hideLoading();
       }
     }
 
+    // --- Show Order Detail Popup ---
+    async function tampilkanDetail(docId) {
+        currentOrderIdForDetail = docId;
+        const docRef = db.collection("pesanan").doc(docId);
+        const uid = auth.currentUser?.uid || "Unknown";
+        const nama = auth.currentUser?.email || "Tanpa Nama";
+
+        try {
+            // Transaction to update 'dibukaOleh' fields if not already set
+            await db.runTransaction(async (transaction) => {
+                const snapshot = await transaction.get(docRef);
+                if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
+                const d = snapshot.data();
+                if (!d.dibukaOlehUid) { // Only update if not already opened
+                    transaction.update(docRef, {
+                        dibukaOlehUid: uid,
+                        dibukaOlehNama: nama,
+                        waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+
+            // After transaction, get the latest data
+            const doc = await docRef.get();
+            if (!doc.exists) {
+                await showCustomAlert('Pesanan tidak ditemukan.');
+                return;
+            }
+
+            const data = doc.data();
+            const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+            const customer = data.customer || {};
+            const waktu = data.waktu?.toDate?.() || new Date(0);
+            const items = data.items || [];
+
+            popupNama.textContent = customer.fullName || "Pelanggan";
+            popupOrderId.textContent = orderId;
+            popupNomor.textContent = customer.phoneNumber || "-";
+            popupAlamat.textContent = customer.address || "-";
+            popupTotal.textContent = formatRupiah(data.totalAmount || 0);
+            popupMetodeBayar.textContent = data.paymentMethod || "-";
+            popupCatatan.textContent = customer.notes || "Tidak ada catatan";
+
+            const currentStatus = data.status || "Pending";
+            popupStatus.textContent = currentStatus;
+            popupStatus.className = `status ${getStatusClass(currentStatus)}`;
+
+            statusUpdater.value = currentStatus;
+
+            popupWaktu.textContent = formatDate(waktu);
+
+            const dibukaOleh = data.dibukaOlehNama || "-";
+            const waktuDibuka = data.waktuDibuka?.toDate?.();
+            popupDibukaOleh.textContent = dibukaOleh;
+            popupWaktuDibuka.textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+            const diubahOleh = data.diubahOlehNama || "-";
+            const waktuDiubah = data.waktuDiubah?.toDate?.();
+            popupDiubahOleh.textContent = diubahOleh;
+            popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+            // Detail Item (Updated to display variants)
+            popupItems.innerHTML = (items || []).map(item => {
+                const variantDisplay = getVariantDisplayString(item.custom);
+                return `
+                    <div style="margin-bottom:5px;">
+                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; vertical-align:middle; margin-right:10px;">
+                        ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0}x) = ${formatRupiah((item.price || 0) * (item.quantity || 0))}
+                        <br><small style="color:#777; margin-left:60px;">Varian: ${variantDisplay}</small>
+                    </div>
+                `;
+            }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
+
+            popupDetail.style.display = "flex";
+
+        } catch (err) {
+            await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
+            console.error("Error showing order detail:", err);
+        }
+    }
+
+    // --- Close Order Detail Popup ---
+    function tutupDetail() {
+        popupDetail.style.display = "none";
+        currentOrderIdForDetail = null; 
+        loadAllOrderHistory(); // Refresh data after closing detail, to see latest status
+    }
+
+    // --- Event Listener for Status Updater Dropdown ---
+    statusUpdater.addEventListener("change", async function () {
+        const newStatus = this.value;
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${newStatus}"?`);
+        if (currentOrderIdForDetail && confirmChange) {
+            try {
+                const user = auth.currentUser;
+                const userName = user?.email || "Admin Anonim"; 
+
+                await db.collection("pesanan").doc(currentOrderIdForDetail).update({
+                    status: newStatus,
+                    diubahOlehNama: userName, 
+                    waktuDiubah: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+
+                // Also update status in customer's history for consistency
+                const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+                const data = docSnap.data();
+                const userId = data.userId;
+
+                if (userId) {
+                    await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
+                        status: newStatus
+                    }, { merge: true });
+                } else {
+                    console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
+                }
+                
+                await showCustomAlert("Status pesanan berhasil diperbarui!"); 
+                tutupDetail(); 
+            } catch (error) {
+                console.error("Error updating order status:", error);
+                await showCustomAlert("Gagal memperbarui status pesanan."); 
+            }
+        }
+    });
+
+    // --- Event Listeners for Filters and Search ---
+    searchQueryInput.addEventListener('input', loadAllOrderHistory);
+    filterDateInput.addEventListener('change', loadAllOrderHistory);
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            activeFilterStatus = button.dataset.status;
+            loadAllOrderHistory();
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        });
+    });
+
+    resetFiltersBtn.addEventListener('click', () => {
+        searchQueryInput.value = '';
+        filterDateInput.value = '';
+        activeFilterStatus = 'All';
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.filter-btn[data-status="All"]').classList.add('active');
+        loadAllOrderHistory();
+    });
+
+    // --- Authentication and Initial Load ---
     auth.onAuthStateChanged(user => {
       const storedRole = localStorage.getItem('userRole');
       const isLoggingOut = localStorage.getItem('isLoggingOut');
       if (isLoggingOut) localStorage.removeItem('isLoggingOut');
 
       if (!user || storedRole !== 'penjual') {
-        if (!isLoggingOut) alert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-        window.location.href = 'index.html';
+        if (!isLoggingOut) showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
+        window.location.href = 'index.html'; // Redirect to login
       } else {
         loadAllOrderHistory();
       }
