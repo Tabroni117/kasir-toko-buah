@@ -49,8 +49,43 @@
     .order-status.cancelled { color: #DC3545; }
 
     .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
-    .order-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; color: #444; }
-    .order-item-name { flex-grow: 1; margin-right: 10px; }
+    .order-item { 
+      display: flex; /* Menggunakan flexbox untuk item */
+      align-items: center; /* Pusatkan secara vertikal */
+      margin-bottom: 10px; /* Spasi antar item */
+      color: #444; 
+      gap: 10px; /* Jarak antara gambar dan teks */
+      font-size: 14px;
+    }
+
+    .order-item-image {
+      width: 50px; /* Ukuran gambar */
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0; /* Jangan biarkan gambar menyusut */
+      background-color: #eee; /* Placeholder background */
+    }
+
+    .order-item-details {
+      flex-grow: 1; /* Biarkan detail mengambil sisa ruang */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .order-item-name { 
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .order-item-quantity-price {
+      font-size: 12px;
+      color: #777;
+    }
+    .order-item-total {
+      font-weight: bold;
+      white-space: nowrap; /* Pastikan total tidak pecah baris */
+      margin-left: auto; /* Dorong ke kanan */
+    }
 
     .order-summary-footer {
       display: flex; justify-content: space-between;
@@ -165,8 +200,12 @@
               <ul class="order-item-list">
                 ${(order.items || []).map(item => `
                   <li class="order-item">
-                    <span class="order-item-name">${item.name} x ${item.quantity}</span>
-                    <span>${formatRupiah(item.price * item.quantity)}</span>
+                    <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
+                    <div class="order-item-details">
+                      <span class="order-item-name">${item.name}</span>
+                      <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
+                    </div>
+                    <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
                   </li>
                 `).join('')}
               </ul>
