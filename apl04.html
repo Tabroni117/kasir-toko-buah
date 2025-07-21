@@ -142,7 +142,7 @@
     .order-card-actions .action-btn.tolak:hover {
         background-color: #C82333; /* Darker Red */
     }
-    .order-card-actions .action-btn.siap-diambil {
+    .order-card-actions .action-btn.siap-diambil { /* This class is now used for the 'Diproses' button label */
         background-color: #007bff; /* Blue */
         border-color: #007bff;
     }
@@ -468,8 +468,7 @@
             <input type="date" id="filterDate" class="form-group-input">
         </div>
         <div class="filter-buttons">
-            <button class="filter-btn active" data-status="All">Semua</button>
-            <button class="filter-btn" data-status="Pending">Pending</button>
+            <button class="filter-btn active" data-status="PendingOnly">Baru</button> 
             <button class="filter-btn" data-status="Diproses">Diproses</button>
             <button class="filter-btn" data-status="Selesai">Selesai</button>
             <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
@@ -500,7 +499,7 @@
           <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
           <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
           <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
-          <p><strong>Catatan:</strong> <span id="popupCatatan">-</span></p>
+          <p><strong>Catatan:</strong> <span id="popupCatatan">-</p>
 
           <p style="margin-bottom: 10px;">
               <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
@@ -586,8 +585,9 @@
     const popupItems = document.getElementById('popupItems');
 
     let currentOrderIdForDetail = null;
-    let activeFilterStatus = 'All'; // Default filter status
+    let activeFilterStatus = 'PendingOnly'; // Default filter status changed to PendingOnly
     let allOrdersData = []; // Cache all orders for filtering/searching
+    let unsubscribeOrders = null; // To store the unsubscribe function for real-time listener
 
     // --- Helper Functions ---
     function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -695,51 +695,17 @@
         });
     }
 
-    // --- Load All Order History (with filters) ---
-    async function loadAllOrderHistory() {
-      showLoading();
-      orderHistoryContent.innerHTML = '';
-      emptyOrderState.style.display = 'none';
+    // --- Render Order Items to DOM ---
+    function renderOrders(ordersToRender) {
+        orderHistoryContent.innerHTML = '';
+        emptyOrderState.style.display = 'none';
 
-      try {
-        const snapshot = await db.collection('pesanan').orderBy('waktu', 'desc').get(); 
-        allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        let docsToRender = [...allOrdersData]; // Start with all fetched data
-
-        const searchTxt = searchQueryInput.value.trim().toUpperCase();
-        const filterDateVal = filterDateInput.value;
-
-        // Apply search filter (client-side)
-        if (searchTxt) {
-            docsToRender = docsToRender.filter(order => {
-                return (order.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                       (order.displayOrderId || '').toUpperCase().includes(searchTxt);
-            });
+        if (ordersToRender.length === 0) {
+            emptyOrderState.style.display = 'block';
+            return;
         }
 
-        // Apply date filter (client-side)
-        if (filterDateVal) {
-            const selectedDate = new Date(filterDateVal);
-            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
-            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
-            docsToRender = docsToRender.filter(order => {
-                const waktuTimestamp = order.waktu?.toDate()?.getTime();
-                return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
-            });
-        }
-
-        // Apply status filter (client-side)
-        if (activeFilterStatus !== 'All') {
-            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
-        }
-
-        if (docsToRender.length === 0) {
-          emptyOrderState.style.display = 'block';
-          return;
-        }
-
-        docsToRender.forEach(order => {
+        ordersToRender.forEach(order => {
           const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
           let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
           let currentStatus = order.status || 'Pending';
@@ -758,7 +724,7 @@
           } else if (currentStatus === 'Diproses') {
               actionButtonsHtml = `
                   <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
-                      <i class="fas fa-check-double"></i> Siap Diambil
+                      <i class="fas fa-check-double"></i> Diproses
                   </button>
               `;
           } else if (currentStatus === 'SiapDiambil') {
@@ -810,13 +776,6 @@
 
         // Re-attach event listeners for dynamically added buttons and cards
         attachOrderButtonListeners();
-
-      } catch (error) {
-        console.error('Gagal memuat semua pesanan:', error);
-        orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data.</p>';
-      } finally {
-          hideLoading();
-      }
     }
 
     // Function to attach event listeners to dynamically created elements
@@ -891,14 +850,74 @@
             }
 
             await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${newStatus}".`);
-            loadAllOrderHistory(); // Reload all data to refresh UI
-            tampilkanDetail(orderId); // Open the detail popup after update
+            // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
+            // But if popup is open, ensure it refreshes.
+            if (currentOrderIdForDetail === orderId) {
+                tampilkanDetail(orderId); // Refresh detail popup if it's the current one
+            }
         } catch (error) {
             console.error("Error updating order status:", error);
             await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
         } finally {
             hideLoading();
         }
+    }
+
+    // --- Load All Order History (with real-time updates and filters) ---
+    function loadAllOrders() {
+        showLoading();
+        // Unsubscribe from previous listener if exists
+        if (unsubscribeOrders) {
+            unsubscribeOrders();
+        }
+
+        // Set up real-time listener
+        unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc')
+            .onSnapshot(snapshot => {
+                allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                applyFiltersAndSearch(); // Apply filters and render whenever data changes
+                hideLoading();
+            }, error => {
+                console.error('Gagal memuat semua pesanan secara real-time:', error);
+                orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data secara real-time.</p>';
+                hideLoading();
+            });
+    }
+
+    // --- Apply Filters and Search to Cached Data ---
+    function applyFiltersAndSearch() {
+        let docsToRender = [...allOrdersData]; // Start with all fetched data
+
+        const searchTxt = searchQueryInput.value.trim().toUpperCase();
+        const filterDateVal = filterDateInput.value;
+
+        // Apply search filter (client-side)
+        if (searchTxt) {
+            docsToRender = docsToRender.filter(order => {
+                return (order.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                       (order.displayOrderId || '').toUpperCase().includes(searchTxt);
+            });
+        }
+
+        // Apply date filter (client-side)
+        if (filterDateVal) {
+            const selectedDate = new Date(filterDateVal);
+            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
+            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
+            docsToRender = docsToRender.filter(order => {
+                const waktuTimestamp = order.waktu?.toDate()?.getTime();
+                return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
+            });
+        }
+
+        // Apply status filter (client-side)
+        if (activeFilterStatus === 'PendingOnly') { // Special handling for "Baru" button
+            docsToRender = docsToRender.filter(order => order.status === 'Pending');
+        } else if (activeFilterStatus !== 'All') { // For other specific status filters
+            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
+        }
+
+        renderOrders(docsToRender); // Render the filtered list
     }
 
 
@@ -991,7 +1010,7 @@
     function tutupDetail() {
         popupDetail.style.display = "none";
         currentOrderIdForDetail = null; 
-        loadAllOrderHistory(); // Refresh data after closing detail, to see latest status
+        // No need to explicitly call loadAllOrders() here, onSnapshot will handle it.
     }
 
     // --- Event Listener for Status Updater Dropdown ---
@@ -1032,13 +1051,13 @@
     });
 
     // --- Event Listeners for Filters and Search ---
-    searchQueryInput.addEventListener('input', loadAllOrderHistory);
-    filterDateInput.addEventListener('change', loadAllOrderHistory);
+    searchQueryInput.addEventListener('input', applyFiltersAndSearch);
+    filterDateInput.addEventListener('change', applyFiltersAndSearch);
 
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             activeFilterStatus = button.dataset.status;
-            loadAllOrderHistory();
+            applyFiltersAndSearch(); // Apply filters to current data
             filterButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
         });
@@ -1047,10 +1066,10 @@
     resetFiltersBtn.addEventListener('click', () => {
         searchQueryInput.value = '';
         filterDateInput.value = '';
-        activeFilterStatus = 'All';
+        activeFilterStatus = 'PendingOnly'; // Reset to PendingOnly for "Baru"
         filterButtons.forEach(btn => btn.classList.remove('active'));
-        document.querySelector('.filter-btn[data-status="All"]').classList.add('active');
-        loadAllOrderHistory();
+        document.querySelector('.filter-btn[data-status="PendingOnly"]').classList.add('active'); // Activate "Baru" button
+        applyFiltersAndSearch(); // Apply reset filters
     });
 
     // --- Authentication and Initial Load ---
@@ -1063,7 +1082,7 @@
         if (!isLoggingOut) showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
         window.location.href = 'index.html'; // Redirect to login
       } else {
-        loadAllOrderHistory();
+        loadAllOrders(); // Start real-time listener on successful authentication
       }
     });
   </script>
