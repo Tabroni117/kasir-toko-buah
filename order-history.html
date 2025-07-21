@@ -9,7 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
 
     <style>
         * {
@@ -77,21 +76,6 @@
             margin-bottom: 10px;
             padding-bottom: 10px;
             border-bottom: 1px dashed #eee;
-        }
-        
-        /* NEW: Style for the thumbnail image in the main order card */
-        .order-id-and-thumbnail {
-            display: flex;
-            align-items: center;
-            gap: 8px; /* Space between ID and image */
-        }
-
-        .order-card-thumbnail-main {
-            width: 30px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 4px;
-            flex-shrink: 0;
         }
 
         .order-id {
@@ -196,7 +180,7 @@
         }
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const pesananCollection = null; // Ini tidak digunakan, akan dihapus di masa mendatang jika tidak diperlukan
+        const pesananCollection = null;
 
         // --- Elemen HTML ---
         const orderHistoryContent = document.getElementById('orderHistoryContent');
@@ -218,11 +202,11 @@
 
             try {
                 const querySnapshot = await db
-                    .collection('riwayat_customer')
-                    .doc(userId)
-                    .collection('pesanan')
-                    .orderBy('waktu', 'desc')
-                    .get();
+  .collection('riwayat_customer')
+  .doc(userId)
+  .collection('pesanan')
+  .orderBy('waktu', 'desc')
+  .get();
 
                 if (querySnapshot.empty) {
                     emptyOrderState.style.display = 'block'; 
@@ -232,7 +216,7 @@
                 querySnapshot.forEach(doc => {
                     const order = doc.data();
                     const orderFirebaseId = doc.id; // Ini ID dokumen Firebase asli
-                    // Gunakan displayOrderId jika ada di dokumen, fallback ke FirebaseId
+                    // NEW: Gunakan displayOrderId jika ada di dokumen, fallback ke FirebaseId
                     const displayOrderId = order.displayOrderId || ('#' + orderFirebaseId.substring(0, 6).toUpperCase());
 
                     const orderDate = order.waktu ? new Date(order.waktu.toDate()).toLocaleString('id-ID', {
@@ -254,51 +238,43 @@
                             statusClass = ''; 
                     }
 
-                    // Dapatkan URL gambar dari item pertama di pesanan
-                    const firstItemImage = order.items && order.items.length > 0 && order.items[0].image
-                                           ? order.items[0].image
-                                           : 'https://placehold.co/30x30/cccccc/333333?text=Img'; // Placeholder jika tidak ada gambar
+const orderCard = document.createElement('div');
+orderCard.classList.add('order-card');
+orderCard.innerHTML = `
+  <div class="order-header">
+    <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
+    <span class="order-date">${orderDate}</span>
+  </div>
+  <div class="order-details">
+    <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
+    <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
+    <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
+    <ul class="order-item-list">
+      ${order.items.map(item => `
+        <li class="order-item">
+          <span class="order-item-name">${item.name} x ${item.quantity}</span>
+          <span>${formatRupiah(item.price * item.quantity)}</span>
+        </li>
+      `).join('')}
+    </ul>
+  </div>
+  <div class="order-summary-footer">
+    <span>Total Pembayaran:</span>
+    <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
+  </div>
 
-                    const orderCard = document.createElement('div');
-                    orderCard.classList.add('order-card');
-                    orderCard.innerHTML = `
-                        <div class="order-header">
-                            <div class="order-id-and-thumbnail">
-                                <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
-                                <img src="${firstItemImage}" alt="Gambar Produk" class="order-card-thumbnail-main">
-                            </div>
-                            <span class="order-date">${orderDate}</span>
-                        </div>
-                        <div class="order-details">
-                            <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
-                            <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
-                            <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
-                            <ul class="order-item-list">
-                                ${order.items.map(item => `
-                                    <li class="order-item">
-                                        <span class="order-item-name">${item.name} x ${item.quantity}</span>
-                                        <span>${formatRupiah(item.price * item.quantity)}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        <div class="order-summary-footer">
-                            <span>Total Pembayaran:</span>
-                            <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
-                        </div>
-
-                        ${
-                            order.paymentMethod === "Transfer Bank" && order.status === "Pending"
-                            ? `<div style="margin-top: 12px; text-align: right;">
-                                <button onclick="window.location.href='konfirmasi.html?orderId=${orderFirebaseId}'" 
-                                    style="background: #ffc107; color: #222; padding: 8px 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
-                                    Konfirmasi Pembayaran
-                                </button>
-                            </div>`
-                            : ""
-                        }
-                    `;
-                    orderHistoryContent.appendChild(orderCard);
+  ${
+    order.paymentMethod === "Transfer Bank" && order.status === "Pending"
+      ? `<div style="margin-top: 12px; text-align: right;">
+          <button onclick="window.location.href='konfirmasi.html?orderId=${orderFirebaseId}'" 
+            style="background: #ffc107; color: #222; padding: 8px 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
+            Konfirmasi Pembayaran
+          </button>
+        </div>`
+      : ""
+  }
+`;
+orderHistoryContent.appendChild(orderCard);
                 });
 
             } catch (error) {
