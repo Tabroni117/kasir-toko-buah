@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Pesanan - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 20px; /* Sedikit padding di bawah */
+        }
+
+        .header-detail {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-button {
+            color: white;
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .order-history-content {
+            padding: 16px;
+        }
+
+        .order-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            padding: 15px;
+            border-left: 5px solid #00C853; /* Indikator hijau */
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        /* NEW: Style for the thumbnail image in the main order card */
+        .order-id-and-thumbnail {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Space between ID and image */
+        }
+
+        .order-card-thumbnail-main {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .order-id {
+            font-weight: bold;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .order-date {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .order-status {
+            font-weight: bold;
+            color: #00C853; /* Default green for pending/success */
+            font-size: 15px;
+        }
+        .order-status.pending { color: #FFC107; } /* Yellow for pending */
+        .order-status.completed { color: #28A745; } /* Green for completed */
+        .order-status.cancelled { color: #DC3545; } /* Red for cancelled */
+
+        .order-item-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .order-item-name {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .order-summary-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+
+        .order-total-amount {
+            font-weight: bold;
+            font-size: 16px;
+            color: #00C853;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #777;
+            font-size: 16px;
+        }
+
+        .empty-state i {
+            font-size: 60px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header-detail">
+            <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
+            <div class="header-title">Riwayat Pesanan Saya</div>
+        </header>
+
+        <div class="order-history-content" id="orderHistoryContent">
+            <div class="empty-state" id="emptyOrderState" style="display: none;">
+                <i class="fas fa-box-open"></i>
+                <p>Anda belum memiliki riwayat pesanan.</p>
+                <p>Ayo mulai pesan rujak buah favoritmu sekarang!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const pesananCollection = null; // Ini tidak digunakan, akan dihapus di masa mendatang jika tidak diperlukan
+
+        // --- Elemen HTML ---
+        const orderHistoryContent = document.getElementById('orderHistoryContent');
+        const emptyOrderState = document.getElementById('emptyOrderState');
+
+        // --- Fungsi untuk Memformat Mata Uang Rupiah ---
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // --- Fungsi untuk Menampilkan Riwayat Pesanan ---
+        async function loadOrderHistory(userId) {
+            orderHistoryContent.innerHTML = ''; 
+            emptyOrderState.style.display = 'none'; 
+
+            try {
+                const querySnapshot = await db
+                    .collection('riwayat_customer')
+                    .doc(userId)
+                    .collection('pesanan')
+                    .orderBy('waktu', 'desc')
+                    .get();
+
+                if (querySnapshot.empty) {
+                    emptyOrderState.style.display = 'block'; 
+                    return;
+                }
+
+                querySnapshot.forEach(doc => {
+                    const order = doc.data();
+                    const orderFirebaseId = doc.id; // Ini ID dokumen Firebase asli
+                    // Gunakan displayOrderId jika ada di dokumen, fallback ke FirebaseId
+                    const displayOrderId = order.displayOrderId || ('#' + orderFirebaseId.substring(0, 6).toUpperCase());
+
+                    const orderDate = order.waktu ? new Date(order.waktu.toDate()).toLocaleString('id-ID', {
+                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    }) : 'Tanggal tidak tersedia';
+
+                    let statusClass = '';
+                    switch (order.status.toLowerCase()) {
+                        case 'pending':
+                            statusClass = 'pending';
+                            break;
+                        case 'completed':
+                            statusClass = 'completed';
+                            break;
+                        case 'cancelled':
+                            statusClass = 'cancelled';
+                            break;
+                        default:
+                            statusClass = ''; 
+                    }
+
+                    // Dapatkan URL gambar dari item pertama di pesanan
+                    const firstItemImage = order.items && order.items.length > 0 && order.items[0].image
+                                           ? order.items[0].image
+                                           : 'https://placehold.co/30x30/cccccc/333333?text=Img'; // Placeholder jika tidak ada gambar
+
+                    const orderCard = document.createElement('div');
+                    orderCard.classList.add('order-card');
+                    orderCard.innerHTML = `
+                        <div class="order-header">
+                            <div class="order-id-and-thumbnail">
+                                <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
+                                <img src="${firstItemImage}" alt="Gambar Produk" class="order-card-thumbnail-main">
+                            </div>
+                            <span class="order-date">${orderDate}</span>
+                        </div>
+                        <div class="order-details">
+                            <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
+                            <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
+                            <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
+                            <ul class="order-item-list">
+                                ${order.items.map(item => `
+                                    <li class="order-item">
+                                        <span class="order-item-name">${item.name} x ${item.quantity}</span>
+                                        <span>${formatRupiah(item.price * item.quantity)}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        <div class="order-summary-footer">
+                            <span>Total Pembayaran:</span>
+                            <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
+                        </div>
+
+                        ${
+                            order.paymentMethod === "Transfer Bank" && order.status === "Pending"
+                            ? `<div style="margin-top: 12px; text-align: right;">
+                                <button onclick="window.location.href='konfirmasi.html?orderId=${orderFirebaseId}'" 
+                                    style="background: #ffc107; color: #222; padding: 8px 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
+                                    Konfirmasi Pembayaran
+                                </button>
+                            </div>`
+                            : ""
+                        }
+                    `;
+                    orderHistoryContent.appendChild(orderCard);
+                });
+
+            } catch (error) {
+                console.error("Error memuat riwayat pesanan:", error);
+                orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat riwayat pesanan. Silakan coba lagi.</p>';
+            }
+        }
+
+        // --- Proteksi Halaman & Muat Riwayat Pesanan ---
+        auth.onAuthStateChanged(user => {
+            const storedRole = localStorage.getItem('userRole');
+            const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+            if (isLoggingOut) {
+                localStorage.removeItem('isLoggingOut');
+            }
+
+            if (!user || storedRole !== 'pembeli') {
+                if (!isLoggingOut) {
+                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk melihat riwayat pesanan.');
+                }
+                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+            } else {
+                loadOrderHistory(user.uid);
+            }
+        });
+    </script>
+</body>
+</html>
