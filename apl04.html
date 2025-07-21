@@ -186,6 +186,8 @@
     .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
     .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
     .order-status.dibatalkan { color: #DC3545; }
+    .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
+
 
     .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
     .order-item { 
@@ -470,7 +472,7 @@
         <div class="filter-buttons">
             <button class="filter-btn active" data-status="PendingOnly">Baru</button> 
             <button class="filter-btn" data-status="Diproses">Diproses</button>
-            <button class="filter-btn" data-status="Selesai">Selesai</button>
+            <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button> <!-- Changed from Selesai to Siap Ambil -->
             <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
         </div>
         <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
@@ -506,6 +508,7 @@
               <select id="statusUpdater" class="status-dropdown">
                   <option value="Pending">Pending</option>
                   <option value="Diproses">Diproses</option>
+                  <option value="SiapDiambil">Siap Ambil</option> <!-- Added Siap Ambil option -->
                   <option value="Selesai">Selesai</option>
                   <option value="Dibatalkan">Dibatalkan</option>
               </select>
@@ -617,8 +620,24 @@
             case 'diproses': return 'diproses';
             case 'selesai': return 'selesai';
             case 'dibatalkan': return 'dibatalkan';
-            case 'siapdiambil': return 'siap-diambil'; // NEW status class
+            case 'siapdiambil': return 'siap-diambil'; 
             default: return '';
+        }
+    }
+
+    /**
+     * Maps internal status string to display string.
+     * @param {string} status - The internal status string from Firestore.
+     * @returns {string} The human-readable display string.
+     */
+    function getDisplayStatus(status) {
+        switch (status) {
+            case 'Pending': return 'Baru';
+            case 'Diproses': return 'Diproses';
+            case 'SiapDiambil': return 'Siap Ambil'; // Display "Siap Ambil" for SiapDiambil status
+            case 'Selesai': return 'Selesai';
+            case 'Dibatalkan': return 'Dibatalkan';
+            default: return status;
         }
     }
 
@@ -724,7 +743,7 @@
           } else if (currentStatus === 'Diproses') {
               actionButtonsHtml = `
                   <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
-                      <i class="fas fa-check-double"></i> Diproses
+                      <i class="fas fa-check-double"></i> Siap Ambil <!-- Changed button text -->
                   </button>
               `;
           } else if (currentStatus === 'SiapDiambil') {
@@ -746,7 +765,7 @@
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${currentStatus}</span></p>
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> <!-- Use getDisplayStatus -->
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
               <ul class="order-item-list">
@@ -815,7 +834,7 @@
         
         let newStatus = action; // The data-action directly provides the new status
 
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${newStatus}"?`);
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus for confirmation message
         if (confirmChange) {
             await updateOrderStatusInFirestore(orderId, newStatus);
         }
@@ -849,7 +868,7 @@
                 console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
             }
 
-            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${newStatus}".`);
+            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); // Use getDisplayStatus
             // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
             // But if popup is open, ensure it refreshes.
             if (currentOrderIdForDetail === orderId) {
@@ -965,10 +984,10 @@
             popupCatatan.textContent = customer.notes || "Tidak ada catatan";
 
             const currentStatus = data.status || "Pending";
-            popupStatus.textContent = currentStatus;
+            popupStatus.textContent = getDisplayStatus(currentStatus); // Use getDisplayStatus
             popupStatus.className = `status ${getStatusClass(currentStatus)}`;
 
-            statusUpdater.value = currentStatus;
+            statusUpdater.value = currentStatus; // Dropdown value remains the actual Firestore value
 
             popupWaktu.textContent = formatDate(waktu);
 
@@ -1016,7 +1035,7 @@
     // --- Event Listener for Status Updater Dropdown ---
     statusUpdater.addEventListener("change", async function () {
         const newStatus = this.value;
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${newStatus}"?`);
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus
         if (currentOrderIdForDetail && confirmChange) {
             try {
                 const user = auth.currentUser;
