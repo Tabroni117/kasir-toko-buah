@@ -196,6 +196,12 @@
     .order-status.dibatalkan { color: #DC3545; }
     .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
     .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
+    .order-driver-info { /* New style for driver info on card */
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+        line-height: 1.4;
+    }
 
 
     .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
@@ -659,7 +665,7 @@
               <input type="text" id="driverAppInput" class="form-group-input" placeholder="Grab, Gojek, ShopeeFood, dll.">
           </div>
           <div class="button-group">
-              <button class="btn btn-cancel" onclick="handleDriverModalCancel()">Batal</button> <!-- Changed onclick -->
+              <button class="btn btn-cancel" onclick="handleDriverModalCancel()">Batal</button> 
               <button class="btn btn-submit" id="submitDriverDetailsBtn">Konfirmasi</button>
           </div>
       </div>
@@ -720,9 +726,9 @@
     const submitDriverDetailsBtn = document.getElementById('submitDriverDetailsBtn');
 
     let currentOrderIdForDetail = null;
-    let activeFilterStatus = 'PendingOnly'; // Default filter status changed to PendingOnly
-    let allOrdersData = []; // Cache all orders for filtering/searching
-    let unsubscribeOrders = null; // To store the unsubscribe function for real-time listener
+    let activeFilterStatus = 'PendingOnly'; 
+    let allOrdersData = []; 
+    let unsubscribeOrders = null; 
 
     // --- Helper Functions ---
     function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -759,16 +765,28 @@
     }
 
     /**
-     * Maps internal status string to display string.
+     * Maps internal status string to display string, including driver details for 'OnDelivery'.
      * @param {string} status - The internal status string from Firestore.
+     * @param {Object} orderData - The full order object to get driver details.
      * @returns {string} The human-readable display string.
      */
-    function getDisplayStatus(status) {
+    function getDisplayStatus(status, orderData = {}) {
         switch (status) {
             case 'Pending': return 'Baru';
             case 'Diproses': return 'Diproses';
             case 'SiapDiambil': return 'Siap Ambil'; 
-            case 'OnDelivery': return 'On Delivery'; 
+            case 'OnDelivery': 
+                let driverInfo = '';
+                if (orderData.driverApp) {
+                    driverInfo += ` via ${orderData.driverApp}`;
+                }
+                if (orderData.driverName) {
+                    driverInfo += ` Driver: ${orderData.driverName}`;
+                }
+                if (orderData.driverPhone) {
+                    driverInfo += ` (${orderData.driverPhone})`;
+                }
+                return `🚚 On Delivery${driverInfo}`;
             case 'Selesai': return 'Selesai';
             case 'Dibatalkan': return 'Dibatalkan';
             default: return status;
@@ -894,6 +912,15 @@
               `;
           }
 
+          // Construct driver info for card if OnDelivery
+          let driverInfoCardHtml = '';
+          if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
+              driverInfoCardHtml = `<p class="order-driver-info">`;
+              if (order.driverApp) driverInfoCardHtml += `App: ${order.driverApp}<br>`;
+              if (order.driverName) driverInfoCardHtml += `Driver: ${order.driverName}`;
+              if (order.driverPhone) driverInfoCardHtml += ` (${order.driverPhone})`;
+              driverInfoCardHtml += `</p>`;
+          }
 
           const orderCard = document.createElement('div');
           orderCard.classList.add('order-card'); 
@@ -906,10 +933,10 @@
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> 
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus, order)}</span></p> 
+              ${driverInfoCardHtml} <!-- Display driver info directly on card -->
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
-              ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''} 
               <ul class="order-item-list">
                 ${(order.items || []).map(item => `
                   <li class="order-item">
@@ -978,7 +1005,10 @@
             showDriverDetailsModal(orderId);
         } else {
             let newStatus = action; // The data-action directly provides the new status
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); 
+            // Fetch the order data to pass to getDisplayStatus for confirmation message
+            const orderDoc = await db.collection("pesanan").doc(orderId).get();
+            const orderDataForConfirm = orderDoc.exists ? orderDoc.data() : {};
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus, orderDataForConfirm)}"?`); 
             if (confirmChange) {
                 await updateOrderStatusInFirestore(orderId, newStatus);
             }
@@ -1002,6 +1032,13 @@
         // Add driver details if provided
         if (Object.keys(driverDetails).length > 0) {
             Object.assign(updateData, driverDetails);
+        } else if (newStatus === 'OnDelivery') {
+            // If status is OnDelivery but no driver details provided (e.g., from Cancel button),
+            // ensure driver fields are explicitly set to null to clear previous data if any.
+            // This prevents old driver info from persisting if user cancels input.
+            updateData.driverName = null;
+            updateData.driverPhone = null;
+            updateData.driverApp = null;
         }
 
         try {
@@ -1020,7 +1057,7 @@
                 console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
             }
 
-            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); 
+            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus, orderData)}".`); 
             // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
             // But if popup is open, ensure it refreshes.
             if (currentOrderIdForDetail === orderId) {
@@ -1136,7 +1173,7 @@
             popupCatatan.textContent = customer.notes || "Tidak ada catatan";
 
             const currentStatus = data.status || "Pending";
-            popupStatus.textContent = getDisplayStatus(currentStatus); 
+            popupStatus.textContent = getDisplayStatus(currentStatus, data); // Pass full data to getDisplayStatus
             popupStatus.className = `status ${getStatusClass(currentStatus)}`;
 
             statusUpdater.value = currentStatus; 
@@ -1197,7 +1234,10 @@
     // --- Event Listener for Status Updater Dropdown ---
     statusUpdater.addEventListener("change", async function () {
         const newStatus = this.value;
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); 
+        // Fetch the order data to pass to getDisplayStatus for confirmation message
+        const orderDoc = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+        const orderDataForConfirm = orderDoc.exists ? orderDoc.data() : {};
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus, orderDataForConfirm)}"?`); 
         if (currentOrderIdForDetail && confirmChange) {
             // If changing to OnDelivery from dropdown, show driver modal
             if (newStatus === 'OnDelivery') {
@@ -1219,14 +1259,14 @@
         driverDetailsModal.style.display = 'flex';
     }
 
-    // NEW: Function to handle "Batal" click on driver modal
+    // Function to handle "Batal" click on driver modal
     async function handleDriverModalCancel() {
         if (!currentOrderIdForDetail) {
             await showCustomAlert("Tidak ada pesanan yang dipilih untuk diperbarui.");
             return;
         }
         driverDetailsModal.style.display = 'none'; // Hide the modal
-        // Update status to OnDelivery without driver details
+        // Update status to OnDelivery without driver details (clears existing ones)
         await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', {});
         currentOrderIdForDetail = null; // Clear orderId after processing
     }
