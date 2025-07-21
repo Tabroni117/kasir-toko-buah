@@ -107,9 +107,59 @@
         background-color: #e0e0e0;
     }
 
+    /* Styles for action buttons within order cards */
+    .order-card-actions {
+        display: flex;
+        justify-content: flex-end; /* Align buttons to the right */
+        gap: 8px; /* Space between buttons */
+        margin-top: 10px; /* Space from content above */
+    }
+    .order-card-actions .action-btn {
+        padding: 8px 12px;
+        border: 1px solid;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    .order-card-actions .action-btn.terima {
+        background-color: #28A745; /* Green */
+        border-color: #28A745;
+    }
+    .order-card-actions .action-btn.terima:hover {
+        background-color: #218838; /* Darker Green */
+    }
+    .order-card-actions .action-btn.tolak {
+        background-color: #DC3545; /* Red */
+        border-color: #DC3545;
+    }
+    .order-card-actions .action-btn.tolak:hover {
+        background-color: #C82333; /* Darker Red */
+    }
+    .order-card-actions .action-btn.siap-diambil {
+        background-color: #007bff; /* Blue */
+        border-color: #007bff;
+    }
+    .order-card-actions .action-btn.siap-diambil:hover {
+        background-color: #0056b3; /* Darker Blue */
+    }
+    .order-card-actions .action-btn.selesai {
+        background-color: #6f42c1; /* Purple */
+        border-color: #6f42c1;
+    }
+    .order-card-actions .action-btn.selesai:hover {
+        background-color: #5a2d9c; /* Darker Purple */
+    }
+
+
     /* Order List */
     .order-history-content { padding: 16px; }
-    /* Reverted to original order-card style */
     .order-card {
       background: #fff; border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
@@ -166,7 +216,7 @@
       font-weight: 500;
       margin-bottom: 2px;
     }
-    /* NEW: Style for variant display within the item name */
+    /* Style for variant display within the item name */
     .order-item-variants-display {
         display: block; /* Make it a new line */
         font-size: 11px; /* Smaller font size */
@@ -464,7 +514,7 @@
 
           <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
           <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
-          <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</span></p>
+          <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</p>
           <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
           <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
 
@@ -537,6 +587,7 @@
 
     let currentOrderIdForDetail = null;
     let activeFilterStatus = 'All'; // Default filter status
+    let allOrdersData = []; // Cache all orders for filtering/searching
 
     // --- Helper Functions ---
     function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -566,6 +617,7 @@
             case 'diproses': return 'diproses';
             case 'selesai': return 'selesai';
             case 'dibatalkan': return 'dibatalkan';
+            case 'siapdiambil': return 'siap-diambil'; // NEW status class
             default: return '';
         }
     }
@@ -650,20 +702,19 @@
       emptyOrderState.style.display = 'none';
 
       try {
-        let query = db.collection('pesanan').orderBy('waktu', 'desc');
+        const snapshot = await db.collection('pesanan').orderBy('waktu', 'desc').get(); 
+        allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        let docsToRender = [...allOrdersData]; // Start with all fetched data
+
         const searchTxt = searchQueryInput.value.trim().toUpperCase();
         const filterDateVal = filterDateInput.value;
 
-        const snapshot = await query.get(); // Fetch all data first, then filter client-side
-
-        let docs = snapshot.docs;
-
         // Apply search filter (client-side)
         if (searchTxt) {
-            docs = docs.filter(doc => {
-                const data = doc.data();
-                return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                       (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+            docsToRender = docsToRender.filter(order => {
+                return (order.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                       (order.displayOrderId || '').toUpperCase().includes(searchTxt);
             });
         }
 
@@ -672,33 +723,55 @@
             const selectedDate = new Date(filterDateVal);
             const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
             const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
-            docs = docs.filter(doc => {
-                const waktuTimestamp = doc.data().waktu?.toDate()?.getTime();
+            docsToRender = docsToRender.filter(order => {
+                const waktuTimestamp = order.waktu?.toDate()?.getTime();
                 return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
             });
         }
 
         // Apply status filter (client-side)
         if (activeFilterStatus !== 'All') {
-            docs = docs.filter(doc => doc.data().status === activeFilterStatus);
+            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
         }
 
-        if (docs.length === 0) {
+        if (docsToRender.length === 0) {
           emptyOrderState.style.display = 'block';
           return;
         }
 
-        docs.forEach(doc => {
-          const order = doc.data();
-          const orderId = doc.id;
-          const displayOrderId = order.displayOrderId || ('#' + orderId.substring(0, 6).toUpperCase());
-
+        docsToRender.forEach(order => {
+          const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
           let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
-          let buyerPhone = order.customer?.phoneNumber || '-';
+          let currentStatus = order.status || 'Pending';
+
+          // Determine which action buttons to show based on status
+          let actionButtonsHtml = '';
+          if (currentStatus === 'Pending') {
+              actionButtonsHtml = `
+                  <button class="action-btn terima" data-order-id="${order.id}" data-action="Diproses">
+                      <i class="fas fa-check"></i> Terima
+                  </button>
+                  <button class="action-btn tolak" data-order-id="${order.id}" data-action="Dibatalkan">
+                      <i class="fas fa-times"></i> Tolak
+                  </button>
+              `;
+          } else if (currentStatus === 'Diproses') {
+              actionButtonsHtml = `
+                  <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
+                      <i class="fas fa-check-double"></i> Siap Diambil
+                  </button>
+              `;
+          } else if (currentStatus === 'SiapDiambil') {
+              actionButtonsHtml = `
+                  <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai">
+                      <i class="fas fa-check-circle"></i> Selesai
+                  </button>
+              `;
+          }
 
           const orderCard = document.createElement('div');
-          orderCard.classList.add('order-card'); /* Reverted to order-card class */
-          orderCard.setAttribute('onclick', `tampilkanDetail("${doc.id}")`); /* Make card clickable */
+          orderCard.classList.add('order-card'); 
+          orderCard.setAttribute('data-order-id', order.id); // Set data-order-id for the card
           
           orderCard.innerHTML = `
             <div class="order-header">
@@ -707,7 +780,7 @@
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(order.status)}">${order.status}</span></p>
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${currentStatus}</span></p>
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
               <ul class="order-item-list">
@@ -728,9 +801,15 @@
               <span>Total Pembayaran:</span>
               <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
             </div>
+            <div class="order-card-actions">
+                ${actionButtonsHtml}
+            </div>
           `;
           orderHistoryContent.appendChild(orderCard);
         });
+
+        // Re-attach event listeners for dynamically added buttons and cards
+        attachOrderButtonListeners();
 
       } catch (error) {
         console.error('Gagal memuat semua pesanan:', error);
@@ -739,6 +818,89 @@
           hideLoading();
       }
     }
+
+    // Function to attach event listeners to dynamically created elements
+    function attachOrderButtonListeners() {
+        // Remove existing listeners to prevent duplicates
+        document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
+            button.removeEventListener('click', handleOrderActionButtonClick);
+        });
+        document.querySelectorAll('.order-card').forEach(card => {
+            card.removeEventListener('click', handleOrderCardClick);
+        });
+
+        // Add new listeners
+        document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
+            button.addEventListener('click', handleOrderActionButtonClick);
+        });
+        document.querySelectorAll('.order-card').forEach(card => {
+            card.addEventListener('click', handleOrderCardClick);
+        });
+    }
+
+    // Handle click on the order card (to open detail popup)
+    function handleOrderCardClick(event) {
+        // Prevent opening detail if an action button inside the card was clicked
+        if (event.target.closest('.action-btn')) {
+            return;
+        }
+        const orderId = this.dataset.orderId;
+        tampilkanDetail(orderId);
+    }
+
+    // Handle click on action buttons within order cards
+    async function handleOrderActionButtonClick(event) {
+        event.stopPropagation(); // Prevent the parent order-card click event from firing
+        const orderId = event.currentTarget.dataset.orderId;
+        const action = event.currentTarget.dataset.action;
+        
+        let newStatus = action; // The data-action directly provides the new status
+
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${newStatus}"?`);
+        if (confirmChange) {
+            await updateOrderStatusInFirestore(orderId, newStatus);
+        }
+    }
+
+    async function updateOrderStatusInFirestore(orderId, newStatus) {
+        showLoading();
+        const docRef = db.collection("pesanan").doc(orderId);
+        const user = auth.currentUser;
+        const userName = user?.email || "Admin Anonim";
+        const userId = user?.uid || "Anonim";
+
+        try {
+            await docRef.update({
+                status: newStatus,
+                diubahOlehNama: userName,
+                diubahOlehUid: userId,
+                waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Also update status in riwayat_customer if userId exists in the order document
+            const orderDoc = await docRef.get();
+            const orderData = orderDoc.data();
+            const customerUserId = orderData.userId; // This is the customer's UID
+
+            if (customerUserId) {
+                await db.doc(`riwayat_customer/${customerUserId}/pesanan/${orderId}`).set({
+                    status: newStatus
+                }, { merge: true });
+            } else {
+                console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
+            }
+
+            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${newStatus}".`);
+            loadAllOrderHistory(); // Reload all data to refresh UI
+            tampilkanDetail(orderId); // Open the detail popup after update
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
 
     // --- Show Order Detail Popup ---
     async function tampilkanDetail(docId) {
@@ -806,9 +968,13 @@
                 const variantDisplay = getVariantDisplayString(item.custom);
                 return `
                     <div style="margin-bottom:5px;">
-                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; vertical-align:middle; margin-right:10px;">
-                        ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0}x) = ${formatRupiah((item.price || 0) * (item.quantity || 0))}
-                        <br><small style="color:#777; margin-left:60px;">Varian: ${variantDisplay}</small>
+                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
+                        <div class="order-item-details">
+                            <span class="order-item-name">${item.name || 'Produk Tidak Dikenal'}</span>
+                            <span class="order-item-variants-display">${variantDisplay}</span>
+                            <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
+                        </div>
+                        <span class="order-item-total">${formatRupiah((item.price || 0) * (item.quantity || 0))}</span>
                     </div>
                 `;
             }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
