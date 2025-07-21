@@ -659,7 +659,7 @@
               <input type="text" id="driverAppInput" class="form-group-input" placeholder="Grab, Gojek, ShopeeFood, dll.">
           </div>
           <div class="button-group">
-              <button class="btn btn-cancel" onclick="hideDriverDetailsModal()">Batal</button>
+              <button class="btn btn-cancel" onclick="handleDriverModalCancel()">Batal</button> <!-- Changed onclick -->
               <button class="btn btn-submit" id="submitDriverDetailsBtn">Konfirmasi</button>
           </div>
       </div>
@@ -707,12 +707,12 @@
     const popupDiubahOleh = document.getElementById('popupDiubahOleh');
     const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
     const popupItems = document.getElementById('popupItems');
-    const driverInfoSection = document.getElementById('driverInfoSection'); // NEW
-    const popupDriverName = document.getElementById('popupDriverName');     // NEW
-    const popupDriverPhone = document.getElementById('popupDriverPhone');   // NEW
-    const popupDriverApp = document.getElementById('popupDriverApp');       // NEW
+    const driverInfoSection = document.getElementById('driverInfoSection'); 
+    const popupDriverName = document.getElementById('popupDriverName');     
+    const popupDriverPhone = document.getElementById('popupDriverPhone');   
+    const popupDriverApp = document.getElementById('popupDriverApp');       
 
-    // Driver Details Modal Elements (NEW)
+    // Driver Details Modal Elements
     const driverDetailsModal = document.getElementById('driverDetailsModal');
     const driverNameInput = document.getElementById('driverNameInput');
     const driverPhoneInput = document.getElementById('driverPhoneInput');
@@ -753,7 +753,7 @@
             case 'selesai': return 'selesai';
             case 'dibatalkan': return 'dibatalkan';
             case 'siapdiambil': return 'siap-diambil'; 
-            case 'ondelivery': return 'on-delivery'; // NEW
+            case 'ondelivery': return 'on-delivery'; 
             default: return '';
         }
     }
@@ -768,7 +768,7 @@
             case 'Pending': return 'Baru';
             case 'Diproses': return 'Diproses';
             case 'SiapDiambil': return 'Siap Ambil'; 
-            case 'OnDelivery': return 'On Delivery'; // NEW
+            case 'OnDelivery': return 'On Delivery'; 
             case 'Selesai': return 'Selesai';
             case 'Dibatalkan': return 'Dibatalkan';
             default: return status;
@@ -883,10 +883,10 @@
           } else if (currentStatus === 'SiapDiambil') {
               actionButtonsHtml = `
                   <button class="action-btn pick-up" data-order-id="${order.id}" data-action="showDriverModal">
-                      <i class="fas fa-truck"></i> Pick Up <!-- Changed button text and action -->
+                      <i class="fas fa-truck"></i> Pick Up 
                   </button>
               `;
-          } else if (currentStatus === 'OnDelivery') { // NEW status
+          } else if (currentStatus === 'OnDelivery') { 
               actionButtonsHtml = `
                   <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai">
                       <i class="fas fa-check-circle"></i> Selesai
@@ -897,7 +897,7 @@
 
           const orderCard = document.createElement('div');
           orderCard.classList.add('order-card'); 
-          orderCard.setAttribute('data-order-id', order.id); // Set data-order-id for the card
+          orderCard.setAttribute('data-order-id', order.id); 
           
           orderCard.innerHTML = `
             <div class="order-header">
@@ -906,10 +906,10 @@
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> <!-- Use getDisplayStatus -->
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> 
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
-              ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''} <!-- Display driver info if available -->
+              ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''} 
               <ul class="order-item-list">
                 ${(order.items || []).map(item => `
                   <li class="order-item">
@@ -978,14 +978,14 @@
             showDriverDetailsModal(orderId);
         } else {
             let newStatus = action; // The data-action directly provides the new status
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus for confirmation message
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); 
             if (confirmChange) {
                 await updateOrderStatusInFirestore(orderId, newStatus);
             }
         }
     }
 
-    async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) { // Added driverDetails param
+    async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) { 
         showLoading();
         const docRef = db.collection("pesanan").doc(orderId);
         const user = auth.currentUser;
@@ -1010,7 +1010,7 @@
             // Also update status in riwayat_customer if userId exists in the order document
             const orderDoc = await docRef.get();
             const orderData = orderDoc.data();
-            const customerUserId = orderData.userId; // This is the customer's UID
+            const customerUserId = orderData.userId; 
 
             if (customerUserId) {
                 await db.doc(`riwayat_customer/${customerUserId}/pesanan/${orderId}`).set({
@@ -1020,11 +1020,11 @@
                 console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
             }
 
-            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); // Use getDisplayStatus
+            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); 
             // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
             // But if popup is open, ensure it refreshes.
             if (currentOrderIdForDetail === orderId) {
-                tampilkanDetail(orderId); // Refresh detail popup if it's the current one
+                tampilkanDetail(orderId); 
             }
         } catch (error) {
             console.error("Error updating order status:", error);
@@ -1082,9 +1082,9 @@
         }
 
         // Apply status filter (client-side)
-        if (activeFilterStatus === 'PendingOnly') { // Special handling for "Baru" button
+        if (activeFilterStatus === 'PendingOnly') { 
             docsToRender = docsToRender.filter(order => order.status === 'Pending');
-        } else if (activeFilterStatus !== 'All') { // For other specific status filters
+        } else if (activeFilterStatus !== 'All') { 
             docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
         }
 
@@ -1105,7 +1105,7 @@
                 const snapshot = await transaction.get(docRef);
                 if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
                 const d = snapshot.data();
-                if (!d.dibukaOlehUid) { // Only update if not already opened
+                if (!d.dibukaOlehUid) { 
                     transaction.update(docRef, {
                         dibukaOlehUid: uid,
                         dibukaOlehNama: nama,
@@ -1136,10 +1136,10 @@
             popupCatatan.textContent = customer.notes || "Tidak ada catatan";
 
             const currentStatus = data.status || "Pending";
-            popupStatus.textContent = getDisplayStatus(currentStatus); // Use getDisplayStatus
+            popupStatus.textContent = getDisplayStatus(currentStatus); 
             popupStatus.className = `status ${getStatusClass(currentStatus)}`;
 
-            statusUpdater.value = currentStatus; // Dropdown value remains the actual Firestore value
+            statusUpdater.value = currentStatus; 
 
             popupWaktu.textContent = formatDate(waktu);
 
@@ -1153,7 +1153,7 @@
             popupDiubahOleh.textContent = diubahOleh;
             popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
-            // Populate Driver Info Section (NEW)
+            // Populate Driver Info Section
             if (data.driverName || data.driverPhone || data.driverApp) {
                 driverInfoSection.style.display = 'block';
                 popupDriverName.textContent = data.driverName || '-';
@@ -1192,13 +1192,12 @@
     function tutupDetail() {
         popupDetail.style.display = "none";
         currentOrderIdForDetail = null; 
-        // No need to explicitly call loadAllOrders() here, onSnapshot will handle it.
     }
 
     // --- Event Listener for Status Updater Dropdown ---
     statusUpdater.addEventListener("change", async function () {
         const newStatus = this.value;
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); 
         if (currentOrderIdForDetail && confirmChange) {
             // If changing to OnDelivery from dropdown, show driver modal
             if (newStatus === 'OnDelivery') {
@@ -1210,9 +1209,9 @@
         }
     });
 
-    // --- Driver Details Modal Functions (NEW) ---
+    // --- Driver Details Modal Functions ---
     function showDriverDetailsModal(orderId) {
-        currentOrderIdForDetail = orderId; // Ensure orderId is set for submission
+        currentOrderIdForDetail = orderId; 
         // Clear previous inputs
         driverNameInput.value = '';
         driverPhoneInput.value = '';
@@ -1220,9 +1219,16 @@
         driverDetailsModal.style.display = 'flex';
     }
 
-    function hideDriverDetailsModal() {
-        driverDetailsModal.style.display = 'none';
-        currentOrderIdForDetail = null; // Clear orderId after closing
+    // NEW: Function to handle "Batal" click on driver modal
+    async function handleDriverModalCancel() {
+        if (!currentOrderIdForDetail) {
+            await showCustomAlert("Tidak ada pesanan yang dipilih untuk diperbarui.");
+            return;
+        }
+        driverDetailsModal.style.display = 'none'; // Hide the modal
+        // Update status to OnDelivery without driver details
+        await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', {});
+        currentOrderIdForDetail = null; // Clear orderId after processing
     }
 
     submitDriverDetailsBtn.addEventListener('click', async () => {
@@ -1237,10 +1243,8 @@
             driverApp: driverAppInput.value.trim() || null
         };
 
-        hideDriverDetailsModal(); // Close the modal
+        driverDetailsModal.style.display = 'none'; // Close the modal
         await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', driverDetails);
-        // After updating, the main order list will refresh via onSnapshot
-        // And if the detail popup was open, it will refresh too.
     });
 
 
