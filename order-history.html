@@ -78,20 +78,7 @@
             border-bottom: 1px dashed #eee;
         }
         
-        /* NEW: Style for the thumbnail image in the main order card */
-        .order-id-and-thumbnail {
-            display: flex;
-            align-items: center;
-            gap: 8px; /* Space between ID and image */
-        }
-
-        .order-card-thumbnail-main {
-            width: 30px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
+        /* Removed: .order-id-and-thumbnail and .order-card-thumbnail-main styles */
 
         .order-id {
             font-weight: bold;
@@ -120,16 +107,41 @@
         }
 
         .order-item {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            margin-bottom: 5px;
+            display: flex; /* Menggunakan flexbox untuk item */
+            align-items: center; /* Pusatkan secara vertikal */
+            margin-bottom: 10px; /* Spasi antar item */
             color: #444;
+            gap: 10px; /* Jarak antara gambar dan teks */
+            font-size: 14px;
+        }
+
+        .order-item-image {
+            width: 50px; /* Ukuran gambar */
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            flex-shrink: 0; /* Jangan biarkan gambar menyusut */
+            background-color: #eee; /* Placeholder background */
+        }
+
+        .order-item-details {
+            flex-grow: 1; /* Biarkan detail mengambil sisa ruang */
+            display: flex;
+            flex-direction: column;
         }
 
         .order-item-name {
-            flex-grow: 1;
-            margin-right: 10px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .order-item-quantity-price {
+            font-size: 12px;
+            color: #777;
+        }
+        .order-item-total {
+            font-weight: bold;
+            white-space: nowrap; /* Pastikan total tidak pecah baris */
+            margin-left: auto; /* Dorong ke kanan */
         }
 
         .order-summary-footer {
@@ -253,19 +265,11 @@
                             statusClass = ''; 
                     }
 
-                    // Dapatkan URL gambar dari item pertama di pesanan
-                    const firstItemImage = order.items && order.items.length > 0 && order.items[0].image
-                                           ? order.items[0].image
-                                           : 'https://placehold.co/30x30/cccccc/333333?text=Img'; // Placeholder jika tidak ada gambar
-
                     const orderCard = document.createElement('div');
                     orderCard.classList.add('order-card');
                     orderCard.innerHTML = `
                         <div class="order-header">
-                            <div class="order-id-and-thumbnail">
-                                <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
-                                <img src="${firstItemImage}" alt="Gambar Produk" class="order-card-thumbnail-main">
-                            </div>
+                            <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
                             <span class="order-date">${orderDate}</span>
                         </div>
                         <div class="order-details">
@@ -275,8 +279,12 @@
                             <ul class="order-item-list">
                                 ${order.items.map(item => `
                                     <li class="order-item">
-                                        <span class="order-item-name">${item.name} x ${item.quantity}</span>
-                                        <span>${formatRupiah(item.price * item.quantity)}</span>
+                                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
+                                        <div class="order-item-details">
+                                            <span class="order-item-name">${item.name}</span>
+                                            <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
+                                        </div>
+                                        <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
                                     </li>
                                 `).join('')}
                             </ul>
