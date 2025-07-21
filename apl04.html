@@ -196,11 +196,26 @@
     .order-status.dibatalkan { color: #DC3545; }
     .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
     .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
-    .order-driver-info { /* New style for driver info on card */
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-        line-height: 1.4;
+    
+    /* New styles for driver info display */
+    .order-driver-info-container {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #eee;
+        font-size: 13px;
+        color: #555;
+    }
+    .order-driver-info-container p {
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .order-driver-info-container p:last-child {
+        margin-bottom: 0;
+    }
+    .order-driver-info-container i {
+        color: #00C853; /* Icon color */
     }
 
 
@@ -568,7 +583,7 @@
             <button class="filter-btn active" data-status="PendingOnly">Baru</button> 
             <button class="filter-btn" data-status="Diproses">Diproses</button>
             <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
-            <button class="filter-btn" data-status="OnDelivery">On Delivery</button> <!-- Changed from Dibatalkan to On Delivery -->
+            <button class="filter-btn" data-status="OnDelivery">On Delivery</button> 
         </div>
         <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
     </div>
@@ -604,7 +619,7 @@
                   <option value="Pending">Pending</option>
                   <option value="Diproses">Diproses</option>
                   <option value="SiapDiambil">Siap Ambil</option>
-                  <option value="OnDelivery">On Delivery</option> <!-- Added On Delivery option -->
+                  <option value="OnDelivery">On Delivery</option> 
                   <option value="Selesai">Selesai</option>
                   <option value="Dibatalkan">Dibatalkan</option>
               </select>
@@ -616,12 +631,12 @@
           <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
           <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
 
-          <!-- Driver Information (New Section) -->
+          <!-- Driver Information Section in Popup -->
           <div id="driverInfoSection" style="display:none;">
             <h4>Info Driver:</h4>
-            <p><strong>Nama Driver:</strong> <span id="popupDriverName">-</span></p>
-            <p><strong>No. HP Driver:</strong> <span id="popupDriverPhone">-</span></p>
-            <p><strong>Aplikasi Ojek:</strong> <span id="popupDriverApp">-</span></p>
+            <p><i class="fas fa-truck"></i> <strong>Aplikasi Ojek:</strong> <span id="popupDriverApp">-</span></p>
+            <p><i class="fas fa-user"></i> <strong>Nama Driver:</strong> <span id="popupDriverName">-</span></p>
+            <p><i class="fas fa-phone"></i> <strong>No. HP Driver:</strong> <span id="popupDriverPhone">-</span></p>
           </div>
 
           <h4>Detail Item:</h4>
@@ -765,28 +780,16 @@
     }
 
     /**
-     * Maps internal status string to display string, including driver details for 'OnDelivery'.
+     * Maps internal status string to display string (concise, without driver details).
      * @param {string} status - The internal status string from Firestore.
-     * @param {Object} orderData - The full order object to get driver details.
      * @returns {string} The human-readable display string.
      */
-    function getDisplayStatus(status, orderData = {}) {
+    function getDisplayStatus(status) {
         switch (status) {
             case 'Pending': return 'Baru';
             case 'Diproses': return 'Diproses';
             case 'SiapDiambil': return 'Siap Ambil'; 
-            case 'OnDelivery': 
-                let driverInfo = '';
-                if (orderData.driverApp) {
-                    driverInfo += ` via ${orderData.driverApp}`;
-                }
-                if (orderData.driverName) {
-                    driverInfo += ` Driver: ${orderData.driverName}`;
-                }
-                if (orderData.driverPhone) {
-                    driverInfo += ` (${orderData.driverPhone})`;
-                }
-                return `🚚 On Delivery${driverInfo}`;
+            case 'OnDelivery': return 'On Delivery'; 
             case 'Selesai': return 'Selesai';
             case 'Dibatalkan': return 'Dibatalkan';
             default: return status;
@@ -915,11 +918,13 @@
           // Construct driver info for card if OnDelivery
           let driverInfoCardHtml = '';
           if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
-              driverInfoCardHtml = `<p class="order-driver-info">`;
-              if (order.driverApp) driverInfoCardHtml += `App: ${order.driverApp}<br>`;
-              if (order.driverName) driverInfoCardHtml += `Driver: ${order.driverName}`;
-              if (order.driverPhone) driverInfoCardHtml += ` (${order.driverPhone})`;
+              driverInfoCardHtml = `<div class="order-driver-info-container">`;
+              driverInfoCardHtml += `<p><i class="fas fa-truck"></i> Pesanan sedang diantar`;
+              if (order.driverApp) driverInfoCardHtml += ` via ${order.driverApp}`;
               driverInfoCardHtml += `</p>`;
+              if (order.driverName) driverInfoCardHtml += `<p><i class="fas fa-user"></i> Driver: ${order.driverName}</p>`;
+              if (order.driverPhone) driverInfoCardHtml += `<p><i class="fas fa-phone"></i> Telp: ${order.driverPhone}</p>`;
+              driverInfoCardHtml += `</div>`;
           }
 
           const orderCard = document.createElement('div');
@@ -933,8 +938,8 @@
             </div>
             <div class="order-details">
               <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus, order)}</span></p> 
-              ${driverInfoCardHtml} <!-- Display driver info directly on card -->
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> 
+              ${driverInfoCardHtml} <!-- Display driver info in a structured way -->
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
               <ul class="order-item-list">
@@ -1005,10 +1010,7 @@
             showDriverDetailsModal(orderId);
         } else {
             let newStatus = action; // The data-action directly provides the new status
-            // Fetch the order data to pass to getDisplayStatus for confirmation message
-            const orderDoc = await db.collection("pesanan").doc(orderId).get();
-            const orderDataForConfirm = orderDoc.exists ? orderDoc.data() : {};
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus, orderDataForConfirm)}"?`); 
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); 
             if (confirmChange) {
                 await updateOrderStatusInFirestore(orderId, newStatus);
             }
@@ -1035,7 +1037,6 @@
         } else if (newStatus === 'OnDelivery') {
             // If status is OnDelivery but no driver details provided (e.g., from Cancel button),
             // ensure driver fields are explicitly set to null to clear previous data if any.
-            // This prevents old driver info from persisting if user cancels input.
             updateData.driverName = null;
             updateData.driverPhone = null;
             updateData.driverApp = null;
@@ -1057,7 +1058,7 @@
                 console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
             }
 
-            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus, orderData)}".`); 
+            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); 
             // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
             // But if popup is open, ensure it refreshes.
             if (currentOrderIdForDetail === orderId) {
@@ -1173,7 +1174,7 @@
             popupCatatan.textContent = customer.notes || "Tidak ada catatan";
 
             const currentStatus = data.status || "Pending";
-            popupStatus.textContent = getDisplayStatus(currentStatus, data); // Pass full data to getDisplayStatus
+            popupStatus.textContent = getDisplayStatus(currentStatus); 
             popupStatus.className = `status ${getStatusClass(currentStatus)}`;
 
             statusUpdater.value = currentStatus; 
@@ -1190,7 +1191,7 @@
             popupDiubahOleh.textContent = diubahOleh;
             popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
-            // Populate Driver Info Section
+            // Populate Driver Info Section in Popup
             if (data.driverName || data.driverPhone || data.driverApp) {
                 driverInfoSection.style.display = 'block';
                 popupDriverName.textContent = data.driverName || '-';
@@ -1234,10 +1235,7 @@
     // --- Event Listener for Status Updater Dropdown ---
     statusUpdater.addEventListener("change", async function () {
         const newStatus = this.value;
-        // Fetch the order data to pass to getDisplayStatus for confirmation message
-        const orderDoc = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
-        const orderDataForConfirm = orderDoc.exists ? orderDoc.data() : {};
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus, orderDataForConfirm)}"?`); 
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); 
         if (currentOrderIdForDetail && confirmChange) {
             // If changing to OnDelivery from dropdown, show driver modal
             if (newStatus === 'OnDelivery') {
