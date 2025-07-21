@@ -142,12 +142,20 @@
     .order-card-actions .action-btn.tolak:hover {
         background-color: #C82333; /* Darker Red */
     }
-    .order-card-actions .action-btn.siap-diambil { /* This class is now used for the 'Diproses' button label */
+    .order-card-actions .action-btn.siap-diambil { 
         background-color: #007bff; /* Blue */
         border-color: #007bff;
     }
     .order-card-actions .action-btn.siap-diambil:hover {
         background-color: #0056b3; /* Darker Blue */
+    }
+    .order-card-actions .action-btn.pick-up { /* New style for "Pick Up" button */
+        background-color: #FFC107; /* Amber */
+        border-color: #FFC107;
+        color: #333;
+    }
+    .order-card-actions .action-btn.pick-up:hover {
+        background-color: #FFA000; /* Darker Amber */
     }
     .order-card-actions .action-btn.selesai {
         background-color: #6f42c1; /* Purple */
@@ -187,6 +195,7 @@
     .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
     .order-status.dibatalkan { color: #DC3545; }
     .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
+    .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
 
 
     .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
@@ -451,6 +460,86 @@
     #customAlertDialog button:hover {
         background-color: #388E3C;
     }
+
+    /* Driver Details Modal */
+    #driverDetailsModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.6);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    #driverDetailsModal > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 350px;
+        width: 100%;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        position: relative;
+    }
+    #driverDetailsModal h3 {
+        margin-top: 0;
+        color: #007bff; /* Blue */
+        font-size: 18px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    #driverDetailsModal .form-group {
+        margin-bottom: 15px;
+    }
+    #driverDetailsModal label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    #driverDetailsModal input[type="text"],
+    #driverDetailsModal input[type="tel"] {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    #driverDetailsModal .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    #driverDetailsModal .button-group .btn {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    #driverDetailsModal .button-group .btn-cancel {
+        background-color: #ccc;
+        color: #333;
+    }
+    #driverDetailsModal .button-group .btn-cancel:hover {
+        background-color: #bbb;
+    }
+    #driverDetailsModal .button-group .btn-submit {
+        background-color: #007bff; /* Blue */
+        color: white;
+    }
+    #driverDetailsModal .button-group .btn-submit:hover {
+        background-color: #0056b3; /* Darker Blue */
+    }
   </style>
 </head>
 <body>
@@ -472,8 +561,8 @@
         <div class="filter-buttons">
             <button class="filter-btn active" data-status="PendingOnly">Baru</button> 
             <button class="filter-btn" data-status="Diproses">Diproses</button>
-            <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button> <!-- Changed from Selesai to Siap Ambil -->
-            <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+            <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
+            <button class="filter-btn" data-status="OnDelivery">On Delivery</button> <!-- Changed from Dibatalkan to On Delivery -->
         </div>
         <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
     </div>
@@ -508,7 +597,8 @@
               <select id="statusUpdater" class="status-dropdown">
                   <option value="Pending">Pending</option>
                   <option value="Diproses">Diproses</option>
-                  <option value="SiapDiambil">Siap Ambil</option> <!-- Added Siap Ambil option -->
+                  <option value="SiapDiambil">Siap Ambil</option>
+                  <option value="OnDelivery">On Delivery</option> <!-- Added On Delivery option -->
                   <option value="Selesai">Selesai</option>
                   <option value="Dibatalkan">Dibatalkan</option>
               </select>
@@ -519,6 +609,14 @@
           <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</p>
           <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
           <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
+
+          <!-- Driver Information (New Section) -->
+          <div id="driverInfoSection" style="display:none;">
+            <h4>Info Driver:</h4>
+            <p><strong>Nama Driver:</strong> <span id="popupDriverName">-</span></p>
+            <p><strong>No. HP Driver:</strong> <span id="popupDriverPhone">-</span></p>
+            <p><strong>Aplikasi Ojek:</strong> <span id="popupDriverApp">-</span></p>
+          </div>
 
           <h4>Detail Item:</h4>
           <div id="popupItems"></div>
@@ -541,6 +639,29 @@
       <div>
           <p id="customAlertMessage"></p>
           <button id="customAlertOk">OK</button>
+      </div>
+  </div>
+
+  <!-- Driver Details Input Modal (NEW) -->
+  <div id="driverDetailsModal">
+      <div>
+          <h3>Input Detail Driver</h3>
+          <div class="form-group">
+              <label for="driverNameInput">Nama Driver (Opsional):</label>
+              <input type="text" id="driverNameInput" class="form-group-input" placeholder="Nama driver">
+          </div>
+          <div class="form-group">
+              <label for="driverPhoneInput">No. HP Driver (Opsional):</label>
+              <input type="tel" id="driverPhoneInput" class="form-group-input" placeholder="081234567890">
+          </div>
+          <div class="form-group">
+              <label for="driverAppInput">Aplikasi Ojek (Opsional):</label>
+              <input type="text" id="driverAppInput" class="form-group-input" placeholder="Grab, Gojek, ShopeeFood, dll.">
+          </div>
+          <div class="button-group">
+              <button class="btn btn-cancel" onclick="hideDriverDetailsModal()">Batal</button>
+              <button class="btn btn-submit" id="submitDriverDetailsBtn">Konfirmasi</button>
+          </div>
       </div>
   </div>
 
@@ -586,6 +707,17 @@
     const popupDiubahOleh = document.getElementById('popupDiubahOleh');
     const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
     const popupItems = document.getElementById('popupItems');
+    const driverInfoSection = document.getElementById('driverInfoSection'); // NEW
+    const popupDriverName = document.getElementById('popupDriverName');     // NEW
+    const popupDriverPhone = document.getElementById('popupDriverPhone');   // NEW
+    const popupDriverApp = document.getElementById('popupDriverApp');       // NEW
+
+    // Driver Details Modal Elements (NEW)
+    const driverDetailsModal = document.getElementById('driverDetailsModal');
+    const driverNameInput = document.getElementById('driverNameInput');
+    const driverPhoneInput = document.getElementById('driverPhoneInput');
+    const driverAppInput = document.getElementById('driverAppInput');
+    const submitDriverDetailsBtn = document.getElementById('submitDriverDetailsBtn');
 
     let currentOrderIdForDetail = null;
     let activeFilterStatus = 'PendingOnly'; // Default filter status changed to PendingOnly
@@ -621,6 +753,7 @@
             case 'selesai': return 'selesai';
             case 'dibatalkan': return 'dibatalkan';
             case 'siapdiambil': return 'siap-diambil'; 
+            case 'ondelivery': return 'on-delivery'; // NEW
             default: return '';
         }
     }
@@ -634,7 +767,8 @@
         switch (status) {
             case 'Pending': return 'Baru';
             case 'Diproses': return 'Diproses';
-            case 'SiapDiambil': return 'Siap Ambil'; // Display "Siap Ambil" for SiapDiambil status
+            case 'SiapDiambil': return 'Siap Ambil'; 
+            case 'OnDelivery': return 'On Delivery'; // NEW
             case 'Selesai': return 'Selesai';
             case 'Dibatalkan': return 'Dibatalkan';
             default: return status;
@@ -743,16 +877,23 @@
           } else if (currentStatus === 'Diproses') {
               actionButtonsHtml = `
                   <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
-                      <i class="fas fa-check-double"></i> Siap Ambil <!-- Changed button text -->
+                      <i class="fas fa-check-double"></i> Siap Ambil
                   </button>
               `;
           } else if (currentStatus === 'SiapDiambil') {
+              actionButtonsHtml = `
+                  <button class="action-btn pick-up" data-order-id="${order.id}" data-action="showDriverModal">
+                      <i class="fas fa-truck"></i> Pick Up <!-- Changed button text and action -->
+                  </button>
+              `;
+          } else if (currentStatus === 'OnDelivery') { // NEW status
               actionButtonsHtml = `
                   <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai">
                       <i class="fas fa-check-circle"></i> Selesai
                   </button>
               `;
           }
+
 
           const orderCard = document.createElement('div');
           orderCard.classList.add('order-card'); 
@@ -768,6 +909,7 @@
               <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> <!-- Use getDisplayStatus -->
               <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
               <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
+              ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''} <!-- Display driver info if available -->
               <ul class="order-item-list">
                 ${(order.items || []).map(item => `
                   <li class="order-item">
@@ -832,28 +974,38 @@
         const orderId = event.currentTarget.dataset.orderId;
         const action = event.currentTarget.dataset.action;
         
-        let newStatus = action; // The data-action directly provides the new status
-
-        const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus for confirmation message
-        if (confirmChange) {
-            await updateOrderStatusInFirestore(orderId, newStatus);
+        if (action === "showDriverModal") {
+            showDriverDetailsModal(orderId);
+        } else {
+            let newStatus = action; // The data-action directly provides the new status
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus for confirmation message
+            if (confirmChange) {
+                await updateOrderStatusInFirestore(orderId, newStatus);
+            }
         }
     }
 
-    async function updateOrderStatusInFirestore(orderId, newStatus) {
+    async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) { // Added driverDetails param
         showLoading();
         const docRef = db.collection("pesanan").doc(orderId);
         const user = auth.currentUser;
         const userName = user?.email || "Admin Anonim";
         const userId = user?.uid || "Anonim";
 
+        const updateData = {
+            status: newStatus,
+            diubahOlehNama: userName,
+            diubahOlehUid: userId,
+            waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Add driver details if provided
+        if (Object.keys(driverDetails).length > 0) {
+            Object.assign(updateData, driverDetails);
+        }
+
         try {
-            await docRef.update({
-                status: newStatus,
-                diubahOlehNama: userName,
-                diubahOlehUid: userId,
-                waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await docRef.update(updateData);
 
             // Also update status in riwayat_customer if userId exists in the order document
             const orderDoc = await docRef.get();
@@ -1001,6 +1153,17 @@
             popupDiubahOleh.textContent = diubahOleh;
             popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
+            // Populate Driver Info Section (NEW)
+            if (data.driverName || data.driverPhone || data.driverApp) {
+                driverInfoSection.style.display = 'block';
+                popupDriverName.textContent = data.driverName || '-';
+                popupDriverPhone.textContent = data.driverPhone || '-';
+                popupDriverApp.textContent = data.driverApp || '-';
+            } else {
+                driverInfoSection.style.display = 'none';
+            }
+
+
             // Detail Item (Updated to display variants)
             popupItems.innerHTML = (items || []).map(item => {
                 const variantDisplay = getVariantDisplayString(item.custom);
@@ -1037,37 +1200,49 @@
         const newStatus = this.value;
         const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); // Use getDisplayStatus
         if (currentOrderIdForDetail && confirmChange) {
-            try {
-                const user = auth.currentUser;
-                const userName = user?.email || "Admin Anonim"; 
-
-                await db.collection("pesanan").doc(currentOrderIdForDetail).update({
-                    status: newStatus,
-                    diubahOlehNama: userName, 
-                    waktuDiubah: firebase.firestore.FieldValue.serverTimestamp() 
-                });
-
-                // Also update status in customer's history for consistency
-                const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
-                const data = docSnap.data();
-                const userId = data.userId;
-
-                if (userId) {
-                    await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
-                        status: newStatus
-                    }, { merge: true });
-                } else {
-                    console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
-                }
-                
-                await showCustomAlert("Status pesanan berhasil diperbarui!"); 
+            // If changing to OnDelivery from dropdown, show driver modal
+            if (newStatus === 'OnDelivery') {
+                showDriverDetailsModal(currentOrderIdForDetail);
+            } else {
+                await updateOrderStatusInFirestore(currentOrderIdForDetail, newStatus);
                 tutupDetail(); 
-            } catch (error) {
-                console.error("Error updating order status:", error);
-                await showCustomAlert("Gagal memperbarui status pesanan."); 
             }
         }
     });
+
+    // --- Driver Details Modal Functions (NEW) ---
+    function showDriverDetailsModal(orderId) {
+        currentOrderIdForDetail = orderId; // Ensure orderId is set for submission
+        // Clear previous inputs
+        driverNameInput.value = '';
+        driverPhoneInput.value = '';
+        driverAppInput.value = '';
+        driverDetailsModal.style.display = 'flex';
+    }
+
+    function hideDriverDetailsModal() {
+        driverDetailsModal.style.display = 'none';
+        currentOrderIdForDetail = null; // Clear orderId after closing
+    }
+
+    submitDriverDetailsBtn.addEventListener('click', async () => {
+        if (!currentOrderIdForDetail) {
+            await showCustomAlert("Tidak ada pesanan yang dipilih untuk diperbarui.");
+            return;
+        }
+
+        const driverDetails = {
+            driverName: driverNameInput.value.trim() || null,
+            driverPhone: driverPhoneInput.value.trim() || null,
+            driverApp: driverAppInput.value.trim() || null
+        };
+
+        hideDriverDetailsModal(); // Close the modal
+        await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', driverDetails);
+        // After updating, the main order list will refresh via onSnapshot
+        // And if the detail popup was open, it will refresh too.
+    });
+
 
     // --- Event Listeners for Filters and Search ---
     searchQueryInput.addEventListener('input', applyFiltersAndSearch);
