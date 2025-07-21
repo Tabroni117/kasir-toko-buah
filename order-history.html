@@ -227,91 +227,91 @@
             orderHistoryContent.innerHTML = ''; 
             emptyOrderState.style.display = 'none'; 
 
-            try {
-                const querySnapshot = await db
-                    .collection('riwayat_customer')
-                    .doc(userId)
-                    .collection('pesanan')
-                    .orderBy('waktu', 'desc')
-                    .get();
+            // Menggunakan onSnapshot untuk real-time updates
+            db.collection('riwayat_customer')
+                .doc(userId)
+                .collection('pesanan')
+                .orderBy('waktu', 'desc')
+                .onSnapshot(querySnapshot => { // <-- PERUBAHAN DI SINI: get() diganti onSnapshot()
+                    orderHistoryContent.innerHTML = ''; // Clear content before rendering
+                    emptyOrderState.style.display = 'none'; // Hide empty state initially
 
-                if (querySnapshot.empty) {
-                    emptyOrderState.style.display = 'block'; 
-                    return;
-                }
-
-                querySnapshot.forEach(doc => {
-                    const order = doc.data();
-                    const orderFirebaseId = doc.id; // Ini ID dokumen Firebase asli
-                    // Gunakan displayOrderId jika ada di dokumen, fallback ke FirebaseId
-                    const displayOrderId = order.displayOrderId || ('#' + orderFirebaseId.substring(0, 6).toUpperCase());
-
-                    const orderDate = order.waktu ? new Date(order.waktu.toDate()).toLocaleString('id-ID', {
-                        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    }) : 'Tanggal tidak tersedia';
-
-                    let statusClass = '';
-                    switch (order.status.toLowerCase()) {
-                        case 'pending':
-                            statusClass = 'pending';
-                            break;
-                        case 'completed':
-                            statusClass = 'completed';
-                            break;
-                        case 'cancelled':
-                            statusClass = 'cancelled';
-                            break;
-                        default:
-                            statusClass = ''; 
+                    if (querySnapshot.empty) {
+                        emptyOrderState.style.display = 'block'; 
+                        return;
                     }
 
-                    const orderCard = document.createElement('div');
-                    orderCard.classList.add('order-card');
-                    orderCard.innerHTML = `
-                        <div class="order-header">
-                            <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
-                            <span class="order-date">${orderDate}</span>
-                        </div>
-                        <div class="order-details">
-                            <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
-                            <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
-                            <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
-                            <ul class="order-item-list">
-                                ${order.items.map(item => `
-                                    <li class="order-item">
-                                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
-                                        <div class="order-item-details">
-                                            <span class="order-item-name">${item.name}</span>
-                                            <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
-                                        </div>
-                                        <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        <div class="order-summary-footer">
-                            <span>Total Pembayaran:</span>
-                            <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
-                        </div>
+                    querySnapshot.forEach(doc => {
+                        const order = doc.data();
+                        const orderFirebaseId = doc.id; // Ini ID dokumen Firebase asli
+                        // Gunakan displayOrderId jika ada di dokumen, fallback ke FirebaseId
+                        const displayOrderId = order.displayOrderId || ('#' + orderFirebaseId.substring(0, 6).toUpperCase());
 
-                        ${
-                            order.paymentMethod === "Transfer Bank" && order.status === "Pending"
-                            ? `<div style="margin-top: 12px; text-align: right;">
-                                <button onclick="window.location.href='konfirmasi.html?orderId=${orderFirebaseId}'" 
-                                    style="background: #ffc107; color: #222; padding: 8px 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
-                                    Konfirmasi Pembayaran
-                                </button>
-                            </div>`
-                            : ""
+                        const orderDate = order.waktu ? new Date(order.waktu.toDate()).toLocaleString('id-ID', {
+                            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        }) : 'Tanggal tidak tersedia';
+
+                        let statusClass = '';
+                        switch (order.status.toLowerCase()) {
+                            case 'pending':
+                                statusClass = 'pending';
+                                break;
+                            case 'completed':
+                                statusClass = 'completed';
+                                break;
+                            case 'cancelled':
+                                statusClass = 'cancelled';
+                                break;
+                            default:
+                                statusClass = ''; 
                         }
-                    `;
-                    orderHistoryContent.appendChild(orderCard);
-                });
 
-            } catch (error) {
-                console.error("Error memuat riwayat pesanan:", error);
-                orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat riwayat pesanan. Silakan coba lagi.</p>';
-            }
+                        const orderCard = document.createElement('div');
+                        orderCard.classList.add('order-card');
+                        orderCard.innerHTML = `
+                            <div class="order-header">
+                                <span class="order-id">Nomor Pesanan: ${displayOrderId}</span> 
+                                <span class="order-date">${orderDate}</span>
+                            </div>
+                            <div class="order-details">
+                                <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
+                                <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
+                                <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
+                                <ul class="order-item-list">
+                                    ${order.items.map(item => `
+                                        <li class="order-item">
+                                            <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
+                                            <div class="order-item-details">
+                                                <span class="order-item-name">${item.name}</span>
+                                                <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
+                                            </div>
+                                            <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            <div class="order-summary-footer">
+                                <span>Total Pembayaran:</span>
+                                <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
+                            </div>
+
+                            ${
+                                order.paymentMethod === "Transfer Bank" && order.status === "Pending"
+                                ? `<div style="margin-top: 12px; text-align: right;">
+                                    <button onclick="window.location.href='konfirmasi.html?orderId=${orderFirebaseId}'" 
+                                        style="background: #ffc107; color: #222; padding: 8px 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer;">
+                                        Konfirmasi Pembayaran
+                                    </button>
+                                </div>`
+                                : ""
+                            }
+                        `;
+                        orderHistoryContent.appendChild(orderCard);
+                    });
+                }, error => {
+                    console.error("Error memuat riwayat pesanan secara real-time:", error);
+                    orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat riwayat pesanan. Silakan coba lagi.</p>';
+                });
         }
 
         // --- Proteksi Halaman & Muat Riwayat Pesanan ---
