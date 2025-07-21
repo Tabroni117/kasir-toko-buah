@@ -134,6 +134,15 @@
             font-weight: 500;
             margin-bottom: 2px;
         }
+        
+        /* NEW: Style for variant display within the item name */
+        .order-item-variants-display {
+            display: block; /* Make it a new line */
+            font-size: 11px; /* Smaller font size */
+            color: #999; /* Lighter color */
+            margin-top: 2px;
+        }
+
         .order-item-quantity-price {
             font-size: 12px;
             color: #777;
@@ -222,6 +231,32 @@
             }).format(amount);
         }
 
+        /**
+         * Generates a display string for variants.
+         * This function is copied from cart.html/pesanan-penjual.html to ensure consistency.
+         * @param {Object} customVariants - The custom variants object.
+         * @returns {string} A human-readable string of selected variants.
+         */
+        function getVariantDisplayString(customVariants) {
+            if (!customVariants || Object.keys(customVariants).length === 0) {
+                return 'Tidak ada varian';
+            }
+            const parts = [];
+            // Sort keys to ensure consistent display order
+            const sortedVariantTypeIds = Object.keys(customVariants).sort();
+            for (const variantTypeId of sortedVariantTypeIds) {
+                const value = customVariants[variantTypeId];
+                if (Array.isArray(value)) {
+                    if (value.length > 0) {
+                        parts.push(value.join(', '));
+                    }
+                } else if (value && value !== 'none') {
+                    parts.push(value);
+                }
+            }
+            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
+        }
+
         // --- Fungsi untuk Menampilkan Riwayat Pesanan ---
         async function loadOrderHistory(userId) {
             orderHistoryContent.innerHTML = ''; 
@@ -282,7 +317,10 @@
                                         <li class="order-item">
                                             <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
                                             <div class="order-item-details">
-                                                <span class="order-item-name">${item.name}</span>
+                                                <span class="order-item-name">
+                                                    ${item.name}
+                                                    <span class="order-item-variants-display">${getVariantDisplayString(item.custom)}</span>
+                                                </span>
                                                 <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
                                             </div>
                                             <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
