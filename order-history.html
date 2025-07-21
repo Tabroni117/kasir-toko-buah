@@ -315,22 +315,33 @@
         }
 
         // --- Proteksi Halaman & Muat Riwayat Pesanan ---
-        auth.onAuthStateChanged(user => {
-            const storedRole = localStorage.getItem('userRole');
-            const isLoggingOut = localStorage.getItem('isLoggingOut');
-
-            if (isLoggingOut) {
-                localStorage.removeItem('isLoggingOut');
-            }
-
-            if (!user || storedRole !== 'pembeli') {
-                if (!isLoggingOut) {
-                    alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk melihat riwayat pesanan.');
-                }
-                window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+        document.addEventListener('DOMContentLoaded', () => {
+            // Logic untuk reload otomatis sekali per sesi
+            if (!sessionStorage.getItem('hasReloadedOrderHistory')) {
+                sessionStorage.setItem('hasReloadedOrderHistory', 'true');
+                location.reload();
             } else {
-                loadOrderHistory(user.uid);
+                // Hapus setelah reload agar jika user membuka lagi secara manual, akan di-reload lagi
+                sessionStorage.removeItem('hasReloadedOrderHistory');
             }
+
+            auth.onAuthStateChanged(user => {
+                const storedRole = localStorage.getItem('userRole');
+                const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+                if (isLoggingOut) {
+                    localStorage.removeItem('isLoggingOut');
+                }
+
+                if (!user || storedRole !== 'pembeli') {
+                    if (!isLoggingOut) {
+                        alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk melihat riwayat pesanan.');
+                    }
+                    window.location.href = 'index.html'; // Arahkan kembali ke halaman login
+                } else {
+                    loadOrderHistory(user.uid);
+                }
+            });
         });
     </script>
 </body>
