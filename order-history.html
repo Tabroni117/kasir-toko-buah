@@ -78,8 +78,6 @@
             border-bottom: 1px dashed #eee;
         }
         
-        /* Removed: .order-id-and-thumbnail and .order-card-thumbnail-main styles */
-
         .order-id {
             font-weight: bold;
             font-size: 14px;
@@ -97,8 +95,12 @@
             font-size: 15px;
         }
         .order-status.pending { color: #FFC107; } /* Yellow for pending */
-        .order-status.completed { color: #28A745; } /* Green for completed */
+        .order-status.completed { color: #28A745; } /* Green for completed - will be replaced by selesai */
         .order-status.cancelled { color: #DC3545; } /* Red for cancelled */
+        .order-status.diproses { color: #28A745; } /* Green for diproses */
+        .order-status.selesai { color: #1976D2; } /* Blue for selesai */
+        .order-status.siap-diambil { color: #007bff; } /* Blue for siap diambil */
+
 
         .order-item-list {
             list-style: none;
@@ -135,7 +137,6 @@
             margin-bottom: 2px;
         }
         
-        /* NEW: Style for variant display within the item name */
         .order-item-variants-display {
             display: block; /* Make it a new line */
             font-size: 11px; /* Smaller font size */
@@ -199,7 +200,7 @@
     </div>
 
     <script>
-        // --- Konfigurasi Firebase (PASTIKAN MENGGUNAKAN KREDENSIAL ASLI ANDA) ---
+        // --- Konfigurasi Firebase ---
         const firebaseConfig = {
             apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
             authDomain: "tokobuahkasir.firebaseapp.com",
@@ -216,7 +217,6 @@
         }
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const pesananCollection = null; // Ini tidak digunakan, akan dihapus di masa mendatang jika tidak diperlukan
 
         // --- Elemen HTML ---
         const orderHistoryContent = document.getElementById('orderHistoryContent');
@@ -229,6 +229,38 @@
                 currency: 'IDR',
                 minimumFractionDigits: 0
             }).format(amount);
+        }
+
+        /**
+         * Maps internal status string to display string for the buyer.
+         * @param {string} status - The internal status string from Firestore.
+         * @returns {string} The human-readable display string.
+         */
+        function getDisplayStatusForBuyer(status) {
+            switch (status) {
+                case 'Pending': return 'Baru';
+                case 'Diproses': return 'Diproses';
+                case 'SiapDiambil': return 'Siap Ambil'; // Ini perubahan utama
+                case 'Selesai': return 'Selesai';
+                case 'Dibatalkan': return 'Dibatalkan';
+                default: return status;
+            }
+        }
+
+        /**
+         * Returns the CSS class for the order status.
+         * @param {string} status - The internal status string from Firestore.
+         * @returns {string} The CSS class name.
+         */
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'siapdiambil': return 'siap-diambil'; // New class for SiapDiambil
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'cancelled'; // Using 'cancelled' for consistency with existing CSS
+                default: return ''; 
+            }
         }
 
         /**
@@ -267,7 +299,7 @@
                 .doc(userId)
                 .collection('pesanan')
                 .orderBy('waktu', 'desc')
-                .onSnapshot(querySnapshot => { // <-- PERUBAHAN DI SINI: get() diganti onSnapshot()
+                .onSnapshot(querySnapshot => {
                     orderHistoryContent.innerHTML = ''; // Clear content before rendering
                     emptyOrderState.style.display = 'none'; // Hide empty state initially
 
@@ -286,20 +318,9 @@
                             year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                         }) : 'Tanggal tidak tersedia';
 
-                        let statusClass = '';
-                        switch (order.status.toLowerCase()) {
-                            case 'pending':
-                                statusClass = 'pending';
-                                break;
-                            case 'completed':
-                                statusClass = 'completed';
-                                break;
-                            case 'cancelled':
-                                statusClass = 'cancelled';
-                                break;
-                            default:
-                                statusClass = ''; 
-                        }
+                        // Menggunakan fungsi getStatusClass dan getDisplayStatusForBuyer
+                        const statusClass = getStatusClass(order.status);
+                        const displayStatus = getDisplayStatusForBuyer(order.status);
 
                         const orderCard = document.createElement('div');
                         orderCard.classList.add('order-card');
@@ -309,7 +330,7 @@
                                 <span class="order-date">${orderDate}</span>
                             </div>
                             <div class="order-details">
-                                <p><strong>Status:</strong> <span class="order-status ${statusClass}">${order.status}</span></p>
+                                <p><strong>Status:</strong> <span class="order-status ${statusClass}">${displayStatus}</span></p>
                                 <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
                                 <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
                                 <ul class="order-item-list">
@@ -373,7 +394,7 @@
 
                 if (!user || storedRole !== 'pembeli') {
                     if (!isLoggingOut) {
-                        alert('Akses Ditolak: Anda harus login sebagai Pembeli untuk melihat riwayat pesanan.');
+                        alert('Akses Ditolak: Halaman ini hanya untuk PEMBELI.');
                     }
                     window.location.href = 'index.html'; // Arahkan kembali ke halaman login
                 } else {
