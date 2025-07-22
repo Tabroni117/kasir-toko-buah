@@ -207,33 +207,31 @@
         font-size: 13px;
         color: #555;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: grid; /* Use grid for column alignment */
+        grid-template-columns: 20px 80px 10px 1fr; /* Icon, Label, Colon, Value */
+        align-items: baseline; /* Align items vertically at their text baseline */
+        gap: 4px; /* Space between grid items */
     }
     .order-driver-info-container .driver-line {
-        display: flex;
-        align-items: baseline; /* Align items vertically at their text baseline */
-        margin-bottom: 4px;
-        gap: 8px; /* Space between icon and text elements */
-    }
-    .order-driver-info-container .driver-line:last-child {
-        margin-bottom: 0;
+        display: contents; /* Make children direct grid items */
     }
     .order-driver-info-container .driver-icon {
         color: #00C853; /* Icon color */
         font-size: 16px; /* Slightly larger icons for better visibility */
-        flex-shrink: 0; /* Prevent icon from shrinking */
+        grid-column: 1; /* Assign to first column */
+        text-align: center; /* Center icon */
     }
     .order-driver-info-container .driver-label-text {
-        flex-basis: 100px; /* Increased fixed width for the label text */
+        grid-column: 2; /* Assign to second column */
         text-align: right; /* Align label text to the right */
         font-weight: bold;
-        flex-shrink: 0; /* Prevent label text from shrinking */
     }
     .order-driver-info-container .driver-colon {
-        flex-shrink: 0; /* Prevent colon from shrinking */
-        margin-right: 4px; /* Small space after colon */
+        grid-column: 3; /* Assign to third column */
+        text-align: center; /* Center colon */
     }
     .order-driver-info-container .driver-value {
-        flex-grow: 1; /* Allow value to take remaining space */
+        grid-column: 4; /* Assign to fourth column */
         text-align: left;
     }
 
@@ -680,9 +678,24 @@
           <!-- Driver Information Section in Popup -->
           <div id="driverInfoSection" style="display:none;">
             <h4>Info Driver:</h4>
-            <div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Diantar</span><span class="driver-colon">:</span> <span id="popupDriverApp" class="driver-value">-</span></div>
-            <div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Driver</span><span class="driver-colon">:</span> <span id="popupDriverName" class="driver-value">-</span></div>
-            <div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">Telp.</span><span class="driver-colon">:</span> <span id="popupDriverPhone" class="driver-value">-</span></div>
+            <div class="driver-line">
+                <i class="fas fa-truck driver-icon"></i> 
+                <span class="driver-label-text">Diantar</span>
+                <span class="driver-colon">:</span> 
+                <span id="popupDriverApp" class="driver-value">-</span>
+            </div>
+            <div class="driver-line">
+                <i class="fas fa-user driver-icon"></i> 
+                <span class="driver-label-text">Driver</span>
+                <span class="driver-colon">:</span> 
+                <span id="popupDriverName" class="driver-value">-</span>
+            </div>
+            <div class="driver-line">
+                <i class="fas fa-phone driver-icon"></i> 
+                <span class="driver-label-text">Telp.</span>
+                <span class="driver-colon">:</span> 
+                <span id="popupDriverPhone" class="driver-value">-</span>
+            </div>
           </div>
 
           <h4>Detail Item:</h4>
@@ -964,15 +977,30 @@
           // Construct driver info for card if OnDelivery - REFINED DISPLAY
           let driverInfoCardHtml = '';
           if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
-              driverInfoCardHtml = `<div class="order-driver-info-container">`;
-              driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Diantar</span><span class="driver-colon">:</span> <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span></div>`;
-              if (order.driverName) {
-                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Driver</span><span class="driver-colon">:</span> <span class="driver-value">${order.driverName}</span></div>`;
-              }
-              if (order.driverPhone) {
-                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">Telp.</span><span class="driver-colon">:</span> <span class="driver-value">${order.driverPhone}</span></div>`;
-              }
-              driverInfoCardHtml += `</div>`;
+              driverInfoCardHtml = `
+                <div class="order-driver-info-container">
+                    <div class="driver-line">
+                        <i class="fas fa-truck driver-icon"></i> 
+                        <span class="driver-label-text">Diantar</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>
+                    </div>
+                    ${order.driverName ? `
+                    <div class="driver-line">
+                        <i class="fas fa-user driver-icon"></i> 
+                        <span class="driver-label-text">Driver</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">${order.driverName}</span>
+                    </div>` : ''}
+                    ${order.driverPhone ? `
+                    <div class="driver-line">
+                        <i class="fas fa-phone driver-icon"></i> 
+                        <span class="driver-label-text">Telp.</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">${order.driverPhone}</span>
+                    </div>` : ''}
+                </div>
+              `;
           }
 
           const orderCard = document.createElement('div');
@@ -1271,9 +1299,26 @@
                 // Updated HTML structure for popup driver info
                 driverInfoSection.innerHTML = `
                     <h4>Info Driver:</h4>
-                    <div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Diantar</span><span class="driver-colon">:</span> <span class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span></div>
-                    <div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Driver</span><span class="driver-colon">:</span> <span class="driver-value">${data.driverName || '-'}</span></div>
-                    <div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">Telp.</span><span class="driver-colon">:</span> <span class="driver-value">${data.driverPhone || '-'}</span></div>
+                    <div class="driver-line">
+                        <i class="fas fa-truck driver-icon"></i> 
+                        <span class="driver-label-text">Diantar</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span>
+                    </div>
+                    ${data.driverName ? `
+                    <div class="driver-line">
+                        <i class="fas fa-user driver-icon"></i> 
+                        <span class="driver-label-text">Driver</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">${data.driverName}</span>
+                    </div>` : ''}
+                    ${data.driverPhone ? `
+                    <div class="driver-line">
+                        <i class="fas fa-phone driver-icon"></i> 
+                        <span class="driver-label-text">Telp.</span>
+                        <span class="driver-colon">:</span> 
+                        <span class="driver-value">${data.driverPhone}</span>
+                    </div>` : ''}
                 `;
             } else {
                 driverInfoSection.style.display = 'none';
