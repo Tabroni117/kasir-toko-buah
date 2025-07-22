@@ -205,17 +205,28 @@
         font-size: 13px;
         color: #555;
     }
-    .order-driver-info-container p {
-        margin-bottom: 4px;
+    .order-driver-info-container .driver-line { /* New class for each line */
         display: flex;
-        align-items: center;
-        gap: 5px;
+        align-items: baseline; /* Align text baselines */
+        margin-bottom: 4px;
+        gap: 5px; /* Space between icon and label */
     }
-    .order-driver-info-container p:last-child {
+    .order-driver-info-container .driver-line:last-child {
         margin-bottom: 0;
+    }
+    .order-driver-info-container .driver-label {
+        flex-basis: 120px; /* Fixed width for the label part to align colons */
+        flex-shrink: 0;
+        font-weight: bold;
+        text-align: left; /* Align label text to left */
+    }
+    .order-driver-info-container .driver-value {
+        flex-grow: 1;
+        text-align: left;
     }
     .order-driver-info-container i {
         color: #00C853; /* Icon color */
+        flex-shrink: 0;
     }
 
 
@@ -919,10 +930,20 @@
           let driverInfoCardHtml = '';
           if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
               driverInfoCardHtml = `<div class="order-driver-info-container">`;
-              driverInfoCardHtml += `<p><i class="fas fa-truck"></i> <strong>Pesanan sedang diantar</strong>`;
-              if (order.driverApp) driverInfoCardHtml += `: Via <strong>${order.driverApp}</strong></p>`; // Updated line
-              if (order.driverName) driverInfoCardHtml += `<p><i class="fas fa-user"></i> <strong>Driver:</strong> ${order.driverName}</p>`;
-              if (order.driverPhone) driverInfoCardHtml += `<p><i class="fas fa-phone"></i> <strong>No Telp:</strong> ${order.driverPhone}</p>`; // Updated line
+              driverInfoCardHtml += `<div class="driver-line">`;
+              driverInfoCardHtml += `<i class="fas fa-truck"></i> <span class="driver-label">Pesanan diantar:</span> <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>`;
+              driverInfoCardHtml += `</div>`;
+
+              if (order.driverName) {
+                  driverInfoCardHtml += `<div class="driver-line">`;
+                  driverInfoCardHtml += `<i class="fas fa-user"></i> <span class="driver-label">Driver:</span> <span class="driver-value">${order.driverName}</span>`;
+                  driverInfoCardHtml += `</div>`;
+              }
+              if (order.driverPhone) {
+                  driverInfoCardHtml += `<div class="driver-line">`;
+                  driverInfoCardHtml += `<i class="fas fa-phone"></i> <span class="driver-label">No Telp:</span> <span class="driver-value">${order.driverPhone}</span>`;
+                  driverInfoCardHtml += `</div>`;
+              }
               driverInfoCardHtml += `</div>`;
           }
 
@@ -1193,7 +1214,7 @@
             // Populate Driver Info Section in Popup
             if (data.driverName || data.driverPhone || data.driverApp) {
                 driverInfoSection.style.display = 'block';
-                popupDriverApp.textContent = data.driverApp || '-'; // Updated to match order
+                popupDriverApp.textContent = data.driverApp || '-'; 
                 popupDriverName.textContent = data.driverName || '-';
                 popupDriverPhone.textContent = data.driverPhone || '-';
             } else {
