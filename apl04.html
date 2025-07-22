@@ -212,25 +212,29 @@
         display: flex;
         align-items: center; /* Align items vertically in the middle */
         margin-bottom: 4px;
-        gap: 8px; /* Added more space between icon and text */
+        gap: 8px; /* Space between icon and text elements */
     }
     .order-driver-info-container .driver-line:last-child {
         margin-bottom: 0;
     }
-    .order-driver-info-container .driver-label {
-        flex-basis: 100px; /* Fixed width for the label part to align colons */
-        flex-shrink: 0;
-        font-weight: bold;
-        text-align: left;
-    }
-    .order-driver-info-container .driver-value {
-        flex-grow: 1;
-        text-align: left;
-    }
-    .order-driver-info-container i {
+    .order-driver-info-container .driver-icon {
         color: #00C853; /* Icon color */
         font-size: 16px; /* Slightly larger icons for better visibility */
-        flex-shrink: 0;
+        flex-shrink: 0; /* Prevent icon from shrinking */
+    }
+    .order-driver-info-container .driver-label-text {
+        flex-basis: 90px; /* Fixed width for the label text */
+        text-align: right; /* Align label text to the right */
+        font-weight: bold;
+        flex-shrink: 0; /* Prevent label text from shrinking */
+    }
+    .order-driver-info-container .driver-colon {
+        flex-shrink: 0; /* Prevent colon from shrinking */
+        margin-right: 4px; /* Small space after colon */
+    }
+    .order-driver-info-container .driver-value {
+        flex-grow: 1; /* Allow value to take remaining space */
+        text-align: left;
     }
 
 
@@ -676,9 +680,9 @@
           <!-- Driver Information Section in Popup -->
           <div id="driverInfoSection" style="display:none;">
             <h4>Info Driver:</h4>
-            <div class="driver-line"><i class="fas fa-truck"></i> <span class="driver-label">Aplikasi Ojek:</span> <span id="popupDriverApp" class="driver-value">-</span></div>
-            <div class="driver-line"><i class="fas fa-user"></i> <span class="driver-label">Nama Driver:</span> <span id="popupDriverName" class="driver-value">-</span></div>
-            <div class="driver-line"><i class="fas fa-phone"></i> <span class="driver-label">No. HP Driver:</span> <span id="popupDriverPhone" class="driver-value">-</span></div>
+            <div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Aplikasi Ojek</span><span class="driver-colon">:</span> <span id="popupDriverApp" class="driver-value">-</span></div>
+            <div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Nama Driver</span><span class="driver-colon">:</span> <span id="popupDriverName" class="driver-value">-</span></div>
+            <div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">No. HP Driver</span><span class="driver-colon">:</span> <span id="popupDriverPhone" class="driver-value">-</span></div>
           </div>
 
           <h4>Detail Item:</h4>
@@ -961,12 +965,12 @@
           let driverInfoCardHtml = '';
           if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
               driverInfoCardHtml = `<div class="order-driver-info-container">`;
-              driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-truck"></i> <span class="driver-label">Pesanan diantar:</span> <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span></div>`;
+              driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Pesanan diantar</span><span class="driver-colon">:</span> <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span></div>`;
               if (order.driverName) {
-                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-user"></i> <span class="driver-label">Driver:</span> <span class="driver-value">${order.driverName}</span></div>`;
+                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Driver</span><span class="driver-colon">:</span> <span class="driver-value">${order.driverName}</span></div>`;
               }
               if (order.driverPhone) {
-                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-phone"></i> <span class="driver-label">No Telp:</span> <span class="driver-value">${order.driverPhone}</span></div>`;
+                  driverInfoCardHtml += `<div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">No Telp</span><span class="driver-colon">:</span> <span class="driver-value">${order.driverPhone}</span></div>`;
               }
               driverInfoCardHtml += `</div>`;
           }
@@ -1264,9 +1268,13 @@
             // Populate Driver Info Section in Popup
             if (data.driverName || data.driverPhone || data.driverApp) {
                 driverInfoSection.style.display = 'block';
-                popupDriverApp.textContent = data.driverApp || '-'; 
-                popupDriverName.textContent = data.driverName || '-';
-                popupDriverPhone.textContent = data.driverPhone || '-';
+                // Updated HTML structure for popup driver info
+                driverInfoSection.innerHTML = `
+                    <h4>Info Driver:</h4>
+                    <div class="driver-line"><i class="fas fa-truck driver-icon"></i> <span class="driver-label-text">Aplikasi Ojek</span><span class="driver-colon">:</span> <span class="driver-value">${data.driverApp || '-'}</span></div>
+                    <div class="driver-line"><i class="fas fa-user driver-icon"></i> <span class="driver-label-text">Nama Driver</span><span class="driver-colon">:</span> <span class="driver-value">${data.driverName || '-'}</span></div>
+                    <div class="driver-line"><i class="fas fa-phone driver-icon"></i> <span class="driver-label-text">No. HP Driver</span><span class="driver-colon">:</span> <span class="driver-value">${data.driverPhone || '-'}</span></div>
+                `;
             } else {
                 driverInfoSection.style.display = 'none';
             }
