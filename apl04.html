@@ -205,33 +205,56 @@
         border-radius: 8px;
         font-size: 13px;
         color: #555;
-        display: grid; /* Use grid for column alignment */
-        /* Auto for icon, auto for label (content-based), 10px for colon, 1fr for value */
-        grid-template-columns: auto auto 10px 1fr; 
-        align-items: baseline; /* Align items vertically at their text baseline */
-        gap: 4px; /* Space between grid items */
+        display: flex; /* Use flex for layout */
+        align-items: center; /* Align items vertically */
+        gap: 8px; /* Space between items */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
     }
     .order-driver-info-container .driver-line {
-        display: contents; /* Make children direct grid items */
+        display: flex; /* Inner flex for icon, label, colon, value */
+        align-items: baseline;
+        gap: 4px;
+        white-space: nowrap; /* Prevent wrapping within a single line */
     }
     .order-driver-info-container .driver-icon {
         color: #777; /* Changed icon color to a neutral gray */
         font-size: 16px; /* Slightly larger icons for better visibility */
-        grid-column: 1; /* Assign to first column */
-        text-align: left; /* Align icon to the left */
+        flex-shrink: 0;
     }
     .order-driver-info-container .driver-label-text {
-        grid-column: 2; /* Assign to second column */
-        text-align: left; /* Align label text to the left */
         font-weight: bold;
+        flex-shrink: 0;
     }
     .order-driver-info-container .driver-colon {
-        grid-column: 3; /* Assign to third column */
-        text-align: left; /* Align colon to the left */
+        flex-shrink: 0;
     }
     .order-driver-info-container .driver-value {
-        grid-column: 4; /* Assign to fourth column */
-        text-align: left;
+        flex-grow: 1;
+    }
+
+    /* NEW: Delivery Car Animation */
+    .delivery-car-animation {
+        width: 40px; /* Small size for the car */
+        height: 20px;
+        overflow: hidden; /* Hide parts of the car when it moves off-screen */
+        position: relative;
+        margin-left: 10px; /* Space from driver info */
+        flex-shrink: 0; /* Prevent it from shrinking */
+    }
+
+    .delivery-car-animation .fas.fa-truck {
+        font-size: 24px; /* Size of the truck icon */
+        color: #00C853; /* Green color for the truck */
+        position: absolute;
+        left: -30px; /* Start off-screen to the left */
+        animation: drive 4s linear infinite; /* Animation properties */
+    }
+
+    @keyframes drive {
+        0% { transform: translateX(0); opacity: 1; }
+        50% { transform: translateX(calc(100% + 60px)); opacity: 1; } /* Move across and slightly beyond its container */
+        51% { opacity: 0; } /* Disappear quickly */
+        100% { transform: translateX(0); opacity: 1; } /* Reset position, then reappear */
     }
 
 
@@ -677,23 +700,33 @@
           <!-- Driver Information Section in Popup -->
           <div id="driverInfoSection" style="display:none;">
             <h4>Info Driver:</h4>
-            <div class="driver-line">
-                <i class="fas fa-truck driver-icon"></i> 
-                <span class="driver-label-text">Diantar</span>
-                <span class="driver-colon">:</span> 
-                <span id="popupDriverApp" class="driver-value">-</span>
+            <div class="order-driver-info-container">
+                <div class="driver-line">
+                    <i class="fas fa-truck driver-icon"></i> 
+                    <span class="driver-label-text">Diantar</span>
+                    <span class="driver-colon">:</span> 
+                    <span id="popupDriverApp" class="driver-value">-</span>
+                </div>
+                ${/* NEW: Animasi Mobil Paket Berjalan */''}
+                <div class="delivery-car-animation">
+                    <i class="fas fa-truck"></i>
+                </div>
             </div>
-            <div class="driver-line">
-                <i class="fas fa-user driver-icon"></i> 
-                <span class="driver-label-text">Driver</span>
-                <span class="driver-colon">:</span> 
-                <span id="popupDriverName" class="driver-value">-</span>
+            <div class="order-driver-info-container">
+                <div class="driver-line">
+                    <i class="fas fa-user driver-icon"></i> 
+                    <span class="driver-label-text">Driver</span>
+                    <span class="driver-colon">:</span> 
+                    <span id="popupDriverName" class="driver-value">-</span>
+                </div>
             </div>
-            <div class="driver-line">
-                <i class="fas fa-phone driver-icon"></i> 
-                <span class="driver-label-text">Telp.</span>
-                <span class="driver-colon">:</span> 
-                <span id="popupDriverPhone" class="driver-value">-</span>
+            <div class="order-driver-info-container">
+                <div class="driver-line">
+                    <i class="fas fa-phone driver-icon"></i> 
+                    <span class="driver-label-text">Telp.</span>
+                    <span class="driver-colon">:</span> 
+                    <span id="popupDriverPhone" class="driver-value">-</span>
+                </div>
             </div>
           </div>
 
@@ -984,21 +1017,29 @@
                         <span class="driver-colon">:</span> 
                         <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>
                     </div>
-                    ${order.driverName ? `
+                    ${/* NEW: Animasi Mobil Paket Berjalan */''}
+                    <div class="delivery-car-animation">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                </div>
+                ${order.driverName ? `
+                <div class="order-driver-info-container">
                     <div class="driver-line">
                         <i class="fas fa-user driver-icon"></i> 
                         <span class="driver-label-text">Driver</span>
                         <span class="driver-colon">:</span> 
                         <span class="driver-value">${order.driverName}</span>
-                    </div>` : ''}
-                    ${order.driverPhone ? `
+                    </div>
+                </div>` : ''}
+                ${order.driverPhone ? `
+                <div class="order-driver-info-container">
                     <div class="driver-line">
                         <i class="fas fa-phone driver-icon"></i> 
                         <span class="driver-label-text">Telp.</span>
                         <span class="driver-colon">:</span> 
                         <span class="driver-value">${order.driverPhone}</span>
-                    </div>` : ''}
-                </div>
+                    </div>
+                </div>` : ''}
               `;
           }
 
@@ -1293,30 +1334,39 @@
             popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
 
             // Populate Driver Info Section in Popup
-            if (data.driverName || data.driverPhone || data.driverApp) {
+            if (currentStatus === 'OnDelivery' && (data.driverName || data.driverPhone || data.driverApp)) {
                 driverInfoSection.style.display = 'block';
                 // Updated HTML structure for popup driver info
                 driverInfoSection.innerHTML = `
                     <h4>Info Driver:</h4>
-                    <div class="driver-line">
-                        <i class="fas fa-truck driver-icon"></i> 
-                        <span class="driver-label-text">Diantar</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span>
+                    <div class="order-driver-info-container">
+                        <div class="driver-line">
+                            <i class="fas fa-truck driver-icon"></i> 
+                            <span class="driver-label-text">Diantar</span>
+                            <span class="driver-colon">:</span> 
+                            <span id="popupDriverApp" class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span>
+                        </div>
+                        <div class="delivery-car-animation">
+                            <i class="fas fa-truck"></i>
+                        </div>
                     </div>
                     ${data.driverName ? `
-                    <div class="driver-line">
-                        <i class="fas fa-user driver-icon"></i> 
-                        <span class="driver-label-text">Driver</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">${data.driverName}</span>
+                    <div class="order-driver-info-container">
+                        <div class="driver-line">
+                            <i class="fas fa-user driver-icon"></i> 
+                            <span class="driver-label-text">Driver</span>
+                            <span class="driver-colon">:</span> 
+                            <span id="popupDriverName" class="driver-value">${data.driverName}</span>
+                        </div>
                     </div>` : ''}
                     ${data.driverPhone ? `
-                    <div class="driver-line">
-                        <i class="fas fa-phone driver-icon"></i> 
-                        <span class="driver-label-text">Telp.</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">${data.driverPhone}</span>
+                    <div class="order-driver-info-container">
+                        <div class="driver-line">
+                            <i class="fas fa-phone driver-icon"></i> 
+                            <span class="driver-label-text">Telp.</span>
+                            <span class="driver-colon">:</span> 
+                            <span id="popupDriverPhone" class="driver-value">${data.driverPhone}</span>
+                        </div>
                     </div>` : ''}
                 `;
             } else {
