@@ -575,6 +575,33 @@
     #driverDetailsModal .button-group .btn-submit:hover {
         background-color: #0056b3; /* Darker Blue */
     }
+
+    /* Styles for clickable phone number */
+    .phone-link-group {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between number and icons */
+    }
+    .phone-link-group a {
+        color: #007bff; /* Blue for links */
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.2s;
+    }
+    .phone-link-group a:hover {
+        color: #0056b3; /* Darker blue on hover */
+    }
+    .phone-link-group .icon-link {
+        font-size: 18px;
+        color: #28a745; /* Green for WhatsApp */
+        transition: color 0.2s;
+    }
+    .phone-link-group .icon-link.fa-phone {
+        color: #007bff; /* Blue for call */
+    }
+    .phone-link-group .icon-link:hover {
+        opacity: 0.8;
+    }
   </style>
 </head>
 <body>
@@ -1190,7 +1217,33 @@
 
             popupNama.textContent = customer.fullName || "Pelanggan";
             popupOrderId.textContent = orderId;
-            popupNomor.textContent = customer.phoneNumber || "-";
+            // START: MODIFIKASI UNTUK NOMOR HP KLIKABLE
+            const phoneNumber = customer.phoneNumber || "-";
+            let formattedPhoneNumber = phoneNumber.replace(/\D/g, ''); // Hapus semua non-digit
+            if (formattedPhoneNumber.startsWith('08')) {
+                formattedPhoneNumber = '62' + formattedPhoneNumber.substring(1); // Ganti 08 dengan 628
+            } else if (!formattedPhoneNumber.startsWith('62') && formattedPhoneNumber.length > 5) {
+                // Jika tidak dimulai dengan 62 dan terlihat seperti nomor telepon, tambahkan 62
+                formattedPhoneNumber = '62' + formattedPhoneNumber;
+            }
+            
+            if (phoneNumber !== "-") {
+                popupNomor.innerHTML = `
+                    <div class="phone-link-group">
+                        <span>${phoneNumber}</span>
+                        <a href="tel:${formattedPhoneNumber}" class="icon-link" title="Telepon">
+                            <i class="fas fa-phone"></i>
+                        </a>
+                        <a href="https://wa.me/${formattedPhoneNumber}" target="_blank" class="icon-link" title="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                `;
+            } else {
+                popupNomor.textContent = phoneNumber; // Jika tidak ada nomor, tampilkan '-' saja
+            }
+            // END: MODIFIKASI UNTUK NOMOR HP KLIKABLE
+
             popupAlamat.textContent = customer.address || "-";
             popupTotal.textContent = formatRupiah(data.totalAmount || 0);
             popupMetodeBayar.textContent = data.paymentMethod || "-";
