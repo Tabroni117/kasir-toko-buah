@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Riwayat Pesanan - Rujak Buah Indonesia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
+        /* General Styling */
         * {
             margin: 0;
             padding: 0;
@@ -100,6 +101,7 @@
         .order-status.diproses { color: #28A745; } /* Green for diproses */
         .order-status.selesai { color: #1976D2; } /* Blue for selesai */
         .order-status.siap-diambil { color: #007bff; } /* Blue for siap diambil */
+        .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
 
 
         .order-item-list {
@@ -181,6 +183,74 @@
             color: #ccc;
             margin-bottom: 20px;
         }
+
+        /* Styles for driver info display */
+        .order-driver-info-container {
+            margin-top: 8px;
+            margin-bottom: 10px; 
+            padding: 0; 
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            display: grid; 
+            grid-template-columns: auto auto 8px 1fr; 
+            align-items: baseline; 
+            gap: 2px; 
+            grid-auto-rows: min-content; 
+        }
+        .order-driver-info-container .driver-line {
+            display: contents; 
+        }
+        .order-driver-info-container .driver-icon {
+            color: #777; 
+            font-size: 12px; 
+            grid-column: 1; 
+            text-align: left; 
+            padding-bottom: 0px; 
+        }
+        .order-driver-info-container .driver-label-text {
+            grid-column: 2; 
+            text-align: left; 
+            font-weight: bold;
+            padding-bottom: 0px; 
+        }
+        .order-driver-info-container .driver-colon {
+            grid-column: 3; 
+            text-align: left; 
+            padding-bottom: 0px; 
+        }
+        .order-driver-info-container .driver-value {
+            grid-column: 4; 
+            text-align: left;
+            padding-bottom: 0px; 
+        }
+
+        /* Styles for clickable phone number */
+        .phone-link-group {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between number and icons */
+        }
+        .phone-link-group a {
+            color: #007bff; /* Blue for links */
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .phone-link-group a:hover {
+            color: #0056b3; /* Darker blue on hover */
+        }
+        .phone-link-group .icon-link {
+            font-size: 18px;
+            color: #28a745; /* Green for WhatsApp */
+            transition: color 0.2s;
+        }
+        .phone-link-group .icon-link.fa-phone {
+            color: #007bff; /* Blue for call */
+        }
+        .phone-link-group .icon-link:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -239,9 +309,10 @@
         function getDisplayStatusForBuyer(status) {
             switch (status) {
                 case 'Pending': return 'Pending';
-                case 'Diproses': return 'Processing';
-                case 'SiapDiambil': return 'Ready'; // Ini perubahan utama
-                case 'Selesai': return 'On Delivery';
+                case 'Diproses': return 'Diproses';
+                case 'SiapDiambil': return 'Siap Diambil'; 
+                case 'OnDelivery': return 'Dalam Pengiriman'; // New status for buyer
+                case 'Selesai': return 'Selesai';
                 case 'Dibatalkan': return 'Dibatalkan';
                 default: return status;
             }
@@ -256,9 +327,10 @@
             switch (status?.toLowerCase()) {
                 case 'pending': return 'pending';
                 case 'diproses': return 'diproses';
-                case 'siapdiambil': return 'siap-diambil'; // New class for SiapDiambil
+                case 'siapdiambil': return 'siap-diambil'; 
+                case 'ondelivery': return 'on-delivery'; // New class for On Delivery
                 case 'selesai': return 'selesai';
-                case 'dibatalkan': return 'cancelled'; // Using 'cancelled' for consistency with existing CSS
+                case 'dibatalkan': return 'cancelled'; 
                 default: return ''; 
             }
         }
@@ -322,6 +394,50 @@
                         const statusClass = getStatusClass(order.status);
                         const displayStatus = getDisplayStatusForBuyer(order.status);
 
+                        // Construct driver info for card if OnDelivery
+                        let driverInfoCardHtml = '';
+                        if (order.status === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
+                            let formattedPhoneNumber = order.driverPhone ? order.driverPhone.replace(/\D/g, '') : '';
+                            if (formattedPhoneNumber.startsWith('08')) {
+                                formattedPhoneNumber = '62' + formattedPhoneNumber.substring(1);
+                            } else if (!formattedPhoneNumber.startsWith('62') && formattedPhoneNumber.length > 5) {
+                                formattedPhoneNumber = '62' + formattedPhoneNumber;
+                            }
+
+                            driverInfoCardHtml = `
+                                <div class="order-driver-info-container">
+                                    <div class="driver-line">
+                                        <i class="fas fa-truck driver-icon"></i> 
+                                        <span class="driver-label-text">Diantar</span>
+                                        <span class="driver-colon">:</span> 
+                                        <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>
+                                    </div>
+                                    ${order.driverName ? `
+                                    <div class="driver-line">
+                                        <i class="fas fa-user driver-icon"></i> 
+                                        <span class="driver-label-text">Driver</span>
+                                        <span class="driver-colon">:</span> 
+                                        <span class="driver-value">${order.driverName}</span>
+                                    </div>` : ''}
+                                    ${order.driverPhone ? `
+                                    <div class="driver-line">
+                                        <i class="fas fa-phone driver-icon"></i> 
+                                        <span class="driver-label-text">Telp.</span>
+                                        <span class="driver-colon">:</span> 
+                                        <span class="driver-value phone-link-group">
+                                            <span>${order.driverPhone}</span>
+                                            <a href="tel:${formattedPhoneNumber}" class="icon-link fa-phone" title="Telepon">
+                                                <i class="fas fa-phone"></i>
+                                            </a>
+                                            <a href="https://wa.me/${formattedPhoneNumber}" target="_blank" class="icon-link" title="WhatsApp">
+                                                <i class="fab fa-whatsapp"></i>
+                                            </a>
+                                        </span>
+                                    </div>` : ''}
+                                </div>
+                            `;
+                        }
+
                         const orderCard = document.createElement('div');
                         orderCard.classList.add('order-card');
                         orderCard.innerHTML = `
@@ -331,6 +447,7 @@
                             </div>
                             <div class="order-details">
                                 <p><strong>Status:</strong> <span class="order-status ${statusClass}">${displayStatus}</span></p>
+                                ${driverInfoCardHtml} <!-- Display driver info if available and OnDelivery -->
                                 <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
                                 <p><strong>Alamat Pengiriman:</strong> ${order.customer.address}</p>
                                 <ul class="order-item-list">
@@ -378,9 +495,8 @@
             // Logic untuk reload otomatis sekali per sesi
             if (!sessionStorage.getItem('hasReloadedOrderHistory')) {
                 sessionStorage.setItem('hasReloadedOrderHistory', 'true');
-                location.reload();
+                // location.reload(); // Removed automatic reload as it can be disruptive
             } else {
-                // Hapus setelah reload agar jika user membuka lagi secara manual, akan di-reload lagi
                 sessionStorage.removeItem('hasReloadedOrderHistory');
             }
 
