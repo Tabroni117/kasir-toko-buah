@@ -577,13 +577,12 @@
                 <input type="date" id="filterDate" class="form-group-input">
             </div>
             <div class="filter-buttons">
-                <button class="filter-btn active" data-status="All">Semua</button>
-                <button class="filter-btn" data-status="Pending">Baru</button>
+                <button class="filter-btn active" data-status="Pending">Baru</button>
                 <button class="filter-btn" data-status="Diproses">Diproses</button>
                 <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
                 <button class="filter-btn" data-status="OnDelivery">On Delivery</button>
                 <button class="filter-btn" data-status="Selesai">Selesai</button>
-                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+                <!-- Tombol "Dibatalkan" dihapus -->
             </div>
             <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
         </div>
@@ -747,7 +746,7 @@
         const driverNameInput = document.getElementById('driverNameInput');
         const driverPhoneInput = document.getElementById('driverPhoneInput');
         const driverAppSelect = document.getElementById('driverAppSelect');
-        const saveDriverDetailsBtn = document.getElementById('saveDriverDetailsBtn'); // NEW
+        const saveDriverDetailsBtn = document.getElementById('saveDriverDetailsBtn');
 
         // Custom Modals
         const customConfirmModal = document.getElementById('customConfirmModal');
@@ -762,7 +761,7 @@
 
 
         let currentOrderIdForDetail = null;
-        let activeFilterStatus = 'All';
+        let activeFilterStatus = 'Pending'; // Default filter status is now 'Pending'
         let allOrdersData = [];
         let unsubscribeOrders = null;
 
@@ -1143,7 +1142,7 @@
             }
 
             // Apply status filter (client-side)
-            if (activeFilterStatus !== 'All') {
+            if (activeFilterStatus !== 'All') { // 'All' is no longer a button, but keep logic for safety
                 docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
             }
 
@@ -1345,9 +1344,10 @@
         resetFiltersBtn.addEventListener('click', () => {
             searchQueryInput.value = '';
             filterDateInput.value = '';
-            activeFilterStatus = 'All';
+            activeFilterStatus = 'Pending'; // Reset to 'Pending' as default
             filterButtons.forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.filter-btn[data-status="All"]').classList.add('active');
+            // Set 'Baru' (Pending) button as active
+            document.querySelector('.filter-btn[data-status="Pending"]').classList.add('active');
             applyFiltersAndSearch(); // Apply reset filters
         });
 
@@ -1361,6 +1361,8 @@
                 if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
                 window.location.href = 'index.html'; // Redirect to login
             } else {
+                // Set default active filter button on initial load
+                document.querySelector('.filter-btn[data-status="Pending"]').classList.add('active');
                 loadAllOrders(); // Start real-time listener on successful authentication
             }
         });
