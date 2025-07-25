@@ -1,1450 +1,1560 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Riwayat Semua Pesanan - Rujak Buah Indonesia</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Penjual - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Firebase SDK v9 Compatibility - PENTING: Gunakan versi compat ini -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+        }
+        .container-wrapper {
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+        /* Header */
+        .header {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title {
+            flex-grow: 1;
+            text-align: center;
+        }
+        .header .notification-icon {
+            font-size: 24px;
+            cursor: pointer;
+            margin-right: 15px;
+            position: relative;
+        }
+        .header .notification-icon.berkedip-kuat {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
 
-  <style>
-    /* General Styling */
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-    body { background: #f9f9f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; align-items: center; }
-    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; width: 100%; }
+        /* Dashboard Summary */
+        .dashboard-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px 20px;
+            background-color: #e8f5e9; /* Light green background */
+            border-bottom: 1px solid #c8e6c9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .summary-card h4 {
+            margin: 0 0 5px;
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+        .summary-card p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
 
-    /* Header */
-    .header-detail {
-      background: linear-gradient(135deg, #00C853, #64DD17);
-      color: white; padding: 12px 16px;
-      display: flex; align-items: center;
-      position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
-    .header-title { font-size: 18px; font-weight: bold; }
+        /* Filter Buttons */
+        .filter-buttons {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 15px;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 60px; /* Below header */
+            z-index: 90;
+        }
+        .filter-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+            flex-grow: 1;
+            margin: 0 5px;
+            white-space: nowrap;
+        }
+        .filter-btn:first-child { margin-left: 0; }
+        .filter-btn:last-child { margin-right: 0; }
+        .filter-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .filter-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
 
-    /* Filter and Search Section */
-    .filter-search-section {
-        padding: 15px 16px 10px;
-        background-color: #fff;
-        border-bottom: 1px solid #eee;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        position: sticky;
-        top: 50px; /* Below header */
-        z-index: 90;
-    }
-    .form-group {
-        margin-bottom: 10px;
-    }
-    .form-group label {
-        display: block;
-        font-size: 13px;
-        color: #555;
-        margin-bottom: 5px;
-        font-weight: 500;
-    }
-    .form-group-input {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-    .filter-buttons {
-        display: flex;
-        justify-content: space-around;
-        padding-top: 5px;
-        padding-bottom: 5px;
-    }
-    .filter-btn {
-        background-color: #f0f0f0;
-        border: 1px solid #ddd;
-        border-radius: 20px;
-        padding: 8px 12px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: #555;
-        flex-grow: 1;
-        margin: 0 4px;
-        white-space: nowrap;
-    }
-    .filter-btn:first-child { margin-left: 0; }
-    .filter-btn:last-child { margin-right: 0; }
-    .filter-btn.active {
-        background-color: #00C853;
-        color: white;
-        border-color: #00C853;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .filter-btn:hover:not(.active) {
-        background-color: #e0e0e0;
-    }
-    .btn-reset {
-        background-color: #f0f0f0;
-        color: #555;
-        border: 1px solid #ddd;
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        width: 100%;
-    }
-    .btn-reset:hover {
-        background-color: #e0e0e0;
-    }
-
-    /* Styles for action buttons within order cards */
-    .order-card-actions {
-        display: flex;
-        justify-content: flex-end; /* Align buttons to the right */
-        gap: 8px; /* Space between buttons */
-        margin-top: 10px; /* Space from content above */
-    }
-    .order-card-actions .action-btn {
-        padding: 8px 12px;
-        border: 1px solid;
-        border-radius: 20px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        white-space: nowrap;
-    }
-    .order-card-actions .action-btn.terima {
-        background-color: #28A745; /* Green */
-        border-color: #28A745;
-    }
-    .order-card-actions .action-btn.terima:hover {
-        background-color: #218838; /* Darker Green */
-    }
-    .order-card-actions .action-btn.tolak {
-        background-color: #DC3545; /* Red */
-        border-color: #DC3545;
-    }
-    .order-card-actions .action-btn.tolak:hover {
-        background-color: #C82333; /* Darker Red */
-    }
-    .order-card-actions .action-btn.siap-diambil { 
-        background-color: #007bff; /* Blue */
-        border-color: #007bff;
-    }
-    .order-card-actions .action-btn.siap-diambil:hover {
-        background-color: #0056b3; /* Darker Blue */
-    }
-    .order-card-actions .action-btn.pick-up { /* New style for "Pick Up" button */
-        background-color: #FFC107; /* Amber */
-        border-color: #FFC107;
-        color: #333;
-    }
-    .order-card-actions .action-btn.pick-up:hover {
-        background-color: #FFA000; /* Darker Amber */
-    }
-    .order-card-actions .action-btn.selesai {
-        background-color: #6f42c1; /* Purple */
-        border-color: #6f42c1;
-    }
-    .order-card-actions .action-btn.selesai:hover {
-        background-color: #5a2d9c; /* Darker Purple */
-    }
+        /* Order List */
+        #daftarPesanan {
+            padding: 15px 20px;
+            flex-grow: 1;
+            overflow-y: auto; /* Enable scrolling for order list */
+            -webkit-overflow-scrolling: touch;
+        }
+        .order-item-upgrade {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .order-item-upgrade:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .order-row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+        .customer {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .customer .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #FFC107; /* Amber */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .customer .info {
+            flex-grow: 1;
+            min-width: 0; /* Allow text truncation */
+        }
+        .customer .name {
+            font-weight: bold;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .customer .phone {
+            font-size: 12px;
+            color: #777;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .meta {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .meta .total {
+            font-weight: bold;
+            font-size: 16px;
+            color: #4CAF50;
+            margin-bottom: 3px;
+        }
+        .meta .status {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status.pending { background-color: #ffe0b2; color: #fb8c00; } /* Orange */
+        .status.diproses { background-color: #c8e6c9; color: #43A047; } /* Green */
+        .status.selesai { background-color: #bbdefb; color: #1976D2; } /* Blue */
+        .status.dibatalkan { background-color: #ffcdd2; color: #e53935; } /* Red */
+        .status.siapdiambil { background-color: #ADD8E6; color: #00008B; } /* LightBlue for Siap Diambil */
+        .status.ondelivery { background-color: #FFECB3; color: #FF8F00; } /* Amber for On Delivery */
 
 
-    /* Order List */
-    .order-history-content { padding: 16px; }
-    .order-card {
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      margin-bottom: 15px; padding: 15px;
-      border-left: 5px solid #00C853;
-      /* cursor: pointer; */ /* Removed cursor pointer for interactivity */
-      transition: transform 0.2s, box-shadow 0.2s; /* Add transition for hover effect */
-    }
-    .order-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+        .order-row-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .order-row-bottom .time {
+            font-size: 12px;
+            color: #777;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .order-row-bottom .items {
+            font-size: 13px;
+            color: #555;
+            border-top: 1px dashed #eee;
+            padding-top: 8px;
+        }
+        .order-row-bottom .items div {
+            margin-bottom: 3px;
+        }
+        .order-row-bottom .items div:last-child {
+            margin-bottom: 0;
+        }
 
-    .order-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px; padding-bottom: 10px;
-      border-bottom: 1px dashed #eee;
-    }
+        /* Loading Spinner */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #4CAF50;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-    .order-id { font-weight: bold; font-size: 14px; color: #555; }
-    .order-date { font-size: 13px; color: #777; }
-    .order-status { font-weight: bold; font-size: 15px; }
-    .order-status.pending { color: #FFC107; }
-    .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
-    .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
-    .order-status.dibatalkan { color: #DC3545; }
-    .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
-    .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
-    
-    /* Styles for driver info display */
-    .order-driver-info-container {
-        margin-top: 8px;
-        margin-bottom: 10px; 
-        padding: 0; 
-        border-radius: 8px;
-        font-size: 13px;
-        color: #555;
-        display: grid; 
-        grid-template-columns: auto auto 8px 1fr; /* Removed the last column for animation */
-        align-items: baseline; 
-        gap: 2px; 
-        grid-auto-rows: min-content; 
-    }
-    .order-driver-info-container .driver-line {
-        display: contents; 
-    }
-    .order-driver-info-container .driver-icon {
-        color: #777; 
-        font-size: 12px; 
-        grid-column: 1; 
-        text-align: left; 
-        padding-bottom: 0px; 
-    }
-    .order-driver-info-container .driver-label-text {
-        grid-column: 2; 
-        text-align: left; 
-        font-weight: bold;
-        padding-bottom: 0px; 
-    }
-    .order-driver-info-container .driver-colon {
-        grid-column: 3; 
-        text-align: left; 
-        padding-bottom: 0px; 
-    }
-    .order-driver-info-container .driver-value {
-        grid-column: 4; 
-        text-align: left;
-        padding-bottom: 0px; 
-    }
+        /* Notification Modal */
+        #notificationModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #notificationModal.show-notification {
+            display: flex;
+            opacity: 1;
+        }
+        #notificationModalContent {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 320px;
+            width: 90%;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+        }
+        @keyframes slideIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .close-btn-notif {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+        }
+        #notificationModalContent h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+        #notificationModalContent p {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn-action-notif {
+            background-color: #FFC107;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn-action-notif:hover {
+            background-color: #FFA000;
+        }
 
-    /* Removed .delivery-car-animation and @keyframes drive */
+        /* Popup Detail */
+        #popupDetail {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #popupDetail > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #popupDetail h3 {
+            margin-top: 0;
+            color: #4CAF50;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        #popupDetail p {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        #popupDetail p strong {
+            color: #555;
+        }
+        #popupDetail .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+        }
+        #popupDetail .status {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 13px;
+        }
+        .status-dropdown {
+            padding: 5px 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        #popupDetail h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #4CAF50;
+            font-size: 16px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+        #popupItems div {
+            background-color: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+        #popupDetail button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #popupDetail button:hover {
+            background-color: #388E3C;
+        }
 
-    .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
-    .order-item { 
-      display: flex; 
-      align-items: center; 
-      margin-bottom: 10px; 
-      color: #444; 
-      gap: 10px; 
-      font-size: 14px;
-    }
+        /* NEW: Driver Info Section in Popup Detail */
+        .driver-info-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+            display: none; /* Hidden by default, shown when status is OnDelivery */
+        }
+        .driver-info-section label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .driver-info-section input,
+        .driver-info-section select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
 
-    .order-item-image {
-      width: 50px; 
-      height: 50px;
-      object-fit: cover;
-      border-radius: 5px;
-      flex-shrink: 0; 
-      background-color: #eee; 
-    }
+        /* Navigation Bar */
+        .app-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background-color: #fff;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #777;
+            font-size: 12px;
+            transition: color 0.3s;
+            padding: 5px 0;
+            flex-grow: 1;
+        }
+        .nav-btn .fas {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .nav-btn.active {
+            color: #4CAF50;
+        }
+        .nav-btn:hover {
+            color: #8BC34A;
+        }
+        .nav-btn.berkedip-kuat {
+            animation: pulse 1s infinite;
+        }
 
-    .order-item-details {
-      flex-grow: 1; 
-      display: flex;
-      flex-direction: column;
-    }
+        /* Modal Verifikasi Password */
+        #modalVerifikasi {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #modalVerifikasi > div {
+            background:white;
+            padding:20px;
+            border-radius:8px;
+            width: calc(100% - 40px);
+            max-width:300px;
+            box-shadow:0 0 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        #modalVerifikasi h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        #modalVerifikasi p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        #modalVerifikasi input[type="password"] {
+            width: calc(100% - 20px);
+            padding:8px;
+            margin-top:10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #modalVerifikasi .button-group-modal {
+            margin-top:15px;
+            text-align:right;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        #modalVerifikasi .button-group-modal button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background-color 0.2s;
+        }
+        #modalVerifikasi .button-group-modal button:first-child {
+            background-color: #ccc;
+            color: #333;
+        }
+        #modalVerifikasi .button-group-modal button:first-child:hover {
+            background-color: #bbb;
+        }
+        #modalVerifikasi .button-group-modal button:last-child {
+            background-color: #f44336; /* Red for delete */
+            color: white;
+        }
+        #modalVerifikasi .button-group-modal button:last-child:hover {
+            background-color: #d32f2f;
+        }
 
-    .order-item-name { 
-      font-weight: 500;
-      margin-bottom: 2px;
-    }
-    /* Style for variant display within the item name */
-    .order-item-variants-display {
-        display: block; /* Make it a new line */
-        font-size: 11px; /* Smaller font size */
-        color: #999; /* Lighter color */
-        margin-top: 2px;
-    }
-    .order-item-quantity-price {
-      font-size: 12px;
-      color: #777;
-    }
-    .order-item-total {
-      font-weight: bold;
-      white-space: nowrap; 
-      margin-left: auto; 
-    }
+        /* Filter and Search Section */
+        .filter-search-section {
+            padding: 15px 20px 10px;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 110px; /* Below header and dashboard summary */
+            z-index: 90;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .btn-reset {
+            background-color: #f0f0f0;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .btn-reset:hover {
+            background-color: #e0e0e0;
+        }
 
-    .order-summary-footer {
-      display: flex; justify-content: space-between;
-      padding-top: 10px; border-top: 1px solid #eee;
-      margin-top: 10px;
-    }
-
-    .order-total-amount { font-weight: bold; font-size: 16px; color: #00C853; }
-
-    .empty-state {
-      text-align: center; padding: 50px 20px; color: #777; font-size: 16px;
-    }
-    .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 20px; }
-
-    /* Loading Spinner */
-    #loadingSpinner {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.8);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        font-size: 24px;
-        color: #00C853;
-    }
-    .spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-left-color: #00C853;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* Popup Detail */
-    /* #popupDetail {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-    #popupDetail > div {
-        background-color: white;
-        padding: 25px;
-        border-radius: 10px;
-        max-width: 400px;
-        width: 100%;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        position: relative;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-    #popupDetail h3 {
-        margin-top: 0;
-        color: #00C853;
-        font-size: 20px;
-        margin-bottom: 15px;
-    }
-    #popupDetail p {
-        margin-bottom: 8px;
-        font-size: 14px;
-        line-height: 1.4;
-    }
-    #popupDetail p strong {
-        color: #555;
-    }
-    #popupDetail .close-button {
-        position: absolute;
-        top: 10px;
-        right: 15px;
-        font-size: 24px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #777;
-    }
-    #popupDetail .status-dropdown {
-        padding: 5px 8px;
-        border-radius: 5px;
-        border: 1px solid #ddd;
-        font-size: 13px;
-    }
-    #popupDetail h4 {
-        margin-top: 20px;
-        margin-bottom: 10px;
-        color: #00C853;
-        font-size: 16px;
-        border-bottom: 1px dashed #eee;
-        padding-bottom: 5px;
-    }
-    #popupItems div {
-        background-color: #f0f0f0;
-        padding: 8px;
-        border-radius: 5px;
-        margin-bottom: 5px;
-        font-size: 13px;
-        color: #333;
-    }
-    #popupDetail button.popup-close-btn { 
-        background-color: #00C853;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        margin-top: 20px;
-        font-weight: bold;
-        transition: background-color 0.2s;
-    }
-    #popupDetail button.popup-close-btn:hover {
-        background-color: #388E3C;
-    } */
-
-    /* Custom Confirmation Modal */
-    #customConfirmModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        z-index: 9998;
-        justify-content: center;
-        align-items: center;
-    }
-    #customConfirmModal > div {
-        background-color: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        text-align: center;
-        max-width: 300px;
-    }
-    #customConfirmModal p {
-        margin-bottom: 20px;
-        font-size: 16px;
-        color: #333;
-    }
-    #customConfirmModal button {
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-right: 10px;
-        font-weight: bold;
-        transition: background-color 0.2s;
-    }
-    #customConfirmModal button#customConfirmYes {
-        background-color: #00C853;
-        color: white;
-    }
-    #customConfirmModal button#customConfirmYes:hover {
-        background-color: #388E3C;
-    }
-    #customConfirmModal button#customConfirmNo {
-        background-color: #f44336;
-        color: white;
-    }
-    #customConfirmModal button#customConfirmNo:hover {
-        background-color: #d32f2f;
-    }
-
-    /* Custom Alert Modal */
-    #customAlertDialog {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        z-index: 9997;
-        justify-content: center;
-        align-items: center;
-    }
-    #customAlertDialog > div {
-        background-color: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        text-align: center;
-        max-width: 300px;
-    }
-    #customAlertDialog p {
-        margin-bottom: 20px;
-        font-size: 16px;
-        color: #333;
-    }
-    #customAlertDialog button {
-        background-color: #00C853;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.2s;
-    }
-    #customAlertDialog button:hover {
-        background-color: #388E3C;
-    }
-
-    /* Driver Details Modal */
-    #driverDetailsModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.6);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-        box-sizing: border-box;
-    }
-    #driverDetailsModal > div {
-        background-color: white;
-        padding: 25px;
-        border-radius: 10px;
-        max-width: 350px;
-        width: 100%;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        position: relative;
-    }
-    #driverDetailsModal h3 {
-        margin-top: 0;
-        color: #007bff; /* Blue */
-        font-size: 18px;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-    #driverDetailsModal .form-group {
-        margin-bottom: 15px;
-    }
-    #driverDetailsModal label {
-        display: block;
-        font-size: 13px;
-        color: #555;
-        margin-bottom: 5px;
-        font-weight: 500;
-    }
-    #driverDetailsModal input[type="text"],
-    #driverDetailsModal input[type="tel"] {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-    #driverDetailsModal .button-group {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 20px;
-    }
-    #driverDetailsModal .button-group .btn {
-        padding: 10px 15px;
-        border: none;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    #driverDetailsModal .button-group .btn-cancel {
-        background-color: #ccc;
-        color: #333;
-    }
-    #driverDetailsModal .button-group .btn-cancel:hover {
-        background-color: #bbb;
-    }
-    #driverDetailsModal .button-group .btn-submit {
-        background-color: #007bff; /* Blue */
-        color: white;
-    }
-    #driverDetailsModal .button-group .btn-submit:hover {
-        background-color: #0056b3; /* Darker Blue */
-    }
-
-    /* Styles for clickable phone number */
-    .phone-link-group {
-        display: flex;
-        align-items: center;
-        gap: 10px; /* Space between number and icons */
-    }
-    .phone-link-group a {
-        color: #007bff; /* Blue for links */
-        text-decoration: none;
-        font-weight: bold;
-        transition: color 0.2s;
-    }
-    .phone-link-group a:hover {
-        color: #0056b3; /* Darker blue on hover */
-    }
-    .phone-link-group .icon-link {
-        font-size: 18px;
-        color: #28a745; /* Green for WhatsApp */
-        transition: color 0.2s;
-    }
-    .phone-link-group .icon-link.fa-phone {
-        color: #007bff; /* Blue for call */
-    }
-    .phone-link-group .icon-link:hover {
-        opacity: 0.8;
-    }
-  </style>
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header class="header-detail">
-      <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
-      <div class="header-title">Riwayat Semua Pesanan</div>
-    </header>
+    <div class="container-wrapper">
+        <header class="header">
+            <div class="header-title">Pesanan Penjual</div>
+            <i class="fas fa-bell notification-icon" id="notifLonceng"></i>
+        </header>
 
-    <div class="filter-search-section">
-        <div class="form-group">
-            <label for="searchQuery">Cari ID Pesanan / Nama Pelanggan:</label>
-            <input type="text" id="searchQuery" class="form-group-input" placeholder="Cari pesanan...">
-        </div>
-        <div class="form-group">
-            <label for="filterDate">Filter Tanggal:</label>
-            <input type="date" id="filterDate" class="form-group-input">
-        </div>
-        <div class="filter-buttons">
-            <button class="filter-btn active" data-status="PendingOnly">Baru</button> 
-            <button class="filter-btn" data-status="Diproses">Diproses</button>
-            <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
-            <button class="filter-btn" data-status="OnDelivery">On Delivery</button> 
-        </div>
-        <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
-    </div>
-
-    <div id="loadingSpinner" style="display: none;">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="order-history-content" id="orderHistoryContent">
-      <div class="empty-state" id="emptyOrderState" style="display: none;">
-        <i class="fas fa-box-open"></i>
-        <p>Belum ada pesanan dari pelanggan.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Popup Detail Pesanan (Dihapus) -->
-  <!-- <div id="popupDetail">
-      <div>
-          <button onclick="tutupDetail()" class="close-button">&times;</button>
-          <h3 id="popupNama">Nama Pelanggan</h3>
-
-          <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
-          <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
-          <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
-          <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
-          <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
-          <p><strong>Catatan:</strong> <span id="popupCatatan">-</p>
-
-          <p style="margin-bottom: 10px;">
-              <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
-              <select id="statusUpdater" class="status-dropdown">
-                  <option value="Pending">Pending</option>
-                  <option value="Diproses">Diproses</option>
-                  <option value="SiapDiambil">Siap Ambil</option>
-                  <option value="OnDelivery">On Delivery</option> 
-                  <option value="Selesai">Selesai</option>
-                  <option value="Dibatalkan">Dibatalkan</option>
-              </select>
-          </p>
-
-          <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
-          <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
-          <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</p>
-          <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</p>
-          <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
-
-          <div id="driverInfoSection" style="display:none;">
-            <h4>Info Driver:</h4>
-            <div class="order-driver-info-container">
-                <div class="driver-line">
-                    <i class="fas fa-truck driver-icon"></i> 
-                    <span class="driver-label-text">Diantar</span>
-                    <span class="driver-colon">:</span> 
-                    <span id="popupDriverApp" class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span>
-                </div>
-                ${data.driverName ? `
-                <div class="driver-line">
-                    <i class="fas fa-user driver-icon"></i> 
-                    <span class="driver-label-text">Driver</span>
-                    <span class="driver-colon">:</span> 
-                    <span id="popupDriverName" class="driver-value">${data.driverName}</span>
-                </div>` : ''}
-                ${data.driverPhone ? `
-                <div class="driver-line">
-                    <i class="fas fa-phone driver-icon"></i> 
-                    <span class="driver-label-text">Telp.</span>
-                    <span class="driver-colon">:</span> 
-                    <span id="popupDriverPhone" class="driver-value">${data.driverPhone}</span>
-                </div>` : ''}
+        <div class="dashboard-summary">
+            <div class="summary-card">
+                <h4>Total Pesanan</h4>
+                <p id="totalOrders">0</p>
             </div>
-          </div>
+            <div class="summary-card">
+                <h4>Pendapatan Hari Ini</h4>
+                <p id="todayIncome">Rp0</p>
+            </div>
+            <div class="summary-card">
+                <h4>Rata-rata Pesanan</h4>
+                <p id="avgOrder">Rp0</p>
+            </div>
+            <div class="summary-card">
+                <h4>Pesanan Terakhir</h4>
+                <p id="lastOrder">-</p>
+            </div>
+        </div>
 
-          <h4>Detail Item:</h4>
-          <div id="popupItems"></div>
+        <div class="filter-search-section">
+            <div class="form-group">
+                <label for="searchQuery">Cari Nomor Pesanan / Nama:</label>
+                <input type="text" id="searchQuery" class="form-group-input" placeholder="Cari pesanan...">
+            </div>
+            <div class="form-group">
+                <label for="filterDate">Filter Tanggal:</label>
+                <input type="date" id="filterDate" class="form-group-input">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-status="All">Semua</button>
+                <button class="filter-btn" data-status="Pending">Pending</button>
+                <button class="filter-btn" data-status="Diproses">Diproses</button>
+                <button class="filter-btn" data-status="SiapDiambil">Siap Diambil</button>
+                <button class="filter-btn" data-status="OnDelivery">Dalam Pengiriman</button>
+                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+            </div>
+            <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo mr-1"></i> Reset Filter</button>
+        </div>
 
-          <button onclick="tutupDetail()" class="popup-close-btn">Tutup</button>
-      </div>
-  </div> -->
+        <div id="loadingSpinner" style="display: none;">
+            <div class="spinner"></div>
+        </div>
 
-  <!-- Custom Confirmation Modal -->
-  <div id="customConfirmModal">
-      <div>
-          <p id="customConfirmMessage"></p>
-          <button id="customConfirmYes">Ya</button>
-          <button id="customConfirmNo">Tidak</button>
-      </div>
-  </div>
+        <div id="daftarPesanan">
+            <!-- Order items will be loaded here -->
+            <p style='text-align:center;'>Memuat data pesanan...</p>
+        </div>
 
-  <!-- Custom Alert Modal -->
-  <div id="customAlertDialog">
-      <div>
-          <p id="customAlertMessage"></p>
-          <button id="customAlertOk">OK</button>
-      </div>
-  </div>
+        <!-- Tombol hapus semua pesanan (untuk admin) -->
+        <button onclick="hapusSemuaPesananPenjual()" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; margin: 20px auto; display: block;">Hapus Semua Pesanan</button>
+    </div>
 
-  <!-- Driver Details Input Modal (NEW) -->
-  <div id="driverDetailsModal">
-      <div>
-          <h3>Input Detail Driver</h3>
-          <div class="form-group">
-              <label for="driverNameInput">Nama Driver (Opsional):</label>
-              <input type="text" id="driverNameInput" class="form-group-input" placeholder="Nama driver">
-          </div>
-          <div class="form-group">
-              <label for="driverPhoneInput">No. HP Driver (Opsional):</label>
-              <input type="tel" id="driverPhoneInput" class="form-group-input" placeholder="081234567890">
-          </div>
-          <div class="form-group">
-              <label for="driverAppInput">Aplikasi Ojek (Opsional):</label>
-              <input type="text" id="driverAppInput" class="form-group-input" placeholder="Grab, Gojek, ShopeeFood, dll.">
-          </div>
-          <div class="button-group">
-              <button class="btn btn-cancel" onclick="handleDriverModalCancel()">Batal</button> 
-              <button class="btn btn-submit" id="submitDriverDetailsBtn">Konfirmasi</button>
-          </div>
-      </div>
-  </div>
+    <!-- Notification Modal -->
+    <div id="notificationModal">
+        <div id="notificationModalContent">
+            <button class="close-btn-notif">&times;</button>
+            <h3><i class="fas fa-bell"></i> Pesanan Baru!</h3>
+            <p id="notificationMessage">Ada pesanan baru dari **[Nama Pelanggan]** dengan total **[Jumlah]**!</p>
+            <button class="btn-action-notif">Lihat Detail Pesanan</button>
+        </div>
+    </div>
 
-  <script>
-    // --- Firebase Configuration ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-      authDomain: "tokobuahkasir.firebaseapp.com",
-      projectId: "tokobuahkasir",
-      storageBucket: "tokobuahkasir.firebasestorage.app",
-      messagingSenderId: "731011133713",
-      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-      measurementId: "G-7CPE2DB2BV"
-    };
+    <!-- Popup Detail Pesanan -->
+    <div id="popupDetail">
+        <div>
+            <button onclick="tutupDetail()" class="close-button">&times;</button>
+            <h3 id="popupNama">Nama Pelanggan</h3>
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+            <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
+            <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
+            <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
+            <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
+            <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
+            <p><strong>Catatan:</strong> <span id="popupCatatan">-</p>
 
-    // DOM Elements
-    const orderHistoryContent = document.getElementById('orderHistoryContent');
-    const emptyOrderState = document.getElementById('emptyOrderState');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const searchQueryInput = document.getElementById('searchQuery');
-    const filterDateInput = document.getElementById('filterDate');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+            <p style="margin-bottom: 10px;">
+                <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+                <select id="statusUpdater" class="status-dropdown">
+                    <option value="Pending">Pending</option>
+                    <option value="Diproses">Diproses</option>
+                    <option value="SiapDiambil">Siap Diambil</option>
+                    <option value="OnDelivery">Dalam Pengiriman</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Dibatalkan">Dibatalkan</option>
+                </select>
+            </p>
 
-    // Popup Detail Elements (Referensi ke elemen popup telah dihapus)
-    // const popupDetail = document.getElementById('popupDetail');
-    // const popupNama = document.getElementById('popupNama');
-    // const popupOrderId = document.getElementById('popupOrderId');
-    // const popupNomor = document.getElementById('popupNomor');
-    // const popupAlamat = document.getElementById('popupAlamat');
-    // const popupTotal = document.getElementById('popupTotal');
-    // const popupMetodeBayar = document.getElementById('popupMetodeBayar');
-    // const popupCatatan = document.getElementById('popupCatatan');
-    // const popupStatus = document.getElementById('popupStatus');
-    // const statusUpdater = document.getElementById('statusUpdater');
-    // const popupWaktu = document.getElementById('popupWaktu');
-    // const popupDibukaOleh = document.getElementById('popupDibukaOleh');
-    // const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
-    // const popupDiubahOleh = document.getElementById('popupDiubahOleh');
-    // const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
-    // const popupItems = document.getElementById('popupItems');
-    // const driverInfoSection = document.getElementById('driverInfoSection'); 
-    // const popupDriverName = document.getElementById('popupDriverName');     
-    // const popupDriverPhone = document.getElementById('popupDriverPhone');   
-    // const popupDriverApp = document.getElementById('popupDriverApp');       
+            <!-- NEW: Driver Info Section -->
+            <div id="driverInfoSection" class="driver-info-section">
+                <h4>Detail Driver:</h4>
+                <label for="driverNameInput">Nama Driver:</label>
+                <input type="text" id="driverNameInput" placeholder="Nama Driver">
 
-    // Driver Details Modal Elements
-    const driverDetailsModal = document.getElementById('driverDetailsModal');
-    const driverNameInput = document.getElementById('driverNameInput');
-    const driverPhoneInput = document.getElementById('driverPhoneInput');
-    const driverAppInput = document.getElementById('driverAppInput');
-    const submitDriverDetailsBtn = document.getElementById('submitDriverDetailsBtn');
+                <label for="driverPhoneInput">Nomor HP Driver:</label>
+                <input type="text" id="driverPhoneInput" placeholder="Nomor HP Driver">
 
-    let currentOrderIdForDetail = null;
-    let activeFilterStatus = 'PendingOnly'; 
-    let allOrdersData = []; 
-    let unsubscribeOrders = null; 
+                <label for="driverAppSelect">Aplikasi Ojek:</label>
+                <select id="driverAppSelect">
+                    <option value="">Pilih Aplikasi</option>
+                    <option value="Gojek">Gojek</option>
+                    <option value="Grab">Grab</option>
+                    <option value="Maxim">Maxim</option>
+                    <option value="In-house">In-house</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+            <!-- END NEW: Driver Info Section -->
 
-    // --- Helper Functions ---
-    function showLoading() { loadingSpinner.style.display = 'flex'; }
-    function hideLoading() { loadingSpinner.style.display = 'none'; }
+            <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
+            <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
+            <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</p>
+            <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</p>
+            <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
 
-    function formatRupiah(amount) {
-      if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
-        return "Rp0";
-      }
-      return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-      }).format(amount);
-    }
+            <h4>Detail Item:</h4>
+            <div id="popupItems"></div>
 
-    function formatDate(date) {
-        if (!date) return "-";
-        const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-        if (isNaN(d.getTime())) return "-";
-        return d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    }
+            <button onclick="tutupDetail()">Tutup</button>
+        </div>
+    </div>
 
-    function getStatusClass(status) {
-        switch (status?.toLowerCase()) {
-            case 'pending': return 'pending';
-            case 'diproses': return 'diproses';
-            case 'selesai': return 'selesai';
-            case 'dibatalkan': return 'dibatalkan';
-            case 'siapdiambil': return 'siap-diambil'; 
-            case 'ondelivery': return 'on-delivery'; 
-            default: return '';
+    <audio id="notifSound" src="https://raw.githubusercontent.com/Tabroni117/kasir-toko-buah/main/notifikasi.mp3" preload="auto" loop></audio>
+
+    <!-- Custom Confirmation Modal (replacing window.confirm) -->
+    <div id="customConfirmModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9998; justify-content:center; align-items:center;">
+        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+            <p id="customConfirmMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <button id="customConfirmYes" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Ya</button>
+            <button id="customConfirmNo" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Tidak</button>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal (for simple messages) -->
+    <div id="customAlertDialog" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:9997; justify-content:center; align-items:center;">
+        <div style="background-color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center; max-width: 300px;">
+            <p id="customAlertMessage" style="margin-bottom: 20px; font-size: 16px; color: #333;"></p>
+            <button id="customAlertOk" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">OK</button>
+        </div>
+    </div>
+
+    <!-- 🔐 Modal Verifikasi Password -->
+    <div id="modalVerifikasi" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background-color:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0 0 0 / 30%);">
+            <h3>🔐 Verifikasi Hapus</h3>
+            <p>Masukkan password untuk melanjutkan.</p>
+            <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
+            <div class="button-group-modal">
+                <button onclick="tutupModalVerifikasi()">Batal</button>
+                <button onclick="verifikasiPasswordDanHapus()">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc", // Ganti dengan API Key Anda
+            authDomain: "tokobuahkasir.firebaseapp.com", // Ganti dengan Auth Domain Anda
+            projectId: "tokobuahkasir", // Ganti dengan Project ID Anda
+            storageBucket: "tokobuahkasir.firebasestorage.app", // Ganti dengan Storage Bucket Anda
+            messagingSenderId: "731011133713", // Ganti dengan Messaging Sender ID Anda
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0", // Ganti dengan App ID Anda
+            measurementId: "G-7CPE2DB2BV" // Ganti dengan Measurement ID Anda
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Elemen-elemen yang dibutuhkan untuk Dashboard Pesanan
+        const daftarPesananEl = document.getElementById("daftarPesanan");
+        const totalOrdersEl = document.getElementById("totalOrders");
+        const todayIncomeEl = document.getElementById("todayIncome");
+        const avgOrderEl = document.getElementById("avgOrder");
+        const lastOrderEl = document.getElementById("lastOrder");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const searchQueryInput = document.getElementById('searchQuery');
+        const filterDateInput = document.getElementById('filterDate');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+        let currentOrderIdForDetail = null; // Digunakan untuk popup detail
+        let activeFilterStatus = 'All'; // Default filter
+        let allOrdersData = []; // Cache for all orders fetched from Firestore
+        let unsubscribeOrders = null; // To store the unsubscribe function for real-time listener
+
+        // --- NEW: Driver Info Input Elements ---
+        const driverInfoSection = document.getElementById('driverInfoSection');
+        const driverNameInput = document.getElementById('driverNameInput');
+        const driverPhoneInput = document.getElementById('driverPhoneInput');
+        const driverAppSelect = document.getElementById('driverAppSelect');
+
+
+        // --- Fungsi Loading Spinner ---
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        // --- Utilitas Format ---
+        function formatCurrency(val) {
+            if (isNaN(val) || val === null || typeof val === 'undefined') {
+                return "Rp0";
+            }
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(val);
         }
-    }
-
-    /**
-     * Maps internal status string to display string (concise, without driver details).
-     * @param {string} status - The internal status string from Firestore.
-     * @returns {string} The human-readable display string.
-     */
-    function getDisplayStatus(status) {
-        switch (status) {
-            case 'Pending': return 'Baru';
-            case 'Diproses': return 'Diproses';
-            case 'SiapDiambil': return 'Siap Ambil'; 
-            case 'OnDelivery': return 'On Delivery'; 
-            case 'Selesai': return 'Selesai';
-            case 'Dibatalkan': return 'Dibatalkan';
-            default: return status;
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            return d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         }
-    }
-
-    /**
-     * Generates a display string for variants.
-     * @param {Object} customVariants - The custom variants object.
-     * @returns {string} A human-readable string of selected variants.
-     */
-    function getVariantDisplayString(customVariants) {
-        if (!customVariants || Object.keys(customVariants).length === 0) {
-            return 'Tidak ada varian';
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'pending': return 'pending';
+                case 'diproses': return 'diproses';
+                case 'siapdiambil': return 'siapdiambil';
+                case 'ondelivery': return 'ondelivery'; // NEW CLASS
+                case 'selesai': return 'selesai';
+                case 'dibatalkan': return 'dibatalkan';
+                default: return '';
+            }
         }
-        const parts = [];
-        const sortedVariantTypeIds = Object.keys(customVariants).sort(); 
-        for (const variantTypeId of sortedVariantTypeIds) {
-            const value = customVariants[variantTypeId];
-            if (Array.isArray(value)) {
-                if (value.length > 0) {
-                    parts.push(value.join(', '));
+
+        function getStatusText(status) {
+            const statusMap = {
+                'Pending': 'Pending',
+                'Diproses': 'Diproses',
+                'SiapDiambil': 'Siap Diambil',
+                'OnDelivery': 'Dalam Pengiriman', // NEW TEXT
+                'Selesai': 'Selesai',
+                'Dibatalkan': 'Dibatalkan'
+            };
+            return statusMap[status] || status;
+        }
+
+        /**
+         * Generates a display string for variants.
+         * This function is copied from cart.html to ensure consistency.
+         * @param {Object} customVariants - The custom variants object.
+         * @returns {string} A human-readable string of selected variants.
+         */
+        function getVariantDisplayString(customVariants) {
+            if (!customVariants || Object.keys(customVariants).length === 0) {
+                return 'Tidak ada varian';
+            }
+            const parts = [];
+            // Sort keys to ensure consistent display order
+            const sortedVariantTypeIds = Object.keys(customVariants).sort(); 
+            for (const variantTypeId of sortedVariantTypeIds) {
+                const value = customVariants[variantTypeId];
+                if (Array.isArray(value)) {
+                    if (value.length > 0) {
+                        parts.push(value.join(', '));
+                    }
+                } else if (value && value !== 'none') {
+                    parts.push(value);
                 }
-            } else if (value && value !== 'none') {
-                parts.push(value);
             }
-        }
-        return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
-    }
-
-    // Custom Confirmation Modal
-    function showCustomConfirm(message) {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('customConfirmModal');
-            const msgEl = document.getElementById('customConfirmMessage');
-            const yesBtn = document.getElementById('customConfirmYes');
-            const noBtn = document.getElementById('customConfirmNo');
-
-            msgEl.textContent = message;
-            modal.style.display = 'flex';
-
-            const handleYes = () => {
-                modal.style.display = 'none';
-                yesBtn.removeEventListener('click', handleYes);
-                noBtn.removeEventListener('click', handleNo);
-                resolve(true);
-            };
-            const handleNo = () => {
-                modal.style.display = 'none';
-                yesBtn.removeEventListener('click', handleYes);
-                noBtn.removeEventListener('click', handleNo);
-                resolve(false);
-            };
-
-            yesBtn.addEventListener('click', handleYes);
-            noBtn.addEventListener('click', handleNo);
-        });
-    }
-
-    // Custom Alert Modal
-    function showCustomAlert(message) {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('customAlertDialog');
-            const msgEl = document.getElementById('customAlertMessage');
-            const okBtn = document.getElementById('customAlertOk');
-
-            msgEl.textContent = message;
-            modal.style.display = 'flex';
-
-            const handleOk = () => {
-                modal.style.display = 'none';
-                okBtn.removeEventListener('click', handleOk);
-                resolve();
-            };
-
-            okBtn.addEventListener('click', handleOk);
-        });
-    }
-
-    // --- Render Order Items to DOM ---
-    function renderOrders(ordersToRender) {
-        orderHistoryContent.innerHTML = '';
-        emptyOrderState.style.display = 'none';
-
-        if (ordersToRender.length === 0) {
-            emptyOrderState.style.display = 'block';
-            return;
+            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
         }
 
-        ordersToRender.forEach(order => {
-          const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
-          let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
-          let currentStatus = order.status || 'Pending';
+        // Custom Confirmation Modal (replacing window.confirm)
+        function showCustomConfirm(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customConfirmModal');
+                const msgEl = document.getElementById('customConfirmMessage');
+                const yesBtn = document.getElementById('customConfirmYes');
+                const noBtn = document.getElementById('customConfirmNo');
 
-          // Determine which action buttons to show based on status
-          let actionButtonsHtml = '';
-          if (currentStatus === 'Pending') {
-              actionButtonsHtml = `
-                  <button class="action-btn terima" data-order-id="${order.id}" data-action="Diproses">
-                      <i class="fas fa-check"></i> Terima
-                  </button>
-                  <button class="action-btn tolak" data-order-id="${order.id}" data-action="Dibatalkan">
-                      <i class="fas fa-times"></i> Tolak
-                  </button>
-              `;
-          } else if (currentStatus === 'Diproses') {
-              actionButtonsHtml = `
-                  <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
-                      <i class="fas fa-check-double"></i> Siap Ambil
-                  </button>
-              `;
-          } else if (currentStatus === 'SiapDiambil') {
-              actionButtonsHtml = `
-                  <button class="action-btn pick-up" data-order-id="${order.id}" data-action="showDriverModal">
-                      <i class="fas fa-truck"></i> Pick Up 
-                  </button>
-              `;
-          } else if (currentStatus === 'OnDelivery') { 
-              actionButtonsHtml = `
-                  <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai">
-                      <i class="fas fa-check-circle"></i> Selesai
-                  </button>
-              `;
-          }
+                msgEl.textContent = message;
+                modal.style.display = 'flex';
 
-          // Construct driver info for card if OnDelivery - REFINED DISPLAY
-          let driverInfoCardHtml = '';
-          if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
-              driverInfoCardHtml = `
-                <div class="order-driver-info-container">
-                    <div class="driver-line">
-                        <i class="fas fa-truck driver-icon"></i> 
-                        <span class="driver-label-text">Diantar</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>
+                const handleYes = () => {
+                    modal.style.display = 'none';
+                    yesBtn.removeEventListener('click', handleYes);
+                    noBtn.removeEventListener('click', handleNo);
+                    resolve(true);
+                };
+                const handleNo = () => {
+                    modal.style.display = 'none';
+                    yesBtn.removeEventListener('click', handleYes);
+                    noBtn.removeEventListener('click', handleNo);
+                    resolve(false);
+                };
+
+                yesBtn.addEventListener('click', handleYes);
+                noBtn.addEventListener('click', handleNo);
+            });
+        }
+
+        // Custom Alert Modal (for simple messages, replacing window.alert)
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('customAlertDialog');
+                const msgEl = document.getElementById('customAlertMessage');
+                const okBtn = document.getElementById('customAlertOk');
+
+                msgEl.textContent = message;
+                modal.style.display = 'flex';
+
+                const handleOk = () => {
+                    modal.style.display = 'none';
+                    okBtn.removeEventListener('click', handleOk);
+                    resolve();
+                };
+
+                okBtn.addEventListener('click', handleOk);
+            });
+        }
+
+        // --- Fungsi Utama: Muat Data Pesanan (Real-time dengan onSnapshot) ---
+        function loadAllOrdersRealtime() {
+            showLoading();
+            daftarPesananEl.innerHTML = '<div class="spinner"></div><p style="text-align:center;">Memuat pesanan...</p>';
+
+            // Unsubscribe from previous listener if it exists
+            if (unsubscribeOrders) {
+                unsubscribeOrders();
+            }
+
+            // Set up real-time listener
+            unsubscribeOrders = db.collection("pesanan").orderBy("waktu", "desc")
+                .onSnapshot(snapshot => {
+                    allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Update dashboard summary with all data
+                    updateDashboardSummary(allOrdersData);
+
+                    // Apply current filters and search, then render
+                    applyFiltersAndSearch();
+                    hideLoading(); // Hide spinner after data is processed
+                }, error => {
+                    console.error("Error loading orders in real-time:", error);
+                    daftarPesananEl.innerHTML = `<p class="text-center text-red-500">Gagal memuat data: ${error.message}. Pastikan aturan Firebase dan koneksi internet Anda sudah benar.</p>`;
+                    hideLoading(); // Hide spinner on error
+                });
+        }
+
+        // Fungsi untuk memperbarui ringkasan dashboard
+        function updateDashboardSummary(orders) {
+            let totalOrderCount = orders.length;
+            let todayIncome = 0;
+            let totalIncomeAllTime = 0;
+            let lastOrderTime = null;
+
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+
+            orders.forEach(order => {
+                const waktu = order.waktu && order.waktu.toDate ? order.waktu.toDate() : new Date(0);
+                const totalHarga = order.totalAmount || 0;
+
+                if (waktu.toDateString() === now.toDateString()) {
+                    todayIncome += totalHarga;
+                }
+                totalIncomeAllTime += totalHarga;
+
+                if (!lastOrderTime || waktu > lastOrderTime) {
+                    lastOrderTime = waktu;
+                }
+            });
+
+            totalOrdersEl.textContent = totalOrderCount;
+            todayIncomeEl.textContent = formatCurrency(todayIncome);
+            avgOrderEl.textContent = formatCurrency(totalOrderCount > 0 ? totalIncomeAllTime / totalOrderCount : 0);
+            lastOrderEl.textContent = lastOrderTime ? formatDate(lastOrderTime) : "-";
+        }
+
+        // Fungsi untuk menerapkan filter dan pencarian ke data yang sudah di-cache
+        function applyFiltersAndSearch() {
+            let docsToRender = [...allOrdersData]; // Start with all fetched data
+
+            const searchTxt = searchQueryInput.value.trim().toUpperCase();
+            const filterDateVal = filterDateInput.value;
+
+            // Apply search filter (client-side)
+            if (searchTxt) {
+                docsToRender = docsToRender.filter(order => {
+                    const data = order; // allOrdersData already contains data()
+                    return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                           (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+                });
+            }
+
+            // Apply date filter (client-side)
+            if (filterDateVal) {
+                const selectedDate = new Date(filterDateVal);
+                const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
+                const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
+                docsToRender = docsToRender.filter(order => {
+                    const waktuTimestamp = order.waktu?.toDate()?.getTime();
+                    return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
+                });
+            }
+
+            // Apply status filter (client-side)
+            if (activeFilterStatus !== 'All') {
+                docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
+            }
+
+            renderFilteredOrdersToDOM(docsToRender);
+        }
+
+        // Fungsi untuk merender pesanan yang sudah difilter ke DOM
+        function renderFilteredOrdersToDOM(ordersToRender) {
+            daftarPesananEl.innerHTML = ordersToRender.length
+                ? ''
+                : '<p class="text-center text-gray-600">Tidak ada pesanan.</p>';
+
+            ordersToRender.forEach(order => {
+                const data = order;
+                const orderId = data.id;
+                const displayOrderId = data.displayOrderId || '#' + orderId.slice(0, 6).toUpperCase();
+                const html = `
+                    <div class="order-item-upgrade" onclick='tampilkanDetail("${orderId}")'>
+                        <div class="order-row-top">
+                            <div class="customer">
+                                <div class="avatar">${(data.customer?.fullName || 'P').charAt(0).toUpperCase()}</div>
+                                <div class="info">
+                                    <div class="name">${data.customer?.fullName || 'Pelanggan Anonim'}</div>
+                                    <div class="phone">${data.customer?.phoneNumber || '-'}</div>
+                                </div>
+                            </div>
+                            <div class="meta">
+                                <div class="total">${formatCurrency(data.totalAmount || 0)}</div>
+                                <div class="status ${getStatusClass(data.status)}">${getStatusText(data.status) || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="order-row-bottom">
+                            <div class="time"><i class="far fa-clock"></i> ${formatDate(data.waktu)}</div>
+                            <div class="items">
+                                ${(data.items || []).map(item => `
+                                    <div>${item.name} (${item.quantity}x)</div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
-                    ${order.driverName ? `
-                    <div class="driver-line">
-                        <i class="fas fa-user driver-icon"></i> 
-                        <span class="driver-label-text">Driver</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">${order.driverName}</span>
-                    </div>` : ''}
-                    ${order.driverPhone ? `
-                    <div class="driver-line">
-                        <i class="fas fa-phone driver-icon"></i> 
-                        <span class="driver-label-text">Telp.</span>
-                        <span class="driver-colon">:</span> 
-                        <span class="driver-value">${order.driverPhone}</span>
-                    </div>` : ''}
-                </div>
-              `;
-          }
-
-          const orderCard = document.createElement('div');
-          orderCard.classList.add('order-card'); 
-          orderCard.setAttribute('data-order-id', order.id); 
-          
-          orderCard.innerHTML = `
-            <div class="order-header">
-              <span class="order-id">Pesanan: ${displayOrderId}</span>
-              <span class="order-date">${formatDate(order.waktu)}</span>
-            </div>
-            <div class="order-details">
-              <p><strong>Pembeli:</strong> ${buyerName}</p>
-              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p> 
-              ${driverInfoCardHtml} <!-- Display driver info in a structured way -->
-              <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
-              <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
-              <ul class="order-item-list">
-                ${(order.items || []).map(item => `
-                  <li class="order-item">
-                    <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
-                    <div class="order-item-details">
-                      <span class="order-item-name">${item.name}</span>
-                      <span class="order-item-variants-display">${getVariantDisplayString(item.custom)}</span>
-                      <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
-                    </div>
-                    <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
-                  </li>
-                `).join('')}
-              </ul>
-            </div>
-            <div class="order-summary-footer">
-              <span>Total Pembayaran:</span>
-              <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
-            </div>
-            <div class="order-card-actions">
-                ${actionButtonsHtml}
-            </div>
-          `;
-          orderHistoryContent.appendChild(orderCard);
-        });
-
-        // Re-attach event listeners for dynamically added buttons and cards
-        attachOrderButtonListeners();
-    }
-
-    // Function to attach event listeners to dynamically created elements
-    function attachOrderButtonListeners() {
-        // Remove existing listeners to prevent duplicates
-        document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
-            button.removeEventListener('click', handleOrderActionButtonClick);
-        });
-        // Removed event listener for order card clicks
-        // document.querySelectorAll('.order-card').forEach(card => {
-        //     card.removeEventListener('click', handleOrderCardClick);
-        // });
-
-        // Add new listeners
-        document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
-            button.addEventListener('click', handleOrderActionButtonClick);
-        });
-        // Removed event listener for order card clicks
-        // document.querySelectorAll('.order-card').forEach(card => {
-        //     card.addEventListener('click', handleOrderCardClick);
-        // });
-    }
-
-    // Handle click on the order card (function removed as popup is removed)
-    // function handleOrderCardClick(event) {
-    //     // Prevent opening detail if an action button inside the card was clicked
-    //     if (event.target.closest('.action-btn')) {
-    //         return;
-    //     }
-    //     const orderId = this.dataset.orderId;
-    //     tampilkanDetail(orderId);
-    // }
-
-    // Handle click on action buttons within order cards
-    async function handleOrderActionButtonClick(event) {
-        event.stopPropagation(); // Prevent the parent order-card click event from firing
-        const orderId = event.currentTarget.dataset.orderId;
-        const action = event.currentTarget.dataset.action;
-        
-        if (action === "showDriverModal") {
-            showDriverDetailsModal(orderId);
-        } else {
-            let newStatus = action; // The data-action directly provides the new status
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`); 
-            if (confirmChange) {
-                await updateOrderStatusInFirestore(orderId, newStatus);
-            }
-        }
-    }
-
-    async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) { 
-        showLoading();
-        const docRef = db.collection("pesanan").doc(orderId);
-        const user = auth.currentUser;
-        const userName = user?.email || "Admin Anonim";
-        const userId = user?.uid || "Anonim";
-
-        const updateData = {
-            status: newStatus,
-            diubahOlehNama: userName,
-            diubahOlehUid: userId,
-            waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        // Add driver details if provided
-        if (Object.keys(driverDetails).length > 0) {
-            Object.assign(updateData, driverDetails);
-        } else if (newStatus === 'OnDelivery') {
-            // If status is OnDelivery but no driver details provided (e.g., from Cancel button),
-            // ensure driver fields are explicitly set to null to clear previous data if any.
-            updateData.driverName = null;
-            updateData.driverPhone = null;
-            updateData.driverApp = null;
+                `;
+                daftarPesananEl.innerHTML += html;
+            });
         }
 
-        try {
-            await docRef.update(updateData);
 
-            // Also update status in riwayat_customer if userId exists in the order document
-            const orderDoc = await docRef.get();
-            const orderData = orderDoc.data();
-            const customerUserId = orderData.userId; 
+        async function tampilkanDetail(docId) {
+            currentOrderIdForDetail = docId;
+            const docRef = db.collection("pesanan").doc(docId);
+            const user = auth.currentUser;
+            const uid = user?.uid || "Unknown";
+            const nama = user?.email || "Tanpa Nama";
 
-            if (customerUserId) {
-                await db.doc(`riwayat_customer/${customerUserId}/pesanan/${orderId}`).set({
-                    status: newStatus
-                }, { merge: true });
-            } else {
-                console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const snapshot = await transaction.get(docRef);
+                    if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
+                    const d = snapshot.data();
+                    if (!d.dibukaOlehUid) { // Hanya update jika belum pernah dibuka
+                        transaction.update(docRef, {
+                            dibukaOlehUid: uid,
+                            dibukaOlehNama: nama,
+                            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+
+                const doc = await docRef.get();
+                if (!doc.exists) {
+                    await showCustomAlert('Pesanan tidak ditemukan.');
+                    return;
+                }
+
+                const data = doc.data();
+                const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                const customer = data.customer || {};
+                const waktu = data.waktu?.toDate?.() || new Date(0);
+                const items = data.items || [];
+
+                document.getElementById("popupNama").textContent = customer.fullName || "Pelanggan";
+                document.getElementById("popupOrderId").textContent = orderId;
+                document.getElementById("popupNomor").textContent = customer.phoneNumber || "-";
+                document.getElementById("popupAlamat").textContent = customer.address || "-";
+                document.getElementById("popupTotal").textContent = formatCurrency(data.totalAmount || 0);
+                document.getElementById("popupMetodeBayar").textContent = data.paymentMethod || "-";
+                document.getElementById("popupCatatan").textContent = customer.notes || "Tidak ada catatan";
+
+                const popupStatusEl = document.getElementById("popupStatus");
+                const currentStatus = data.status || "Pending";
+                popupStatusEl.textContent = getStatusText(currentStatus);
+                popupStatusEl.className = `status ${getStatusClass(currentStatus)}`;
+
+                const statusUpdater = document.getElementById("statusUpdater");
+                statusUpdater.value = currentStatus;
+
+                // NEW: Populate driver info fields and show/hide section
+                if (currentStatus === 'OnDelivery') {
+                    driverInfoSection.style.display = 'block';
+                    driverNameInput.value = data.driverName || '';
+                    driverPhoneInput.value = data.driverPhone || '';
+                    driverAppSelect.value = data.driverApp || '';
+                } else {
+                    driverInfoSection.style.display = 'none';
+                    driverNameInput.value = ''; // Clear fields when not OnDelivery
+                    driverPhoneInput.value = '';
+                    driverAppSelect.value = '';
+                }
+
+
+                document.getElementById("popupWaktu").textContent = formatDate(waktu);
+
+                const dibukaOleh = data.dibukaOlehNama || "-";
+                const waktuDibuka = data.waktuDibuka?.toDate?.();
+                document.getElementById("popupDibukaOleh").textContent = dibukaOleh;
+                document.getElementById("popupWaktuDibuka").textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+                const diubahOleh = data.diubahOlehNama || "-";
+                const waktuDiubah = data.waktuDiubah?.toDate?.();
+                document.getElementById("popupDiubahOleh").textContent = diubahOleh;
+                document.getElementById("popupWaktuDiubah").textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+                document.getElementById("popupItems").innerHTML = (items || []).map(item => {
+                    const variantDisplay = getVariantDisplayString(item.custom);
+                    return `
+                        <div style="margin-bottom:5px;">
+                            - ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0} x ${formatCurrency(item.price || 0)}) = ${formatCurrency((item.price || 0) * (item.quantity || 0))}
+                            <br><small style="color:#777;">Varian: ${variantDisplay}</small>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
+
+                document.getElementById("popupDetail").style.display = "flex";
+
+            } catch (err) {
+                await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
+                console.error("Error showing order detail:", err);
             }
+        }
 
-            await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`); 
+        function tutupDetail() {
+            document.getElementById("popupDetail").style.display = "none";
+            currentOrderIdForDetail = null; 
             // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
-            // Removed popup refresh logic since popup is removed
-            // if (currentOrderIdForDetail === orderId) {
-            //     tampilkanDetail(orderId); 
-            // }
-        } catch (error) {
-            console.error("Error updating order status:", error);
-            await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // --- Load All Order History (with real-time updates and filters) ---
-    function loadAllOrders() {
-        showLoading();
-        // Unsubscribe from previous listener if exists
-        if (unsubscribeOrders) {
-            unsubscribeOrders();
         }
 
-        // Set up real-time listener
-        unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc')
-            .onSnapshot(snapshot => {
-                allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                applyFiltersAndSearch(); // Apply filters and render whenever data changes
-                hideLoading();
-            }, error => {
-                console.error('Gagal memuat semua pesanan secara real-time:', error);
-                orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data secara real-time.</p>';
-                hideLoading();
-            });
-    }
+        document.getElementById("statusUpdater").addEventListener("change", async function () {
+            const newStatus = this.value;
+            const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getStatusText(newStatus)}"?`);
+            if (currentOrderIdForDetail && confirmChange) {
+                try {
+                    const user = auth.currentUser;
+                    const userName = user?.email || "Admin Anonim"; 
 
-    // --- Apply Filters and Search to Cached Data ---
-    function applyFiltersAndSearch() {
-        let docsToRender = [...allOrdersData]; // Start with all fetched data
+                    const updateData = {
+                        status: newStatus,
+                        diubahOlehNama: userName, 
+                        waktuDiubah: firebase.firestore.FieldValue.serverTimestamp() 
+                    };
 
-        const searchTxt = searchQueryInput.value.trim().toUpperCase();
-        const filterDateVal = filterDateInput.value;
+                    // NEW: Add driver info if status is OnDelivery, or remove if not
+                    if (newStatus === 'OnDelivery') {
+                        updateData.driverName = driverNameInput.value;
+                        updateData.driverPhone = driverPhoneInput.value;
+                        updateData.driverApp = driverAppSelect.value;
+                    } else {
+                        // If changing from OnDelivery to another status, remove driver info
+                        updateData.driverName = firebase.firestore.FieldValue.delete();
+                        updateData.driverPhone = firebase.firestore.FieldValue.delete();
+                        updateData.driverApp = firebase.firestore.FieldValue.delete();
+                    }
 
-        // Apply search filter (client-side)
-        if (searchTxt) {
-            docsToRender = docsToRender.filter(order => {
-                return (order.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                       (order.displayOrderId || '').toUpperCase().includes(searchTxt);
-            });
-        }
+                    await db.collection("pesanan").doc(currentOrderIdForDetail).update(updateData);
 
-        // Apply date filter (client-side)
-        if (filterDateVal) {
-            const selectedDate = new Date(filterDateVal);
-            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
-            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
-            docsToRender = docsToRender.filter(order => {
-                const waktuTimestamp = order.waktu?.toDate()?.getTime();
-                return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
-            });
-        }
+                    const docSnap = await db.collection("pesanan").doc(currentOrderIdForDetail).get();
+                    const data = docSnap.data();
+                    const userId = data.userId;
 
-        // Apply status filter (client-side)
-        if (activeFilterStatus === 'PendingOnly') { 
-            docsToRender = docsToRender.filter(order => order.status === 'Pending');
-        } else if (activeFilterStatus !== 'All') { 
-            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
-        }
+                    if (userId) {
+                        const customerUpdateData = { status: newStatus };
+                        if (newStatus === 'OnDelivery') {
+                            customerUpdateData.driverName = driverNameInput.value;
+                            customerUpdateData.driverPhone = driverPhoneInput.value;
+                            customerUpdateData.driverApp = driverAppSelect.value;
+                        } else {
+                            customerUpdateData.driverName = firebase.firestore.FieldValue.delete();
+                            customerUpdateData.driverPhone = firebase.firestore.FieldValue.delete();
+                            customerUpdateData.driverApp = firebase.firestore.FieldValue.delete();
+                        }
 
-        renderOrders(docsToRender); // Render the filtered list
-    }
-
-
-    // --- Show Order Detail Popup (Fungsi ini telah dihapus) ---
-    // async function tampilkanDetail(docId) {
-    //     currentOrderIdForDetail = docId;
-    //     const docRef = db.collection("pesanan").doc(docId);
-    //     const uid = auth.currentUser?.uid || "Unknown";
-    //     const nama = auth.currentUser?.email || "Tanpa Nama";
-
-    //     try {
-    //         await db.runTransaction(async (transaction) => {
-    //             const snapshot = await transaction.get(docRef);
-    //             if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
-    //             const d = snapshot.data();
-    //             if (!d.dibukaOlehUid) { 
-    //                 transaction.update(docRef, {
-    //                     dibukaOlehUid: uid,
-    //                     dibukaOlehNama: nama,
-    //                     waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
-    //                 });
-    //             }
-    //         });
-
-    //         const doc = await docRef.get();
-    //         if (!doc.exists) {
-    //             await showCustomAlert('Pesanan tidak ditemukan.');
-    //             return;
-    //         }
-
-    //         const data = doc.data();
-    //         const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-    //         const customer = data.customer || {};
-    //         const waktu = data.waktu?.toDate?.() || new Date(0);
-    //         const items = data.items || [];
-
-    //         popupNama.textContent = customer.fullName || "Pelanggan";
-    //         popupOrderId.textContent = orderId;
-    //         const phoneNumber = customer.phoneNumber || "-";
-    //         let formattedPhoneNumber = phoneNumber.replace(/\D/g, '');
-    //         if (formattedPhoneNumber.startsWith('08')) {
-    //             formattedPhoneNumber = '62' + formattedPhoneNumber.substring(1);
-    //         } else if (!formattedPhoneNumber.startsWith('62') && formattedPhoneNumber.length > 5) {
-    //             formattedPhoneNumber = '62' + formattedPhoneNumber;
-    //         }
-            
-    //         if (phoneNumber !== "-") {
-    //             popupNomor.innerHTML = `
-    //                 <div class="phone-link-group">
-    //                     <span>${phoneNumber}</span>
-    //                     <a href="tel:${formattedPhoneNumber}" class="icon-link" title="Telepon">
-    //                         <i class="fas fa-phone"></i>
-    //                     </a>
-    //                     <a href="https://wa.me/${formattedPhoneNumber}" target="_blank" class="icon-link" title="WhatsApp">
-    //                         <i class="fab fa-whatsapp"></i>
-    //                     </a>
-    //                 </div>
-    //             `;
-    //         } else {
-    //             popupNomor.textContent = phoneNumber;
-    //         }
-
-    //         popupAlamat.textContent = customer.address || "-";
-    //         popupTotal.textContent = formatRupiah(data.totalAmount || 0);
-    //         popupMetodeBayar.textContent = data.paymentMethod || "-";
-    //         popupCatatan.textContent = customer.notes || "Tidak ada catatan";
-
-    //         const currentStatus = data.status || "Pending";
-    //         popupStatus.textContent = getDisplayStatus(currentStatus); 
-    //         popupStatus.className = `status ${getStatusClass(currentStatus)}`;
-
-    //         statusUpdater.value = currentStatus; 
-
-    //         popupWaktu.textContent = formatDate(waktu);
-
-    //         const dibukaOleh = data.dibukaOlehNama || "-";
-    //         const waktuDibuka = data.waktuDibuka?.toDate?.();
-    //         popupDibukaOleh.textContent = dibukaOleh;
-    //         popupWaktuDibuka.textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
-
-    //         const diubahOleh = data.diubahOlehNama || "-";
-    //         const waktuDiubah = data.waktuDiubah?.toDate?.();
-    //         popupDiubahOleh.textContent = diubahOleh;
-    //         popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
-
-    //         if (currentStatus === 'OnDelivery' && (data.driverName || data.driverPhone || data.driverApp)) {
-    //             driverInfoSection.style.display = 'block';
-    //             driverInfoSection.innerHTML = `
-    //                 <h4>Info Driver:</h4>
-    //                 <div class="order-driver-info-container">
-    //                     <div class="driver-line">
-    //                         <i class="fas fa-truck driver-icon"></i> 
-    //                         <span class="driver-label-text">Diantar</span>
-    //                         <span class="driver-colon">:</span> 
-    //                         <span id="popupDriverApp" class="driver-value">Via <strong>${data.driverApp || '-'}</strong></span>
-    //                     </div>
-    //                     ${data.driverName ? `
-    //                     <div class="driver-line">
-    //                         <i class="fas fa-user driver-icon"></i> 
-    //                         <span class="driver-label-text">Driver</span>
-    //                         <span class="driver-colon">:</span> 
-    //                         <span id="popupDriverName" class="driver-value">${data.driverName}</span>
-    //                     </div>` : ''}
-    //                     ${data.driverPhone ? `
-    //                     <div class="driver-line">
-    //                         <i class="fas fa-phone driver-icon"></i> 
-    //                         <span class="driver-label-text">Telp.</span>
-    //                         <span class="driver-colon">:</span> 
-    //                         <span id="popupDriverPhone" class="driver-value">${data.driverPhone}</span>
-    //                     </div>` : ''}
-    //                 </div>
-    //             `;
-    //         } else {
-    //             driverInfoSection.style.display = 'none';
-    //         }
-
-    //         popupItems.innerHTML = (items || []).map(item => {
-    //             const variantDisplay = getVariantDisplayString(item.custom);
-    //             return `
-    //                 <div style="margin-bottom:5px;">
-    //                     <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
-    //                     <div class="order-item-details">
-    //                         <span class="order-item-name">${item.name || 'Produk Tidak Dikenal'}</span>
-    //                         <span class="order-item-variants-display">${variantDisplay}</span>
-    //                         <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
-    //                     </div>
-    //                     <span class="order-item-total">${formatRupiah((item.price || 0) * (item.quantity || 0))}</span>
-    //                 </div>
-    //             `;
-    //         }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
-
-    //         popupDetail.style.display = "flex";
-
-    //     } catch (err) {
-    //         await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
-    //         console.error("Error showing order detail:", err);
-    //     }
-    // }
-
-    // --- Close Order Detail Popup (Fungsi ini telah dihapus) ---
-    // function tutupDetail() {
-    //     popupDetail.style.display = "none";
-    //     currentOrderIdForDetail = null; 
-    // }
-
-    // --- Event Listener for Status Updater Dropdown (Telah dihapus karena bagian dari popup) ---
-    // statusUpdater.addEventListener("change", async function () {
-    //     const newStatus = this.value;
-    //     const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`); 
-    //     if (currentOrderIdForDetail && confirmChange) {
-    //         if (newStatus === 'OnDelivery') {
-    //             showDriverDetailsModal(currentOrderIdForDetail);
-    //         } else {
-    //             await updateOrderStatusInFirestore(currentOrderIdForDetail, newStatus);
-    //             tutupDetail(); 
-    //         }
-    //     }
-    // });
-
-    // --- Driver Details Modal Functions ---
-    function showDriverDetailsModal(orderId) {
-        currentOrderIdForDetail = orderId; 
-        // Clear previous inputs
-        driverNameInput.value = '';
-        driverPhoneInput.value = '';
-        driverAppInput.value = '';
-        driverDetailsModal.style.display = 'flex';
-    }
-
-    // Function to handle "Batal" click on driver modal
-    async function handleDriverModalCancel() {
-        if (!currentOrderIdForDetail) {
-            await showCustomAlert("Tidak ada pesanan yang dipilih untuk diperbarui.");
-            return;
-        }
-        driverDetailsModal.style.display = 'none'; // Hide the modal
-        // Update status to OnDelivery without driver details (clears existing ones)
-        await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', {});
-        currentOrderIdForDetail = null; // Clear orderId after processing
-    }
-
-    submitDriverDetailsBtn.addEventListener('click', async () => {
-        if (!currentOrderIdForDetail) {
-            await showCustomAlert("Tidak ada pesanan yang dipilih untuk diperbarui.");
-            return;
-        }
-
-        const driverDetails = {
-            driverName: driverNameInput.value.trim() || null,
-            driverPhone: driverPhoneInput.value.trim() || null,
-            driverApp: driverAppInput.value.trim() || null
-        };
-
-        driverDetailsModal.style.display = 'none'; // Close the modal
-        await updateOrderStatusInFirestore(currentOrderIdForDetail, 'OnDelivery', driverDetails);
-    });
-
-
-    // --- Event Listeners for Filters and Search ---
-    searchQueryInput.addEventListener('input', applyFiltersAndSearch);
-    filterDateInput.addEventListener('change', applyFiltersAndSearch);
-
-    filterButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            activeFilterStatus = button.dataset.status;
-            applyFiltersAndSearch(); // Apply filters to current data
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
+                        await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set(customerUpdateData, { merge: true });
+                    } else {
+                        console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
+                    }
+                    
+                    await showCustomAlert("Status pesanan berhasil diperbarui!"); 
+                    tutupDetail(); 
+                } catch (error) {
+                    console.error("Error updating order status:", error);
+                    await showCustomAlert("Gagal memperbarui status pesanan."); 
+                }
+            }
         });
-    });
 
-    resetFiltersBtn.addEventListener('click', () => {
-        searchQueryInput.value = '';
-        filterDateInput.value = '';
-        activeFilterStatus = 'PendingOnly'; // Reset to PendingOnly for "Baru"
-        filterButtons.forEach(btn => btn.classList.remove('active'));
-        document.querySelector('.filter-btn[data-status="PendingOnly"]').classList.add('active'); // Activate "Baru" button
-        applyFiltersAndSearch(); // Apply reset filters
-    });
+        // NEW: Event listener for statusUpdater to show/hide driver info section
+        document.getElementById("statusUpdater").addEventListener('change', function() {
+            if (this.value === 'OnDelivery') {
+                driverInfoSection.style.display = 'block';
+            } else {
+                driverInfoSection.style.display = 'none';
+            }
+        });
 
-    // --- Authentication and Initial Load ---
-    auth.onAuthStateChanged(user => {
-      const storedRole = localStorage.getItem('userRole');
-      const isLoggingOut = localStorage.getItem('isLoggingOut');
-      if (isLoggingOut) localStorage.removeItem('isLoggingOut');
 
-      if (!user || storedRole !== 'penjual') {
-        if (!isLoggingOut) showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-        window.location.href = 'index.html'; // Redirect to login
-      } else {
-        loadAllOrders(); // Start real-time listener on successful authentication
-      }
-    });
-  </script>
+        // --- Event Listeners untuk Tombol Filter dan Pencarian ---
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const status = button.dataset.status;
+                activeFilterStatus = status; // Update active filter status
+                applyFiltersAndSearch(); // Apply filters and render
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            });
+        });
+
+        searchQueryInput.addEventListener('input', applyFiltersAndSearch);
+        filterDateInput.addEventListener('change', applyFiltersAndSearch);
+
+        resetFiltersBtn.addEventListener('click', () => {
+            searchQueryInput.value = '';
+            filterDateInput.value = '';
+            activeFilterStatus = 'All'; // Reset to default filter
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-status="All"]').classList.add('active'); // Activate "Semua" button
+            applyFiltersAndSearch(); // Apply reset filters
+        });
+
+        // --- LOGIKA NOTIFIKASI SUARA & POPUP BARU (Implementasi Terbaru) ---
+        const notifSound = document.getElementById("notifSound");
+        const notificationModal = document.getElementById('notificationModal');
+        const notificationModalContent = document.getElementById('notificationModalContent');
+        const closeBtnNotif = document.querySelector('.close-btn-notif');
+        const btnActionNotif = document.querySelector('.btn-action-notif');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notifLonceng = document.getElementById('notifLonceng'); // Icon lonceng di header
+        const navPesanan = document.getElementById('navPesanan'); // Tombol Pesanan di nav bawah (jika ada)
+
+        let terakhirDitampilkan = localStorage.getItem("terakhirNotifOrderId") || ""; 
+        let sedangBerbunyi = false; 
+        let audioSudahDiizinkan = false;
+        let currentNewOrderId = null; 
+
+        // Fungsi untuk mengizinkan audio setelah interaksi pengguna pertama
+        document.addEventListener("click", () => {
+            if (!audioSudahDiizinkan) {
+                notifSound.play().catch(() => {}); 
+                notifSound.pause();
+                notifSound.currentTime = 0;
+                audioSudahDiizinkan = true;
+                console.log("Audio diizinkan setelah interaksi pengguna.");
+            }
+        }, { once: true });
+
+        // Fungsi tampilkan popup notifikasi baru
+        function showNotificationModal(orderData) {
+            notificationMessage.innerHTML = `Ada pesanan baru dari <strong>${orderData.customer?.fullName || 'Pelanggan'}</strong> dengan total <strong>${formatCurrency(orderData.totalAmount || 0)}</strong>!`;
+            
+            notificationModal.style.display = 'flex'; 
+            setTimeout(() => {
+                notificationModal.classList.add('show-notification'); 
+            }, 50); 
+
+            currentNewOrderId = orderData.id;
+        }
+
+        // Fungsi tutup popup notifikasi baru
+        function hideNotificationModal() {
+            notificationModal.classList.remove('show-notification'); 
+            setTimeout(() => {
+                notificationModal.style.display = 'none'; 
+            }, 300); 
+
+            notifSound.pause();
+            notifSound.currentTime = 0;
+            sedangBerbunyi = false; 
+
+            localStorage.setItem("pesananSudahDibuka", new Date().toISOString());
+            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+
+            notifLonceng.classList.remove("berkedip-kuat");
+            if (navPesanan) navPesanan.classList.remove("berkedip-kuat"); 
+        }
+
+        // Event listener untuk tombol tutup 'X' di notificationModal
+        closeBtnNotif.addEventListener('click', hideNotificationModal);
+
+        // Event listener untuk klik di luar konten notificationModal (overlay)
+        notificationModal.addEventListener('click', function(event) {
+            if (event.target === notificationModal) { 
+                hideNotificationModal();
+            }
+        });
+
+        // Event listener untuk tombol aksi "Lihat Detail Pesanan" di notificationModal
+        btnActionNotif.addEventListener('click', function() {
+            hideNotificationModal(); 
+            if (currentNewOrderId) {
+                tampilkanDetail(currentNewOrderId); 
+            }
+        });
+
+        // Fungsi utama cek pesanan baru dari Firebase
+        function cekPesananBaru() {
+            // Menggunakan onSnapshot untuk real-time updates
+            db.collection("pesanan").orderBy("waktu", "desc").limit(1)
+                .onSnapshot(snapshot => {
+                    if (!snapshot.empty) {
+                        const doc = snapshot.docs[0];
+                        const data = doc.data();
+                        data.id = doc.id; 
+                        
+                        const waktuPesanan = data.waktu?.toDate?.() || new Date();
+                        const waktuBukaTerakhir = new Date(localStorage.getItem("pesananSudahDibuka") || 0); 
+                        const idPesananTerakhirDibunyikan = localStorage.getItem("idPesananTerakhirDibunyikan") || ""; 
+
+                        // KONDISI UNTUK MEMICU NOTIFIKASI
+                        // Notifikasi (popup dan kedip lonceng) akan muncul jika:
+                        // 1. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir ditampilkan (terakhirDitampilkan)
+                        // 2. Waktu pesanan terbaru lebih baru dari waktu terakhir user "membuka" notifikasi (waktuBukaTerakhir)
+                        // 3. ID pesanan terbaru berbeda dengan ID pesanan yang terakhir dibunyikan (idPesananTerakhirDibunyikan)
+                        if (doc.id !== terakhirDitampilkan || (waktuPesanan > waktuBukaTerakhir && doc.id !== idPesananTerakhirDibunyikan)) {
+                            // Update terakhirDitampilkan agar tidak memicu notifikasi visual berulang-ulang dalam satu sesi
+                            terakhirDitampilkan = doc.id; 
+                            localStorage.setItem("terakhirNotifOrderId", terakhirDitampilkan); 
+
+                            // Logic untuk SUARA: Hanya berbunyi jika ID pesanan belum pernah dibunyikan sebelumnya
+                            if (doc.id !== idPesananTerakhirDibunyikan && audioSudahDiizinkan && !sedangBerbunyi) {
+                                notifSound.play().catch(error => {
+                                    console.warn("Gagal memutar suara notifikasi:", error);
+                                });
+                                sedangBerbunyi = true; 
+                                localStorage.setItem("idPesananTerakhirDibunyikan", doc.id); 
+                            }
+
+                            // Tampilkan popup notifikasi baru
+                            showNotificationModal(data); 
+
+                            // Aktifkan efek berkedip pada lonceng dan tombol nav
+                            notifLonceng.classList.add("berkedip-kuat");
+                            if (navPesanan) navPesanan.classList.add("berkedip-kuat");
+
+                        } else {
+                            // KONDISI UNTUK MEMASTIKAN NOTIFIKASI MATI jika tidak ada pesanan baru yang valid
+                            if (!notificationModal.classList.contains('show-notification')) { 
+                                notifSound.pause();
+                                notifSound.currentTime = 0;
+                                sedangBerbunyi = false;
+                                notifLonceng.classList.remove("berkedip-kuat");
+                                if (navPesanan) navPesanan.classList.remove("berkedip-kuat");
+                            }
+                        }
+                    } else {
+                        // Jika tidak ada pesanan sama sekali di Firebase
+                        notifSound.pause();
+                        notifSound.currentTime = 0;
+                        sedangBerbunyi = false;
+                        notifLonceng.classList.remove("berkedip-kuat");
+                        if (navPesanan) navPesanan.classList.remove("berkedip-kuat");
+                    }
+                }, error => {
+                    console.error("Error fetching latest order (onSnapshot):", error);
+                    // Jika ada error dalam mengambil data, matikan juga notifikasi
+                    notifSound.pause();
+                    notifSound.currentTime = 0;
+                    sedangBerbunyi = false;
+                    notifLonceng.classList.remove("berkedip-kuat");
+                    if (navPesanan) navPesanan.classList.remove("berkedip-kuat");
+                });
+        }
+
+        auth.onAuthStateChanged(async function(user) {
+            let finalUser = user;
+            if (!finalUser) {
+                if (initialAuthToken) {
+                    console.log("Attempting sign-in with custom token...");
+                    try {
+                        const userCredential = await auth.signInWithCustomToken(initialAuthToken);
+                        finalUser = userCredential.user;
+                        console.log("Signed in with custom token:", finalUser.uid);
+                    } catch (error) {
+                        console.error("Seller Dashboard: Error signing in with custom token:", error);
+                        await showCustomAlert("Gagal login otomatis. Silakan login manual.");
+                        return; // Stop further execution if sign-in fails
+                    }
+                } else {
+                    await showCustomAlert("Silakan login terlebih dahulu.");
+                    return; // Stop further execution if no user and no token
+                }
+            }
+
+            if (finalUser) {
+                console.log("User authenticated:", finalUser.uid, "Checking role...");
+                // Check user role
+                db.collection('users').doc(finalUser.uid).get().then(doc => {
+                    if (doc.exists && doc.data().role === 'penjual') {
+                        console.log("User is a 'penjual'. Loading data.");
+                        localStorage.setItem("userUid", finalUser.uid);
+                        localStorage.setItem("userEmail", finalUser.email || "Anonim"); 
+                        loadAllOrdersRealtime(); // Start real-time listener
+                        cekPesananBaru();
+                    } else {
+                        console.error("User does not have 'penjual' role or role not found.");
+                        showCustomAlert("Anda tidak memiliki akses sebagai penjual.");
+                    }
+                }).catch(err => {
+                    console.error("Error fetching user role:", err);
+                    showCustomAlert("Gagal memverifikasi peran pengguna. Silakan coba lagi. Detail: " + err.message);
+                });
+            }
+        });
+
+        // --- Jalankan saat halaman selesai dimuat ---
+        window.addEventListener("DOMContentLoaded", () => {
+            // Event listener untuk tombol navigasi "Pesanan" (jika ada)
+            if (navPesanan) {
+                navPesanan.addEventListener("click", function () {
+                    hideNotificationModal(); 
+                });
+            }
+
+            // Event listener untuk tombol lonceng notifikasi di header
+            notifLonceng.addEventListener("click", function() {
+                if (notificationModal.classList.contains('show-notification')) {
+                    hideNotificationModal();
+                } else {
+                    console.log("Lonceng diklik, tidak ada notifikasi aktif.");
+                }
+            });
+
+            // Listener untuk menutup popup dengan tombol ESC (popupDetail dan notificationModal)
+            document.addEventListener("keydown", function(event) {
+                if (event.key === "Escape") {
+                    if (notificationModal.classList.contains('show-notification')) {
+                        hideNotificationModal();
+                    } else if (document.getElementById("popupDetail").style.display === "flex") {
+                        tutupDetail();
+                    } else if (document.getElementById("customConfirmModal").style.display === "flex") {
+                        document.getElementById("customConfirmNo").click(); // Simulate clicking 'No'
+                    } else if (document.getElementById("customAlertDialog").style.display === "flex") {
+                        document.getElementById("customAlertOk").click(); // Simulate clicking 'OK'
+                    } else if (document.getElementById("modalVerifikasi").style.display === "flex") {
+                        tutupModalVerifikasi();
+                    }
+                }
+            });
+
+            // ✅ Fungsi hapus semua pesanan penjual dengan modal verifikasi password
+            window.hapusSemuaPesananPenjual = async function () {
+                const konfirmasi = await showCustomConfirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
+                if (!konfirmasi) return;
+
+                // Tampilkan modal verifikasi password
+                const modal = document.getElementById('modalVerifikasi');
+                if (modal) {
+                    modal.style.display = 'flex';
+                } else {
+                    await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman."); 
+                }
+            };
+
+            // ✅ Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
+            window.verifikasiPasswordDanHapus = async function () {
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    await showCustomAlert("⚠️ Anda belum login."); 
+                    return;
+                }
+
+                const passwordInput = document.getElementById('inputPassword');
+                if (!passwordInput || !passwordInput.value) {
+                    await showCustomAlert("⚠️ Masukkan password terlebih dahulu."); 
+                    return;
+                }
+
+                const password = passwordInput.value;
+                const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+
+                try {
+                    showLoading();
+                    await user.reauthenticateWithCredential(credential);
+
+                    const snapshot = await db.collection("pesanan").get();
+                    const batch = db.batch();
+
+                    snapshot.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+
+                    await batch.commit();
+
+                    await showCustomAlert("✅ Semua pesanan berhasil dihapus."); 
+                    tutupModalVerifikasi();
+                    // loadAllOrdersRealtime() will automatically update the list
+                } catch (error) {
+                    console.error("❌ Gagal re-auth:", error);
+                    await showCustomAlert("❌ Password salah atau gagal autentikasi."); 
+                } finally {
+                    hideLoading();
+                }
+            };
+
+            // ✅ Tutup modal jika klik "Batal"
+            window.tutupModalVerifikasi = function () {
+                const modal = document.getElementById('modalVerifikasi');
+                if (modal) modal.style.display = 'none';
+            };
+        });
+    </script>
 </body>
 </html>
