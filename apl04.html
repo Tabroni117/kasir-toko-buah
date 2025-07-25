@@ -646,6 +646,10 @@
                     <option value="In-house">In-house</option>
                     <option value="Lainnya">Lainnya</option>
                 </select>
+                <!-- NEW: Tombol Simpan Detail Driver -->
+                <button id="saveDriverDetailsBtn" class="action-btn siap-diambil" style="width: 100%; margin-top: 15px;">
+                    <i class="fas fa-save"></i> Simpan Detail Driver
+                </button>
             </div>
             <!-- END NEW: Driver Info Section -->
 
@@ -743,6 +747,7 @@
         const driverNameInput = document.getElementById('driverNameInput');
         const driverPhoneInput = document.getElementById('driverPhoneInput');
         const driverAppSelect = document.getElementById('driverAppSelect');
+        const saveDriverDetailsBtn = document.getElementById('saveDriverDetailsBtn'); // NEW
 
         // Custom Modals
         const customConfirmModal = document.getElementById('customConfirmModal');
@@ -1291,6 +1296,37 @@
                 driverInfoSection.style.display = 'none';
             }
         });
+
+        // NEW: Event Listener for Save Driver Details Button
+        if (saveDriverDetailsBtn) { // Pastikan tombol ada di DOM
+            saveDriverDetailsBtn.addEventListener('click', async () => {
+                if (!currentOrderIdForDetail) {
+                    await showCustomAlert("Tidak ada pesanan yang dipilih.");
+                    return;
+                }
+
+                // Ambil status saat ini dari dropdown, karena tombol ini hanya terlihat jika status adalah OnDelivery
+                const currentStatus = statusUpdater.value;
+
+                if (currentStatus !== 'OnDelivery') {
+                    await showCustomAlert("Detail driver hanya dapat disimpan untuk pesanan 'On Delivery'.");
+                    return;
+                }
+
+                const driverDetails = {
+                    driverName: driverNameInput.value,
+                    driverPhone: driverPhoneInput.value,
+                    driverApp: driverAppSelect.value
+                };
+
+                const confirmSave = await showCustomConfirm("Simpan detail driver?");
+                if (confirmSave) {
+                    // Teruskan status saat ini dan detail driver ke fungsi pembaruan
+                    await updateOrderStatusInFirestore(currentOrderIdForDetail, currentStatus, driverDetails);
+                    // Tidak perlu menutup popup di sini, onSnapshot akan memperbarui konten secara real-time.
+                }
+            });
+        }
 
 
         // --- Event Listeners for Filters and Search ---
