@@ -801,7 +801,7 @@
 
         // NEW: Variables for blinking logic and initial load
         let previousPendingCount = 0; // To store the count from the last snapshot
-        let isInitialLoad = true; // Flag to control initial spinner display
+        let isInitialLoadComplete = false; // Flag to track if initial data load is done
 
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -1122,13 +1122,12 @@
                 }
 
                 await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`);
-                // The onSnapshot listener will handle re-rendering and hiding the spinner
+                // The onSnapshot listener will handle re-rendering.
             } catch (error) {
                 console.error("Error updating order status:", error);
                 await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
             } finally {
-                // The onSnapshot listener will trigger and hide loading
-                // No explicit hideLoading() here, as onSnapshot handles it globally
+                hideLoading(); // Always hide loading after this specific action completes
             }
         }
 
@@ -1157,7 +1156,6 @@
 
             // Logic for blinking "Baru" button
             // Blink if current pending count is greater than previous, AND the 'Pending' filter is NOT currently active
-            // OR if there are pending orders and the button is already blinking (to keep it blinking)
             if (currentPendingCount > previousPendingCount && activeFilterStatus !== 'Pending') {
                 if (pendingButton) {
                     pendingButton.classList.add('blinking');
@@ -1183,7 +1181,7 @@
 
         // --- Load All Order History (with real-time updates and filters) ---
         function loadAllOrders() {
-            if (isInitialLoad) { // Only show loading spinner on initial load
+            if (!isInitialLoadComplete) { // Only show loading spinner on initial load
                 showLoading();
             }
             // Unsubscribe from previous listener if exists
@@ -1197,17 +1195,56 @@
                     allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons and handle blinking
                     applyFiltersAndSearch(); // Apply filters and render whenever data changes
-                    if (isInitialLoad) { // Hide loading after initial load
+
+                    if (!isInitialLoadComplete) { // Hide loading after initial load
                         hideLoading();
-                        isInitialLoad = false; // Set to false after first load
+                        isInitialLoadComplete = true; // Set to true after first successful load
                     }
                 }, error => {
                     console.error('Gagal memuat semua pesanan secara real-time:', error);
                     orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data secara real-time.</p>';
-                    hideLoading();
-                    isInitialLoad = false; // Also set to false on error
+                    hideLoading(); // Hide loading even on error
+                    isInitialLoadComplete = true; // Mark as complete even on error to prevent future spinner on real-time updates
                 });
         }
+
+        // Function to apply filters and search to the currently loaded data
+        function applyFiltersAndSearch() {
+            let filteredOrders = [...allOrdersData]; // Start with all data
+
+            // Filter by status
+            if (activeFilterStatus) {
+                filteredOrders = filteredOrders.filter(order => order.status === activeFilterStatus);
+            }
+
+            // Filter by search query
+            const query = searchQueryInput.value.toLowerCase().trim();
+            if (query) {
+                filteredOrders = filteredOrders.filter(order =>
+                    (order.displayOrderId && order.displayOrderId.toLowerCase().includes(query)) ||
+                    (order.customer && order.customer.fullName && order.customer.fullName.toLowerCase().includes(query)) ||
+                    order.id.toLowerCase().includes(query) // Also search by full Firestore ID
+                );
+            }
+
+            // Filter by date
+            const filterDateValue = filterDateInput.value;
+            if (filterDateValue) {
+                const selectedDate = new Date(filterDateValue);
+                selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = order.waktu?.toDate?.();
+                    if (!orderDate) return false;
+                    const orderDay = new Date(orderDate);
+                    orderDay.setHours(0, 0, 0, 0); // Normalize order date to start of day
+                    return orderDay.getTime() === selectedDate.getTime();
+                });
+            }
+
+            renderOrders(filteredOrders);
+        }
+
 
         // NEW: Function to stop blinking
         function stopBlinking() {
@@ -1226,6 +1263,9 @@
             const nama = user?.email || "Tanpa Nama";
 
             try {
+                // Show loading spinner while fetching/updating detail
+                showLoading();
+
                 await db.runTransaction(async (transaction) => {
                     const snapshot = await transaction.get(docRef);
                     if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
@@ -1329,6 +1369,8 @@
             } catch (err) {
                 await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
                 console.error("Error showing order detail:", err);
+            } finally {
+                hideLoading(); // Always hide loading after detail popup attempt
             }
         }
 
@@ -1488,7 +1530,7 @@
                 console.error("❌ Gagal re-auth:", error);
                 await showCustomAlert("❌ Password salah atau gagal autentikasi.");
             } finally {
-                hideLoading();
+                hideLoading(); // Always hide loading after this specific action completes
             }
         };
 
