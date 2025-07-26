@@ -801,7 +801,7 @@
 
         // NEW: Variables for blinking logic
         let previousPendingCount = 0; // To store the count from the last snapshot
-        let blinkingTimeout = null; // To store the timeout ID for stopping the blink
+        // No more blinkingTimeout, as it should blink indefinitely until stopped by user action
 
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -1160,15 +1160,9 @@
             if (currentPendingCount > previousPendingCount && activeFilterStatus !== 'Pending') {
                 if (pendingButton) {
                     pendingButton.classList.add('blinking');
-                    // Clear any existing timeout to restart the blink duration
-                    if (blinkingTimeout) clearTimeout(blinkingTimeout);
-                    blinkingTimeout = setTimeout(() => {
-                        pendingButton.classList.remove('blinking');
-                        blinkingTimeout = null;
-                    }, 5000); // Blink for 5 seconds
                 }
-            } else if (currentPendingCount <= previousPendingCount && pendingButton.classList.contains('blinking')) {
-                // If pending count decreased or stayed same, and it's currently blinking, stop blinking
+            } else if (currentPendingCount <= 0 && pendingButton.classList.contains('blinking')) {
+                // Stop blinking if there are no more pending orders
                 stopBlinking();
             }
 
@@ -1208,48 +1202,11 @@
                 });
         }
 
-        // --- Apply Filters and Search to Cached Data ---
-        function applyFiltersAndSearch() {
-            let docsToRender = [...allOrdersData]; // Start with all fetched data
-
-            const searchTxt = searchQueryInput.value.trim().toUpperCase();
-            const filterDateVal = filterDateInput.value;
-
-            // Apply search filter (client-side)
-            if (searchTxt) {
-                docsToRender = docsToRender.filter(order => {
-                    return (order.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
-                           (order.displayOrderId || '').toUpperCase().includes(searchTxt);
-                });
-            }
-
-            // Apply date filter (client-side)
-            if (filterDateVal) {
-                const selectedDate = new Date(filterDateVal);
-                const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
-                const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
-                docsToRender = docsToRender.filter(order => {
-                    const waktuTimestamp = order.waktu?.toDate()?.getTime();
-                    return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
-                });
-            }
-
-            // Apply status filter (client-side)
-            // Note: There is no 'All' button in this version of the HTML, so this condition will always apply a specific filter
-            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
-            
-            renderOrders(docsToRender); // Render the filtered list
-        }
-
         // NEW: Function to stop blinking
         function stopBlinking() {
             const pendingButton = document.querySelector('.filter-btn[data-status="Pending"]');
             if (pendingButton) {
                 pendingButton.classList.remove('blinking');
-                if (blinkingTimeout) {
-                    clearTimeout(blinkingTimeout);
-                    blinkingTimeout = null;
-                }
             }
         }
 
@@ -1442,7 +1399,10 @@
                 applyFiltersAndSearch(); // Apply filters to current data
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                stopBlinking(); // Stop blinking when any filter is clicked
+                // Only stop blinking if the clicked button is the "Pending" button
+                if (button.dataset.status === 'Pending') {
+                    stopBlinking();
+                }
             });
         });
 
