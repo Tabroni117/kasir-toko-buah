@@ -74,12 +74,13 @@
             cursor: pointer;
             transition: all 0.2s;
             color: #555;
-            /* Hapus flex-grow dan margin individual karena sudah ada gap */
-            /* flex-grow: 1; */
-            /* margin: 0 4px; */
             white-space: nowrap; /* Pastikan teks tidak membungkus di dalam tombol */
             text-align: center; /* Pusatkan teks di dalam tombol */
             min-width: 80px; /* Beri lebar minimum agar tidak terlalu sempit */
+            display: flex; /* Menggunakan flexbox untuk menengahkan teks dan angka */
+            align-items: center;
+            justify-content: center;
+            gap: 5px; /* Jarak antara teks dan angka */
         }
         .filter-btn:first-child { margin-left: 0; }
         .filter-btn:last-child { margin-right: 0; }
@@ -558,6 +559,23 @@
         .phone-link-group .icon-link:hover {
             opacity: 0.8;
         }
+
+        /* Style for the count span inside filter buttons */
+        .filter-btn .status-count {
+            background-color: rgba(255, 255, 255, 0.3); /* Slightly transparent white for contrast */
+            color: #333; /* Dark text for the count */
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            min-width: 20px; /* Ensure minimum width for single/double digits */
+            text-align: center;
+            font-weight: bold;
+            margin-left: 5px; /* Space from the text label */
+        }
+        .filter-btn.active .status-count {
+            background-color: rgba(0, 0, 0, 0.2); /* Darker background for active state */
+            color: white; /* White text for active state count */
+        }
     </style>
 </head>
 <body>
@@ -577,11 +595,12 @@
                 <input type="date" id="filterDate" class="form-group-input">
             </div>
             <div class="filter-buttons">
-                <button class="filter-btn active" data-status="Pending">Baru</button>
-                <button class="filter-btn" data-status="Diproses">Diproses</button>
-                <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
-                <button class="filter-btn" data-status="OnDelivery">On Delivery</button>
-                <button class="filter-btn" data-status="Selesai">Selesai</button>
+                <button class="filter-btn active" data-status="Pending">Baru <span id="count-Pending" class="status-count"></span></button>
+                <button class="filter-btn" data-status="Diproses">Diproses <span id="count-Diproses" class="status-count"></span></button>
+                <button class="filter-btn" data-status="SiapDiambil">Siap Ambil <span id="count-SiapDiambil" class="status-count"></span></button>
+                <button class="filter-btn" data-status="OnDelivery">On Delivery <span id="count-OnDelivery" class="status-count"></span></button>
+                <button class="filter-btn" data-status="Selesai">Selesai <span id="count-Selesai" class="status-count"></span></button>
+                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan <span id="count-Dibatalkan" class="status-count"></span></button>
             </div>
             <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
         </div>
@@ -619,7 +638,7 @@
                 <select id="statusUpdater" class="status-dropdown">
                     <option value="Pending">Pending</option>
                     <option value="Diproses">Diproses</option>
-                    <option value="SiapDiambil">Siap Diambil</option>
+                    <option value="SiapDiambil">Siap Ambil</option>
                     <option value="OnDelivery">On Delivery</option>
                     <option value="Selesai">Selesai</option>
                     <option value="Dibatalkan">Dibatalkan</option>
@@ -879,13 +898,14 @@
                 return;
             }
 
-            // Duplicate orders to make the list longer
-            const duplicatedOrders = [];
-            for (let i = 0; i < 3; i++) { // Duplicate 3 times
-                duplicatedOrders.push(...ordersToRender);
-            }
+            // No longer duplicating orders to make the list longer,
+            // as the request is about filter counts.
+            // const duplicatedOrders = [];
+            // for (let i = 0; i < 3; i++) { // Duplicate 3 times
+            //     duplicatedOrders.push(...ordersToRender);
+            // }
 
-            duplicatedOrders.forEach(order => {
+            ordersToRender.forEach(order => {
                 const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
                 let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
                 let currentStatus = order.status || 'Pending';
@@ -1099,6 +1119,35 @@
             }
         }
 
+        /**
+         * Updates the count displayed on each filter button.
+         * @param {Array<Object>} orders - The array of all order data.
+         */
+        function updateFilterCountsDisplay(orders) {
+            const counts = {
+                'Pending': 0,
+                'Diproses': 0,
+                'SiapDiambil': 0,
+                'OnDelivery': 0,
+                'Selesai': 0,
+                'Dibatalkan': 0
+            };
+
+            orders.forEach(order => {
+                if (counts.hasOwnProperty(order.status)) {
+                    counts[order.status]++;
+                }
+            });
+
+            for (const status in counts) {
+                const countSpan = document.getElementById(`count-${status}`);
+                if (countSpan) {
+                    // Jika jumlahnya 0, set textContent menjadi kosong, jika tidak, tampilkan jumlahnya
+                    countSpan.textContent = counts[status] > 0 ? counts[status] : '';
+                }
+            }
+        }
+
         // --- Load All Order History (with real-time updates and filters) ---
         function loadAllOrders() {
             showLoading();
@@ -1111,6 +1160,7 @@
             unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc')
                 .onSnapshot(snapshot => {
                     allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons
                     applyFiltersAndSearch(); // Apply filters and render whenever data changes
                     hideLoading();
                 }, error => {
@@ -1147,10 +1197,9 @@
             }
 
             // Apply status filter (client-side)
-            if (activeFilterStatus !== 'All') { // 'All' is no longer a button, but keep logic for safety
-                docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
-            }
-
+            // Note: There is no 'All' button in this version of the HTML, so this condition will always apply a specific filter
+            docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
+            
             renderOrders(docsToRender); // Render the filtered list
         }
 
@@ -1435,3 +1484,4 @@
     </script>
 </body>
 </html>
+```
