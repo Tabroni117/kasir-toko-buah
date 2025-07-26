@@ -1,647 +1,564 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Riwayat Semua Pesanan - Rujak Buah Indonesia</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-  <!-- Firebase SDK v9 Compatibility - PENTING: Gunakan versi compat ini -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background-color: #f5f7fa;
-      color: #333;
-      line-height: 1.6;
-    }
-
-    .app-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 15px;
-    }
-
-    header {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .back-button {
-      font-size: 24px;
-      margin-right: 15px;
-      cursor: pointer;
-    }
-
-    .header-title {
-      font-size: 1.3rem;
-      font-weight: bold;
-    }
-
-    .filter-search-section {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-      margin-bottom: 15px;
-    }
-
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 15px;
-      justify-content: center;
-    }
-
-    .filter-btn {
-      padding: 8px 12px;
-      background-color: #f0f2f5;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .filter-btn.active {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      border-color: #007E33;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    .search-box {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-
-    .search-box input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.9rem;
-    }
-
-    .search-box button {
-      padding: 10px 15px;
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    .date-filter {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    .date-filter label {
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .date-filter input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 0.9rem;
-    }
-
-    .reset-filters-btn {
-      padding: 10px 15px;
-      background-color: #6c757d;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .order-history-content {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
-    }
-
-    .order-card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-      padding: 15px;
-      border-left: 4px solid #00C853;
-      transition: transform 0.3s, box-shadow 0.3s;
-      cursor: pointer;
-    }
-
-    .order-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .order-id {
-      font-weight: bold;
-      color: #00C853;
-      font-size: 1.1rem;
-    }
-
-    .order-status {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
-
-    .status-Pending {
-      background-color: #fff3cd;
-      color: #856404;
-    }
-
-    .status-Diproses {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-    }
-
-    .status-SiapDiambil {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-    }
-
-    .status-OnDelivery {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-    }
-
-    .status-Selesai {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    .status-Dibatalkan {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-
-    .order-customer {
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 1rem;
-    }
-
-    .order-time {
-      color: #6c757d;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-    }
-
-    .order-items {
-      margin-bottom: 12px;
-    }
-
-    .order-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      gap: 10px;
-    }
-
-    .order-item-image {
-      width: 45px;
-      height: 45px;
-      object-fit: cover;
-      border-radius: 5px;
-      background-color: #eee;
-    }
-
-    .order-item-details {
-      flex-grow: 1;
-    }
-
-    .order-item-name {
-      font-weight: 500;
-      margin-bottom: 2px;
-      font-size: 0.95rem;
-    }
-
-    .order-item-variants-display {
-      display: block;
-      font-size: 0.8rem;
-      color: #6c757d;
-      margin-top: 2px;
-    }
-
-    .order-item-quantity-price {
-      font-size: 0.85rem;
-      color: #6c757d;
-    }
-
-    .order-item-total {
-      font-weight: bold;
-      white-space: nowrap;
-      margin-left: auto;
-      font-size: 0.95rem;
-    }
-
-    .order-summary-footer {
-      display: flex;
-      justify-content: space-between;
-      padding-top: 10px;
-      border-top: 1px solid #eee;
-      margin-top: 10px;
-    }
-
-    .order-total-amount {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #00C853;
-    }
-
-    .order-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 15px;
-    }
-
-    .action-btn {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: background-color 0.2s;
-      flex: 1;
-      min-width: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-    }
-
-    .action-btn.terima, .action-btn.siap-diambil, .action-btn.pick-up {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    .action-btn.tolak {
-      background-color: #6c757d;
-      color: white;
-    }
-
-    .action-btn.selesai {
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    .empty-state {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 40px 20px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .empty-state i {
-      font-size: 3rem;
-      color: #ccc;
-      margin-bottom: 20px;
-    }
-
-    .empty-state p {
-      font-size: 1.2rem;
-      color: #6c757d;
-    }
-
-    /* Loading Spinner */
-    #loadingSpinner {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-    }
-
-    .spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #00C853;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Popup Detail */
-    .popup-detail {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .popup-content {
-      background: white;
-      border-radius: 10px;
-      width: 95%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 20px;
-      position: relative;
-    }
-
-    .close-popup {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #6c757d;
-    }
-
-    .popup-header {
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .popup-title {
-      font-size: 1.3rem;
-      color: #00C853;
-    }
-
-    .popup-section {
-      margin-bottom: 20px;
-    }
-
-    .popup-section-title {
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: #495057;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.1rem;
-    }
-
-    .popup-section-title i {
-      color: #00C853;
-    }
-
-    .order-info-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .info-label {
-      font-weight: 500;
-      color: #6c757d;
-      font-size: 0.9rem;
-    }
-
-    .info-value {
-      color: #212529;
-      font-size: 0.95rem;
-    }
-
-    .order-status-popup {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-    }
-
-    .driver-info-section {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-
-    .driver-info-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .driver-info-grid .info-label {
-      font-weight: 500;
-    }
-
-    .status-updater {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .status-updater select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 100%;
-    }
-
-    .status-updater button {
-      padding: 10px 15px;
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    .driver-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-top: 15px;
-    }
-
-    .driver-form input, .driver-form select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      width: 100%;
-    }
-
-    .driver-form button {
-      padding: 12px;
-      background: linear-gradient(135deg, #00C853 0%, #007E33 100%);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-      box-shadow: 0 2px 5px rgba(0,200,83,0.3);
-    }
-
-    /* Custom Modals */
-    #customConfirmModal, #customAlertDialog, #modalVerifikasi {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      z-index: 9998;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #customConfirmModal > div, #customAlertDialog > div, #modalVerifikasi > div {
-      background-color: white;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      text-align: center;
-      max-width: 300px;
-      width: 90%;
-    }
-
-    #customConfirmModal p, #customAlertDialog p, #modalVerifikasi p {
-      margin-bottom: 20px;
-      font-size: 16px;
-      color: #333;
-    }
-
-    #customConfirmModal button, #customAlertDialog button, #modalVerifikasi button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s;
-      margin: 0 5px;
-    }
-
-    #customConfirmYes, #customAlertOk, #saveDriverDetailsBtn {
-      background-color: #00C853;
-      color: white;
-    }
-
-    #customConfirmNo, #customAlertOk, #modalVerifikasi button {
-      background-color: #6c757d;
-      color: white;
-    }
-
-    #customConfirmYes:hover, #customAlertOk:hover, #saveDriverDetailsBtn:hover {
-      background-color: #388E3C;
-    }
-
-    #customConfirmNo:hover {
-      background-color: #5a6268;
-    }
-
-    #inputPassword {
-      width: 100%;
-      padding: 8px;
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-
-    @media (min-width: 768px) {
-      .app-container {
-        padding: 20px;
-      }
-      
-      .order-history-content {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      }
-      
-      .driver-form {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-      
-      .driver-form button {
-        grid-column: span 2;
-      }
-      
-      .status-updater {
-        flex-direction: row;
-        align-items: center;
-      }
-      
-      .status-updater select {
-        flex: 1;
-      }
-      
-      .order-info-grid {
-        grid-template-columns: 1fr 2fr;
-      }
-      
-      .driver-info-grid {
-        grid-template-columns: auto 1fr;
-      }
-      
-      .search-box, .date-filter {
-        margin-bottom: 0;
-      }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Semua Pesanan - Rujak Buah Indonesia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Firebase SDK v9 Compatibility - PENTING: Gunakan versi compat ini -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* General Styling */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f9f9f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; align-items: center; }
+        .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; width: 100%; }
+
+        /* Header */
+        .header-detail {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white; padding: 12px 16px;
+            display: flex; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
+        .header-title { font-size: 18px; font-weight: bold; }
+
+        /* Filter and Search Section */
+        .filter-search-section {
+            padding: 15px 16px 10px;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 50px; /* Below header */
+            z-index: 90;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        /* PERBAIKAN: Layout tombol filter */
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Memungkinkan tombol untuk membungkus ke baris baru */
+            justify-content: center; /* Pusatkan tombol */
+            gap: 8px; /* Jarak antar tombol yang konsisten */
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        .filter-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 10px; /* Sedikit sesuaikan padding horizontal */
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+            /* Hapus flex-grow dan margin individual karena sudah ada gap */
+            /* flex-grow: 1; */
+            /* margin: 0 4px; */
+            white-space: nowrap; /* Pastikan teks tidak membungkus di dalam tombol */
+            text-align: center; /* Pusatkan teks di dalam tombol */
+            min-width: 80px; /* Beri lebar minimum agar tidak terlalu sempit */
+        }
+        .filter-btn:first-child { margin-left: 0; }
+        .filter-btn:last-child { margin-right: 0; }
+        .filter-btn.active {
+            background-color: #00C853;
+            color: white;
+            border-color: #00C853;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .filter-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+        .btn-reset {
+            background-color: #f0f0f0;
+            color: #555;
+            border: 1px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        .btn-reset:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Styles for action buttons within order cards */
+        .order-card-actions {
+            display: flex;
+            justify-content: flex-end; /* Align buttons to the right */
+            gap: 8px; /* Space between buttons */
+            margin-top: 10px; /* Space from content above */
+        }
+        .order-card-actions .action-btn {
+            padding: 8px 12px;
+            border: 1px solid;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .order-card-actions .action-btn.terima {
+            background-color: #28A745; /* Green */
+            border-color: #28A745;
+        }
+        .order-card-actions .action-btn.terima:hover {
+            background-color: #218838; /* Darker Green */
+        }
+        .order-card-actions .action-btn.tolak {
+            background-color: #DC3545; /* Red */
+            border-color: #DC3545;
+        }
+        .order-card-actions .action-btn.tolak:hover {
+            background-color: #C82333; /* Darker Red */
+        }
+        .order-card-actions .action-btn.siap-diambil {
+            background-color: #007bff; /* Blue */
+            border-color: #007bff;
+        }
+        .order-card-actions .action-btn.siap-diambil:hover {
+            background-color: #0056b3; /* Darker Blue */
+        }
+        .order-card-actions .action-btn.pick-up { /* New style for "Pick Up" button */
+            background-color: #FFC107; /* Amber */
+            border-color: #FFC107;
+            color: #333;
+        }
+        .order-card-actions .action-btn.pick-up:hover {
+            background-color: #FFA000; /* Darker Amber */
+        }
+        .order-card-actions .action-btn.selesai {
+            background-color: #6f42c1; /* Purple */
+            border-color: #6f42c1;
+        }
+        .order-card-actions .action-btn.selesai:hover {
+            background-color: #5a2d9c; /* Darker Purple */
+        }
+
+
+        /* Order List */
+        .order-history-content { padding: 16px; }
+        .order-card {
+            background: #fff; border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 15px; padding: 15px;
+            border-left: 5px solid #00C853;
+            cursor: pointer; /* Keep cursor pointer for interactivity */
+            transition: transform 0.2s, box-shadow 0.2s; /* Add transition for hover effect */
+        }
+        .order-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .order-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; padding-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .order-id { font-weight: bold; font-size: 14px; color: #555; }
+        .order-date { font-size: 13px; color: #777; }
+        .order-status { font-weight: bold; font-size: 15px; }
+        .order-status.pending { color: #FFC107; }
+        .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
+        .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
+        .order-status.dibatalkan { color: #DC3545; }
+        .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
+        .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
+
+        /* Styles for driver info display */
+        .order-driver-info-container {
+            margin-top: 8px;
+            margin-bottom: 10px;
+            padding: 0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            display: grid;
+            grid-template-columns: auto auto 8px 1fr;
+            align-items: baseline;
+            gap: 2px;
+            grid-auto-rows: min-content;
+        }
+        .order-driver-info-container .driver-line {
+            display: contents;
+        }
+        .order-driver-info-container .driver-icon {
+            color: #777;
+            font-size: 12px;
+            grid-column: 1;
+            text-align: left;
+            padding-bottom: 0px;
+        }
+        .order-driver-info-container .driver-label-text {
+            grid-column: 2;
+            text-align: left;
+            font-weight: bold;
+            padding-bottom: 0px;
+        }
+        .order-driver-info-container .driver-colon {
+            grid-column: 3;
+            text-align: left;
+            padding-bottom: 0px;
+        }
+        .order-driver-info-container .driver-value {
+            grid-column: 4;
+            text-align: left;
+            padding-bottom: 0px;
+        }
+
+        .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
+        .order-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #444;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .order-item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            flex-shrink: 0;
+            background-color: #eee;
+        }
+
+        .order-item-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .order-item-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        .order-item-variants-display {
+            display: block;
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+        .order-item-quantity-price {
+            font-size: 12px;
+            color: #777;
+        }
+        .order-item-total {
+            font-weight: bold;
+            white-space: nowrap;
+            margin-left: auto;
+        }
+
+        .order-summary-footer {
+            display: flex; justify-content: space-between;
+            padding-top: 10px; border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+
+        .order-total-amount { font-weight: bold; font-size: 16px; color: #00C853; }
+
+        .empty-state {
+            text-align: center; padding: 50px 20px; color: #777; font-size: 16px;
+        }
+        .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 20px; }
+
+        /* Loading Spinner */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #00C853;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #00C853;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Popup Detail */
+        #popupDetail {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #popupDetail > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #popupDetail h3 {
+            margin-top: 0;
+            color: #00C853;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        #popupDetail p {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        #popupDetail p strong {
+            color: #555;
+        }
+        #popupDetail .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #777;
+        }
+        #popupDetail .status-dropdown {
+            padding: 5px 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        #popupDetail h4 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #00C853;
+            font-size: 16px;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+        #popupItems div {
+            background-color: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+        #popupDetail button.popup-close-btn {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #popupDetail button.popup-close-btn:hover {
+            background-color: #388E3C;
+        }
+
+        /* NEW: Driver Info Section in Popup Detail */
+        .driver-info-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+            display: none; /* Hidden by default, shown when status is OnDelivery */
+        }
+        .driver-info-section label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .driver-info-section input,
+        .driver-info-section select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+
+        /* Custom Confirmation Modal */
+        #customConfirmModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
+        }
+        #customConfirmModal > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customConfirmModal p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customConfirmModal button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customConfirmModal button#customConfirmYes {
+            background-color: #00C853;
+            color: white;
+        }
+        #customConfirmModal button#customConfirmYes:hover {
+            background-color: #388E3C;
+        }
+        #customConfirmModal button#customConfirmNo {
+            background-color: #f44336;
+            color: white;
+        }
+        #customConfirmModal button#customConfirmNo:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Custom Alert Modal */
+        #customAlertDialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9997;
+            justify-content: center;
+            align-items: center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customAlertDialog button {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customAlertDialog button:hover {
+            background-color: #388E3C;
+        }
+
+        /* Styles for clickable phone number */
+        .phone-link-group {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between number and icons */
+        }
+        .phone-link-group a {
+            color: #007bff; /* Blue for links */
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .phone-link-group a:hover {
+            color: #0056b3; /* Darker blue on hover */
+        }
+        .phone-link-group .icon-link {
+            font-size: 18px;
+            color: #28a745; /* Green for WhatsApp */
+            transition: color 0.2s;
+        }
+        .phone-link-group .icon-link.fa-phone {
+            color: #007bff; /* Blue for call */
+        }
+        .phone-link-group .icon-link:hover {
+            opacity: 0.8;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
