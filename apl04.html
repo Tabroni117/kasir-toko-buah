@@ -799,9 +799,9 @@
         let allOrdersData = [];
         let unsubscribeOrders = null;
 
-        // NEW: Variables for blinking logic
+        // NEW: Variables for blinking logic and initial load
         let previousPendingCount = 0; // To store the count from the last snapshot
-        // No more blinkingTimeout, as it should blink indefinitely until stopped by user action
+        let isInitialLoad = true; // Flag to control initial spinner display
 
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -1072,7 +1072,7 @@
         }
 
         async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) {
-            showLoading();
+            showLoading(); // Show loading when initiating an update
             const docRef = db.collection("pesanan").doc(orderId);
             const user = auth.currentUser;
             const userName = user?.email || "Admin Anonim";
@@ -1122,13 +1122,13 @@
                 }
 
                 await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`);
-                // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
-                // If popup is open, it will be closed by tutupDetail()
+                // The onSnapshot listener will handle re-rendering and hiding the spinner
             } catch (error) {
                 console.error("Error updating order status:", error);
                 await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
             } finally {
-                hideLoading();
+                // The onSnapshot listener will trigger and hide loading
+                // No explicit hideLoading() here, as onSnapshot handles it globally
             }
         }
 
@@ -1157,11 +1157,12 @@
 
             // Logic for blinking "Baru" button
             // Blink if current pending count is greater than previous, AND the 'Pending' filter is NOT currently active
+            // OR if there are pending orders and the button is already blinking (to keep it blinking)
             if (currentPendingCount > previousPendingCount && activeFilterStatus !== 'Pending') {
                 if (pendingButton) {
                     pendingButton.classList.add('blinking');
                 }
-            } else if (currentPendingCount <= 0 && pendingButton.classList.contains('blinking')) {
+            } else if (currentPendingCount <= 0 && pendingButton && pendingButton.classList.contains('blinking')) {
                 // Stop blinking if there are no more pending orders
                 stopBlinking();
             }
@@ -1182,7 +1183,9 @@
 
         // --- Load All Order History (with real-time updates and filters) ---
         function loadAllOrders() {
-            showLoading();
+            if (isInitialLoad) { // Only show loading spinner on initial load
+                showLoading();
+            }
             // Unsubscribe from previous listener if exists
             if (unsubscribeOrders) {
                 unsubscribeOrders();
@@ -1194,11 +1197,15 @@
                     allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons and handle blinking
                     applyFiltersAndSearch(); // Apply filters and render whenever data changes
-                    hideLoading();
+                    if (isInitialLoad) { // Hide loading after initial load
+                        hideLoading();
+                        isInitialLoad = false; // Set to false after first load
+                    }
                 }, error => {
                     console.error('Gagal memuat semua pesanan secara real-time:', error);
                     orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data secara real-time.</p>';
                     hideLoading();
+                    isInitialLoad = false; // Also set to false on error
                 });
         }
 
@@ -1399,10 +1406,7 @@
                 applyFiltersAndSearch(); // Apply filters to current data
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                // Only stop blinking if the clicked button is the "Pending" button
-                if (button.dataset.status === 'Pending') {
-                    stopBlinking();
-                }
+                stopBlinking(); // Stop blinking when ANY filter button is clicked
             });
         });
 
