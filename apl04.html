@@ -576,6 +576,22 @@
             background-color: rgba(0, 0, 0, 0.2); /* Darker background for active state */
             color: white; /* White text for active state count */
         }
+
+        /* NEW: Blinking animation for new orders */
+        @keyframes blink-animation {
+            0%, 100% {
+                background-color: #00C853; /* Active color */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+            50% {
+                background-color: #64DD17; /* Lighter shade */
+                box-shadow: 0 0 15px rgba(0,200,83,0.7); /* Stronger glow */
+            }
+        }
+
+        .filter-btn.blinking {
+            animation: blink-animation 1s infinite alternate; /* Blink indefinitely until stopped */
+        }
     </style>
 </head>
 <body>
@@ -783,6 +799,10 @@
         let allOrdersData = [];
         let unsubscribeOrders = null;
 
+        // NEW: Variables for blinking logic
+        let previousPendingCount = 0; // To store the count from the last snapshot
+        let blinkingTimeout = null; // To store the timeout ID for stopping the blink
+
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
         function hideLoading() { loadingSpinner.style.display = 'none'; }
@@ -897,13 +917,6 @@
                 emptyOrderState.style.display = 'block';
                 return;
             }
-
-            // No longer duplicating orders to make the list longer,
-            // as the request is about filter counts.
-            // const duplicatedOrders = [];
-            // for (let i = 0; i < 3; i++) { // Duplicate 3 times
-            //     duplicatedOrders.push(...ordersToRender);
-            // }
 
             ordersToRender.forEach(order => {
                 const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
@@ -1120,7 +1133,7 @@
         }
 
         /**
-         * Updates the count displayed on each filter button.
+         * Updates the count displayed on each filter button and triggers blinking.
          * @param {Array<Object>} orders - The array of all order data.
          */
         function updateFilterCountsDisplay(orders) {
@@ -1139,6 +1152,28 @@
                 }
             });
 
+            const pendingButton = document.querySelector('.filter-btn[data-status="Pending"]');
+            const currentPendingCount = counts['Pending'];
+
+            // Logic for blinking "Baru" button
+            // Blink if current pending count is greater than previous, AND the 'Pending' filter is NOT currently active
+            if (currentPendingCount > previousPendingCount && activeFilterStatus !== 'Pending') {
+                if (pendingButton) {
+                    pendingButton.classList.add('blinking');
+                    // Clear any existing timeout to restart the blink duration
+                    if (blinkingTimeout) clearTimeout(blinkingTimeout);
+                    blinkingTimeout = setTimeout(() => {
+                        pendingButton.classList.remove('blinking');
+                        blinkingTimeout = null;
+                    }, 5000); // Blink for 5 seconds
+                }
+            } else if (currentPendingCount <= previousPendingCount && pendingButton.classList.contains('blinking')) {
+                // If pending count decreased or stayed same, and it's currently blinking, stop blinking
+                stopBlinking();
+            }
+
+
+            // Update the display for all counts
             for (const status in counts) {
                 const countSpan = document.getElementById(`count-${status}`);
                 if (countSpan) {
@@ -1146,6 +1181,9 @@
                     countSpan.textContent = counts[status] > 0 ? counts[status] : '';
                 }
             }
+
+            // Update previous count *after* all checks and updates
+            previousPendingCount = currentPendingCount;
         }
 
         // --- Load All Order History (with real-time updates and filters) ---
@@ -1160,7 +1198,7 @@
             unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc')
                 .onSnapshot(snapshot => {
                     allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons
+                    updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons and handle blinking
                     applyFiltersAndSearch(); // Apply filters and render whenever data changes
                     hideLoading();
                 }, error => {
@@ -1201,6 +1239,18 @@
             docsToRender = docsToRender.filter(order => order.status === activeFilterStatus);
             
             renderOrders(docsToRender); // Render the filtered list
+        }
+
+        // NEW: Function to stop blinking
+        function stopBlinking() {
+            const pendingButton = document.querySelector('.filter-btn[data-status="Pending"]');
+            if (pendingButton) {
+                pendingButton.classList.remove('blinking');
+                if (blinkingTimeout) {
+                    clearTimeout(blinkingTimeout);
+                    blinkingTimeout = null;
+                }
+            }
         }
 
         // --- Show Order Detail Popup ---
@@ -1383,8 +1433,8 @@
 
 
         // --- Event Listeners for Filters and Search ---
-        searchQueryInput.addEventListener('input', applyFiltersAndSearch);
-        filterDateInput.addEventListener('change', applyFiltersAndSearch);
+        searchQueryInput.addEventListener('input', stopBlinking); // Stop blinking on search input
+        filterDateInput.addEventListener('change', stopBlinking); // Stop blinking on date filter change
 
         filterButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1392,6 +1442,7 @@
                 applyFiltersAndSearch(); // Apply filters to current data
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
+                stopBlinking(); // Stop blinking when any filter is clicked
             });
         });
 
@@ -1403,6 +1454,7 @@
             // Set 'Baru' (Pending) button as active
             document.querySelector('.filter-btn[data-status="Pending"]').classList.add('active');
             applyFiltersAndSearch(); // Apply reset filters
+            stopBlinking(); // Stop blinking on reset
         });
 
         // --- Authentication and Initial Load ---
@@ -1484,4 +1536,3 @@
     </script>
 </body>
 </html>
-```
