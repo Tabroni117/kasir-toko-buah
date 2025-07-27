@@ -3,9 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Struk Belanja Minimarket</title>
+    <title>Pratinjau Struk Pesanan</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Firebase SDK v9 Compatibility -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
     <style>
-        /* Gaya untuk tampilan di layar */
+        /* Gaya untuk tampilan di layar (Screen View) */
         body {
             font-family: 'Consolas', 'Courier New', monospace; /* Font monospasi agar rapi seperti struk */
             margin: 0;
@@ -13,33 +20,89 @@
             background-color: #f0f0f0;
             color: #333;
             display: flex;
+            flex-direction: column; /* Untuk menempatkan tombol di bawah struk */
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             min-height: 90vh;
         }
 
+        /* Header Bar (for screen view, not part of receipt print) */
+        .header-bar {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 480px; /* Match container width */
+            box-sizing: border-box;
+            margin-bottom: 10px; /* Space between header and receipt */
+        }
+        .back-button {
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Loading Spinner */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #00C853;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #00C853;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Struk Container (Main Receipt Content) */
         .struk-container {
-            width: 220px; /* **Lebar yang jauh lebih ramping (sebelumnya 250px)** */
+            width: 220px; /* Lebar yang jauh lebih ramping */
             background-color: #fff;
             padding: 10px; /* Padding lebih kecil lagi */
             box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
             border-radius: 3px; /* Sudut lebih tajam */
             font-size: 0.8em; /* Font keseluruhan sedikit lebih kecil */
             line-height: 1.2; /* Jarak baris lebih rapat */
+            box-sizing: border-box; /* Include padding in width */
         }
 
-        .header, .footer {
+        .header-struk, .footer-struk { /* Renamed to avoid conflict with header-bar */
             text-align: center;
             margin-bottom: 8px; /* Margin lebih kecil */
         }
 
-        .header h3 {
+        .header-struk h3 {
             margin: 3px 0; /* Margin header lebih kecil */
             font-size: 1em; /* Ukuran font lebih kecil */
             font-weight: bold;
         }
 
-        .header p {
+        .header-struk p {
             margin: 1px 0; /* Margin paragraf lebih kecil */
             font-size: 0.75em; /* Font detail lebih kecil */
         }
@@ -123,7 +186,47 @@
             background-color: #0056b3;
         }
 
-        /* Gaya khusus untuk cetak */
+        /* Custom Alert Modal */
+        #customAlertDialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9997;
+            justify-content: center;
+            align-items: center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customAlertDialog button {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customAlertDialog button:hover {
+            background-color: #388E3C;
+        }
+
+        /* Gaya khusus untuk cetak (Print Specific Styles) */
         @media print {
             body {
                 background-color: #fff;
@@ -132,34 +235,43 @@
                 display: block;
             }
 
+            .header-bar, .print-button-container, #loadingSpinner, #customAlertDialog {
+                display: none !important; /* Sembunyikan elemen non-struk saat mencetak */
+            }
+
             .struk-container {
-                width: 58mm; /* **Lebar yang sangat ramping untuk cetak (58mm umum)** */
+                width: 58mm; /* Lebar yang sangat ramping untuk cetak (58mm umum) */
                 box-shadow: none;
                 margin: 0 auto;
                 padding: 0;
-                font-size: 8.5pt; /* **Ukuran font sangat kecil untuk cetak** */
-                line-height: 1.05; /* **Jarak baris sangat rapat untuk cetak** */
-            }
-
-            .print-button-container {
-                display: none;
+                font-size: 8.5pt; /* Ukuran font sangat kecil untuk cetak */
+                line-height: 1.05; /* Jarak baris sangat rapat untuk cetak */
+                page-break-inside: avoid; /* Mencegah pemisahan halaman di dalam struk */
             }
 
             @page {
-                margin: 2mm; /* **Margin halaman cetak sangat kecil** */
+                margin: 2mm; /* Margin halaman cetak sangat kecil */
             }
         }
     </style>
 </head>
 <body>
-    <div class="struk-container">
-        <div class="header">
-            <h3>MINIMART INDONESIA</h3>
-            <p>Jl. Contoh No. 123, Jakarta Selatan</p>
-            <p>Telp: (021) 12345678</p>
-            <p>Tanggal: 28/07/2025 09:30</p>
-            <p>Kasir: Budi</p>
-            <p>No. Transaksi: #TRX0012345</p>
+    <header class="header-bar">
+        <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
+        <div class="header-title">Pratinjau Struk</div>
+    </header>
+
+    <div id="loadingSpinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="struk-container" id="receiptContent" style="display: none;">
+        <div class="header-struk">
+            <h3>RUJAK BUAH INDONESIA</h3> <!-- Nama toko dari aplikasi Kakak -->
+            <p>Jl. Contoh No. 123, Kota Contoh</p>
+            <p>Telp: 0812-3456-7890</p>
+            <p>Tanggal: <span id="receiptOrderDate"></span></p>
+            <p>No. Transaksi: <span id="receiptOrderId"></span></p>
         </div>
 
         <div class="divider"></div>
@@ -173,32 +285,8 @@
                         <th class="total-item" style="width: 25%;">Total</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>Mie Instan Rasa Ayam</td>
-                        <td class="qty-price">2 x 3.000</td>
-                        <td class="total-item">6.000</td>
-                    </tr>
-                    <tr>
-                        <td>Susu UHT Cokelat 1L</td>
-                        <td class="qty-price">1 x 18.500</td>
-                        <td class="total-item">18.500</td>
-                    </tr>
-                    <tr>
-                        <td>Roti Tawar Gandum</td>
-                        <td class="qty-price">1 x 15.000</td>
-                        <td class="total-item">15.000</td>
-                    </tr>
-                    <tr>
-                        <td>Air Mineral 600ml</td>
-                        <td class="qty-price">3 x 2.500</td>
-                        <td class="total-item">7.500</td>
-                    </tr>
-                    <tr>
-                        <td>Snack Kentang Besar</td>
-                        <td class="qty-price">1 x 12.000</td>
-                        <td class="total-item">12.000</td>
-                    </tr>
+                <tbody id="receiptItemsList">
+                    <!-- Items will be loaded here dynamically -->
                 </tbody>
             </table>
         </div>
@@ -206,17 +294,17 @@
         <div class="divider"></div>
 
         <div class="summary">
-            <p><span class="label">Total Belanja:</span> <span class="value">Rp 59.000</span></p>
-            <p><span class="label">Diskon:</span> <span class="value">Rp 0</span></p>
-            <p><span class="label">Pajak (11%):</span> <span class="value">Rp 6.490</span></p>
-            <p><strong><span class="label">GRAND TOTAL:</span> <span class="value">Rp 65.490</span></strong></p>
-            <p><span class="label">Bayar:</span> <span class="value">Rp 70.000</span></p>
-            <p><span class="label">Kembali:</span> <span class="value">Rp 4.510</span></p>
+            <p><span class="label">Subtotal:</span> <span class="value" id="receiptSubtotal">Rp 0</span></p>
+            <p><span class="label">Diskon:</span> <span class="value" id="receiptDiscount">Rp 0</span></p>
+            <p><span class="label">Pajak (11%):</span> <span class="value">Rp 0</span></p> <!-- Placeholder, tidak ada data pajak di Firestore -->
+            <p><strong><span class="label">GRAND TOTAL:</span> <span class="value" id="receiptTotalAmount">Rp 0</span></strong></p>
+            <p><span class="label">Bayar:</span> <span class="value" id="receiptPaidAmount">Rp 0</span></p>
+            <p><span class="label">Kembali:</span> <span class="value" id="receiptChangeAmount">Rp 0</span></p>
         </div>
 
         <div class="divider"></div>
 
-        <div class="footer">
+        <div class="footer-struk">
             <p class="thank-you">TERIMA KASIH TELAH BERBELANJA DI TEMPAT KAMI</p>
             <p style="font-size: 0.75em;">Layanan Pelanggan: 0812-3456-7890</p>
         </div>
@@ -225,5 +313,178 @@
     <div class="print-button-container">
         <button class="print-button" onclick="window.print()">Cetak Struk Ini</button>
     </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertDialog">
+        <div>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOk">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const receiptContent = document.getElementById('receiptContent');
+        const receiptOrderId = document.getElementById('receiptOrderId');
+        const receiptOrderDate = document.getElementById('receiptOrderDate');
+        const receiptItemsList = document.getElementById('receiptItemsList');
+        const receiptSubtotal = document.getElementById('receiptSubtotal');
+        const receiptDiscount = document.getElementById('receiptDiscount');
+        const receiptTotalAmount = document.getElementById('receiptTotalAmount');
+        const receiptPaidAmount = document.getElementById('receiptPaidAmount'); // New element for paid amount
+        const receiptChangeAmount = document.getElementById('receiptChangeAmount'); // New element for change amount
+        
+        // Custom Alert Modal
+        const customAlertDialog = document.getElementById('customAlertDialog');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customAlertOk = document.getElementById('customAlertOk');
+
+        // --- Helper Functions ---
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        function formatRupiah(amount) {
+            if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
+                return "0"; // Return "0" for currency display, not "Rp0" as per minimarket style
+            }
+            // Use Intl.NumberFormat for IDR currency, then remove "Rp" prefix
+            const formatted = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+            return formatted.replace('Rp', '').trim(); // Remove "Rp" and trim whitespace
+        }
+
+        function formatDate(date) {
+            if (!date) return "-";
+            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+            if (isNaN(d.getTime())) return "-";
+            // Format for a compact receipt date/time: DD/MM/YYYY HH:MM
+            return d.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        }
+
+        // getVariantDisplayString is no longer needed for this minimalist receipt
+
+        // Custom Alert Modal
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                customAlertMessage.textContent = message;
+                customAlertDialog.style.display = 'flex';
+
+                const handleOk = () => {
+                    customAlertDialog.style.display = 'none';
+                    customAlertOk.removeEventListener('click', handleOk);
+                    resolve();
+                };
+
+                customAlertOk.addEventListener('click', handleOk);
+            });
+        }
+
+        // --- Load Order Details for Printing ---
+        async function loadOrderForPrint(orderId) {
+            showLoading();
+            receiptContent.style.display = 'none'; // Hide content until loaded
+
+            try {
+                const orderDoc = await db.collection('pesanan').doc(orderId).get();
+
+                if (!orderDoc.exists) {
+                    await showCustomAlert('Pesanan tidak ditemukan.');
+                    hideLoading();
+                    return;
+                }
+
+                const orderData = orderDoc.data();
+                const items = orderData.items || [];
+
+                // Populate receipt details
+                receiptOrderId.textContent = orderData.displayOrderId || '#' + orderId.substring(0, 6).toUpperCase();
+                receiptOrderDate.textContent = formatDate(orderData.waktu);
+                // Other details like customer name, payment method, address, notes, driver info are not displayed in this minimalist design.
+
+                // Populate items list
+                receiptItemsList.innerHTML = '';
+                let subtotal = 0;
+                items.forEach(item => {
+                    const itemTotal = item.quantity * item.price;
+                    subtotal += itemTotal;
+
+                    const listItem = document.createElement('tr');
+                    listItem.innerHTML = `
+                        <td>${item.name}</td>
+                        <td class="qty-price">${item.quantity} x ${formatRupiah(item.price)}</td>
+                        <td class="total-item">${formatRupiah(itemTotal)}</td>
+                    `;
+                    receiptItemsList.appendChild(listItem);
+                });
+
+                receiptSubtotal.textContent = formatRupiah(subtotal);
+                // Assuming discount is 0 for now, or fetch from orderData if available
+                receiptDiscount.textContent = formatRupiah(orderData.discount || 0); 
+                receiptTotalAmount.textContent = formatRupiah(orderData.totalAmount || subtotal);
+                
+                // For 'Bayar' and 'Kembali', we need to check if these fields exist in orderData.
+                // If not, we can default them or leave them as placeholders.
+                // Assuming `paidAmount` and `changeAmount` might be present in `orderData`
+                receiptPaidAmount.textContent = formatRupiah(orderData.paidAmount || orderData.totalAmount || subtotal); // Default paid to total if not specified
+                receiptChangeAmount.textContent = formatRupiah(orderData.changeAmount || 0); // Default change to 0 if not specified
+
+                receiptContent.style.display = 'block'; // Show content after loading
+                hideLoading();
+
+            } catch (error) {
+                console.error('Error loading order for print:', error);
+                await showCustomAlert('Gagal memuat detail pesanan untuk cetak: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Authenticate user (e.g., as seller)
+            auth.onAuthStateChanged(async user => {
+                const storedRole = localStorage.getItem('userRole');
+                const isLoggingOut = localStorage.getItem('isLoggingOut');
+                if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+
+                if (!user || storedRole !== 'penjual') {
+                    if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
+                    window.location.href = 'index.html'; // Redirect to login
+                } else {
+                    // Get orderId from URL query parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const orderId = urlParams.get('orderId');
+
+                    if (orderId) {
+                        loadOrderForPrint(orderId);
+                    } else {
+                        await showCustomAlert('ID Pesanan tidak ditemukan di URL.');
+                        history.back(); // Go back if no orderId
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
