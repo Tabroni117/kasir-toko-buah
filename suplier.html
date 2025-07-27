@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Pesanan ke Supplier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Firebase SDK v9 Compatibility -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* General Styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            padding-bottom: 20px;
+            width: 100%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .header-detail {
+            background: linear-gradient(135deg, #00C853, #64DD17);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .back-button {
+            font-size: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Loading Spinner */
+        #loadingSpinner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #00C853;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #00C853;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Form Sections */
+        .form-section, .selected-items-section, .supplier-details-section, .order-summary-section {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-section h2, .selected-items-section h2, .supplier-details-section h2, .order-summary-section h2 {
+            font-size: 18px;
+            color: #00C853;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .add-item-button {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .add-item-button:hover {
+            background-color: #388E3C;
+        }
+        .add-item-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Selected Items Table */
+        .selected-items-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .selected-items-section th, .selected-items-section td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .selected-items-section th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .selected-items-section .item-actions {
+            text-align: center;
+        }
+
+        .selected-items-section .remove-item-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .selected-items-section .remove-item-btn:hover {
+            background-color: #d32f2f;
+        }
+        .selected-items-section .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Order Summary */
+        .order-summary-section .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .order-summary-section .summary-total {
+            font-weight: bold;
+            font-size: 18px;
+            color: #00C853;
+            border-top: 1px dashed #eee;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        /* Send Order Button */
+        .send-order-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .send-order-button:hover {
+            background-color: #0056b3;
+        }
+        .send-order-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Custom Alert Modal */
+        #customAlertDialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9997;
+            justify-content: center;
+            align-items: center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customAlertDialog button {
+            background-color: #00C853;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customAlertDialog button:hover {
+            background-color: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header-detail">
+            <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
+            <div class="header-title">Input Pesanan ke Supplier</div>
+        </header>
+
+        <div id="loadingSpinner">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Pilih Produk</h2>
+            <div class="form-group">
+                <label for="productSelect">Produk:</label>
+                <select id="productSelect">
+                    <option value="">-- Pilih Produk --</option>
+                    <!-- Products will be loaded here -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="quantityInput">Kuantitas:</label>
+                <input type="number" id="quantityInput" value="1" min="1">
+            </div>
+            <button id="addItemBtn" class="add-item-button">Tambahkan ke Daftar Pesanan</button>
+        </div>
+
+        <div class="selected-items-section">
+            <h2>Daftar Pesanan ke Supplier</h2>
+            <div id="selectedItemsContainer">
+                <table id="selectedItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Qty</th>
+                            <th>Harga Satuan</th>
+                            <th>Total</th>
+                            <th class="item-actions">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="selectedItemsList">
+                        <!-- Selected items will be loaded here -->
+                    </tbody>
+                </table>
+                <p id="emptyItemsMessage" class="empty-message">Belum ada item dalam daftar pesanan.</p>
+            </div>
+        </div>
+
+        <div class="supplier-details-section">
+            <h2>Detail Supplier</h2>
+            <div class="form-group">
+                <label for="supplierName">Nama Supplier:</label>
+                <input type="text" id="supplierName" placeholder="Contoh: PT Buah Segar Abadi" required>
+            </div>
+            <div class="form-group">
+                <label for="supplierAddress">Alamat Supplier:</label>
+                <textarea id="supplierAddress" placeholder="Alamat lengkap supplier" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="supplierNotes">Catatan untuk Supplier (Opsional):</label>
+                <textarea id="supplierNotes" placeholder="Contoh: Mohon kirim sebelum jam 3 sore"></textarea>
+            </div>
+        </div>
+
+        <div class="order-summary-section">
+            <h2>Ringkasan Pesanan</h2>
+            <div class="summary-row">
+                <span>Total Item:</span>
+                <span id="totalItemsForSupplier">0</span>
+            </div>
+            <div class="summary-row summary-total">
+                <span>Total Harga Pesanan:</span>
+                <span id="totalPriceForSupplier">Rp 0</span>
+            </div>
+        </div>
+
+        <button id="sendOrderBtn" class="send-order-button">Kirim Pesanan ke Supplier</button>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertDialog">
+        <div>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOk">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Firestore Collections
+        const productsCollection = db.collection('buah'); // Assuming 'buah' contains products to order from supplier
+        const supplierOrdersCollection = db.collection('supplierOrders'); // NEW collection for supplier orders
+
+        // DOM Elements
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const productSelect = document.getElementById('productSelect');
+        const quantityInput = document.getElementById('quantityInput');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const selectedItemsList = document.getElementById('selectedItemsList');
+        const emptyItemsMessage = document.getElementById('emptyItemsMessage');
+        const supplierNameInput = document.getElementById('supplierName');
+        const supplierAddressInput = document.getElementById('supplierAddress');
+        const supplierNotesInput = document.getElementById('supplierNotes');
+        const totalItemsForSupplier = document.getElementById('totalItemsForSupplier');
+        const totalPriceForSupplier = document.getElementById('totalPriceForSupplier');
+        const sendOrderBtn = document.getElementById('sendOrderBtn');
+        const customAlertDialog = document.getElementById('customAlertDialog');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customAlertOk = document.getElementById('customAlertOk');
+
+        let currentUserId = null;
+        let productsData = []; // To store all products for selection
+        let localSupplierOrderItems = []; // Array to hold items selected for the current supplier order
+
+        // --- Helper Functions ---
+        function showLoading() { loadingSpinner.style.display = 'flex'; }
+        function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+        function formatRupiah(amount) {
+            if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
+                return "Rp 0";
+            }
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                customAlertMessage.textContent = message;
+                customAlertDialog.style.display = 'flex';
+
+                const handleOk = () => {
+                    customAlertDialog.style.display = 'none';
+                    customAlertOk.removeEventListener('click', handleOk);
+                    resolve();
+                };
+
+                customAlertOk.addEventListener('click', handleOk);
+            });
+        }
+
+        // --- Load Products for Selection ---
+        async function loadProductsForSelection() {
+            showLoading();
+            productSelect.innerHTML = '<option value="">-- Memuat Produk --</option>';
+            try {
+                const snapshot = await productsCollection.where('isAvailable', '==', true).orderBy('nama').get();
+                productsData = [];
+                productSelect.innerHTML = '<option value="">-- Pilih Produk --</option>'; // Reset dropdown
+
+                if (snapshot.empty) {
+                    productSelect.innerHTML = '<option value="">-- Tidak Ada Produk Tersedia --</option>';
+                    addItemBtn.disabled = true;
+                    hideLoading();
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const product = { id: doc.id, ...doc.data() };
+                    productsData.push(product);
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.nama} (${formatRupiah(product.harga)})`;
+                    productSelect.appendChild(option);
+                });
+                addItemBtn.disabled = false;
+            } catch (error) {
+                console.error("Error loading products for selection:", error);
+                showCustomAlert("Gagal memuat daftar produk.");
+                productSelect.innerHTML = '<option value="">-- Gagal Memuat Produk --</option>';
+                addItemBtn.disabled = true;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Add Item to Local Order ---
+        addItemBtn.addEventListener('click', () => {
+            const selectedProductId = productSelect.value;
+            const quantity = parseInt(quantityInput.value);
+
+            if (!selectedProductId) {
+                showCustomAlert("Silakan pilih produk terlebih dahulu.");
+                return;
+            }
+            if (isNaN(quantity) || quantity <= 0) {
+                showCustomAlert("Kuantitas harus angka positif.");
+                return;
+            }
+
+            const selectedProduct = productsData.find(p => p.id === selectedProductId);
+            if (!selectedProduct) {
+                showCustomAlert("Produk tidak ditemukan.");
+                return;
+            }
+
+            // Check if item already exists in local list
+            const existingItemIndex = localSupplierOrderItems.findIndex(item => item.productId === selectedProductId);
+
+            if (existingItemIndex > -1) {
+                // Update quantity if item exists
+                localSupplierOrderItems[existingItemIndex].quantity += quantity;
+            } else {
+                // Add new item
+                localSupplierOrderItems.push({
+                    productId: selectedProduct.id,
+                    name: selectedProduct.nama,
+                    price: selectedProduct.harga,
+                    quantity: quantity
+                });
+            }
+
+            renderSelectedItemsTable();
+            updateSupplierOrderSummary();
+            // Reset quantity input and product selection
+            quantityInput.value = 1;
+            productSelect.value = "";
+        });
+
+        // --- Render Selected Items Table ---
+        function renderSelectedItemsTable() {
+            selectedItemsList.innerHTML = '';
+            if (localSupplierOrderItems.length === 0) {
+                emptyItemsMessage.style.display = 'block';
+                document.getElementById('selectedItemsTable').style.display = 'none';
+            } else {
+                emptyItemsMessage.style.display = 'none';
+                document.getElementById('selectedItemsTable').style.display = 'table';
+                localSupplierOrderItems.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    const totalItemPrice = item.quantity * item.price;
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatRupiah(item.price)}</td>
+                        <td>${formatRupiah(totalItemPrice)}</td>
+                        <td class="item-actions">
+                            <button class="remove-item-btn" data-index="${index}">Hapus</button>
+                        </td>
+                    `;
+                    selectedItemsList.appendChild(row);
+                });
+            }
+            // Attach event listeners for remove buttons
+            selectedItemsList.querySelectorAll('.remove-item-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const indexToRemove = parseInt(event.target.dataset.index);
+                    removeItemFromLocalOrder(indexToRemove);
+                });
+            });
+        }
+
+        // --- Remove Item from Local Order ---
+        function removeItemFromLocalOrder(index) {
+            localSupplierOrderItems.splice(index, 1);
+            renderSelectedItemsTable();
+            updateSupplierOrderSummary();
+        }
+
+        // --- Update Supplier Order Summary ---
+        function updateSupplierOrderSummary() {
+            let totalItems = 0;
+            let totalPrice = 0;
+            localSupplierOrderItems.forEach(item => {
+                totalItems += item.quantity;
+                totalPrice += item.quantity * item.price;
+            });
+            totalItemsForSupplier.textContent = totalItems;
+            totalPriceForSupplier.textContent = formatRupiah(totalPrice);
+
+            // Enable/disable send order button based on items and supplier details
+            checkFormValidity();
+        }
+
+        // --- Check Form Validity ---
+        function checkFormValidity() {
+            const isItemsAdded = localSupplierOrderItems.length > 0;
+            const isSupplierNameFilled = supplierNameInput.value.trim() !== '';
+            const isSupplierAddressFilled = supplierAddressInput.value.trim() !== '';
+
+            sendOrderBtn.disabled = !(isItemsAdded && isSupplierNameFilled && isSupplierAddressFilled);
+        }
+
+        // --- Send Order to Supplier ---
+        sendOrderBtn.addEventListener('click', async () => {
+            if (!currentUserId) {
+                showCustomAlert("Anda harus login sebagai penjual untuk mengirim pesanan.");
+                return;
+            }
+
+            if (!localSupplierOrderItems.length) {
+                showCustomAlert("Daftar pesanan ke supplier masih kosong.");
+                return;
+            }
+            if (supplierNameInput.value.trim() === '' || supplierAddressInput.value.trim() === '') {
+                showCustomAlert("Nama dan Alamat Supplier harus diisi.");
+                return;
+            }
+
+            showLoading();
+            sendOrderBtn.disabled = true;
+
+            const orderData = {
+                items: localSupplierOrderItems,
+                supplier: {
+                    name: supplierNameInput.value.trim(),
+                    address: supplierAddressInput.value.trim(),
+                    notes: supplierNotesInput.value.trim()
+                },
+                totalItems: parseInt(totalItemsForSupplier.textContent),
+                totalPrice: parseFloat(totalPriceForSupplier.textContent.replace(/[^0-9,-]+/g, "").replace(",", ".")), // Convert back to number
+                status: 'Pending', // Initial status
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: currentUserId,
+                createdByName: auth.currentUser.email || "Unknown Seller"
+            };
+
+            try {
+                await supplierOrdersCollection.add(orderData);
+                showCustomAlert("Pesanan berhasil dikirim ke supplier!");
+                // Reset form and local data
+                localSupplierOrderItems = [];
+                renderSelectedItemsTable();
+                updateSupplierOrderSummary();
+                supplierNameInput.value = '';
+                supplierAddressInput.value = '';
+                supplierNotesInput.value = '';
+            } catch (error) {
+                console.error("Error sending order to supplier:", error);
+                showCustomAlert("Gagal mengirim pesanan ke supplier: " + error.message);
+            } finally {
+                hideLoading();
+                sendOrderBtn.disabled = false;
+            }
+        });
+
+        // --- Initial Load & Authentication ---
+        document.addEventListener('DOMContentLoaded', () => {
+            auth.onAuthStateChanged(async user => {
+                const storedRole = localStorage.getItem('userRole');
+                const isLoggingOut = localStorage.getItem('isLoggingOut');
+                if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+
+                if (!user || storedRole !== 'penjual') {
+                    if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
+                    window.location.href = 'index.html'; // Redirect to login
+                } else {
+                    currentUserId = user.uid;
+                    loadProductsForSelection();
+                    renderSelectedItemsTable(); // Render empty table initially
+                    updateSupplierOrderSummary(); // Update summary
+                    // Add event listeners for input changes to check form validity
+                    supplierNameInput.addEventListener('input', checkFormValidity);
+                    supplierAddressInput.addEventListener('input', checkFormValidity);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
