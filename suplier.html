@@ -220,30 +220,54 @@
             margin-top: 10px;
         }
 
-        /* Send Order Button */
-        .send-order-button {
-            background-color: #007bff;
-            color: white;
+        /* Action Buttons Group */
+        .action-buttons-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 0 20px; /* Match section padding */
+        }
+
+        .action-buttons-group button {
+            flex-grow: 1;
+            padding: 12px 20px;
             border: none;
             border-radius: 25px;
-            padding: 12px 20px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background-color 0.2s;
-            display: block;
-            width: 100%;
-            margin-top: 20px;
+            transition: background-color 0.2s, transform 0.2s;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        .send-order-button:hover {
-            background-color: #0056b3;
+
+        .action-buttons-group .send-order-button {
+            background-color: #007bff; /* Blue */
+            color: white;
         }
-        .send-order-button:disabled {
+        .action-buttons-group .send-order-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        .action-buttons-group .send-order-button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
             box-shadow: none;
         }
+
+        .action-buttons-group .share-whatsapp-button {
+            background-color: #25D366; /* WhatsApp Green */
+            color: white;
+        }
+        .action-buttons-group .share-whatsapp-button:hover {
+            background-color: #1DA851;
+            transform: translateY(-1px);
+        }
+        .action-buttons-group .share-whatsapp-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
 
         /* Custom Alert Modal */
         #customAlertDialog {
@@ -362,7 +386,10 @@
             </div>
         </div>
 
-        <button id="sendOrderBtn" class="send-order-button">Kirim Pesanan ke Supplier</button>
+        <div class="action-buttons-group">
+            <button id="sendOrderBtn" class="send-order-button">Kirim Pesanan ke Supplier</button>
+            <button id="shareWhatsappBtn" class="share-whatsapp-button"><i class="fab fa-whatsapp"></i> Share</button>
+        </div>
     </div>
 
     <!-- Custom Alert Modal -->
@@ -409,6 +436,7 @@
         const totalItemsForSupplier = document.getElementById('totalItemsForSupplier');
         const totalPriceForSupplier = document.getElementById('totalPriceForSupplier');
         const sendOrderBtn = document.getElementById('sendOrderBtn');
+        const shareWhatsappBtn = document.getElementById('shareWhatsappBtn'); // NEW Share Button
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
         const customAlertOk = document.getElementById('customAlertOk');
@@ -576,7 +604,7 @@
             totalItemsForSupplier.textContent = totalItems;
             totalPriceForSupplier.textContent = formatRupiah(totalPrice);
 
-            // Enable/disable send order button based on items and supplier details
+            // Enable/disable send order and share buttons based on items and supplier details
             checkFormValidity();
         }
 
@@ -586,7 +614,9 @@
             const isSupplierNameFilled = supplierNameInput.value.trim() !== '';
             const isSupplierAddressFilled = supplierAddressInput.value.trim() !== '';
 
-            sendOrderBtn.disabled = !(isItemsAdded && isSupplierNameFilled && isSupplierAddressFilled);
+            const isFormValid = isItemsAdded && isSupplierNameFilled && isSupplierAddressFilled;
+            sendOrderBtn.disabled = !isFormValid;
+            shareWhatsappBtn.disabled = !isFormValid; // Disable share button if form is not valid
         }
 
         // --- Send Order to Supplier ---
@@ -607,6 +637,7 @@
 
             showLoading();
             sendOrderBtn.disabled = true;
+            shareWhatsappBtn.disabled = true;
 
             const orderData = {
                 items: localSupplierOrderItems,
@@ -616,7 +647,8 @@
                     notes: supplierNotesInput.value.trim()
                 },
                 totalItems: parseInt(totalItemsForSupplier.textContent),
-                totalPrice: parseFloat(totalPriceForSupplier.textContent.replace(/[^0-9,-]+/g, "").replace(",", ".")), // Convert back to number
+                // Remove "Rp " and commas, then replace decimal comma with dot for parseFloat
+                totalPrice: parseFloat(totalPriceForSupplier.textContent.replace('Rp ', '').replace(/\./g, '').replace(',', '.')), 
                 status: 'Pending', // Initial status
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 createdBy: currentUserId,
@@ -639,8 +671,41 @@
             } finally {
                 hideLoading();
                 sendOrderBtn.disabled = false;
+                shareWhatsappBtn.disabled = false;
             }
         });
+
+        // --- Share Order to WhatsApp ---
+        shareWhatsappBtn.addEventListener('click', () => {
+            if (!localSupplierOrderItems.length) {
+                showCustomAlert("Daftar pesanan ke supplier masih kosong.");
+                return;
+            }
+            if (supplierNameInput.value.trim() === '' || supplierAddressInput.value.trim() === '') {
+                showCustomAlert("Nama dan Alamat Supplier harus diisi.");
+                return;
+            }
+
+            let message = `*Pesanan Bahan Baku Rujak Buah Indonesia*\n\n`;
+            message += `*Supplier:* ${supplierNameInput.value.trim()}\n`;
+            message += `*Alamat:* ${supplierAddressInput.value.trim()}\n`;
+            if (supplierNotesInput.value.trim()) {
+                message += `*Catatan:* ${supplierNotesInput.value.trim()}\n`;
+            }
+            message += `\n*Daftar Pesanan:*\n`;
+
+            localSupplierOrderItems.forEach((item, index) => {
+                message += `${index + 1}. ${item.name} - ${item.quantity}x ${formatRupiah(item.price)} = ${formatRupiah(item.quantity * item.price)}\n`;
+            });
+
+            message += `\n*Total Item:* ${totalItemsForSupplier.textContent}\n`;
+            message += `*Total Harga Pesanan:* ${totalPriceForSupplier.textContent}\n`;
+            message += `\nTerima kasih!`;
+
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        });
+
 
         // --- Initial Load & Authentication ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -660,6 +725,7 @@
                     // Add event listeners for input changes to check form validity
                     supplierNameInput.addEventListener('input', checkFormValidity);
                     supplierAddressInput.addEventListener('input', checkFormValidity);
+                    supplierNotesInput.addEventListener('input', checkFormValidity); // Also check notes for validity
                 }
             });
         });
