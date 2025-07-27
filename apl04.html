@@ -22,7 +22,7 @@
             background: linear-gradient(135deg, #00C853, #64DD17);
             color: white; padding: 12px 16px;
             display: flex; align-items: center;
-            position: sticky; top: 0; z-index: 100;
+            position: stickysticky; top: 0; z-index: 100;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
@@ -604,53 +604,83 @@
 
         /* --- Print-specific styles for the iframe content --- */
         /* These styles will be injected directly into the iframe's head */
-        .print-iframe-styles {
-            font-family: monospace; /* Font monospace untuk kesan struk */
-            font-size: 12px;
-            line-height: 1.4;
-            color: black;
-            padding: 15px;
+        /* PERBAIKAN: Lebih agresif untuk tampilan struk */
+        .print-iframe-styles body {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'monospace' !important; /* Font monospace untuk kesan struk */
+            font-size: 11px !important; /* Ukuran font lebih kecil */
+            line-height: 1.3 !important;
+            color: black !important;
+            width: 280px !important; /* Lebar tetap untuk simulasi printer termal */
+            max-width: 280px !important;
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important; /* Penting untuk warna latar belakang */
+            print-color-adjust: exact !important;
+            overflow: hidden !important; /* Hindari scrollbar di print */
+        }
+        .print-iframe-styles .print-container {
+            padding: 10px !important; /* Padding keseluruhan struk */
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .print-iframe-styles h1, .print-iframe-styles h2, .print-iframe-styles h3, .print-iframe-styles h4 {
             color: black !important;
-            text-align: center;
-            margin-bottom: 5px;
+            text-align: center !important;
+            margin-top: 0 !important;
+            margin-bottom: 5px !important;
+            font-size: 14px !important; /* Ukuran judul lebih kecil */
+            font-weight: bold !important;
         }
         .print-iframe-styles p {
-            margin-bottom: 2px;
+            margin-bottom: 2px !important;
+            font-size: 11px !important;
+            line-height: 1.3 !important;
+        }
+        .print-iframe-styles strong {
+            font-weight: bold !important;
         }
         .print-iframe-styles .print-section {
-            border-bottom: 1px dashed #ccc;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            border-bottom: 1px dashed #ccc !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 8px !important;
         }
         .print-iframe-styles .print-item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         .print-iframe-styles .print-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2px;
+            display: flex !important;
+            justify-content: space-between !important;
+            margin-bottom: 2px !important;
+            font-size: 11px !important;
         }
         .print-iframe-styles .print-item-name {
-            flex-grow: 1;
-            margin-right: 10px;
+            flex-grow: 1 !important;
+            margin-right: 10px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }
         .print-iframe-styles .print-item-qty {
-            width: 30px;
-            text-align: center;
+            width: 30px !important;
+            text-align: center !important;
+            flex-shrink: 0 !important;
         }
         .print-iframe-styles .print-item-price {
-            width: 80px;
-            text-align: right;
+            width: 80px !important;
+            text-align: right !important;
+            flex-shrink: 0 !important;
         }
         .print-iframe-styles .print-total {
-            font-weight: bold;
-            font-size: 14px;
-            text-align: right;
-            margin-top: 10px;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            text-align: right !important;
+            margin-top: 10px !important;
+        }
+        .print-iframe-styles .text-center {
+            text-align: center !important;
         }
     </style>
 </head>
@@ -1560,7 +1590,7 @@
                 if (order.status === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
                     driverInfoHtml = `
                         <div class="print-section">
-                            <h4>Info Pengiriman:</h4>
+                            <p class="text-center">--- Info Pengiriman ---</p>
                             <p><strong>Diantar Via:</strong> ${order.driverApp || '-'}</p>
                             ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''}
                             ${order.driverPhone ? `<p><strong>Telp. Driver:</strong> ${order.driverPhone}</p>` : ''}
@@ -1585,69 +1615,90 @@
                     <head>
                         <title>Struk Pesanan ${displayOrderId}</title>
                         <style>
-                            /* Styles for the iframe content */
+                            /* PERBAIKAN: Lebih agresif untuk tampilan struk */
                             body {
-                                margin: 0;
-                                padding: 0;
-                                font-family: monospace; /* Font monospace untuk kesan struk */
-                                font-size: 12px;
-                                line-height: 1.4;
-                                color: black;
-                                -webkit-print-color-adjust: exact; /* Penting untuk warna latar belakang */
-                                print-color-adjust: exact;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                font-family: 'monospace' !important; /* Font monospace untuk kesan struk */
+                                font-size: 11px !important; /* Ukuran font lebih kecil */
+                                line-height: 1.3 !important;
+                                color: black !important;
+                                width: 280px !important; /* Lebar tetap untuk simulasi printer termal */
+                                max-width: 280px !important;
+                                box-sizing: border-box !important;
+                                -webkit-print-color-adjust: exact !important; /* Penting untuk warna latar belakang */
+                                print-color-adjust: exact !important;
+                                overflow: hidden !important; /* Hindari scrollbar di print */
                             }
                             .print-container {
-                                padding: 15px;
-                                width: 100%; /* Pastikan lebar 100% untuk cetak */
-                                box-sizing: border-box;
+                                padding: 10px !important; /* Padding keseluruhan struk */
+                                width: 100% !important;
+                                box-sizing: border-box !important;
                             }
                             h1, h2, h3, h4 {
                                 color: black !important;
-                                text-align: center;
-                                margin-bottom: 5px;
+                                text-align: center !important;
+                                margin-top: 0 !important;
+                                margin-bottom: 5px !important;
+                                font-size: 14px !important; /* Ukuran judul lebih kecil */
+                                font-weight: bold !important;
                             }
                             p {
-                                margin-bottom: 2px;
+                                margin-bottom: 2px !important;
+                                font-size: 11px !important;
+                                line-height: 1.3 !important;
+                            }
+                            strong {
+                                font-weight: bold !important;
                             }
                             .print-section {
-                                border-bottom: 1px dashed #ccc;
-                                padding-bottom: 10px;
-                                margin-bottom: 10px;
+                                border-bottom: 1px dashed #ccc !important;
+                                padding-bottom: 8px !important;
+                                margin-bottom: 8px !important;
                             }
                             .print-item-list {
-                                list-style: none;
-                                padding: 0;
-                                margin: 0;
+                                list-style: none !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
                             }
                             .print-item {
-                                display: flex;
-                                justify-content: space-between;
-                                margin-bottom: 2px;
+                                display: flex !important;
+                                justify-content: space-between !important;
+                                margin-bottom: 2px !important;
+                                font-size: 11px !important;
                             }
                             .print-item-name {
-                                flex-grow: 1;
-                                margin-right: 10px;
+                                flex-grow: 1 !important;
+                                margin-right: 10px !important;
+                                white-space: nowrap !important;
+                                overflow: hidden !important;
+                                text-overflow: ellipsis !important;
                             }
                             .print-item-qty {
-                                width: 30px;
-                                text-align: center;
+                                width: 30px !important;
+                                text-align: center !important;
+                                flex-shrink: 0 !important;
                             }
                             .print-item-price {
-                                width: 80px;
-                                text-align: right;
+                                width: 80px !important;
+                                text-align: right !important;
+                                flex-shrink: 0 !important;
                             }
                             .print-total {
-                                font-weight: bold;
-                                font-size: 14px;
-                                text-align: right;
-                                margin-top: 10px;
+                                font-weight: bold !important;
+                                font-size: 14px !important;
+                                text-align: right !important;
+                                margin-top: 10px !important;
+                            }
+                            .text-center {
+                                text-align: center !important;
                             }
                         </style>
                     </head>
                     <body>
                         <div class="print-container">
-                            <h3 style="text-align: center; margin-bottom: 10px;">Rujak Buah Indonesia</h3>
-                            <p style="text-align: center; margin-bottom: 15px;">Struk Pesanan</p>
+                            <h3 class="text-center">Rujak Buah Indonesia</h3>
+                            <p class="text-center" style="margin-bottom: 15px !important;">Struk Pesanan</p>
                             
                             <div class="print-section">
                                 <p><strong>ID Pesanan:</strong> ${displayOrderId}</p>
@@ -1656,7 +1707,7 @@
                             </div>
 
                             <div class="print-section">
-                                <h4>Info Pelanggan:</h4>
+                                <p class="text-center">--- Info Pelanggan ---</p>
                                 <p><strong>Nama:</strong> ${buyerName}</p>
                                 <p><strong>No. HP:</strong> ${phoneNumber}</p>
                                 <p><strong>Alamat:</strong> ${address}</p>
@@ -1666,7 +1717,7 @@
                             ${driverInfoHtml}
 
                             <div class="print-section">
-                                <h4>Detail Item:</h4>
+                                <p class="text-center">--- Detail Item ---</p>
                                 <ul class="print-item-list">
                                     ${itemsHtml}
                                 </ul>
@@ -1677,7 +1728,7 @@
                                 <p class="print-total">Total Pembayaran: ${totalAmount}</p>
                             </div>
 
-                            <p style="text-align: center; margin-top: 20px;">Terima Kasih!</p>
+                            <p class="text-center" style="margin-top: 20px !important;">Terima Kasih!</p>
                         </div>
                     </body>
                     </html>
