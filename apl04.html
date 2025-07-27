@@ -602,24 +602,29 @@
             animation: blink-animation 1s infinite alternate; /* Blink indefinitely until stopped */
         }
 
-        /* Print-specific styles */
+        /* --- Print-specific styles --- */
+        /* Sembunyikan semua elemen di body secara default saat mencetak */
         @media print {
-            body > *:not(#print-area) {
-                display: none !important; /* Hide everything except the print area */
+            body {
+                visibility: hidden; /* Sembunyikan seluruh body */
             }
             #print-area {
-                display: block !important;
+                visibility: visible; /* Tampilkan hanya print-area */
+                position: absolute; /* Posisikan absolut agar tidak mengganggu layout */
+                left: 0;
+                top: 0;
                 width: 100%;
                 margin: 0;
-                padding: 0;
+                padding: 15px; /* Padding untuk konten cetak */
                 box-shadow: none;
                 background-color: white;
                 color: black;
-                font-family: monospace; /* Use monospace for receipt-like feel */
+                font-family: monospace; /* Font monospace untuk kesan struk */
                 font-size: 12px;
+                line-height: 1.4;
             }
             #print-area h1, #print-area h2, #print-area h3, #print-area h4 {
-                color: black !important;
+                color: black !important; /* Pastikan judul berwarna hitam */
                 text-align: center;
                 margin-bottom: 5px;
             }
@@ -797,6 +802,9 @@
         </div>
     </div>
 
+    <!-- NEW: Hidden div for print content -->
+    <div id="print-area" style="display: none;"></div>
+
     <script>
         // --- Firebase Configuration ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -809,7 +817,7 @@
             appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
             measurementId: "G-7CPE2DB2BV"
         };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? initialAuthToken : null;
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
@@ -860,6 +868,9 @@
         const customAlertOk = document.getElementById('customAlertOk');
         const modalVerifikasi = document.getElementById('modalVerifikasi');
         const inputPassword = document.getElementById('inputPassword');
+
+        // NEW: Print Area Element
+        const printArea = document.getElementById('print-area');
 
 
         let currentOrderIdForDetail = null;
@@ -1585,18 +1596,7 @@
                     `;
                 }).join('');
 
-                // Create a temporary div for printing
-                const printArea = document.createElement('div');
-                printArea.id = 'print-area';
-                printArea.style.cssText = `
-                    width: 300px; /* Lebar standar untuk struk */
-                    margin: 0 auto;
-                    padding: 15px;
-                    font-family: 'monospace';
-                    font-size: 12px;
-                    line-height: 1.4;
-                    color: black;
-                `;
+                // Populate the hidden print-area div
                 printArea.innerHTML = `
                     <h3 style="text-align: center; margin-bottom: 10px;">Rujak Buah Indonesia</h3>
                     <p style="text-align: center; margin-bottom: 15px;">Struk Pesanan</p>
@@ -1632,15 +1632,14 @@
                     <p style="text-align: center; margin-top: 20px;">Terima Kasih!</p>
                 `;
 
-                document.body.appendChild(printArea);
-
                 // Trigger print dialog
                 window.print();
 
-                // Clean up: remove the temporary div after printing (or after a short delay)
+                // Clear the content and hide the print-area after printing
+                // Use a small delay to ensure print dialog has time to process
                 setTimeout(() => {
-                    document.body.removeChild(printArea);
-                }, 500); // Give browser a moment to process print dialog
+                    printArea.innerHTML = ''; // Clear content
+                }, 500);
 
             } catch (error) {
                 console.error("Error printing order details:", error);
