@@ -322,11 +322,11 @@
         </div>
 
         <div class="form-section">
-            <h2>Pilih Produk</h2>
+            <h2>Pilih Bahan Baku</h2>
             <div class="form-group">
-                <label for="productSelect">Produk:</label>
+                <label for="productSelect">Bahan Baku:</label>
                 <select id="productSelect">
-                    <option value="">-- Pilih Produk --</option>
+                    <option value="">-- Pilih Bahan Baku --</option>
                     <!-- Products will be loaded here -->
                 </select>
             </div>
@@ -343,10 +343,10 @@
                 <table id="selectedItemsTable">
                     <thead>
                         <tr>
-                            <th>Produk</th>
+                            <th>Bahan Baku</th>
                             <th>Qty</th>
-                            <th>Harga Satuan</th>
-                            <th>Total</th>
+                            <th>Harga Beli Satuan</th>
+                            <th>Total Harga Beli</th>
                             <th class="item-actions">Aksi</th>
                         </tr>
                     </thead>
@@ -420,8 +420,8 @@
         const db = firebase.firestore();
 
         // Firestore Collections
-        const productsCollection = db.collection('bahan'); // Assuming 'buah' contains products to order from supplier
-        const supplierOrdersCollection = db.collection('supplierOrders'); // NEW collection for supplier orders
+        const productsCollection = db.collection('bahan'); // *** CHANGED from 'buah' to 'bahan' ***
+        const supplierOrdersCollection = db.collection('supplierOrders'); 
 
         // DOM Elements
         const loadingSpinner = document.getElementById('loadingSpinner');
@@ -436,14 +436,14 @@
         const totalItemsForSupplier = document.getElementById('totalItemsForSupplier');
         const totalPriceForSupplier = document.getElementById('totalPriceForSupplier');
         const sendOrderBtn = document.getElementById('sendOrderBtn');
-        const shareWhatsappBtn = document.getElementById('shareWhatsappBtn'); // NEW Share Button
+        const shareWhatsappBtn = document.getElementById('shareWhatsappBtn'); 
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
         const customAlertOk = document.getElementById('customAlertOk');
 
         let currentUserId = null;
-        let productsData = []; // To store all products for selection
-        let localSupplierOrderItems = []; // Array to hold items selected for the current supplier order
+        let productsData = []; 
+        let localSupplierOrderItems = []; 
 
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -475,17 +475,17 @@
             });
         }
 
-        // --- Load Products for Selection ---
+        // --- Load Products (Bahan Baku) for Selection ---
         async function loadProductsForSelection() {
             showLoading();
-            productSelect.innerHTML = '<option value="">-- Memuat Produk --</option>';
+            productSelect.innerHTML = '<option value="">-- Memuat Bahan Baku --</option>';
             try {
                 const snapshot = await productsCollection.where('isAvailable', '==', true).orderBy('nama').get();
                 productsData = [];
-                productSelect.innerHTML = '<option value="">-- Pilih Produk --</option>'; // Reset dropdown
+                productSelect.innerHTML = '<option value="">-- Pilih Bahan Baku --</option>'; // Reset dropdown
 
                 if (snapshot.empty) {
-                    productSelect.innerHTML = '<option value="">-- Tidak Ada Produk Tersedia --</option>';
+                    productSelect.innerHTML = '<option value="">-- Tidak Ada Bahan Baku Tersedia --</option>';
                     addItemBtn.disabled = true;
                     hideLoading();
                     return;
@@ -496,14 +496,15 @@
                     productsData.push(product);
                     const option = document.createElement('option');
                     option.value = product.id;
-                    option.textContent = `${product.nama} (${formatRupiah(product.harga)})`;
+                    // Display nama and harga_beli for bahan
+                    option.textContent = `${product.nama} (Harga Beli: ${formatRupiah(product.harga_beli)})`;
                     productSelect.appendChild(option);
                 });
                 addItemBtn.disabled = false;
             } catch (error) {
                 console.error("Error loading products for selection:", error);
-                showCustomAlert("Gagal memuat daftar produk.");
-                productSelect.innerHTML = '<option value="">-- Gagal Memuat Produk --</option>';
+                showCustomAlert("Gagal memuat daftar bahan baku.");
+                productSelect.innerHTML = '<option value="">-- Gagal Memuat Bahan Baku --</option>';
                 addItemBtn.disabled = true;
             } finally {
                 hideLoading();
@@ -516,7 +517,7 @@
             const quantity = parseInt(quantityInput.value);
 
             if (!selectedProductId) {
-                showCustomAlert("Silakan pilih produk terlebih dahulu.");
+                showCustomAlert("Silakan pilih bahan baku terlebih dahulu.");
                 return;
             }
             if (isNaN(quantity) || quantity <= 0) {
@@ -526,7 +527,7 @@
 
             const selectedProduct = productsData.find(p => p.id === selectedProductId);
             if (!selectedProduct) {
-                showCustomAlert("Produk tidak ditemukan.");
+                showCustomAlert("Bahan baku tidak ditemukan.");
                 return;
             }
 
@@ -537,11 +538,11 @@
                 // Update quantity if item exists
                 localSupplierOrderItems[existingItemIndex].quantity += quantity;
             } else {
-                // Add new item
+                // Add new item, using harga_beli as price
                 localSupplierOrderItems.push({
                     productId: selectedProduct.id,
                     name: selectedProduct.nama,
-                    price: selectedProduct.harga,
+                    price: selectedProduct.harga_beli, // Use harga_beli from 'bahan' collection
                     quantity: quantity
                 });
             }
@@ -616,7 +617,7 @@
 
             const isFormValid = isItemsAdded && isSupplierNameFilled && isSupplierAddressFilled;
             sendOrderBtn.disabled = !isFormValid;
-            shareWhatsappBtn.disabled = !isFormValid; // Disable share button if form is not valid
+            shareWhatsappBtn.disabled = !isFormValid; 
         }
 
         // --- Send Order to Supplier ---
@@ -719,13 +720,13 @@
                     window.location.href = 'index.html'; // Redirect to login
                 } else {
                     currentUserId = user.uid;
-                    loadProductsForSelection();
-                    renderSelectedItemsTable(); // Render empty table initially
-                    updateSupplierOrderSummary(); // Update summary
+                    loadProductsForSelection(); // Now loads from 'bahan'
+                    renderSelectedItemsTable(); 
+                    updateSupplierOrderSummary(); 
                     // Add event listeners for input changes to check form validity
                     supplierNameInput.addEventListener('input', checkFormValidity);
                     supplierAddressInput.addEventListener('input', checkFormValidity);
-                    supplierNotesInput.addEventListener('input', checkFormValidity); // Also check notes for validity
+                    supplierNotesInput.addEventListener('input', checkFormValidity); 
                 }
             });
         });
