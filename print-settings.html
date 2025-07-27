@@ -3,740 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pratinjau Struk Pesanan</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-    <!-- Firebase SDK v9 Compatibility -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
+    <title>Pratinjau Cetak Dokumen</title>
     <style>
-        /* General Styling for screen view */
+        /* Gaya untuk tampilan di layar */
         body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
             color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
         }
 
         .container {
-            width: 100%;
-            max-width: 480px; /* Max width for mobile-like view */
-            background-color: white;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            border-radius: 8px;
         }
 
-        /* Header (for screen view) */
-        .header-bar {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .back-button {
-            font-size: 24px;
-            margin-right: 15px;
-            cursor: pointer;
-        }
-        .header-title {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        /* Loading Spinner */
-        #loadingSpinner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            font-size: 24px;
-            color: #00C853;
-        }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #00C853;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Order Receipt Content */
-        .receipt-content {
-            padding: 20px;
-            flex-grow: 1; /* Allow content to grow */
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Push footer to bottom */
-        }
-
-        .receipt-header, .receipt-footer {
+        h1 {
+            color: #0056b3;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
-        .receipt-header h2 {
-            margin: 0 0 5px;
-            color: #00C853;
-            font-size: 22px;
-        }
-        .receipt-header p {
-            margin: 0;
-            font-size: 13px;
-            color: #555;
+        p {
+            line-height: 1.6;
+            margin-bottom: 15px;
         }
 
-        .receipt-details {
-            margin-bottom: 20px;
-            border-top: 1px dashed #ccc;
-            border-bottom: 1px dashed #ccc;
-            padding: 10px 0;
-        }
-        .receipt-details p {
-            margin: 5px 0;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .receipt-details p strong {
-            color: #333;
-        }
-        .receipt-details .label {
-            color: #555;
-            text-align: left;
-            flex-basis: 120px; /* Fixed width for labels */
-            flex-shrink: 0;
-        }
-        .receipt-details .value {
-            text-align: right;
-            flex-grow: 1;
-        }
-        /* Specific alignment for address/notes */
-        .receipt-details p.full-width {
-            display: block;
-            margin-bottom: 10px; /* Add margin for full-width lines */
-        }
-        .receipt-details p.full-width .label {
-            display: block;
-            margin-bottom: 3px;
-            font-weight: bold; /* Make labels bold for clarity */
-            color: #333; /* Darker color for labels */
-        }
-        .receipt-details p.full-width .value {
-            display: block;
-            text-align: left;
-            word-wrap: break-word; /* Ensure long addresses wrap */
-            font-size: 13px; /* Slightly smaller for long text */
-            color: #555;
-        }
-
-
-        .receipt-items {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 20px;
-        }
-        .receipt-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-            border-bottom: 1px dotted #eee;
-            padding-bottom: 5px;
-        }
-        .receipt-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        .receipt-item-name {
-            font-weight: 500;
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .receipt-item-qty-price {
-            white-space: nowrap;
-            color: #777;
-            font-size: 13px;
-            text-align: right;
-        }
-        .receipt-item-total {
-            font-weight: bold;
-            white-space: nowrap;
-            margin-left: 10px;
-        }
-        .receipt-item-variants {
-            display: block;
-            font-size: 11px;
-            color: #999;
-            margin-top: 2px;
-        }
-
-        .receipt-summary {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed #ccc;
-        }
-        .receipt-summary div {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        .receipt-summary .total {
-            font-weight: bold;
-            font-size: 16px;
-            color: #00C853;
-        }
-
-        .receipt-footer {
-            font-size: 12px;
-            color: #777;
-            margin-top: 20px;
-            border-top: 1px dashed #ccc;
-            padding-top: 10px;
-        }
-        .receipt-footer p {
-            margin: 3px 0;
-        }
-
-        /* Action Buttons for screen view */
-        .action-buttons {
-            padding: 15px 20px;
-            background-color: white;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: space-around;
-            gap: 15px;
-            position: sticky;
-            bottom: 0;
-            width: 100%;
-            max-width: 480px;
-            box-sizing: border-box;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-        }
-        .action-buttons button {
-            flex-grow: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .action-buttons .print-btn {
-            background-color: #00C853; /* Green */
-            color: white;
-        }
-        .action-buttons .print-btn:hover {
-            background-color: #388E3C; /* Darker Green */
-            transform: translateY(-1px);
-        }
-        .action-buttons .back-btn {
-            background-color: #6c757d; /* Grey */
-            color: white;
-        }
-        .action-buttons .back-btn:hover {
-            background-color: #5a6268; /* Darker Grey */
-            transform: translateY(-1px);
-        }
-
-        /* Custom Alert Modal */
-        #customAlertDialog {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9997;
-            justify-content: center;
-            align-items: center;
-        }
-        #customAlertDialog > div {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        .print-button-container {
             text-align: center;
-            max-width: 300px;
+            margin-top: 40px;
         }
-        #customAlertDialog p {
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #333;
-        }
-        #customAlertDialog button {
-            background-color: #00C853;
+
+        .print-button {
+            background-color: #007bff;
             color: white;
-            border: none;
             padding: 10px 20px;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #customAlertDialog button:hover {
-            background-color: #388E3C;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
 
-        /* --- Print Specific Styles --- */
+        .print-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Gaya khusus untuk cetak */
         @media print {
             body {
-                background-color: white;
+                background-color: #fff; /* Pastikan latar belakang putih saat dicetak */
                 margin: 0;
                 padding: 0;
-                display: block;
             }
+
             .container {
-                width: 100%;
-                max-width: none;
-                box-shadow: none;
-                min-height: auto;
-                display: block;
-            }
-            .header-bar, .action-buttons, #loadingSpinner {
-                display: none !important;
-            }
-            .receipt-content {
-                padding: 5mm; /* Mengurangi padding keseluruhan untuk cetak */
+                box-shadow: none; /* Hilangkan bayangan saat dicetak */
                 margin: 0;
-                box-sizing: border-box;
-                display: block;
-                page-break-inside: avoid; /* Mencegah pemisahan halaman di dalam konten struk */
-            }
-            .receipt-header {
-                margin-bottom: 5mm; /* Mengurangi margin */
-            }
-            .receipt-header h2 {
-                font-size: 16pt; /* Ukuran font lebih kecil untuk header */
-                margin-bottom: 2mm;
-            }
-            .receipt-header p {
-                font-size: 9pt; /* Ukuran font lebih kecil untuk alamat/telepon */
-                line-height: 1.2;
+                padding: 0;
+                width: 100%; /* Lebar penuh saat dicetak */
             }
 
-            .receipt-details {
-                margin-bottom: 5mm; /* Mengurangi margin */
-                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
-                border-bottom: 0.5px dashed #ccc;
-                padding: 5mm 0; /* Mengurangi padding */
-            }
-            .receipt-details p {
-                margin: 2mm 0; /* Mengurangi spasi baris */
-                font-size: 10pt; /* Ukuran font lebih kecil untuk detail */
-                display: block; /* Memastikan label dan nilai menumpuk jika diperlukan */
-            }
-            .receipt-details p .label {
-                font-weight: bold;
-                color: #333;
-                display: inline; /* Menjaga label tetap sebaris untuk pasangan sederhana */
-                margin-right: 5px;
-            }
-            .receipt-details p .value {
-                display: inline; /* Menjaga nilai tetap sebaris */
-                text-align: left; /* Menyelaraskan nilai ke kiri */
-            }
-            .receipt-details p.full-width .label,
-            .receipt-details p.full-width .value {
-                display: block; /* Untuk alamat/catatan, pertahankan tampilan blok */
-                text-align: left;
-                margin-bottom: 1mm;
-            }
-            .receipt-details p.full-width .label {
-                font-size: 11pt; /* Label sedikit lebih besar untuk item lebar penuh */
-            }
-            .receipt-details p.full-width .value {
-                font-size: 10pt;
+            .print-button-container {
+                display: none; /* Sembunyikan tombol cetak saat dicetak */
             }
 
-
-            .receipt-items {
-                margin: 5mm 0; /* Mengurangi margin */
-            }
-            .receipt-item {
-                margin-bottom: 3mm; /* Mengurangi spasi item */
-                font-size: 10pt; /* Ukuran font lebih kecil untuk item */
-                padding-bottom: 2mm; /* Mengurangi padding */
-                border-bottom: 0.5px dotted #eee; /* Garis putus-putus lebih tipis */
-                display: block; /* Memaksa item untuk menumpuk secara vertikal untuk cetak */
-            }
-            .receipt-item-name {
-                font-weight: bold; /* Membuat nama item tebal */
-                margin-right: 0;
-                display: block;
-            }
-            .receipt-item-variants {
-                font-size: 8pt; /* Lebih kecil lagi untuk varian */
-                margin-top: 1mm;
-                display: block;
-            }
-            .receipt-item-qty-price {
-                font-size: 9pt; /* Lebih kecil untuk qty x harga */
-                text-align: left; /* Selaraskan ke kiri */
-                display: block;
-            }
-            .receipt-item-total {
-                font-size: 11pt; /* Lebih kecil untuk total per item */
-                margin-left: 0;
-                text-align: right; /* Selaraskan ke kanan */
-                display: block;
-                margin-top: -15px; /* Tarik ke atas agar sejajar dengan qty/harga jika memungkinkan */
-                float: right; /* Apungkan ke kanan */
+            /* Atur ukuran font dan margin untuk tampilan cetak yang optimal */
+            h1 {
+                font-size: 24pt;
+                margin-bottom: 15pt;
             }
 
-            .receipt-summary {
-                margin-top: 5mm; /* Mengurangi margin */
-                padding-top: 5mm;
-                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
-            }
-            .receipt-summary div {
-                margin-bottom: 3mm; /* Mengurangi spasi */
-                font-size: 10pt; /* Ukuran font lebih kecil */
-            }
-            .receipt-summary .total {
-                font-size: 13pt; /* Ukuran font total lebih kecil */
-            }
-
-            .receipt-footer {
-                font-size: 9pt; /* Ukuran font footer lebih kecil */
-                margin-top: 10mm; /* Mengurangi margin */
-                padding-top: 5mm;
-                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
-            }
-            .receipt-footer p {
-                margin: 1mm 0;
-            }
-
-            /* Memastikan tidak ada pemisahan halaman di dalam bagian-bagian ini */
-            .receipt-header, .receipt-details, .receipt-items, .receipt-summary, .receipt-footer {
-                page-break-inside: avoid;
+            p {
+                font-size: 12pt;
+                line-height: 1.5;
+                margin-bottom: 10pt;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header-bar">
-            <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
-            <div class="header-title">Pratinjau Struk</div>
-        </header>
+        <h1>Judul Dokumen Anda</h1>
+        <p>Ini adalah contoh paragraf pertama dalam dokumen yang akan dicetak. Anda bisa menempatkan berbagai konten di sini, seperti teks, gambar, tabel, atau elemen HTML lainnya yang ingin Anda sertakan dalam cetakan.</p>
+        <p>Pastikan untuk memeriksa pratinjau cetak di browser Anda (biasanya dengan menekan `Ctrl+P` atau `Cmd+P`) untuk melihat bagaimana tampilan dokumen ini saat dicetak. Perhatikan bagaimana gaya berubah antara tampilan layar dan tampilan cetak.</p>
+        <p>Anda bisa menambahkan lebih banyak paragraf atau elemen lain di sini sesuai kebutuhan dokumen Anda. Misalnya, daftar, blok kutipan, atau gambar.</p>
 
-        <div id="loadingSpinner">
-            <div class="spinner"></div>
-        </div>
+        <h2>Bagian Lain dari Dokumen</h2>
+        <p>Bagian ini menunjukkan bagaimana Anda bisa membagi dokumen Anda menjadi beberapa bagian. Ini bisa sangat berguna untuk dokumen yang lebih panjang.</p>
+        <ul>
+            <li>Item pertama dalam daftar.</li>
+            <li>Item kedua yang mungkin lebih panjang untuk menunjukkan pemformatan.</li>
+            <li>Item ketiga.</li>
+        </ul>
 
-        <div class="receipt-content" id="receiptContent" style="display: none;">
-            <div class="receipt-header">
-                <h2>RUJAK BUAH INDONESIA</h2>
-                <p>Jl. Contoh No. 123, Kota Contoh</p>
-                <p>Telp: 0812-3456-7890</p>
-            </div>
-
-            <div class="receipt-details">
-                <p>
-                    <span class="label">ID Pesanan:</span>
-                    <span class="value" id="receiptOrderId"></span>
-                </p>
-                <p>
-                    <span class="label">Tanggal:</span>
-                    <span class="value" id="receiptOrderDate"></span>
-                </p>
-                <p>
-                    <span class="label">Pelanggan:</span>
-                    <span class="value" id="receiptCustomerName"></span>
-                </p>
-                <p>
-                    <span class="label">Metode Bayar:</span>
-                    <span class="value" id="receiptPaymentMethod"></span>
-                </p>
-                <p class="full-width">
-                    <span class="label">Alamat:</span>
-                    <span class="value" id="receiptAddress"></span>
-                </p>
-                <p class="full-width">
-                    <span class="label">Catatan:</span>
-                    <span class="value" id="receiptNotes"></span>
-                </p>
-                <!-- Driver Info (only if OnDelivery) -->
-                <div id="receiptDriverInfo" style="display: none;">
-                    <p class="full-width">
-                        <span class="label">Driver:</span>
-                        <span class="value" id="receiptDriverName"></span>
-                    </p>
-                    <p class="full-width">
-                        <span class="label">No. HP Driver:</span>
-                        <span class="value" id="receiptDriverPhone"></span>
-                    </p>
-                    <p class="full-width">
-                        <span class="label">Via Aplikasi:</span>
-                        <span class="value" id="receiptDriverApp"></span>
-                    </p>
-                </div>
-            </div>
-
-            <ul class="receipt-items" id="receiptItemsList">
-                <!-- Items will be loaded here -->
-            </ul>
-
-            <div class="receipt-summary">
-                <div>
-                    <span>Subtotal:</span>
-                    <span id="receiptSubtotal"></span>
-                </div>
-                <div>
-                    <span>Diskon:</span>
-                    <span id="receiptDiscount">Rp 0</span> <!-- Placeholder for discount -->
-                </div>
-                <div class="total">
-                    <span>Total Pembayaran:</span>
-                    <span id="receiptTotalAmount"></span>
-                </div>
-            </div>
-
-            <div class="receipt-footer">
-                <p>Terima kasih telah berbelanja di Rujak Buah Indonesia!</p>
-                <p>Kunjungi kami lagi!</p>
-            </div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="print-btn" onclick="window.print()"><i class="fas fa-print"></i> Cetak Struk</button>
-            <button class="back-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i> Kembali</button>
+        <div class="print-button-container">
+            <button class="print-button" onclick="window.print()">Cetak Dokumen Ini</button>
         </div>
     </div>
-
-    <!-- Custom Alert Modal -->
-    <div id="customAlertDialog">
-        <div>
-            <p id="customAlertMessage"></p>
-            <button id="customAlertOk">OK</button>
-        </div>
-    </div>
-
-    <script>
-        // --- Firebase Configuration ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // DOM Elements
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const receiptContent = document.getElementById('receiptContent');
-        const receiptOrderId = document.getElementById('receiptOrderId');
-        const receiptOrderDate = document.getElementById('receiptOrderDate');
-        const receiptCustomerName = document.getElementById('receiptCustomerName');
-        const receiptPaymentMethod = document.getElementById('receiptPaymentMethod');
-        const receiptAddress = document.getElementById('receiptAddress');
-        const receiptNotes = document.getElementById('receiptNotes');
-        const receiptItemsList = document.getElementById('receiptItemsList');
-        const receiptSubtotal = document.getElementById('receiptSubtotal');
-        const receiptDiscount = document.getElementById('receiptDiscount');
-        const receiptTotalAmount = document.getElementById('receiptTotalAmount');
-        
-        // Driver Info Elements
-        const receiptDriverInfo = document.getElementById('receiptDriverInfo');
-        const receiptDriverName = document.getElementById('receiptDriverName');
-        const receiptDriverPhone = document.getElementById('receiptDriverPhone');
-        const receiptDriverApp = document.getElementById('receiptDriverApp');
-
-        // Custom Alert Modal
-        const customAlertDialog = document.getElementById('customAlertDialog');
-        const customAlertMessage = document.getElementById('customAlertMessage');
-        const customAlertOk = document.getElementById('customAlertOk');
-
-        // --- Helper Functions ---
-        function showLoading() { loadingSpinner.style.display = 'flex'; }
-        function hideLoading() { loadingSpinner.style.display = 'none'; }
-
-        function formatRupiah(amount) {
-            if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
-                return "Rp0";
-            }
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
-        }
-
-        function formatDate(date) {
-            if (!date) return "-";
-            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-            if (isNaN(d.getTime())) return "-";
-            return d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
-        }
-
-        function getVariantDisplayString(customVariants) {
-            if (!customVariants || Object.keys(customVariants).length === 0) {
-                return 'Tidak ada varian';
-            }
-            const parts = [];
-            const sortedVariantTypeIds = Object.keys(customVariants).sort();
-            for (const variantTypeId of sortedVariantTypeIds) {
-                const value = customVariants[variantTypeId];
-                if (Array.isArray(value)) {
-                    if (value.length > 0) {
-                        parts.push(value.join(', '));
-                    }
-                } else if (value && value !== 'none') {
-                    parts.push(value);
-                }
-            }
-            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
-        }
-
-        // Custom Alert Modal
-        function showCustomAlert(message) {
-            return new Promise((resolve) => {
-                customAlertMessage.textContent = message;
-                customAlertDialog.style.display = 'flex';
-
-                const handleOk = () => {
-                    customAlertDialog.style.display = 'none';
-                    customAlertOk.removeEventListener('click', handleOk);
-                    resolve();
-                };
-
-                customAlertOk.addEventListener('click', handleOk);
-            });
-        }
-
-        // --- Load Order Details for Printing ---
-        async function loadOrderForPrint(orderId) {
-            showLoading();
-            receiptContent.style.display = 'none'; // Hide content until loaded
-
-            try {
-                const orderDoc = await db.collection('pesanan').doc(orderId).get();
-
-                if (!orderDoc.exists) {
-                    await showCustomAlert('Pesanan tidak ditemukan.');
-                    hideLoading();
-                    return;
-                }
-
-                const orderData = orderDoc.data();
-                const customer = orderData.customer || {};
-                const items = orderData.items || [];
-
-                // Populate receipt details
-                receiptOrderId.textContent = orderData.displayOrderId || '#' + orderId.substring(0, 6).toUpperCase();
-                receiptOrderDate.textContent = formatDate(orderData.waktu);
-                receiptCustomerName.textContent = customer.fullName || 'Pelanggan Anonim';
-                receiptPaymentMethod.textContent = orderData.paymentMethod || '-';
-                receiptAddress.textContent = customer.address || orderData.alamat || 'Alamat tidak tersedia';
-                receiptNotes.textContent = customer.notes || 'Tidak ada catatan';
-
-                // Populate driver info if status is OnDelivery
-                if (orderData.status === 'OnDelivery' && (orderData.driverName || orderData.driverPhone || orderData.driverApp)) {
-                    receiptDriverInfo.style.display = 'block';
-                    receiptDriverName.textContent = orderData.driverName || '-';
-                    receiptDriverPhone.textContent = orderData.driverPhone || '-';
-                    receiptDriverApp.textContent = orderData.driverApp || '-';
-                } else {
-                    receiptDriverInfo.style.display = 'none';
-                }
-
-                // Populate items list
-                receiptItemsList.innerHTML = '';
-                let subtotal = 0;
-                items.forEach(item => {
-                    const itemTotal = item.quantity * item.price;
-                    subtotal += itemTotal;
-
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('receipt-item');
-                    // Removed image from receipt item for simplicity and print compatibility
-                    listItem.innerHTML = `
-                        <span class="receipt-item-name">
-                            ${item.name}
-                            <span class="receipt-item-variants">${getVariantDisplayString(item.custom)}</span>
-                        </span>
-                        <span class="receipt-item-qty-price">${item.quantity} x ${formatRupiah(item.price)}</span>
-                        <span class="receipt-item-total">${formatRupiah(itemTotal)}</span>
-                    `;
-                    receiptItemsList.appendChild(listItem);
-                });
-
-                receiptSubtotal.textContent = formatRupiah(subtotal);
-                // Assuming discount is 0 for now, or fetch from orderData if available
-                receiptDiscount.textContent = formatRupiah(orderData.discount || 0); 
-                receiptTotalAmount.textContent = formatRupiah(orderData.totalAmount || subtotal);
-
-                receiptContent.style.display = 'flex'; // Show content after loading
-                hideLoading();
-
-            } catch (error) {
-                console.error('Error loading order for print:', error);
-                await showCustomAlert('Gagal memuat detail pesanan untuk cetak: ' + error.message);
-                hideLoading();
-            }
-        }
-
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Authenticate user (e.g., as seller)
-            auth.onAuthStateChanged(async user => {
-                const storedRole = localStorage.getItem('userRole');
-                const isLoggingOut = localStorage.getItem('isLoggingOut');
-                if (isLoggingOut) localStorage.removeItem('isLoggingOut');
-
-                if (!user || storedRole !== 'penjual') {
-                    if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-                    window.location.href = 'index.html'; // Redirect to login
-                } else {
-                    // Get orderId from URL query parameter
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const orderId = urlParams.get('orderId');
-
-                    if (orderId) {
-                        loadOrderForPrint(orderId);
-                    } else {
-                        await showCustomAlert('ID Pesanan tidak ditemukan di URL.');
-                        history.back(); // Go back if no orderId
-                    }
-                }
-            });
-        });
-    </script>
 </body>
 </html>
