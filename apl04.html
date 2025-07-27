@@ -1,1565 +1,980 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Semua Pesanan - Rujak Buah Indonesia</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riwayat Semua Pesanan - Rujak Buah Indonesia</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-    <!-- Firebase SDK v9 Compatibility -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <style>
-        /* General Styling */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f9f9f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; align-items: center; }
-        .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; width: 100%; }
+  <style>
+    /* General Styling */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background: #f9f9f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; align-items: center; }
+    .container { max-width: 480px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 20px; width: 100%; }
 
-        /* Header */
-        .header-detail {
-            background: linear-gradient(135deg, #00C853, #64DD17);
-            color: white; padding: 12px 16px;
-            display: flex; align-items: center;
-            position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
-        .header-title { font-size: 18px; font-weight: bold; }
+    /* Header */
+    .header-detail {
+      background: linear-gradient(135deg, #00C853, #64DD17);
+      color: white; padding: 12px 16px;
+      display: flex; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .back-button { font-size: 24px; margin-right: 15px; cursor: pointer; }
+    .header-title { font-size: 18px; font-weight: bold; }
 
-        /* Filter and Search Section */
-        .filter-search-section {
-            padding: 15px 16px 10px;
-            background-color: #fff;
-            border-bottom: 1px solid #eee;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 50px; /* Below header */
-            z-index: 90;
-        }
-        .form-group {
-            margin-bottom: 10px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        .form-group-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        /* PERBAIKAN: Layout tombol filter */
-        .filter-buttons {
-            display: flex;
-            flex-wrap: wrap; /* Memungkinkan tombol untuk membungkus ke baris baru */
-            justify-content: center; /* Pusatkan tombol */
-            gap: 8px; /* Jarak antar tombol yang konsisten */
-            padding-top: 5px;
-            padding-bottom: 5px;
-        }
-        .filter-btn {
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 8px 10px; /* Sedikit sesuaikan padding horizontal */
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #555;
-            white-space: nowrap; /* Pastikan teks tidak membungkus di dalam tombol */
-            text-align: center; /* Pusatkan teks di dalam tombol */
-            min-width: 80px; /* Beri lebar minimum agar tidak terlalu sempit */
-            display: flex; /* Menggunakan flexbox untuk menengahkan teks dan angka */
-            align-items: center;
-            justify-content: center;
-            gap: 5px; /* Jarak antara teks dan angka */
-        }
-        .filter-btn:first-child { margin-left: 0; }
-        .filter-btn:last-child { margin-right: 0; }
-        .filter-btn.active {
-            background-color: #00C853;
-            color: white;
-            border-color: #00C853;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .filter-btn:hover:not(.active) {
-            background-color: #e0e0e0;
-        }
-        .btn-reset {
-            background-color: #f0f0f0;
-            color: #555;
-            border: 1px solid #ddd;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            width: 100%;
-        }
-        .btn-reset:hover {
-            background-color: #e0e0e0;
-        }
+    /* Filter and Search Section */
+    .filter-search-section {
+        padding: 15px 16px 10px;
+        background-color: #fff;
+        border-bottom: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 50px; /* Below header */
+        z-index: 90;
+    }
+    .form-group {
+        margin-bottom: 10px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .form-group-input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    .filter-buttons {
+        display: flex;
+        justify-content: space-around;
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .filter-btn {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: #555;
+        flex-grow: 1;
+        margin: 0 4px;
+        white-space: nowrap;
+    }
+    .filter-btn:first-child { margin-left: 0; }
+    .filter-btn:last-child { margin-right: 0; }
+    .filter-btn.active {
+        background-color: #00C853;
+        color: white;
+        border-color: #00C853;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .filter-btn:hover:not(.active) {
+        background-color: #e0e0e0;
+    }
+    .btn-reset {
+        background-color: #f0f0f0;
+        color: #555;
+        border: 1px solid #ddd;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+    }
+    .btn-reset:hover {
+        background-color: #e0e0e0;
+    }
 
-        /* Styles for action buttons within order cards */
-        .order-card-actions {
-            display: flex;
-            justify-content: flex-end; /* Align buttons to the right */
-            gap: 8px; /* Space between buttons */
-            margin-top: 10px; /* Space from content above */
-            flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
-        }
-        .order-card-actions .action-btn {
-            padding: 8px 12px;
-            border: 1px solid;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-        .order-card-actions .action-btn.terima {
-            background-color: #28A745; /* Green */
-            border-color: #28A745;
-        }
-        .order-card-actions .action-btn.terima:hover {
-            background-color: #218838; /* Darker Green */
-        }
-        .order-card-actions .action-btn.tolak {
-            background-color: #DC3545; /* Red */
-            border-color: #DC3545;
-        }
-        .order-card-actions .action-btn.tolak:hover {
-            background-color: #C82333; /* Darker Red */
-        }
-        .order-card-actions .action-btn.siap-diambil {
-            background-color: #007bff; /* Blue */
-            border-color: #007bff;
-        }
-        .order-card-actions .action-btn.siap-diambil:hover {
-            background-color: #0056b3; /* Darker Blue */
-        }
-        .order-card-actions .action-btn.pick-up { /* New style for "Pick Up" button */
-            background-color: #FFC107; /* Amber */
-            border-color: #FFC107;
-            color: #333;
-        }
-        .order-card-actions .action-btn.pick-up:hover {
-            background-color: #FFA000; /* Darker Amber */
-        }
-        .order-card-actions .action-btn.selesai {
-            background-color: #6f42c1; /* Purple */
-            border-color: #6f42c1;
-        }
-        .order-card-actions .action-btn.selesai:hover {
-            background-color: #5a2d9c; /* Darker Purple */
-        }
-        /* NEW: Print Button Style */
-        .order-card-actions .action-btn.print {
-            background-color: #6c757d; /* Grey */
-            border-color: #6c757d;
-        }
-        .order-card-actions .action-btn.print:hover {
-            background-color: #5a6268; /* Darker Grey */
-        }
+    /* Order List */
+    .order-history-content { padding: 16px; }
+    /* Reverted to original order-card style */
+    .order-card {
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 15px; padding: 15px;
+      border-left: 5px solid #00C853;
+      cursor: pointer; /* Keep cursor pointer for interactivity */
+      transition: transform 0.2s, box-shadow 0.2s; /* Add transition for hover effect */
+    }
+    .order-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .order-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px; padding-bottom: 10px;
+      border-bottom: 1px dashed #eee;
+    }
+
+    .order-id { font-weight: bold; font-size: 14px; color: #555; }
+    .order-date { font-size: 13px; color: #777; }
+    .order-status { font-weight: bold; font-size: 15px; }
+    .order-status.pending { color: #FFC107; }
+    .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
+    .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
+    .order-status.dibatalkan { color: #DC3545; }
+    .order-status.siap-diambil { color: #007bff; } /* Blue for siap diambil */
+    .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
 
 
-        /* Order List */
-        .order-history-content { padding: 16px; }
-        .order-card {
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            margin-bottom: 15px; padding: 15px;
-            border-left: 5px solid #00C853;
-            cursor: pointer; /* Keep cursor pointer for interactivity */
-            transition: transform 0.2s, box-shadow 0.2s; /* Add transition for hover effect */
-        }
-        .order-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
+    .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
+    .order-item { 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 10px; 
+      color: #444; 
+      gap: 10px; 
+      font-size: 14px;
+    }
 
-        .order-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; padding-bottom: 10px;
-            border-bottom: 1px dashed #eee;
-        }
+    .order-item-image {
+      width: 50px; 
+      height: 50px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0; 
+      background-color: #eee; 
+    }
 
-        .order-id { font-weight: bold; font-size: 14px; color: #555; }
-        .order-date { font-size: 13px; color: #777; }
-        .order-status { font-weight: bold; font-size: 15px; }
-        .order-status.pending { color: #FFC107; }
-        .order-status.diproses { color: #28A745; } /* Changed to match seller dashboard green */
-        .order-status.selesai { color: #1976D2; } /* Changed to match seller dashboard blue */
-        .order-status.dibatalkan { color: #DC3545; }
-        .order-status.siap-diambil { color: #007bff; } /* Added specific color for Siap Ambil */
-        .order-status.on-delivery { color: #FFC107; } /* New color for On Delivery */
+    .order-item-details {
+      flex-grow: 1; 
+      display: flex;
+      flex-direction: column;
+    }
 
-        /* Styles for driver info display */
-        .order-driver-info-container {
-            margin-top: 8px;
-            margin-bottom: 10px;
-            padding: 0;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #555;
-            display: grid;
-            grid-template-columns: auto auto 8px 1fr;
-            align-items: baseline;
-            gap: 2px;
-            grid-auto-rows: min-content;
-        }
-        .order-driver-info-container .driver-line {
-            display: contents;
-        }
-        .order-driver-info-container .driver-icon {
-            color: #777;
-            font-size: 12px;
-            grid-column: 1;
-            text-align: left;
-            padding-bottom: 0px;
-        }
-        .order-driver-info-container .driver-label-text {
-            grid-column: 2;
-            text-align: left;
-            font-weight: bold;
-            padding-bottom: 0px;
-        }
-        .order-driver-info-container .driver-colon {
-            grid-column: 3;
-            text-align: left;
-            padding-bottom: 0px;
-        }
-        .order-driver-info-container .driver-value {
-            grid-column: 4;
-            text-align: left;
-            padding-bottom: 0px;
-        }
+    .order-item-name { 
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    /* NEW: Style for variant display within the item name */
+    .order-item-variants-display {
+        display: block; /* Make it a new line */
+        font-size: 11px; /* Smaller font size */
+        color: #999; /* Lighter color */
+        margin-top: 2px;
+    }
+    .order-item-quantity-price {
+      font-size: 12px;
+      color: #777;
+    }
+    .order-item-total {
+      font-weight: bold;
+      white-space: nowrap; 
+      margin-left: auto; 
+    }
 
-        .order-item-list { list-style: none; padding: 0; margin: 10px 0; }
-        .order-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            color: #444;
-            gap: 10px;
-            font-size: 14px;
-        }
+    .order-summary-footer {
+      display: flex; justify-content: space-between;
+      padding-top: 10px; border-top: 1px solid #eee;
+      margin-top: 10px;
+    }
 
-        .order-item-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 5px;
-            flex-shrink: 0;
-            background-color: #eee;
-        }
+    .order-total-amount { font-weight: bold; font-size: 16px; color: #00C853; }
 
-        .order-item-details {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
+    .empty-state {
+      text-align: center; padding: 50px 20px; color: #777; font-size: 16px;
+    }
+    .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 20px; }
 
-        .order-item-name {
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-        .order-item-variants-display {
-            display: block;
-            font-size: 11px;
-            color: #999;
-            margin-top: 2px;
-        }
-        .order-item-quantity-price {
-            font-size: 12px;
-            color: #777;
-        }
-        .order-item-total {
-            font-weight: bold;
-            white-space: nowrap;
-            margin-left: auto;
-        }
+    /* Loading Spinner */
+    #loadingSpinner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        font-size: 24px;
+        color: #00C853;
+    }
+    .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: #00C853;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
-        .order-summary-footer {
-            display: flex; justify-content: space-between;
-            padding-top: 10px; border-top: 1px solid #eee;
-            margin-top: 10px;
-        }
+    /* Popup Detail */
+    #popupDetail {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    #popupDetail > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    #popupDetail h3 {
+        margin-top: 0;
+        color: #00C853;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    #popupDetail p {
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    #popupDetail p strong {
+        color: #555;
+    }
+    #popupDetail .close-button {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #777;
+    }
+    #popupDetail .status-dropdown {
+        padding: 5px 8px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 13px;
+    }
+    #popupDetail h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #00C853;
+        font-size: 16px;
+        border-bottom: 1px dashed #eee;
+        padding-bottom: 5px;
+    }
+    #popupItems div {
+        background-color: #f0f0f0;
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #333;
+    }
+    #popupDetail button.popup-close-btn { /* Specific class for the close button in popup */
+        background-color: #00C853;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        margin-top: 20px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #popupDetail button.popup-close-btn:hover {
+        background-color: #388E3C;
+    }
 
-        .order-total-amount { font-weight: bold; font-size: 16px; color: #00C853; }
+    /* Custom Confirmation Modal */
+    #customConfirmModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 9998;
+        justify-content: center;
+        align-items: center;
+    }
+    #customConfirmModal > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 300px;
+    }
+    #customConfirmModal p {
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #333;
+    }
+    #customConfirmModal button {
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #customConfirmModal button#customConfirmYes {
+        background-color: #00C853;
+        color: white;
+    }
+    #customConfirmModal button#customConfirmYes:hover {
+        background-color: #388E3C;
+    }
+    #customConfirmModal button#customConfirmNo {
+        background-color: #f44336;
+        color: white;
+    }
+    #customConfirmModal button#customConfirmNo:hover {
+        background-color: #d32f2f;
+    }
 
-        .empty-state {
-            text-align: center; padding: 50px 20px; color: #777; font-size: 16px;
-        }
-        .empty-state i { font-size: 60px; color: #ccc; margin-bottom: 20px; }
-
-        /* Loading Spinner */
-        #loadingSpinner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            font-size: 24px;
-            color: #00C853;
-        }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #00C853;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Popup Detail */
-        #popupDetail {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        #popupDetail > div {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        #popupDetail h3 {
-            margin-top: 0;
-            color: #00C853;
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-        #popupDetail p {
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        #popupDetail p strong {
-            color: #555;
-        }
-        #popupDetail .close-button {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #777;
-        }
-        #popupDetail .status-dropdown {
-            padding: 5px 8px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 13px;
-        }
-        #popupDetail h4 {
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #00C853;
-            font-size: 16px;
-            border-bottom: 1px dashed #eee;
-            padding-bottom: 5px;
-        }
-        #popupItems div {
-            background-color: #f0f0f0;
-            padding: 8px;
-            border-radius: 5px;
-            margin-bottom: 5px;
-            font-size: 13px;
-            color: #333;
-        }
-        #popupDetail button.popup-close-btn {
-            background-color: #00C853;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            margin-top: 20px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #popupDetail button.popup-close-btn:hover {
-            background-color: #388E3C;
-        }
-
-        /* NEW: Driver Info Section in Popup Detail */
-        .driver-info-section {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed #eee;
-            display: none; /* Hidden by default, shown when status is OnDelivery */
-        }
-        .driver-info-section label {
-            display: block;
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        .driver-info-section input,
-        .driver-info-section select {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-
-
-        /* Custom Confirmation Modal */
-        #customConfirmModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9998;
-            justify-content: center;
-            align-items: center;
-        }
-        #customConfirmModal > div {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 300px;
-        }
-        #customConfirmModal p {
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #333;
-        }
-        #customConfirmModal button {
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 10px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #customConfirmModal button#customConfirmYes {
-            background-color: #00C853;
-            color: white;
-        }
-        #customConfirmModal button#customConfirmYes:hover {
-            background-color: #388E3C;
-        }
-        #customConfirmModal button#customConfirmNo {
-            background-color: #f44336;
-            color: white;
-        }
-        #customConfirmModal button#customConfirmNo:hover {
-            background-color: #d32f2f;
-        }
-
-        /* Custom Alert Modal */
-        #customAlertDialog {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9997;
-            justify-content: center;
-            align-items: center;
-        }
-        #customAlertDialog > div {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 300px;
-        }
-        #customAlertDialog p {
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #333;
-        }
-        #customAlertDialog button {
-            background-color: #00C853;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #customAlertDialog button:hover {
-            background-color: #388E3C;
-        }
-
-        /* Styles for clickable phone number */
-        .phone-link-group {
-            display: flex;
-            align-items: center;
-            gap: 10px; /* Space between number and icons */
-        }
-        .phone-link-group a {
-            color: #007bff; /* Blue for links */
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.2s;
-        }
-        .phone-link-group a:hover {
-            color: #0056b3; /* Darker blue on hover */
-        }
-        .phone-link-group .icon-link {
-            font-size: 18px;
-            color: #28a745; /* Green for WhatsApp */
-            transition: color 0.2s;
-        }
-        .phone-link-group .icon-link.fa-phone {
-            color: #007bff; /* Blue for call */
-        }
-        .phone-link-group .icon-link:hover {
-            opacity: 0.8;
-        }
-
-        /* NEW: Blinking animation for new orders */
-        @keyframes blink-animation {
-            0%, 100% {
-                background-color: #00C853; /* Active color */
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            }
-            50% {
-                background-color: #FFC107; /* Orange color for blinking */
-                box-shadow: 0 0 15px rgba(255,193,7,0.7); /* Orange glow */
-            }
-        }
-
-        .filter-btn.blinking {
-            animation: blink-animation 1s infinite alternate; /* Blink indefinitely until stopped */
-        }
-
-        /* Style for the count span inside filter buttons */
-        .filter-btn .status-count {
-            background-color: rgba(255, 255, 255, 0.3); /* Slightly transparent white for contrast */
-            color: #333; /* Dark text for the count */
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 10px;
-            min-width: 20px; /* Ensure minimum width for single/double digits */
-            text-align: center;
-            font-weight: bold;
-            margin-left: 5px; /* Space from the text label */
-        }
-        .filter-btn.active .status-count {
-            background-color: rgba(0, 0, 0, 0.2); /* Darker background for active state */
-            color: white; /* White text for active state count */
-        }
-    </style>
+    /* Custom Alert Modal */
+    #customAlertDialog {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 9997;
+        justify-content: center;
+        align-items: center;
+    }
+    #customAlertDialog > div {
+        background-color: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 300px;
+    }
+    #customAlertDialog p {
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #333;
+    }
+    #customAlertDialog button {
+        background-color: #00C853;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+    #customAlertDialog button:hover {
+        background-color: #388E3C;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header-detail">
-            <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
-            <div class="header-title">Riwayat Semua Pesanan</div>
-        </header>
+  <div class="container">
+    <header class="header-detail">
+      <i class="fas fa-arrow-left back-button" onclick="history.back()"></i>
+      <div class="header-title">Riwayat Semua Pesanan</div>
+    </header>
 
-        <div class="filter-search-section">
-            <div class="form-group">
-                <label for="searchQuery">Cari ID Pesanan / Nama Pelanggan:</label>
-                <input type="text" id="searchQuery" class="form-group-input" placeholder="Cari pesanan...">
-            </div>
-            <div class="form-group">
-                <label for="filterDate">Filter Tanggal:</label>
-                <input type="date" id="filterDate" class="form-group-input">
-            </div>
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-status="Pending">Baru <span id="count-Pending" class="status-count"></span></button>
-                <button class="filter-btn" data-status="Diproses">Diproses <span id="count-Diproses" class="status-count"></span></button>
-                <button class="filter-btn" data-status="SiapDiambil">Siap Ambil <span id="count-SiapDiambil" class="status-count"></span></button>
-                <button class="filter-btn" data-status="OnDelivery">On Delivery <span id="count-OnDelivery" class="status-count"></span></button>
-                <button class="filter-btn" data-status="Selesai">Selesai <span id="count-Selesai" class="status-count"></span></button>
-                <button class="filter-btn" data-status="Dibatalkan">Dibatalkan <span id="count-Dibatalkan" class="status-count"></span></button>
-            </div>
-            <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
+    <div class="filter-search-section">
+        <div class="form-group">
+            <label for="searchQuery">Cari ID Pesanan / Nama Pelanggan:</label>
+            <input type="text" id="searchQuery" class="form-group-input" placeholder="Cari pesanan...">
         </div>
-
-        <div id="loadingSpinner" style="display: none;">
-            <div class="spinner"></div>
+        <div class="form-group">
+            <label for="filterDate">Filter Tanggal:</label>
+            <input type="date" id="filterDate" class="form-group-input">
         </div>
-
-        <div class="order-history-content" id="orderHistoryContent">
-            <div class="empty-state" id="emptyOrderState" style="display: none;">
-                <i class="fas fa-box-open"></i>
-                <p>Belum ada pesanan dari pelanggan.</p>
-            </div>
+        <div class="filter-buttons">
+            <button class="filter-btn active" data-status="All">Semua</button>
+            <button class="filter-btn" data-status="Pending">Pending</button>
+            <button class="filter-btn" data-status="Diproses">Diproses</button>
+            <button class="filter-btn" data-status="Selesai">Selesai</button>
+            <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+            <button class="filter-btn" data-status="SiapDiambil">Siap Diambil</button>
+            <button class="filter-btn" data-status="OnDelivery">Dalam Pengiriman</button>
         </div>
-
-        <!-- Tombol hapus semua pesanan (untuk admin) -->
-        <button onclick="hapusSemuaPesananPenjual()" style="background-color: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; margin: 20px auto; display: block;">Hapus Semua Pesanan</button>
+        <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-redo"></i> Reset Filter</button>
     </div>
 
-    <!-- Popup Detail Pesanan -->
-    <div id="popupDetail">
-        <div>
-            <button onclick="tutupDetail()" class="close-button">&times;</button>
-            <h3 id="popupNama">Nama Pelanggan</h3>
-
-            <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
-            <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
-            <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
-            <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
-            <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
-            <p><strong>Catatan:</strong> <span id="popupCatatan">-</p>
-
-            <p style="margin-bottom: 10px;">
-                <strong>Status Pesanan:</strong> <span id="popupStatus" class="order-status"></span>
-                <select id="statusUpdater" class="status-dropdown">
-                    <option value="Pending">Pending</option>
-                    <option value="Diproses">Diproses</option>
-                    <option value="SiapDiambil">Siap Ambil</option>
-                    <option value="OnDelivery">On Delivery</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Dibatalkan">Dibatalkan</option>
-                </select>
-            </p>
-
-            <!-- NEW: Driver Info Section -->
-            <div id="driverInfoSection" class="driver-info-section">
-                <h4>Detail Driver:</h4>
-                <label for="driverNameInput">Nama Driver:</label>
-                <input type="text" id="driverNameInput" placeholder="Nama Driver">
-
-                <label for="driverPhoneInput">Nomor HP Driver:</label>
-                <input type="text" id="driverPhoneInput" placeholder="Nomor HP Driver">
-
-                <label for="driverAppSelect">Aplikasi Ojek:</label>
-                <select id="driverAppSelect">
-                    <option value="">Pilih Aplikasi</option>
-                    <option value="Gojek">Gojek</option>
-                    <option value="Grab">Grab</option>
-                    <option value="Maxim">Maxim</option>
-                    <option value="In-house">In-house</option>
-                    <option value="Lainnya">Lainnya</option>
-                </select>
-                <!-- NEW: Tombol Simpan Detail Driver -->
-                <button id="saveDriverDetailsBtn" class="action-btn siap-diambil" style="width: 100%; margin-top: 15px;">
-                    <i class="fas fa-save"></i> Simpan Detail Driver
-                </button>
-            </div>
-            <!-- END NEW: Driver Info Section -->
-
-            <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
-            <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
-            <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</p>
-            <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</p>
-            <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
-
-            <h4>Detail Item:</h4>
-            <div id="popupItems"></div>
-
-            <button onclick="tutupDetail()" class="popup-close-btn">Tutup</button>
-        </div>
+    <div id="loadingSpinner" style="display: none;">
+        <div class="spinner"></div>
     </div>
 
-    <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal">
-        <div>
-            <p id="customConfirmMessage"></p>
-            <button id="customConfirmYes">Ya</button>
-            <button id="customConfirmNo">Tidak</button>
-        </div>
+    <div class="order-history-content" id="orderHistoryContent">
+      <div class="empty-state" id="emptyOrderState" style="display: none;">
+        <i class="fas fa-box-open"></i>
+        <p>Belum ada pesanan dari pelanggan.</p>
+      </div>
     </div>
+  </div>
 
-    <!-- Custom Alert Modal -->
-    <div id="customAlertDialog">
-        <div>
-            <p id="customAlertMessage"></p>
-            <button id="customAlertOk">OK</button>
-        </div>
-    </div>
+  <!-- Popup Detail Pesanan -->
+  <div id="popupDetail">
+      <div>
+          <button onclick="tutupDetail()" class="close-button">&times;</button>
+          <h3 id="popupNama">Nama Pelanggan</h3>
 
-    <!-- Modal Verifikasi Password -->
-    <div id="modalVerifikasi" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background-color:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:white; padding:20px; border-radius:8px; width:300px; box-shadow:0 0 10px rgba(0 0 0 / 30%);">
-            <h3>🔐 Verifikasi Hapus</h3>
-            <p>Masukkan password untuk melanjutkan.</p>
-            <input type="password" id="inputPassword" placeholder="Password" style="width:100%; padding:8px; margin-top:10px;">
-            <div class="button-group-modal" style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
-                <button onclick="tutupModalVerifikasi()" style="padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: #ccc; color: #333;">Batal</button>
-                <button onclick="verifikasiPasswordDanHapus()" style="padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; background-color: #f44336; color: white;">Hapus</button>
-            </div>
-        </div>
-    </div>
+          <p><strong>ID Pesanan:</strong> <span id="popupOrderId">#-</span></p>
+          <p><strong>Nomor HP:</strong> <span id="popupNomor">-</span></p>
+          <p><strong>Alamat:</strong> <span id="popupAlamat">-</span></p>
+          <p><strong>Total Pembayaran:</strong> <span id="popupTotal">-</span></p>
+          <p><strong>Metode Pembayaran:</strong> <span id="popupMetodeBayar">-</span></p>
+          <p><strong>Catatan:</strong> <span id="popupCatatan">-</span></p>
 
-    <script>
-        // --- Firebase Configuration ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+          <p style="margin-bottom: 10px;">
+              <strong>Status Pesanan:</strong> <span id="popupStatus" class="status"></span>
+              <select id="statusUpdater" class="status-dropdown">
+                  <option value="Pending">Pending</option>
+                  <option value="Diproses">Diproses</option>
+                  <option value="SiapDiambil">Siap Diambil</option>
+                  <option value="OnDelivery">Dalam Pengiriman</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Dibatalkan">Dibatalkan</option>
+              </select>
+          </p>
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+          <p><strong>Waktu Pesanan:</strong> <span id="popupWaktu">-</span></p>
+          <p><strong>Dibuka oleh:</strong> <span id="popupDibukaOleh">-</span></p>
+          <p><strong>Waktu Dibuka:</strong> <span id="popupWaktuDibuka">-</span></p>
+          <p><strong>Diubah oleh:</strong> <span id="popupDiubahOleh">-</span></p>
+          <p><strong>Waktu Ubah:</strong> <span id="popupWaktuDiubah">-</p>
 
-        // DOM Elements
-        const orderHistoryContent = document.getElementById('orderHistoryContent');
-        const emptyOrderState = document.getElementById('emptyOrderState');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const searchQueryInput = document.getElementById('searchQuery');
-        const filterDateInput = document.getElementById('filterDate');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+          <h4>Detail Item:</h4>
+          <div id="popupItems"></div>
 
-        // Popup Detail Elements
-        const popupDetail = document.getElementById('popupDetail');
-        const popupNama = document.getElementById('popupNama');
-        const popupOrderId = document.getElementById('popupOrderId');
-        const popupNomor = document.getElementById('popupNomor');
-        const popupAlamat = document.getElementById('popupAlamat');
-        const popupTotal = document.getElementById('popupTotal');
-        const popupMetodeBayar = document.getElementById('popupMetodeBayar');
-        const popupCatatan = document.getElementById('popupCatatan');
-        const popupStatus = document.getElementById('popupStatus');
-        const statusUpdater = document.getElementById('statusUpdater');
-        const popupWaktu = document.getElementById('popupWaktu');
-        const popupDibukaOleh = document.getElementById('popupDibukaOleh');
-        const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
-        const popupDiubahOleh = document.getElementById('popupDiubahOleh');
-        const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
-        const popupItems = document.getElementById('popupItems');
+          <button onclick="tutupDetail()" class="popup-close-btn">Tutup</button>
+      </div>
+  </div>
 
-        // NEW: Driver Info Input Elements
-        const driverInfoSection = document.getElementById('driverInfoSection');
-        const driverNameInput = document.getElementById('driverNameInput');
-        const driverPhoneInput = document.getElementById('driverPhoneInput');
-        const driverAppSelect = document.getElementById('driverAppSelect');
-        const saveDriverDetailsBtn = document.getElementById('saveDriverDetailsBtn');
+  <!-- Custom Confirmation Modal -->
+  <div id="customConfirmModal">
+      <div>
+          <p id="customConfirmMessage"></p>
+          <button id="customConfirmYes">Ya</button>
+          <button id="customConfirmNo">Tidak</button>
+      </div>
+  </div>
 
-        // Custom Modals
-        const customConfirmModal = document.getElementById('customConfirmModal');
-        const customConfirmMessage = document.getElementById('customConfirmMessage');
-        const customConfirmYes = document.getElementById('customConfirmYes');
-        const customConfirmNo = document.getElementById('customConfirmNo');
-        const customAlertDialog = document.getElementById('customAlertDialog');
-        const customAlertMessage = document.getElementById('customAlertMessage');
-        const customAlertOk = document.getElementById('customAlertOk');
-        const modalVerifikasi = document.getElementById('modalVerifikasi');
-        const inputPassword = document.getElementById('inputPassword');
+  <!-- Custom Alert Modal -->
+  <div id="customAlertDialog">
+      <div>
+          <p id="customAlertMessage"></p>
+          <button id="customAlertOk">OK</button>
+      </div>
+  </div>
 
+  <script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+      authDomain: "tokobuahkasir.firebaseapp.com",
+      projectId: "tokobuahkasir",
+      storageBucket: "tokobuahkasir.firebasestorage.app",
+      messagingSenderId: "731011133713",
+      appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+      measurementId: "G-7CPE2DB2BV"
+    };
 
-        let currentOrderIdForDetail = null;
-        let activeFilterStatus = 'Pending'; // Default filter status is now 'Pending'
-        let allOrdersData = [];
-        let unsubscribeOrders = null;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        // NEW: Variables for blinking logic and initial load
-        let previousPendingCount = 0; // To store the count from the last snapshot
-        let isInitialLoadComplete = false; // Flag to track if initial data load is done
+    // DOM Elements
+    const orderHistoryContent = document.getElementById('orderHistoryContent');
+    const emptyOrderState = document.getElementById('emptyOrderState');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const searchQueryInput = document.getElementById('searchQuery');
+    const filterDateInput = document.getElementById('filterDate');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
-        // --- Helper Functions ---
-        function showLoading() { loadingSpinner.style.display = 'flex'; }
-        function hideLoading() { loadingSpinner.style.display = 'none'; }
+    // Popup Detail Elements
+    const popupDetail = document.getElementById('popupDetail');
+    const popupNama = document.getElementById('popupNama');
+    const popupOrderId = document.getElementById('popupOrderId');
+    const popupNomor = document.getElementById('popupNomor');
+    const popupAlamat = document.getElementById('popupAlamat');
+    const popupTotal = document.getElementById('popupTotal');
+    const popupMetodeBayar = document.getElementById('popupMetodeBayar');
+    const popupCatatan = document.getElementById('popupCatatan');
+    const popupStatus = document.getElementById('popupStatus');
+    const statusUpdater = document.getElementById('statusUpdater');
+    const popupWaktu = document.getElementById('popupWaktu');
+    const popupDibukaOleh = document.getElementById('popupDibukaOleh');
+    const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
+    const popupDiubahOleh = document.getElementById('popupDiubahOleh');
+    const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
+    const popupItems = document.getElementById('popupItems');
 
-        function formatRupiah(amount) {
-            if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
-                return "Rp0";
-            }
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
+    let currentOrderIdForDetail = null;
+    let activeFilterStatus = 'All'; // Default filter status
+
+    // --- Helper Functions ---
+    function showLoading() { loadingSpinner.style.display = 'flex'; }
+    function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+    function formatRupiah(amount) {
+      if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
+        return "Rp0";
+      }
+      return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      }).format(amount);
+    }
+
+    function formatDate(date) {
+        if (!date) return "-";
+        const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
+        if (isNaN(d.getTime())) return "-";
+        return d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function getStatusClass(status) {
+        switch (status?.toLowerCase()) {
+            case 'pending': return 'pending';
+            case 'diproses': return 'diproses';
+            case 'selesai': return 'selesai';
+            case 'dibatalkan': return 'dibatalkan';
+            case 'siapdiambil': return 'siap-diambil';
+            case 'ondelivery': return 'on-delivery';
+            default: return '';
         }
+    }
 
-        function formatDate(date) {
-            if (!date) return "-";
-            const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
-            if (isNaN(d.getTime())) return "-";
-            return d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    /**
+     * Generates a display string for variants.
+     * @param {Object} customVariants - The custom variants object.
+     * @returns {string} A human-readable string of selected variants.
+     */
+    function getVariantDisplayString(customVariants) {
+        if (!customVariants || Object.keys(customVariants).length === 0) {
+            return 'Tidak ada varian';
         }
-
-        function getStatusClass(status) {
-            switch (status?.toLowerCase()) {
-                case 'pending': return 'pending';
-                case 'diproses': return 'diproses';
-                case 'selesai': return 'selesai';
-                case 'dibatalkan': return 'dibatalkan';
-                case 'siapdiambil': return 'siap-diambil';
-                case 'ondelivery': return 'on-delivery';
-                default: return '';
-            }
-        }
-
-        function getDisplayStatus(status) {
-            switch (status) {
-                case 'Pending': return 'Baru';
-                case 'Diproses': return 'Diproses';
-                case 'SiapDiambil': return 'Siap Ambil';
-                case 'OnDelivery': return 'On Delivery';
-                case 'Selesai': return 'Selesai';
-                case 'Dibatalkan': return 'Dibatalkan';
-                default: return status;
-            }
-        }
-
-        function getVariantDisplayString(customVariants) {
-            if (!customVariants || Object.keys(customVariants).length === 0) {
-                return 'Tidak ada varian';
-            }
-            const parts = [];
-            const sortedVariantTypeIds = Object.keys(customVariants).sort();
-            for (const variantTypeId of sortedVariantTypeIds) {
-                const value = customVariants[variantTypeId];
-                if (Array.isArray(value)) {
-                    if (value.length > 0) {
-                        parts.push(value.join(', '));
-                    }
-                } else if (value && value !== 'none') {
-                    parts.push(value);
+        const parts = [];
+        const sortedVariantTypeIds = Object.keys(customVariants).sort(); 
+        for (const variantTypeId of sortedVariantTypeIds) {
+            const value = customVariants[variantTypeId];
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                    parts.push(value.join(', '));
                 }
-            }
-            return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
-        }
-
-        // Custom Confirmation Modal
-        function showCustomConfirm(message) {
-            return new Promise((resolve) => {
-                customConfirmMessage.textContent = message;
-                customConfirmModal.style.display = 'flex';
-
-                const handleYes = () => {
-                    customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', handleYes);
-                    customConfirmNo.removeEventListener('click', handleNo);
-                    resolve(true);
-                };
-                const handleNo = () => {
-                    customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', handleYes);
-                    customConfirmNo.removeEventListener('click', handleNo);
-                    resolve(false);
-                };
-
-                customConfirmYes.addEventListener('click', handleYes);
-                customConfirmNo.addEventListener('click', handleNo);
-            });
-        }
-
-        // Custom Alert Modal
-        function showCustomAlert(message) {
-            return new Promise((resolve) => {
-                customAlertMessage.textContent = message;
-                customAlertDialog.style.display = 'flex';
-
-                const handleOk = () => {
-                    customAlertDialog.style.display = 'none';
-                    customAlertOk.removeEventListener('click', handleOk);
-                    resolve();
-                };
-
-                customAlertOk.addEventListener('click', handleOk);
-            });
-        }
-
-        // --- Render Order Items to DOM ---
-        function renderOrders(ordersToRender) {
-            orderHistoryContent.innerHTML = '';
-            emptyOrderState.style.display = 'none';
-
-            if (ordersToRender.length === 0) {
-                emptyOrderState.style.display = 'block';
-                return;
-            }
-
-            ordersToRender.forEach(order => {
-                const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
-                let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
-                let currentStatus = order.status || 'Pending';
-
-                // Determine which action buttons to show based on status
-                let actionButtonsHtml = '';
-                if (currentStatus === 'Pending') {
-                    actionButtonsHtml = `
-                        <button class="action-btn terima" data-order-id="${order.id}" data-action="Diproses">
-                            <i class="fas fa-check"></i> Terima
-                        </button>
-                        <button class="action-btn tolak" data-order-id="${order.id}" data-action="Dibatalkan">
-                            <i class="fas fa-times"></i> Tolak
-                        </button>
-                    `;
-                } else if (currentStatus === 'Diproses') {
-                    actionButtonsHtml = `
-                        <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil">
-                            <i class="fas fa-check-double"></i> Siap Ambil
-                        </button>
-                    `;
-                } else if (currentStatus === 'SiapDiambil') {
-                    actionButtonsHtml = `
-                        <button class="action-btn pick-up" data-order-id="${order.id}" data-action="OnDelivery">
-                            <i class="fas fa-truck"></i> Pick Up
-                        </button>
-                    `;
-                } else if (currentStatus === 'OnDelivery') {
-                    actionButtonsHtml = `
-                        <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai">
-                            <i class="fas fa-check-circle"></i> Selesai
-                        </button>
-                    `;
-                }
-                // Add Print button for all orders
-                actionButtonsHtml += `
-                    <button class="action-btn print" data-order-id="${order.id}" data-action="print">
-                        <i class="fas fa-print"></i> Cetak
-                    </button>
-                `;
-
-                // Construct driver info for card if OnDelivery - REFINED DISPLAY
-                let driverInfoCardHtml = '';
-                if (currentStatus === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
-                    driverInfoCardHtml = `
-                        <div class="order-driver-info-container">
-                            <div class="driver-line">
-                                <i class="fas fa-truck driver-icon"></i>
-                                <span class="driver-label-text">Diantar</span>
-                                <span class="driver-colon">:</span>
-                                <span class="driver-value">Via <strong>${order.driverApp || '-'}</strong></span>
-                            </div>
-                            ${order.driverName ? `
-                            <div class="driver-line">
-                                <i class="fas fa-user driver-icon"></i>
-                                <span class="driver-label-text">Driver</span>
-                                <span class="driver-colon">:</span>
-                                <span class="driver-value">${order.driverName}</span>
-                            </div>` : ''}
-                            ${order.driverPhone ? `
-                            <div class="driver-line">
-                                <i class="fas fa-phone driver-icon"></i>
-                                <span class="driver-label-text">Telp.</span>
-                                <span class="driver-colon">:</span>
-                                <span class="driver-value">${order.driverPhone}</span>
-                            </div>` : ''}
-                        </div>
-                    `;
-                }
-
-                const orderCard = document.createElement('div');
-                orderCard.classList.add('order-card');
-                orderCard.setAttribute('data-order-id', order.id);
-
-                orderCard.innerHTML = `
-                    <div class="order-header">
-                        <span class="order-id">Pesanan: ${displayOrderId}</span>
-                        <span class="order-date">${formatDate(order.waktu)}</span>
-                    </div>
-                    <div class="order-details">
-                        <p><strong>Pembeli:</strong> ${buyerName}</p>
-                        <p><strong>Status:</strong> <span class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</span></p>
-                        ${driverInfoCardHtml} <!-- Display driver info in a structured way -->
-                        <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
-                        <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
-                        <ul class="order-item-list">
-                            ${(order.items || []).map(item => `
-                                <li class="order-item">
-                                    <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
-                                    <div class="order-item-details">
-                                        <span class="order-item-name">${item.name}</span>
-                                        <span class="order-item-variants-display">${getVariantDisplayString(item.custom)}</span>
-                                        <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
-                                    </div>
-                                    <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    <div class="order-summary-footer">
-                        <span>Total Pembayaran:</span>
-                        <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
-                    </div>
-                    <div class="order-card-actions">
-                        ${actionButtonsHtml}
-                    </div>
-                `;
-                orderHistoryContent.appendChild(orderCard);
-            });
-
-            // Re-attach event listeners for dynamically added buttons and cards
-            attachOrderButtonListeners();
-        }
-
-        // Function to attach event listeners to dynamically created elements
-        function attachOrderButtonListeners() {
-            // Remove existing listeners to prevent duplicates
-            document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
-                button.removeEventListener('click', handleOrderActionButtonClick);
-            });
-            document.querySelectorAll('.order-card').forEach(card => {
-                card.removeEventListener('click', handleOrderCardClick);
-            });
-
-            // Add new listeners
-            document.querySelectorAll('.order-card-actions .action-btn').forEach(button => {
-                button.addEventListener('click', handleOrderActionButtonClick);
-            });
-            document.querySelectorAll('.order-card').forEach(card => {
-                card.addEventListener('click', handleOrderCardClick);
-            });
-        }
-
-        // Handle click on the order card to open detail popup
-        function handleOrderCardClick(event) {
-            // Prevent opening detail if an action button inside the card was clicked
-            if (event.target.closest('.action-btn')) {
-                return;
-            }
-            const orderId = this.dataset.orderId;
-            tampilkanDetail(orderId);
-        }
-
-        // Handle click on action buttons within order cards
-        async function handleOrderActionButtonClick(event) {
-            event.stopPropagation(); // Prevent the parent order-card click event from firing
-            const orderId = event.currentTarget.dataset.orderId;
-            const action = event.currentTarget.dataset.action;
-
-            if (action === 'print') {
-                // REDIRECT TO NEW PRINT SETTINGS PAGE
-                window.location.href = `print-settings.html?orderId=${orderId}`;
-                return;
-            }
-
-            let newStatus = action; // The data-action directly provides the new status
-
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ${orderId} menjadi "${getDisplayStatus(newStatus)}"?`);
-            if (confirmChange) {
-                // For direct action buttons, no driver details are passed
-                await updateOrderStatusInFirestore(orderId, newStatus, {});
+            } else if (value && value !== 'none') {
+                parts.push(value);
             }
         }
+        return parts.length > 0 ? parts.join(', ') : 'Tidak ada varian';
+    }
 
-        async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) {
-            showLoading(); // Show loading when initiating an update
-            const docRef = db.collection("pesanan").doc(orderId);
-            const user = auth.currentUser;
-            const userName = user?.email || "Admin Anonim";
-            const uid = user?.uid || "Anonim";
+    /**
+     * Maps internal status string to display string for the buyer.
+     * @param {string} status - The internal status string from Firestore.
+     * @returns {string} The human-readable display string.
+     */
+    function getDisplayStatusForBuyer(status) {
+        switch (status) {
+            case 'Pending': return 'Pending';
+            case 'Diproses': return 'Diproses';
+            case 'SiapDiambil': return 'Siap Diambil'; 
+            case 'OnDelivery': return 'Dalam Pengiriman'; // New status for buyer
+            case 'Selesai': return 'Selesai';
+            case 'Dibatalkan': return 'Dibatalkan';
+            default: return status;
+        }
+    }
 
-            const updateData = {
-                status: newStatus,
-                diubahOlehNama: userName,
-                diubahOlehUid: uid,
-                waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+    // Custom Confirmation Modal
+    function showCustomConfirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('customConfirmModal');
+            const msgEl = document.getElementById('customConfirmMessage');
+            const yesBtn = document.getElementById('customConfirmYes');
+            const noBtn = document.getElementById('customConfirmNo');
+
+            msgEl.textContent = message;
+            modal.style.display = 'flex';
+
+            const handleYes = () => {
+                modal.style.display = 'none';
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(true);
+            };
+            const handleNo = () => {
+                modal.style.display = 'none';
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(false);
             };
 
-            // Add driver details if provided and status is OnDelivery
-            if (newStatus === 'OnDelivery') {
-                updateData.driverName = driverDetails.driverName || null;
-                updateData.driverPhone = driverDetails.driverPhone || null;
-                updateData.driverApp = driverDetails.driverApp || null;
-            } else {
-                // If changing from OnDelivery to another status, remove driver info
-                updateData.driverName = firebase.firestore.FieldValue.delete();
-                updateData.driverPhone = firebase.firestore.FieldValue.delete();
-                updateData.driverApp = firebase.firestore.FieldValue.delete();
+            yesBtn.addEventListener('click', handleYes);
+            noBtn.addEventListener('click', handleNo);
+        });
+    }
+
+    // Custom Alert Modal
+    function showCustomAlert(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('customAlertDialog');
+            const msgEl = document.getElementById('customAlertMessage');
+            const okBtn = document.getElementById('customAlertOk');
+
+            msgEl.textContent = message;
+            modal.style.display = 'flex';
+
+            const handleOk = () => {
+                modal.style.display = 'none';
+                okBtn.removeEventListener('click', handleOk);
+                resolve();
+            };
+
+            okBtn.addEventListener('click', handleOk);
+        });
+    }
+
+    // --- Load All Order History (with filters) ---
+    async function loadAllOrderHistory() {
+      showLoading();
+      orderHistoryContent.innerHTML = '';
+      emptyOrderState.style.display = 'none';
+
+      try {
+        let query = db.collection('pesanan').orderBy('waktu', 'desc');
+        const searchTxt = searchQueryInput.value.trim().toUpperCase();
+        const filterDateVal = filterDateInput.value;
+
+        const snapshot = await query.get(); // Fetch all data first, then filter client-side
+
+        let docs = snapshot.docs;
+
+        // Apply search filter (client-side)
+        if (searchTxt) {
+            docs = docs.filter(doc => {
+                const data = doc.data();
+                return (data.customer?.fullName || '').toUpperCase().includes(searchTxt) ||
+                       (data.displayOrderId || '').toUpperCase().includes(searchTxt);
+            });
+        }
+
+        // Apply date filter (client-side)
+        if (filterDateVal) {
+            const selectedDate = new Date(filterDateVal);
+            const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0)).getTime();
+            const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999)).getTime();
+            docs = docs.filter(doc => {
+                const waktuTimestamp = doc.data().waktu?.toDate()?.getTime();
+                return waktuTimestamp >= startOfDay && waktuTimestamp <= endOfDay;
+            });
+        }
+
+        // Apply status filter (client-side)
+        if (activeFilterStatus !== 'All') {
+            docs = docs.filter(doc => doc.data().status === activeFilterStatus);
+        }
+
+        if (docs.length === 0) {
+          emptyOrderState.style.display = 'block';
+          return;
+        }
+
+        docs.forEach(doc => {
+          const order = doc.data();
+          const orderId = doc.id;
+          const displayOrderId = order.displayOrderId || ('#' + orderId.substring(0, 6).toUpperCase());
+
+          let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
+          let buyerPhone = order.customer?.phoneNumber || '-';
+
+          const orderCard = document.createElement('div');
+          orderCard.classList.add('order-card'); /* Reverted to order-card class */
+          orderCard.setAttribute('onclick', `tampilkanDetail("${doc.id}")`); /* Make card clickable */
+          
+          orderCard.innerHTML = `
+            <div class="order-header">
+              <span class="order-id">Pesanan: ${displayOrderId}</span>
+              <span class="order-date">${formatDate(order.waktu)}</span>
+            </div>
+            <div class="order-details">
+              <p><strong>Pembeli:</strong> ${buyerName}</p>
+              <p><strong>Status:</strong> <span class="order-status ${getStatusClass(order.status)}">${getDisplayStatusForBuyer(order.status)}</span></p>
+              <p><strong>Metode Pembayaran:</strong> ${order.paymentMethod}</p>
+              <p><strong>Alamat:</strong> ${order.customer?.address || order.alamat || 'Alamat tidak tersedia'}</p>
+              <ul class="order-item-list">
+                ${(order.items || []).map(item => `
+                  <li class="order-item">
+                    <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" class="order-item-image">
+                    <div class="order-item-details">
+                      <span class="order-item-name">${item.name}</span>
+                      <span class="order-item-variants-display">${getVariantDisplayString(item.custom)}</span>
+                    </div>
+                    <span class="order-item-quantity-price">${item.quantity} x ${formatRupiah(item.price)}</span>
+                    <span class="order-item-total">${formatRupiah(item.price * item.quantity)}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+            <div class="order-summary-footer">
+              <span>Total Pembayaran:</span>
+              <span class="order-total-amount">${formatRupiah(order.totalAmount)}</span>
+            </div>
+          `;
+          orderHistoryContent.appendChild(orderCard);
+        });
+
+      } catch (error) {
+        console.error('Gagal memuat semua pesanan:', error);
+        orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data.</p>';
+      } finally {
+          hideLoading();
+      }
+    }
+
+    // --- Show Order Detail Popup ---
+    async function tampilkanDetail(docId) {
+        currentOrderIdForDetail = docId;
+        const docRef = db.collection("pesanan").doc(docId);
+        const uid = auth.currentUser?.uid || "Unknown";
+        const nama = auth.currentUser?.email || "Tanpa Nama";
+
+        try {
+            // Transaction to update 'dibukaOleh' fields if not already set
+            await db.runTransaction(async (transaction) => {
+                const snapshot = await transaction.get(docRef);
+                if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
+                const d = snapshot.data();
+                if (!d.dibukaOlehUid) { // Only update if not already opened
+                    transaction.update(docRef, {
+                        dibukaOlehUid: uid,
+                        dibukaOlehNama: nama,
+                        waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            });
+
+            // After transaction, get the latest data
+            const doc = await docRef.get();
+            if (!doc.exists) {
+                await showCustomAlert('Pesanan tidak ditemukan.');
+                return;
             }
 
+            const data = doc.data();
+            const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+            const customer = data.customer || {};
+            const waktu = data.waktu?.toDate?.() || new Date(0);
+            const items = data.items || [];
+
+            popupNama.textContent = customer.fullName || "Pelanggan";
+            popupOrderId.textContent = orderId;
+            popupNomor.textContent = customer.phoneNumber || "-";
+            popupAlamat.textContent = customer.address || "-";
+            popupTotal.textContent = formatRupiah(data.totalAmount || 0);
+            popupMetodeBayar.textContent = data.paymentMethod || "-";
+            popupCatatan.textContent = customer.notes || "Tidak ada catatan";
+
+            const currentStatus = data.status || "Pending";
+            popupStatus.textContent = getDisplayStatusForBuyer(currentStatus); // Display buyer-friendly status
+            popupStatus.className = `status ${getStatusClass(currentStatus)}`;
+
+            statusUpdater.value = currentStatus;
+
+            popupWaktu.textContent = formatDate(waktu);
+
+            const dibukaOleh = data.dibukaOlehNama || "-";
+            const waktuDibuka = data.waktuDibuka?.toDate?.();
+            popupDibukaOleh.textContent = dibukaOleh;
+            popupWaktuDibuka.textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+            const diubahOleh = data.diubahOlehNama || "-";
+            const waktuDiubah = data.waktuDiubah?.toDate?.();
+            popupDiubahOleh.textContent = diubahOleh;
+            popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+            // Detail Item (Updated to display variants)
+            popupItems.innerHTML = (items || []).map(item => {
+                const variantDisplay = getVariantDisplayString(item.custom);
+                return `
+                    <div style="margin-bottom:5px;">
+                        <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; vertical-align:middle; margin-right:10px;">
+                        ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0}x) = ${formatRupiah((item.price || 0) * (item.quantity || 0))}
+                        <br><small style="color:#777; margin-left:60px;">Varian: ${variantDisplay}</small>
+                    </div>
+                `;
+            }).join('') || '<p class="text-gray-500">Tidak ada produk.</p>';
+
+            popupDetail.style.display = "flex";
+
+        } catch (err) {
+            await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
+            console.error("Error showing order detail:", err);
+        }
+    }
+
+    // --- Close Order Detail Popup ---
+    function tutupDetail() {
+        popupDetail.style.display = "none";
+        currentOrderIdForDetail = null; 
+        loadAllOrderHistory(); // Refresh data after closing detail, to see latest status
+    }
+
+    // --- Event Listener for Status Updater Dropdown ---
+    statusUpdater.addEventListener("change", async function () {
+        const newStatus = this.value;
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${newStatus}"?`);
+        if (currentOrderIdForDetail && confirmChange) {
             try {
-                await docRef.update(updateData);
+                const user = auth.currentUser;
+                const userName = user?.email || "Admin Anonim";
 
-                // Also update status in riwayat_customer if userId exists in the order document
-                const orderDoc = await docRef.get();
-                const orderData = orderDoc.data();
-                const customerUserId = orderData.userId;
+                // Fetch the order document again to get all details for WhatsApp message
+                const orderDocRef = db.collection("pesanan").doc(currentOrderIdForDetail);
+                const orderDocSnap = await orderDocRef.get();
+                if (!orderDocSnap.exists) {
+                    await showCustomAlert('Pesanan tidak ditemukan untuk diperbarui.');
+                    return;
+                }
+                const orderData = orderDocSnap.data(); // This contains all order details
 
-                if (customerUserId) {
-                    const customerUpdateData = { status: newStatus };
-                    if (newStatus === 'OnDelivery') {
-                        customerUpdateData.driverName = driverDetails.driverName || null;
-                        customerUpdateData.driverPhone = driverDetails.driverPhone || null;
-                        customerUpdateData.driverApp = driverDetails.driverApp || null;
-                    } else {
-                        customerUpdateData.driverName = firebase.firestore.FieldValue.delete();
-                        customerUpdateData.driverPhone = firebase.firestore.FieldValue.delete();
-                        customerUpdateData.driverApp = firebase.firestore.FieldValue.delete();
-                    }
-                    await db.doc(`riwayat_customer/${customerUserId}/pesanan/${orderId}`).set(customerUpdateData, { merge: true });
+                await orderDocRef.update({
+                    status: newStatus,
+                    diubahOlehNama: userName,
+                    waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Also update status in customer's history for consistency
+                const userId = orderData.userId;
+                if (userId) {
+                    await db.doc(`riwayat_customer/${userId}/pesanan/${currentOrderIdForDetail}`).set({
+                        status: newStatus
+                    }, { merge: true });
                 } else {
-                    console.warn(`Customer User ID not found for order ${orderId}, skipping riwayat_customer update.`);
+                    console.warn("User ID tidak ditemukan di dokumen pesanan, tidak dapat memperbarui riwayat pelanggan.");
                 }
 
-                await showCustomAlert(`Status pesanan ${orderId} berhasil diperbarui menjadi "${getDisplayStatus(newStatus)}".`);
-                // The onSnapshot listener will handle re-rendering.
+                await showCustomAlert("Status pesanan berhasil diperbarui!");
+
+                // --- NEW: WhatsApp Struk Logic ---
+                // Kirim struk jika status diubah ke Diproses, Siap Diambil, On Delivery, atau Selesai
+                if (['Diproses', 'SiapDiambil', 'OnDelivery', 'Selesai'].includes(newStatus)) {
+                    let whatsappMessage = `*Struk Pesanan Rujak Buah Indonesia*\n\n`;
+                    whatsappMessage += `*Nomor Pesanan:* ${orderData.displayOrderId || ('#' + currentOrderIdForDetail.substring(0, 6).toUpperCase())}\n`;
+                    whatsappMessage += `*Status Pesanan:* *${getDisplayStatusForBuyer(newStatus)}*\n\n`;
+
+                    whatsappMessage += `*Detail Pelanggan:*\n`;
+                    whatsappMessage += `Nama: ${orderData.customer?.fullName || 'Pelanggan Anonim'}\n`;
+                    whatsappMessage += `Telp: ${orderData.customer?.phoneNumber || '-'}\n`;
+                    whatsappMessage += `Alamat: ${orderData.customer?.address || 'Alamat tidak tersedia'}\n\n`;
+
+                    whatsappMessage += `*Daftar Item:*\n`;
+                    (orderData.items || []).forEach((item, index) => {
+                        const variantDisplay = getVariantDisplayString(item.custom);
+                        whatsappMessage += `${index + 1}. ${item.name} ${variantDisplay !== 'Tidak ada varian' ? `(${variantDisplay})` : ''}\n`;
+                        whatsappMessage += `   ${item.quantity} x ${formatRupiah(item.price)} = ${formatRupiah(item.price * item.quantity)}\n`;
+                    });
+
+                    whatsappMessage += `\n*Total Pembayaran:* ${formatRupiah(orderData.totalAmount || 0)}\n`;
+                    whatsappMessage += `*Metode Pembayaran:* ${orderData.paymentMethod || '-'}\n\n`;
+                    whatsappMessage += `Terima kasih telah berbelanja di Rujak Buah Indonesia! 😊`;
+
+                    let customerPhoneNumber = orderData.customer?.phoneNumber;
+                    if (customerPhoneNumber) {
+                        // Bersihkan dan format nomor telepon untuk WhatsApp
+                        customerPhoneNumber = customerPhoneNumber.replace(/\D/g, ''); // Hapus non-digit
+                        if (customerPhoneNumber.startsWith('08')) {
+                            customerPhoneNumber = '62' + customerPhoneNumber.substring(1);
+                        } else if (!customerPhoneNumber.startsWith('62') && customerPhoneNumber.length > 5) { 
+                            customerPhoneNumber = '62' + customerPhoneNumber;
+                        }
+
+                        const whatsappUrl = `https://wa.me/${customerPhoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+                        window.open(whatsappUrl, '_blank');
+                    } else {
+                        console.warn("Nomor telepon pelanggan tidak tersedia, tidak dapat mengirim WhatsApp struk.");
+                        await showCustomAlert("Nomor telepon pelanggan tidak tersedia, struk WhatsApp tidak dapat dikirim.");
+                    }
+                }
+                // --- END NEW: WhatsApp Struk Logic ---
+
+                tutupDetail();
             } catch (error) {
                 console.error("Error updating order status:", error);
                 await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
-            } finally {
-                hideLoading(); // Always hide loading after this specific action completes
             }
         }
+    });
 
-        /**
-         * Updates the count displayed on each filter button and triggers blinking.
-         * @param {Array<Object>} orders - The array of all order data.
-         */
-        function updateFilterCountsDisplay(orders) {
-            const counts = {
-                'Pending': 0,
-                'Diproses': 0,
-                'SiapDiambil': 0,
-                'OnDelivery': 0,
-                'Selesai': 0,
-                'Dibatalkan': 0
-            };
+    // --- Event Listeners for Filters and Search ---
+    searchQueryInput.addEventListener('input', loadAllOrderHistory);
+    filterDateInput.addEventListener('change', loadAllOrderHistory);
 
-            orders.forEach(order => {
-                if (counts.hasOwnProperty(order.status)) {
-                    counts[order.status]++;
-                }
-            });
-
-            const pendingButton = document.querySelector('.filter-btn[data-status="Pending"]');
-            const currentPendingCount = counts['Pending'];
-
-            // Logic for blinking "Baru" button
-            // Blink if current pending count is greater than previous, AND the 'Pending' filter is NOT currently active
-            if (currentPendingCount > previousPendingCount && activeFilterStatus !== 'Pending') {
-                if (pendingButton) {
-                    pendingButton.classList.add('blinking');
-                }
-            } else if (currentPendingCount <= 0 && pendingButton && pendingButton.classList.contains('blinking')) {
-                // Stop blinking if there are no more pending orders
-                stopBlinking();
-            }
-
-
-            // Update the display for all counts
-            for (const status in counts) {
-                const countSpan = document.getElementById(`count-${status}`);
-                if (countSpan) {
-                    // Jika jumlahnya 0, set textContent menjadi kosong, jika tidak, tampilkan jumlahnya
-                    countSpan.textContent = counts[status] > 0 ? counts[status] : '';
-                }
-            }
-
-            // Update previous count *after* all checks and updates
-            previousPendingCount = currentPendingCount;
-        }
-
-        // --- Load All Order History (with real-time updates and filters) ---
-        function loadAllOrders() {
-            if (!isInitialLoadComplete) { // Only show loading spinner on initial load
-                showLoading();
-            }
-            // Unsubscribe from previous listener if exists
-            if (unsubscribeOrders) {
-                unsubscribeOrders();
-            }
-
-            // Set up real-time listener
-            unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc')
-                .onSnapshot(snapshot => {
-                    allOrdersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    updateFilterCountsDisplay(allOrdersData); // Update counts on filter buttons and handle blinking
-                    applyFiltersAndSearch(); // Apply filters and render whenever data changes
-
-                    if (!isInitialLoadComplete) { // Hide loading after initial load
-                        hideLoading();
-                        isInitialLoadComplete = true; // Set to true after first successful load
-                    }
-                }, error => {
-                    console.error('Gagal memuat semua pesanan secara real-time:', error);
-                    orderHistoryContent.innerHTML = '<p style="color: red; text-align: center;">Gagal memuat data secara real-time.</p>';
-                    hideLoading(); // Hide loading even on error
-                    isInitialLoadComplete = true; // Mark as complete even on error to prevent future spinner on real-time updates
-                });
-        }
-
-        // Function to apply filters and search to the currently loaded data
-        function applyFiltersAndSearch() {
-            let filteredOrders = [...allOrdersData]; // Start with all data
-
-            // Filter by status
-            if (activeFilterStatus) {
-                filteredOrders = filteredOrders.filter(order => order.status === activeFilterStatus);
-            }
-
-            // Filter by search query
-            const query = searchQueryInput.value.toLowerCase().trim();
-            if (query) {
-                filteredOrders = filteredOrders.filter(order =>
-                    (order.displayOrderId && order.displayOrderId.toLowerCase().includes(query)) ||
-                    (order.customer && order.customer.fullName && order.customer.fullName.toLowerCase().includes(query)) ||
-                    order.id.toLowerCase().includes(query) // Also search by full Firestore ID
-                );
-            }
-
-            // Filter by date
-            const filterDateValue = filterDateInput.value;
-            if (filterDateValue) {
-                const selectedDate = new Date(filterDateValue);
-                selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                filteredOrders = filteredOrders.filter(order => {
-                    const orderDate = order.waktu?.toDate?.();
-                    if (!orderDate) return false;
-                    const orderDay = new Date(orderDate);
-                    orderDay.setHours(0, 0, 0, 0); // Normalize order date to start of day
-                    return orderDay.getTime() === selectedDate.getTime();
-                });
-            }
-
-            renderOrders(filteredOrders);
-        }
-
-
-        // NEW: Function to stop blinking
-        function stopBlinking() {
-            const pendingButton = document.querySelector('.filter-btn[data-status="Pending"]');
-            if (pendingButton) {
-                pendingButton.classList.remove('blinking');
-            }
-        }
-
-        // --- Show Order Detail Popup ---
-        async function tampilkanDetail(docId) {
-            currentOrderIdForDetail = docId;
-            const docRef = db.collection("pesanan").doc(docId);
-            const user = auth.currentUser;
-            const uid = user?.uid || "Unknown";
-            const nama = user?.email || "Tanpa Nama";
-
-            try {
-                // Show loading spinner while fetching/updating detail
-                showLoading();
-
-                await db.runTransaction(async (transaction) => {
-                    const snapshot = await transaction.get(docRef);
-                    if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
-                    const d = snapshot.data();
-                    if (!d.dibukaOlehUid) {
-                        transaction.update(docRef, {
-                            dibukaOlehUid: uid,
-                            dibukaOlehNama: nama,
-                            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                });
-
-                const doc = await docRef.get();
-                if (!doc.exists) {
-                    await showCustomAlert('Pesanan tidak ditemukan.');
-                    return;
-                }
-
-                const data = doc.data();
-                const orderId = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
-                const customer = data.customer || {};
-                const waktu = data.waktu?.toDate?.() || new Date(0);
-                const items = data.items || [];
-
-                popupNama.textContent = customer.fullName || "Pelanggan";
-                popupOrderId.textContent = orderId;
-                const phoneNumber = customer.phoneNumber || "-";
-                let formattedPhoneNumber = phoneNumber.replace(/\D/g, '');
-                if (formattedPhoneNumber.startsWith('08')) {
-                    formattedPhoneNumber = '62' + formattedPhoneNumber.substring(1);
-                } else if (!formattedPhoneNumber.startsWith('62') && formattedPhoneNumber.length > 5) {
-                    formattedPhoneNumber = '62' + formattedPhoneNumber;
-                }
-
-                if (phoneNumber !== "-") {
-                    popupNomor.innerHTML = `
-                        <div class="phone-link-group">
-                            <span>${phoneNumber}</span>
-                            <a href="tel:${formattedPhoneNumber}" class="icon-link" title="Telepon">
-                                <i class="fas fa-phone"></i>
-                            </a>
-                            <a href="https://wa.me/${formattedPhoneNumber}" target="_blank" class="icon-link" title="WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </a>
-                        </div>
-                    `;
-                } else {
-                    popupNomor.textContent = phoneNumber;
-                }
-
-                popupAlamat.textContent = customer.address || "-";
-                popupTotal.textContent = formatRupiah(data.totalAmount || 0);
-                popupMetodeBayar.textContent = data.paymentMethod || "-";
-                popupCatatan.textContent = customer.notes || "Tidak ada catatan";
-
-                const currentStatus = data.status || "Pending";
-                popupStatus.textContent = getDisplayStatus(currentStatus);
-                popupStatus.className = `order-status ${getStatusClass(currentStatus)}`;
-
-                statusUpdater.value = currentStatus;
-
-                // NEW: Populate driver info fields and show/hide section
-                if (currentStatus === 'OnDelivery') {
-                    driverInfoSection.style.display = 'block';
-                    driverNameInput.value = data.driverName || '';
-                    driverPhoneInput.value = data.driverPhone || '';
-                    driverAppSelect.value = data.driverApp || '';
-                } else {
-                    driverInfoSection.style.display = 'none';
-                    driverNameInput.value = ''; // Clear fields when not OnDelivery
-                    driverPhoneInput.value = '';
-                    driverAppSelect.value = '';
-                }
-
-                popupWaktu.textContent = formatDate(waktu);
-
-                const dibukaOleh = data.dibukaOlehNama || "-";
-                const waktuDibuka = data.waktuDibuka?.toDate?.();
-                popupDibukaOleh.textContent = dibukaOleh;
-                popupWaktuDibuka.textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
-
-                const diubahOleh = data.diubahOlehNama || "-";
-                const waktuDiubah = data.waktuDiubah?.toDate?.();
-                popupDiubahOleh.textContent = diubahOleh;
-                popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
-
-                popupItems.innerHTML = (items || []).map(item => {
-                    const variantDisplay = getVariantDisplayString(item.custom);
-                    return `
-                        <div style="margin-bottom:5px;">
-                            <img src="${item.image || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${item.name}" style="width:50px; height:50px; object-fit:cover; border-radius:5px; vertical-align:middle; margin-right:10px;">
-                            ${item.name || 'Produk Tidak Dikenal'} (${item.quantity || 0}x) = ${formatRupiah((item.price || 0) * (item.quantity || 0))}
-                            <br><small style="color:#777; margin-left:60px;">Varian: ${variantDisplay}</small>
-                        </div>
-                    `;
-                }).join('') || '<p style="text-align: center; color: #777;">Tidak ada produk.</p>';
-
-                popupDetail.style.display = "flex";
-
-            } catch (err) {
-                console.error("Error showing order detail:", err);
-                await showCustomAlert('Gagal menampilkan detail pesanan: ' + err.message);
-            } finally {
-                hideLoading(); // Always hide loading after detail popup attempt
-            }
-        }
-
-        // --- Close Order Detail Popup ---
-        function tutupDetail() {
-            popupDetail.style.display = "none";
-            currentOrderIdForDetail = null;
-            // No need to call loadAllOrders() explicitly here, onSnapshot will handle it.
-        }
-
-        // --- Event Listener for Status Updater Dropdown in Popup ---
-        statusUpdater.addEventListener("change", async function () {
-            const newStatus = this.value;
-            const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`);
-            if (currentOrderIdForDetail && confirmChange) {
-                const driverDetails = {};
-                if (newStatus === 'OnDelivery') {
-                    driverDetails.driverName = driverNameInput.value;
-                    driverDetails.driverPhone = driverPhoneInput.value;
-                    driverDetails.driverApp = driverAppSelect.value;
-                }
-                await updateOrderStatusInFirestore(currentOrderIdForDetail, newStatus, driverDetails);
-                tutupDetail();
-            }
-        });
-
-        // NEW: Event listener for statusUpdater to show/hide driver info section
-        statusUpdater.addEventListener('change', function() {
-            if (this.value === 'OnDelivery') {
-                driverInfoSection.style.display = 'block';
-            } else {
-                driverInfoSection.style.display = 'none';
-            }
-        });
-
-        // NEW: Event Listener for Save Driver Details Button
-        if (saveDriverDetailsBtn) { // Pastikan tombol ada di DOM
-            saveDriverDetailsBtn.addEventListener('click', async () => {
-                if (!currentOrderIdForDetail) {
-                    await showCustomAlert("Tidak ada pesanan yang dipilih.");
-                    return;
-                }
-
-                // Ambil status saat ini dari dropdown, karena tombol ini hanya terlihat jika status adalah OnDelivery
-                const currentStatus = statusUpdater.value;
-
-                if (currentStatus !== 'OnDelivery') {
-                    await showCustomAlert("Detail driver hanya dapat disimpan untuk pesanan 'On Delivery'.");
-                    return;
-                }
-
-                const driverDetails = {
-                    driverName: driverNameInput.value,
-                    driverPhone: driverPhoneInput.value,
-                    driverApp: driverAppSelect.value
-                };
-
-                const confirmSave = await showCustomConfirm("Simpan detail driver?");
-                if (confirmSave) {
-                    // Teruskan status saat ini dan detail driver ke fungsi pembaruan
-                    await updateOrderStatusInFirestore(currentOrderIdForDetail, currentStatus, driverDetails);
-                    // Tidak perlu menutup popup di sini, onSnapshot akan memperbarui konten secara real-time.
-                }
-            });
-        }
-
-
-        // --- Event Listeners for Filters and Search ---
-        searchQueryInput.addEventListener('input', stopBlinking); // Stop blinking on search input
-        filterDateInput.addEventListener('change', stopBlinking); // Stop blinking on date filter change
-
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                activeFilterStatus = button.dataset.status;
-                applyFiltersAndSearch(); // Apply filters to current data
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                stopBlinking(); // Stop blinking when ANY filter button is clicked
-            });
-        });
-
-        resetFiltersBtn.addEventListener('click', () => {
-            searchQueryInput.value = '';
-            filterDateInput.value = '';
-            activeFilterStatus = 'Pending'; // Reset to 'Pending' as default
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            activeFilterStatus = button.dataset.status;
+            loadAllOrderHistory();
             filterButtons.forEach(btn => btn.classList.remove('active'));
-            // Set 'Baru' (Pending) button as active
-            document.querySelector('.filter-btn[data-status="Pending"]').classList.add('active');
-            applyFiltersAndSearch(); // Apply reset filters
-            stopBlinking(); // Stop blinking on reset
+            button.classList.add('active');
         });
+    });
 
-        // --- Authentication and Initial Load ---
-        auth.onAuthStateChanged(async user => {
-            const storedRole = localStorage.getItem('userRole');
-            const isLoggingOut = localStorage.getItem('isLoggingOut');
-            if (isLoggingOut) localStorage.removeItem('isLoggingOut');
+    resetFiltersBtn.addEventListener('click', () => {
+        searchQueryInput.value = '';
+        filterDateInput.value = '';
+        activeFilterStatus = 'All';
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.filter-btn[data-status="All"]').classList.add('active');
+        loadAllOrderHistory();
+    });
 
-            if (!user || storedRole !== 'penjual') {
-                if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-                window.location.href = 'index.html'; // Redirect to login
-            } else {
-                // Set default active filter button on initial load
-                document.querySelector('.filter-btn[data-status="Pending"]').classList.add('active');
-                loadAllOrders(); // Start real-time listener on successful authentication
-            }
-        });
+    // --- Authentication and Initial Load ---
+    auth.onAuthStateChanged(user => {
+      const storedRole = localStorage.getItem('userRole');
+      const isLoggingOut = localStorage.getItem('isLoggingOut');
+      if (isLoggingOut) localStorage.removeItem('isLoggingOut');
 
-        // --- Admin Actions ---
-        window.hapusSemuaPesananPenjual = async function () {
-            const konfirmasi = await showCustomConfirm("❗Yakin ingin menghapus SEMUA pesanan dari database penjual?");
-            if (!konfirmasi) return;
-
-            // Tampilkan modal verifikasi password
-            const modal = document.getElementById('modalVerifikasi');
-            if (modal) {
-                modal.style.display = 'flex';
-            } else {
-                await showCustomAlert("❌ Modal verifikasi tidak ditemukan di halaman.");
-            }
-        };
-
-        // Fungsi dipanggil saat tombol 'Hapus' di modal ditekan
-        window.verifikasiPasswordDanHapus = async function () {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                await showCustomAlert("⚠️ Anda belum login.");
-                return;
-            }
-
-            const passwordInput = document.getElementById('inputPassword');
-            if (!passwordInput || !passwordInput.value) {
-                await showCustomAlert("⚠️ Masukkan password terlebih dahulu.");
-                return;
-            }
-
-            const password = passwordInput.value;
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
-
-            try {
-                showLoading();
-                await user.reauthenticateWithCredential(credential);
-
-                const snapshot = await db.collection("pesanan").get();
-                const batch = db.batch();
-
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-
-                await batch.commit();
-
-                await showCustomAlert("✅ Semua pesanan berhasil dihapus.");
-                tutupModalVerifikasi();
-                // loadAllOrders() will automatically update the list
-            } catch (error) {
-                console.error("❌ Gagal re-auth:", error);
-                await showCustomAlert("❌ Password salah atau gagal autentikasi.");
-            } finally {
-                hideLoading();
-            }
-        };
-
-        // Tutup modal jika klik "Batal"
-        window.tutupModalVerifikasi = function () {
-            const modal = document.getElementById('modalVerifikasi');
-            if (modal) modal.style.display = 'none';
-        };
-    </script>
+      if (!user || storedRole !== 'penjual') {
+        if (!isLoggingOut) showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
+        window.location.href = 'index.html'; // Redirect to login
+      } else {
+        loadAllOrderHistory();
+      }
+    });
+  </script>
 </body>
 </html>
