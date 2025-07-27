@@ -603,13 +603,14 @@
         }
 
         /* --- Print-specific styles --- */
-        /* Sembunyikan semua elemen di body secara default saat mencetak */
         @media print {
-            body {
-                visibility: hidden; /* Sembunyikan seluruh body */
+            /* Sembunyikan semua elemen di body secara default saat mencetak */
+            body > *:not(#print-area) {
+                display: none !important;
             }
+            /* Tampilkan hanya print-area */
             #print-area {
-                visibility: visible; /* Tampilkan hanya print-area */
+                display: block !important;
                 position: absolute; /* Posisikan absolut agar tidak mengganggu layout */
                 left: 0;
                 top: 0;
@@ -622,6 +623,7 @@
                 font-family: monospace; /* Font monospace untuk kesan struk */
                 font-size: 12px;
                 line-height: 1.4;
+                z-index: 9999 !important; /* Pastikan di atas semua elemen */
             }
             #print-area h1, #print-area h2, #print-area h3, #print-area h4 {
                 color: black !important; /* Pastikan judul berwarna hitam */
@@ -802,9 +804,6 @@
         </div>
     </div>
 
-    <!-- NEW: Hidden div for print content -->
-    <div id="print-area" style="display: none;"></div>
-
     <script>
         // --- Firebase Configuration ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -868,9 +867,6 @@
         const customAlertOk = document.getElementById('customAlertOk');
         const modalVerifikasi = document.getElementById('modalVerifikasi');
         const inputPassword = document.getElementById('inputPassword');
-
-        // NEW: Print Area Element
-        const printArea = document.getElementById('print-area');
 
 
         let currentOrderIdForDetail = null;
@@ -1556,6 +1552,8 @@
         // --- Print Order Details Function ---
         async function printOrderDetails(orderId) {
             showLoading();
+            let printArea = null; // Declare printArea here
+
             try {
                 const doc = await db.collection("pesanan").doc(orderId).get();
                 if (!doc.exists) {
@@ -1596,7 +1594,9 @@
                     `;
                 }).join('');
 
-                // Populate the hidden print-area div
+                // Create a temporary div for printing dynamically
+                printArea = document.createElement('div');
+                printArea.id = 'print-area'; // Assign ID for CSS targeting
                 printArea.innerHTML = `
                     <h3 style="text-align: center; margin-bottom: 10px;">Rujak Buah Indonesia</h3>
                     <p style="text-align: center; margin-bottom: 15px;">Struk Pesanan</p>
@@ -1632,19 +1632,19 @@
                     <p style="text-align: center; margin-top: 20px;">Terima Kasih!</p>
                 `;
 
+                document.body.appendChild(printArea);
+
                 // Trigger print dialog
                 window.print();
-
-                // Clear the content and hide the print-area after printing
-                // Use a small delay to ensure print dialog has time to process
-                setTimeout(() => {
-                    printArea.innerHTML = ''; // Clear content
-                }, 500);
 
             } catch (error) {
                 console.error("Error printing order details:", error);
                 await showCustomAlert("Gagal mencetak detail pesanan: " + error.message);
             } finally {
+                // Clean up: remove the temporary div after printing
+                if (printArea && document.body.contains(printArea)) {
+                    document.body.removeChild(printArea);
+                }
                 hideLoading();
             }
         }
