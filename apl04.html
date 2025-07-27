@@ -120,6 +120,7 @@
             justify-content: flex-end; /* Align buttons to the right */
             gap: 8px; /* Space between buttons */
             margin-top: 10px; /* Space from content above */
+            flex-wrap: wrap; /* Allow buttons to wrap to next line if needed */
         }
         .order-card-actions .action-btn {
             padding: 8px 12px;
@@ -170,6 +171,14 @@
         }
         .order-card-actions .action-btn.selesai:hover {
             background-color: #5a2d9c; /* Darker Purple */
+        }
+        /* NEW: Print Button Style */
+        .order-card-actions .action-btn.print {
+            background-color: #6c757d; /* Grey */
+            border-color: #6c757d;
+        }
+        .order-card-actions .action-btn.print:hover {
+            background-color: #5a6268; /* Darker Grey */
         }
 
 
@@ -592,6 +601,65 @@
         .filter-btn.blinking {
             animation: blink-animation 1s infinite alternate; /* Blink indefinitely until stopped */
         }
+
+        /* Print-specific styles */
+        @media print {
+            body > *:not(#print-area) {
+                display: none !important; /* Hide everything except the print area */
+            }
+            #print-area {
+                display: block !important;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                background-color: white;
+                color: black;
+                font-family: monospace; /* Use monospace for receipt-like feel */
+                font-size: 12px;
+            }
+            #print-area h1, #print-area h2, #print-area h3, #print-area h4 {
+                color: black !important;
+                text-align: center;
+                margin-bottom: 5px;
+            }
+            #print-area p {
+                margin-bottom: 2px;
+            }
+            #print-area .print-section {
+                border-bottom: 1px dashed #ccc;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
+            #print-area .print-item-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            #print-area .print-item {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 2px;
+            }
+            #print-area .print-item-name {
+                flex-grow: 1;
+                margin-right: 10px;
+            }
+            #print-area .print-item-qty {
+                width: 30px;
+                text-align: center;
+            }
+            #print-area .print-item-price {
+                width: 80px;
+                text-align: right;
+            }
+            #print-area .print-total {
+                font-weight: bold;
+                font-size: 14px;
+                text-align: right;
+                margin-top: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -953,6 +1021,12 @@
                         </button>
                     `;
                 }
+                // Add Print button for all orders
+                actionButtonsHtml += `
+                    <button class="action-btn print" data-order-id="${order.id}" data-action="print">
+                        <i class="fas fa-print"></i> Cetak
+                    </button>
+                `;
 
                 // Construct driver info for card if OnDelivery - REFINED DISPLAY
                 let driverInfoCardHtml = '';
@@ -1061,6 +1135,11 @@
             event.stopPropagation(); // Prevent the parent order-card click event from firing
             const orderId = event.currentTarget.dataset.orderId;
             const action = event.currentTarget.dataset.action;
+
+            if (action === 'print') {
+                printOrderDetails(orderId);
+                return;
+            }
 
             let newStatus = action; // The data-action directly provides the new status
 
@@ -1463,6 +1542,114 @@
             stopBlinking(); // Stop blinking on reset
         });
 
+        // --- Print Order Details Function ---
+        async function printOrderDetails(orderId) {
+            showLoading();
+            try {
+                const doc = await db.collection("pesanan").doc(orderId).get();
+                if (!doc.exists) {
+                    await showCustomAlert('Pesanan tidak ditemukan untuk dicetak.');
+                    return;
+                }
+                const order = doc.data();
+
+                const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
+                const buyerName = order.customer?.fullName || 'Pelanggan Anonim';
+                const phoneNumber = order.customer?.phoneNumber || '-';
+                const address = order.customer?.address || order.alamat || 'Alamat tidak tersedia';
+                const paymentMethod = order.paymentMethod || '-';
+                const notes = order.customer?.notes || 'Tidak ada catatan';
+                const totalAmount = formatRupiah(order.totalAmount || 0);
+                const orderTime = formatDate(order.waktu);
+
+                let driverInfoHtml = '';
+                if (order.status === 'OnDelivery' && (order.driverName || order.driverPhone || order.driverApp)) {
+                    driverInfoHtml = `
+                        <div class="print-section">
+                            <h4>Info Pengiriman:</h4>
+                            <p><strong>Diantar Via:</strong> ${order.driverApp || '-'}</p>
+                            ${order.driverName ? `<p><strong>Driver:</strong> ${order.driverName}</p>` : ''}
+                            ${order.driverPhone ? `<p><strong>Telp. Driver:</strong> ${order.driverPhone}</p>` : ''}
+                        </div>
+                    `;
+                }
+
+                let itemsHtml = (order.items || []).map(item => {
+                    const variantDisplay = getVariantDisplayString(item.custom);
+                    return `
+                        <li class="print-item">
+                            <span class="print-item-name">${item.name} (${variantDisplay})</span>
+                            <span class="print-item-qty">${item.quantity}x</span>
+                            <span class="print-item-price">${formatRupiah(item.price * item.quantity)}</span>
+                        </li>
+                    `;
+                }).join('');
+
+                // Create a temporary div for printing
+                const printArea = document.createElement('div');
+                printArea.id = 'print-area';
+                printArea.style.cssText = `
+                    width: 300px; /* Lebar standar untuk struk */
+                    margin: 0 auto;
+                    padding: 15px;
+                    font-family: 'monospace';
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: black;
+                `;
+                printArea.innerHTML = `
+                    <h3 style="text-align: center; margin-bottom: 10px;">Rujak Buah Indonesia</h3>
+                    <p style="text-align: center; margin-bottom: 15px;">Struk Pesanan</p>
+                    
+                    <div class="print-section">
+                        <p><strong>ID Pesanan:</strong> ${displayOrderId}</p>
+                        <p><strong>Waktu Pesanan:</strong> ${orderTime}</p>
+                        <p><strong>Status:</strong> ${getDisplayStatus(order.status)}</p>
+                    </div>
+
+                    <div class="print-section">
+                        <h4>Info Pelanggan:</h4>
+                        <p><strong>Nama:</strong> ${buyerName}</p>
+                        <p><strong>No. HP:</strong> ${phoneNumber}</p>
+                        <p><strong>Alamat:</strong> ${address}</p>
+                        <p><strong>Catatan:</strong> ${notes}</p>
+                    </div>
+
+                    ${driverInfoHtml}
+
+                    <div class="print-section">
+                        <h4>Detail Item:</h4>
+                        <ul class="print-item-list">
+                            ${itemsHtml}
+                        </ul>
+                    </div>
+
+                    <div class="print-section">
+                        <p><strong>Metode Pembayaran:</strong> ${paymentMethod}</p>
+                        <p class="print-total">Total Pembayaran: ${totalAmount}</p>
+                    </div>
+
+                    <p style="text-align: center; margin-top: 20px;">Terima Kasih!</p>
+                `;
+
+                document.body.appendChild(printArea);
+
+                // Trigger print dialog
+                window.print();
+
+                // Clean up: remove the temporary div after printing (or after a short delay)
+                setTimeout(() => {
+                    document.body.removeChild(printArea);
+                }, 500); // Give browser a moment to process print dialog
+
+            } catch (error) {
+                console.error("Error printing order details:", error);
+                await showCustomAlert("Gagal mencetak detail pesanan: " + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
         // --- Authentication and Initial Load ---
         auth.onAuthStateChanged(async user => {
             const storedRole = localStorage.getItem('userRole');
@@ -1530,7 +1717,7 @@
                 console.error("❌ Gagal re-auth:", error);
                 await showCustomAlert("❌ Password salah atau gagal autentikasi.");
             } finally {
-                hideLoading(); // Always hide loading after this specific action completes
+                hideLoading();
             }
         };
 
