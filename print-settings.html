@@ -311,7 +311,7 @@
     </div>
 
     <div class="print-button-container">
-        <button class="print-button" onclick="window.print()">Cetak Struk Ini</button>
+        <button class="print-button" onclick="printReceipt()"><i class="fas fa-print"></i> Cetak Struk Ini</button>
     </div>
 
     <!-- Custom Alert Modal -->
@@ -350,13 +350,15 @@
         const receiptSubtotal = document.getElementById('receiptSubtotal');
         const receiptDiscount = document.getElementById('receiptDiscount');
         const receiptTotalAmount = document.getElementById('receiptTotalAmount');
-        const receiptPaidAmount = document.getElementById('receiptPaidAmount'); // New element for paid amount
-        const receiptChangeAmount = document.getElementById('receiptChangeAmount'); // New element for change amount
+        const receiptPaidAmount = document.getElementById('receiptPaidAmount'); 
+        const receiptChangeAmount = document.getElementById('receiptChangeAmount'); 
         
         // Custom Alert Modal
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
         const customAlertOk = document.getElementById('customAlertOk');
+
+        let currentOrderId = null; // Global variable to store the order ID
 
         // --- Helper Functions ---
         function showLoading() { loadingSpinner.style.display = 'flex'; }
@@ -364,26 +366,22 @@
 
         function formatRupiah(amount) {
             if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
-                return "0"; // Return "0" for currency display, not "Rp0" as per minimarket style
+                return "0"; 
             }
-            // Use Intl.NumberFormat for IDR currency, then remove "Rp" prefix
             const formatted = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
                 minimumFractionDigits: 0
             }).format(amount);
-            return formatted.replace('Rp', '').trim(); // Remove "Rp" and trim whitespace
+            return formatted.replace('Rp', '').trim(); 
         }
 
         function formatDate(date) {
             if (!date) return "-";
             const d = (date instanceof firebase.firestore.Timestamp) ? date.toDate() : new Date(date);
             if (isNaN(d.getTime())) return "-";
-            // Format for a compact receipt date/time: DD/MM/YYYY HH:MM
             return d.toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
         }
-
-        // getVariantDisplayString is no longer needed for this minimalist receipt
 
         // Custom Alert Modal
         function showCustomAlert(message) {
@@ -401,10 +399,29 @@
             });
         }
 
+        // --- Function to handle Print Button Click ---
+        function printReceipt() {
+            // Check if a specific Android bridge is available (AppsGeyser might inject one)
+            if (typeof AndroidBridge !== 'undefined' && AndroidBridge.printReceipt) {
+                AndroidBridge.printReceipt(currentOrderId); // Call native Android print function
+                showCustomAlert('Perintah cetak dikirim ke aplikasi.');
+            } else if (window.location.protocol === 'file:' || window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                // For browser environments, use standard print
+                window.print();
+            } else {
+                // For WebView environments without a direct bridge, try custom URL scheme
+                // AppsGeyser needs to be configured to handle this scheme (e.g., in "Advanced" settings)
+                window.location.href = 'appsgeyserprint://print?orderId=' + currentOrderId;
+                console.log('Attempting to print via custom URL scheme: appsgeyserprint://print?orderId=' + currentOrderId);
+                showCustomAlert('Perintah cetak dikirim. Jika tidak mencetak, pastikan aplikasi Anda di AppsGeyser mendukung fitur cetak dari WebView (misalnya, melalui pengaturan URL kustom).');
+            }
+        }
+
         // --- Load Order Details for Printing ---
         async function loadOrderForPrint(orderId) {
             showLoading();
-            receiptContent.style.display = 'none'; // Hide content until loaded
+            receiptContent.style.display = 'none'; 
+            currentOrderId = orderId; // Store order ID globally
 
             try {
                 const orderDoc = await db.collection('pesanan').doc(orderId).get();
@@ -421,8 +438,7 @@
                 // Populate receipt details
                 receiptOrderId.textContent = orderData.displayOrderId || '#' + orderId.substring(0, 6).toUpperCase();
                 receiptOrderDate.textContent = formatDate(orderData.waktu);
-                // Other details like customer name, payment method, address, notes, driver info are not displayed in this minimalist design.
-
+                
                 // Populate items list
                 receiptItemsList.innerHTML = '';
                 let subtotal = 0;
@@ -440,17 +456,12 @@
                 });
 
                 receiptSubtotal.textContent = formatRupiah(subtotal);
-                // Assuming discount is 0 for now, or fetch from orderData if available
                 receiptDiscount.textContent = formatRupiah(orderData.discount || 0); 
                 receiptTotalAmount.textContent = formatRupiah(orderData.totalAmount || subtotal);
-                
-                // For 'Bayar' and 'Kembali', we need to check if these fields exist in orderData.
-                // If not, we can default them or leave them as placeholders.
-                // Assuming `paidAmount` and `changeAmount` might be present in `orderData`
-                receiptPaidAmount.textContent = formatRupiah(orderData.paidAmount || orderData.totalAmount || subtotal); // Default paid to total if not specified
-                receiptChangeAmount.textContent = formatRupiah(orderData.changeAmount || 0); // Default change to 0 if not specified
+                receiptPaidAmount.textContent = formatRupiah(orderData.paidAmount || orderData.totalAmount || subtotal); 
+                receiptChangeAmount.textContent = formatRupiah(orderData.changeAmount || 0); 
 
-                receiptContent.style.display = 'block'; // Show content after loading
+                receiptContent.style.display = 'block'; 
                 hideLoading();
 
             } catch (error) {
@@ -462,7 +473,6 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Authenticate user (e.g., as seller)
             auth.onAuthStateChanged(async user => {
                 const storedRole = localStorage.getItem('userRole');
                 const isLoggingOut = localStorage.getItem('isLoggingOut');
@@ -470,9 +480,8 @@
 
                 if (!user || storedRole !== 'penjual') {
                     if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-                    window.location.href = 'index.html'; // Redirect to login
+                    window.location.href = 'index.html'; 
                 } else {
-                    // Get orderId from URL query parameter
                     const urlParams = new URLSearchParams(window.location.search);
                     const orderId = urlParams.get('orderId');
 
@@ -480,7 +489,7 @@
                         loadOrderForPrint(orderId);
                     } else {
                         await showCustomAlert('ID Pesanan tidak ditemukan di URL.');
-                        history.back(); // Go back if no orderId
+                        history.back(); 
                     }
                 }
             });
