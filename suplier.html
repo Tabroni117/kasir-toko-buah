@@ -420,7 +420,7 @@
         const db = firebase.firestore();
 
         // Firestore Collections
-        const productsCollection = db.collection('bahan'); // *** CHANGED from 'buah' to 'bahan' ***
+        const productsCollection = db.collection('bahan'); // Mengambil dari koleksi 'bahan'
         const supplierOrdersCollection = db.collection('supplierOrders'); 
 
         // DOM Elements
@@ -446,8 +446,14 @@
         let localSupplierOrderItems = []; 
 
         // --- Helper Functions ---
-        function showLoading() { loadingSpinner.style.display = 'flex'; }
-        function hideLoading() { loadingSpinner.style.display = 'none'; }
+        function showLoading() { 
+            console.log("DEBUG: Menampilkan loading spinner.");
+            loadingSpinner.style.display = 'flex'; 
+        }
+        function hideLoading() { 
+            console.log("DEBUG: Menyembunyikan loading spinner.");
+            loadingSpinner.style.display = 'none'; 
+        }
 
         function formatRupiah(amount) {
             if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
@@ -461,6 +467,7 @@
         }
 
         function showCustomAlert(message) {
+            console.log("DEBUG: Menampilkan custom alert:", message);
             return new Promise((resolve) => {
                 customAlertMessage.textContent = message;
                 customAlertDialog.style.display = 'flex';
@@ -477,42 +484,47 @@
 
         // --- Load Products (Bahan Baku) for Selection ---
         async function loadProductsForSelection() {
+            console.log("DEBUG: Memulai loadProductsForSelection.");
             showLoading();
             productSelect.innerHTML = '<option value="">-- Memuat Bahan Baku --</option>';
             try {
+                // Mengambil bahan baku yang 'isAvailable' adalah true
                 const snapshot = await productsCollection.where('isAvailable', '==', true).orderBy('nama').get();
                 productsData = [];
                 productSelect.innerHTML = '<option value="">-- Pilih Bahan Baku --</option>'; // Reset dropdown
 
                 if (snapshot.empty) {
+                    console.log("DEBUG: Koleksi 'bahan' kosong atau tidak ada yang 'isAvailable: true'.");
                     productSelect.innerHTML = '<option value="">-- Tidak Ada Bahan Baku Tersedia --</option>';
                     addItemBtn.disabled = true;
                     hideLoading();
                     return;
                 }
 
+                console.log(`DEBUG: Menemukan ${snapshot.size} bahan baku yang tersedia.`);
                 snapshot.forEach(doc => {
                     const product = { id: doc.id, ...doc.data() };
                     productsData.push(product);
                     const option = document.createElement('option');
                     option.value = product.id;
-                    // Display nama and harga_beli for bahan
                     option.textContent = `${product.nama} (Harga Beli: ${formatRupiah(product.harga_beli)})`;
                     productSelect.appendChild(option);
                 });
                 addItemBtn.disabled = false;
             } catch (error) {
-                console.error("Error loading products for selection:", error);
-                showCustomAlert("Gagal memuat daftar bahan baku.");
+                console.error("DEBUG: Error loading products for selection:", error);
+                showCustomAlert("Gagal memuat daftar bahan baku. Cek konsol untuk detail.");
                 productSelect.innerHTML = '<option value="">-- Gagal Memuat Bahan Baku --</option>';
                 addItemBtn.disabled = true;
             } finally {
                 hideLoading();
+                console.log("DEBUG: loadProductsForSelection selesai.");
             }
         }
 
         // --- Add Item to Local Order ---
         addItemBtn.addEventListener('click', () => {
+            console.log("DEBUG: Tombol 'Tambahkan ke Daftar Pesanan' diklik.");
             const selectedProductId = productSelect.value;
             const quantity = parseInt(quantityInput.value);
 
@@ -527,39 +539,39 @@
 
             const selectedProduct = productsData.find(p => p.id === selectedProductId);
             if (!selectedProduct) {
-                showCustomAlert("Bahan baku tidak ditemukan.");
+                showCustomAlert("Produk tidak ditemukan dalam daftar yang dimuat.");
                 return;
             }
 
-            // Check if item already exists in local list
             const existingItemIndex = localSupplierOrderItems.findIndex(item => item.productId === selectedProductId);
 
             if (existingItemIndex > -1) {
-                // Update quantity if item exists
                 localSupplierOrderItems[existingItemIndex].quantity += quantity;
+                console.log(`DEBUG: Kuantitas bahan baku '${selectedProduct.nama}' diperbarui menjadi ${localSupplierOrderItems[existingItemIndex].quantity}.`);
             } else {
-                // Add new item, using harga_beli as price
                 localSupplierOrderItems.push({
                     productId: selectedProduct.id,
                     name: selectedProduct.nama,
-                    price: selectedProduct.harga_beli, // Use harga_beli from 'bahan' collection
+                    price: selectedProduct.harga_beli, 
                     quantity: quantity
                 });
+                console.log(`DEBUG: Bahan baku '${selectedProduct.nama}' ditambahkan ke daftar pesanan.`);
             }
 
             renderSelectedItemsTable();
             updateSupplierOrderSummary();
-            // Reset quantity input and product selection
             quantityInput.value = 1;
             productSelect.value = "";
         });
 
         // --- Render Selected Items Table ---
         function renderSelectedItemsTable() {
+            console.log("DEBUG: Merender tabel item yang dipilih.");
             selectedItemsList.innerHTML = '';
             if (localSupplierOrderItems.length === 0) {
                 emptyItemsMessage.style.display = 'block';
                 document.getElementById('selectedItemsTable').style.display = 'none';
+                console.log("DEBUG: Daftar pesanan kosong.");
             } else {
                 emptyItemsMessage.style.display = 'none';
                 document.getElementById('selectedItemsTable').style.display = 'table';
@@ -577,8 +589,8 @@
                     `;
                     selectedItemsList.appendChild(row);
                 });
+                console.log(`DEBUG: Merender ${localSupplierOrderItems.length} item di tabel pesanan.`);
             }
-            // Attach event listeners for remove buttons
             selectedItemsList.querySelectorAll('.remove-item-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const indexToRemove = parseInt(event.target.dataset.index);
@@ -589,6 +601,7 @@
 
         // --- Remove Item from Local Order ---
         function removeItemFromLocalOrder(index) {
+            console.log(`DEBUG: Menghapus item di indeks ${index}.`);
             localSupplierOrderItems.splice(index, 1);
             renderSelectedItemsTable();
             updateSupplierOrderSummary();
@@ -596,6 +609,7 @@
 
         // --- Update Supplier Order Summary ---
         function updateSupplierOrderSummary() {
+            console.log("DEBUG: Memperbarui ringkasan pesanan supplier.");
             let totalItems = 0;
             let totalPrice = 0;
             localSupplierOrderItems.forEach(item => {
@@ -604,13 +618,14 @@
             });
             totalItemsForSupplier.textContent = totalItems;
             totalPriceForSupplier.textContent = formatRupiah(totalPrice);
+            console.log(`DEBUG: Total item: ${totalItems}, Total harga: ${formatRupiah(totalPrice)}.`);
 
-            // Enable/disable send order and share buttons based on items and supplier details
             checkFormValidity();
         }
 
         // --- Check Form Validity ---
         function checkFormValidity() {
+            console.log("DEBUG: Memeriksa validitas form.");
             const isItemsAdded = localSupplierOrderItems.length > 0;
             const isSupplierNameFilled = supplierNameInput.value.trim() !== '';
             const isSupplierAddressFilled = supplierAddressInput.value.trim() !== '';
@@ -618,21 +633,23 @@
             const isFormValid = isItemsAdded && isSupplierNameFilled && isSupplierAddressFilled;
             sendOrderBtn.disabled = !isFormValid;
             shareWhatsappBtn.disabled = !isFormValid; 
+            console.log(`DEBUG: Form valid: ${isFormValid}. Tombol 'Kirim' dan 'Share' diatur.`);
         }
 
         // --- Send Order to Supplier ---
         sendOrderBtn.addEventListener('click', async () => {
+            console.log("DEBUG: Tombol 'Kirim Pesanan ke Supplier' diklik.");
             if (!currentUserId) {
-                showCustomAlert("Anda harus login sebagai penjual untuk mengirim pesanan.");
+                await showCustomAlert("Anda harus login sebagai penjual untuk mengirim pesanan."); // AWAIT HERE
                 return;
             }
 
             if (!localSupplierOrderItems.length) {
-                showCustomAlert("Daftar pesanan ke supplier masih kosong.");
+                await showCustomAlert("Daftar pesanan ke supplier masih kosong."); // AWAIT HERE
                 return;
             }
             if (supplierNameInput.value.trim() === '' || supplierAddressInput.value.trim() === '') {
-                showCustomAlert("Nama dan Alamat Supplier harus diisi.");
+                await showCustomAlert("Nama dan Alamat Supplier harus diisi."); // AWAIT HERE
                 return;
             }
 
@@ -648,18 +665,19 @@
                     notes: supplierNotesInput.value.trim()
                 },
                 totalItems: parseInt(totalItemsForSupplier.textContent),
-                // Remove "Rp " and commas, then replace decimal comma with dot for parseFloat
                 totalPrice: parseFloat(totalPriceForSupplier.textContent.replace('Rp ', '').replace(/\./g, '').replace(',', '.')), 
-                status: 'Pending', // Initial status
+                status: 'Pending', 
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 createdBy: currentUserId,
                 createdByName: auth.currentUser.email || "Unknown Seller"
             };
+            console.log("DEBUG: Data pesanan yang akan dikirim:", orderData);
 
             try {
                 await supplierOrdersCollection.add(orderData);
-                showCustomAlert("Pesanan berhasil dikirim ke supplier!");
-                // Reset form and local data
+                console.log("DEBUG: Pesanan berhasil ditambahkan ke Firestore.");
+                await showCustomAlert("Pesanan berhasil dikirim ke supplier!"); // AWAIT HERE
+                
                 localSupplierOrderItems = [];
                 renderSelectedItemsTable();
                 updateSupplierOrderSummary();
@@ -667,23 +685,25 @@
                 supplierAddressInput.value = '';
                 supplierNotesInput.value = '';
             } catch (error) {
-                console.error("Error sending order to supplier:", error);
-                showCustomAlert("Gagal mengirim pesanan ke supplier: " + error.message);
+                console.error("DEBUG: Error mengirim pesanan ke supplier:", error);
+                await showCustomAlert("Gagal mengirim pesanan ke supplier: " + error.message + ". Cek konsol untuk detail."); // AWAIT HERE
             } finally {
                 hideLoading();
                 sendOrderBtn.disabled = false;
                 shareWhatsappBtn.disabled = false;
+                console.log("DEBUG: Proses pengiriman pesanan selesai.");
             }
         });
 
         // --- Share Order to WhatsApp ---
-        shareWhatsappBtn.addEventListener('click', () => {
+        shareWhatsappBtn.addEventListener('click', async () => { // Made async to await alert
+            console.log("DEBUG: Tombol 'Share WhatsApp' diklik.");
             if (!localSupplierOrderItems.length) {
-                showCustomAlert("Daftar pesanan ke supplier masih kosong.");
+                await showCustomAlert("Daftar pesanan ke supplier masih kosong."); // AWAIT HERE
                 return;
             }
             if (supplierNameInput.value.trim() === '' || supplierAddressInput.value.trim() === '') {
-                showCustomAlert("Nama dan Alamat Supplier harus diisi.");
+                await showCustomAlert("Nama dan Alamat Supplier harus diisi."); // AWAIT HERE
                 return;
             }
 
@@ -703,6 +723,7 @@
             message += `*Total Harga Pesanan:* ${totalPriceForSupplier.textContent}\n`;
             message += `\nTerima kasih!`;
 
+            console.log("DEBUG: Pesan WhatsApp yang dibuat:", message);
             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         });
@@ -710,20 +731,25 @@
 
         // --- Initial Load & Authentication ---
         document.addEventListener('DOMContentLoaded', () => {
+            console.log("DEBUG: DOMContentLoaded terpicu.");
             auth.onAuthStateChanged(async user => {
+                console.log("DEBUG: auth.onAuthStateChanged terpicu. User:", user ? user.uid : "null");
                 const storedRole = localStorage.getItem('userRole');
                 const isLoggingOut = localStorage.getItem('isLoggingOut');
                 if (isLoggingOut) localStorage.removeItem('isLoggingOut');
 
                 if (!user || storedRole !== 'penjual') {
+                    console.log("DEBUG: Pengguna bukan penjual atau tidak login. Mengarahkan ke index.html.");
+                    // Await the alert before redirecting
                     if (!isLoggingOut) await showCustomAlert('Akses ditolak. Halaman ini hanya untuk PENJUAL.');
-                    window.location.href = 'index.html'; // Redirect to login
+                    // Use window.location.replace for cleaner history
+                    window.location.replace('./index.html'); 
                 } else {
                     currentUserId = user.uid;
-                    loadProductsForSelection(); // Now loads from 'bahan'
+                    console.log(`DEBUG: Pengguna terautentikasi sebagai penjual. UID: ${currentUserId}`);
+                    loadProductsForSelection(); 
                     renderSelectedItemsTable(); 
                     updateSupplierOrderSummary(); 
-                    // Add event listeners for input changes to check form validity
                     supplierNameInput.addEventListener('input', checkFormValidity);
                     supplierAddressInput.addEventListener('input', checkFormValidity);
                     supplierNotesInput.addEventListener('input', checkFormValidity); 
