@@ -307,51 +307,135 @@
         /* --- Print Specific Styles --- */
         @media print {
             body {
-                background-color: white; /* Ensure white background for print */
+                background-color: white;
                 margin: 0;
                 padding: 0;
-                display: block; /* Override flex for print layout */
+                display: block;
             }
             .container {
                 width: 100%;
-                max-width: none; /* No max-width for print */
-                box-shadow: none; /* No shadow for print */
-                min-height: auto; /* No min-height for print */
-                display: block; /* Override flex for print layout */
+                max-width: none;
+                box-shadow: none;
+                min-height: auto;
+                display: block;
             }
             .header-bar, .action-buttons, #loadingSpinner {
-                display: none !important; /* Hide header, buttons, and spinner when printing */
+                display: none !important;
             }
             .receipt-content {
-                padding: 10mm; /* Use physical units for print padding */
+                padding: 5mm; /* Mengurangi padding keseluruhan untuk cetak */
                 margin: 0;
                 box-sizing: border-box;
-                display: block; /* Override flex for print layout */
+                display: block;
+                page-break-inside: avoid; /* Mencegah pemisahan halaman di dalam konten struk */
             }
-            .receipt-header, .receipt-footer {
-                margin-bottom: 10mm; /* Adjust margins for print */
-            }
-            .receipt-details, .receipt-items, .receipt-summary {
-                margin-bottom: 10mm;
-            }
-            .receipt-details p, .receipt-items li, .receipt-summary div {
-                font-size: 12pt; /* Use points for print font size */
+            .receipt-header {
+                margin-bottom: 5mm; /* Mengurangi margin */
             }
             .receipt-header h2 {
-                font-size: 18pt;
+                font-size: 16pt; /* Ukuran font lebih kecil untuk header */
+                margin-bottom: 2mm;
             }
             .receipt-header p {
+                font-size: 9pt; /* Ukuran font lebih kecil untuk alamat/telepon */
+                line-height: 1.2;
+            }
+
+            .receipt-details {
+                margin-bottom: 5mm; /* Mengurangi margin */
+                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
+                border-bottom: 0.5px dashed #ccc;
+                padding: 5mm 0; /* Mengurangi padding */
+            }
+            .receipt-details p {
+                margin: 2mm 0; /* Mengurangi spasi baris */
+                font-size: 10pt; /* Ukuran font lebih kecil untuk detail */
+                display: block; /* Memastikan label dan nilai menumpuk jika diperlukan */
+            }
+            .receipt-details p .label {
+                font-weight: bold;
+                color: #333;
+                display: inline; /* Menjaga label tetap sebaris untuk pasangan sederhana */
+                margin-right: 5px;
+            }
+            .receipt-details p .value {
+                display: inline; /* Menjaga nilai tetap sebaris */
+                text-align: left; /* Menyelaraskan nilai ke kiri */
+            }
+            .receipt-details p.full-width .label,
+            .receipt-details p.full-width .value {
+                display: block; /* Untuk alamat/catatan, pertahankan tampilan blok */
+                text-align: left;
+                margin-bottom: 1mm;
+            }
+            .receipt-details p.full-width .label {
+                font-size: 11pt; /* Label sedikit lebih besar untuk item lebar penuh */
+            }
+            .receipt-details p.full-width .value {
                 font-size: 10pt;
             }
+
+
+            .receipt-items {
+                margin: 5mm 0; /* Mengurangi margin */
+            }
+            .receipt-item {
+                margin-bottom: 3mm; /* Mengurangi spasi item */
+                font-size: 10pt; /* Ukuran font lebih kecil untuk item */
+                padding-bottom: 2mm; /* Mengurangi padding */
+                border-bottom: 0.5px dotted #eee; /* Garis putus-putus lebih tipis */
+                display: block; /* Memaksa item untuk menumpuk secara vertikal untuk cetak */
+            }
+            .receipt-item-name {
+                font-weight: bold; /* Membuat nama item tebal */
+                margin-right: 0;
+                display: block;
+            }
+            .receipt-item-variants {
+                font-size: 8pt; /* Lebih kecil lagi untuk varian */
+                margin-top: 1mm;
+                display: block;
+            }
+            .receipt-item-qty-price {
+                font-size: 9pt; /* Lebih kecil untuk qty x harga */
+                text-align: left; /* Selaraskan ke kiri */
+                display: block;
+            }
+            .receipt-item-total {
+                font-size: 11pt; /* Lebih kecil untuk total per item */
+                margin-left: 0;
+                text-align: right; /* Selaraskan ke kanan */
+                display: block;
+                margin-top: -15px; /* Tarik ke atas agar sejajar dengan qty/harga jika memungkinkan */
+                float: right; /* Apungkan ke kanan */
+            }
+
+            .receipt-summary {
+                margin-top: 5mm; /* Mengurangi margin */
+                padding-top: 5mm;
+                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
+            }
+            .receipt-summary div {
+                margin-bottom: 3mm; /* Mengurangi spasi */
+                font-size: 10pt; /* Ukuran font lebih kecil */
+            }
             .receipt-summary .total {
-                font-size: 14pt;
+                font-size: 13pt; /* Ukuran font total lebih kecil */
             }
-            /* Ensure elements flow naturally and don't get cut off */
-            .receipt-details p, .receipt-items li {
+
+            .receipt-footer {
+                font-size: 9pt; /* Ukuran font footer lebih kecil */
+                margin-top: 10mm; /* Mengurangi margin */
+                padding-top: 5mm;
+                border-top: 0.5px dashed #ccc; /* Garis putus-putus lebih tipis */
+            }
+            .receipt-footer p {
+                margin: 1mm 0;
+            }
+
+            /* Memastikan tidak ada pemisahan halaman di dalam bagian-bagian ini */
+            .receipt-header, .receipt-details, .receipt-items, .receipt-summary, .receipt-footer {
                 page-break-inside: avoid;
-            }
-            .receipt-content {
-                page-break-after: always; /* Ensure each receipt starts on a new page if multiple */
             }
         }
     </style>
