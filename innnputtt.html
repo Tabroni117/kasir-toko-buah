@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data Produk</title>
+    <title>Input Pesanan ke Supplier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-    <!-- Firebase SDK v9 Compatibility (sesuai konfigurasi yang Kakak berikan) -->
+    <!-- Firebase SDK v9 Compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -50,7 +50,7 @@
         }
         input[type="text"],
         input[type="number"],
-        textarea {
+        input[type="date"] { /* Added date input type */
             width: 100%;
             padding: 12px;
             border: 1px solid #e0e0e0;
@@ -62,14 +62,10 @@
         }
         input[type="text"]:focus,
         input[type="number"]:focus,
-        textarea:focus {
+        input[type="date"]:focus { /* Added date input type */
             border-color: #4CAF50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
             outline: none;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 80px;
         }
         .button-group {
             display: flex;
@@ -87,19 +83,19 @@
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
-        #saveProductBtn {
+        #saveOrderBtn { /* Changed ID */
             background-color: #4CAF50;
             color: white;
         }
-        #saveProductBtn:hover {
+        #saveOrderBtn:hover { /* Changed ID */
             background-color: #388E3C;
             transform: translateY(-2px);
         }
-        #viewProductsBtn {
+        #viewOrdersBtn { /* Changed ID */
             background-color: #007bff;
             color: white;
         }
-        #viewProductsBtn:hover {
+        #viewOrdersBtn:hover { /* Changed ID */
             background-color: #0056b3;
             transform: translateY(-2px);
         }
@@ -146,23 +142,27 @@
 </head>
 <body>
     <div class="container">
-        <h2>Input Data Produk</h2>
-        <form id="productForm">
+        <h2>Input Pesanan ke Supplier</h2>
+        <form id="orderForm"> <!-- Changed ID -->
             <div class="form-group">
-                <label for="productName">Nama Produk:</label>
-                <input type="text" id="productName" required>
+                <label for="itemName">Nama Barang:</label>
+                <input type="text" id="itemName" required>
             </div>
             <div class="form-group">
-                <label for="productDescription">Deskripsi:</label>
-                <textarea id="productDescription" required></textarea>
+                <label for="orderQuantity">Jumlah Pesanan:</label>
+                <input type="text" id="orderQuantity" required placeholder="Contoh: 5 Kg, 10 Pcs">
             </div>
             <div class="form-group">
-                <label for="productPrice">Harga (Rp):</label>
-                <input type="number" id="productPrice" min="0" required>
+                <label for="supplierPrice">Harga Satuan (dari Supplier, Rp):</label>
+                <input type="number" id="supplierPrice" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="orderDate">Tanggal Pesanan:</label>
+                <input type="date" id="orderDate" required>
             </div>
             <div class="button-group">
-                <button type="submit" id="saveProductBtn">Simpan Produk</button>
-                <button type="button" id="viewProductsBtn">Lihat Produk</button>
+                <button type="submit" id="saveOrderBtn">Simpan Pesanan</button> <!-- Changed ID -->
+                <button type="button" id="viewOrdersBtn">Lihat Pesanan</button> <!-- Changed ID -->
             </div>
         </form>
     </div>
@@ -192,16 +192,17 @@
         const auth = firebase.auth(); // Auth is needed for Firebase rules, even if anonymous
         const db = firebase.firestore();
 
-        // Firestore Collection Reference
+        // Firestore Collection Reference (Tetap menggunakan 'Produk' sesuai permintaan Kakak)
         const produkCollection = db.collection('Produk');
 
         // DOM Elements
-        const productForm = document.getElementById('productForm');
-        const productNameInput = document.getElementById('productName');
-        const productDescriptionInput = document.getElementById('productDescription');
-        const productPriceInput = document.getElementById('productPrice');
-        const saveProductBtn = document.getElementById('saveProductBtn');
-        const viewProductsBtn = document.getElementById('viewProductsBtn');
+        const orderForm = document.getElementById('orderForm'); // Changed ID
+        const itemNameInput = document.getElementById('itemName'); // Changed ID
+        const orderQuantityInput = document.getElementById('orderQuantity'); // Changed ID
+        const supplierPriceInput = document.getElementById('supplierPrice'); // Changed ID
+        const orderDateInput = document.getElementById('orderDate'); // NEW: Date input
+        const saveOrderBtn = document.getElementById('saveOrderBtn'); // Changed ID
+        const viewOrdersBtn = document.getElementById('viewOrdersBtn'); // Changed ID
 
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
@@ -221,20 +222,21 @@
             });
         }
 
-        // --- Save Product Data to Firestore ---
-        productForm.addEventListener('submit', async (e) => {
+        // --- Save Order Data to Firestore ---
+        orderForm.addEventListener('submit', async (e) => {
             e.preventDefault(); // Prevent default form submission
 
-            const productName = productNameInput.value.trim();
-            const productDescription = productDescriptionInput.value.trim();
-            const productPrice = parseFloat(productPriceInput.value);
+            const itemName = itemNameInput.value.trim();
+            const orderQuantity = orderQuantityInput.value.trim();
+            const supplierPrice = parseFloat(supplierPriceInput.value);
+            const orderDate = orderDateInput.value; // Get date string
 
-            if (!productName || !productDescription || isNaN(productPrice) || productPrice < 0) {
+            if (!itemName || !orderQuantity || isNaN(supplierPrice) || supplierPrice < 0 || !orderDate) {
                 await showCustomAlert("Harap isi semua kolom dengan benar.");
                 return;
             }
 
-            saveProductBtn.disabled = true; // Disable button to prevent multiple submissions
+            saveOrderBtn.disabled = true; // Disable button to prevent multiple submissions
 
             try {
                 // Sign in anonymously if not already authenticated
@@ -244,30 +246,38 @@
                 }
 
                 await produkCollection.add({
-                    nama: productName,
-                    deskripsi: productDescription,
-                    harga: productPrice,
+                    nama_barang: itemName, // Changed field name
+                    jumlah_pesanan: orderQuantity, // Changed field name
+                    harga_satuan_supplier: supplierPrice, // Changed field name
+                    tanggal_pesanan: firebase.firestore.Timestamp.fromDate(new Date(orderDate)), // Save as Timestamp
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() // Add timestamp
                 });
 
-                await showCustomAlert("Produk berhasil disimpan!");
-                productForm.reset(); // Clear form fields
+                await showCustomAlert("Pesanan berhasil disimpan!");
+                orderForm.reset(); // Clear form fields
             } catch (error) {
-                console.error("Error menyimpan produk:", error);
-                await showCustomAlert("Gagal menyimpan produk: " + error.message);
+                console.error("Error menyimpan pesanan:", error);
+                await showCustomAlert("Gagal menyimpan pesanan: " + error.message);
             } finally {
-                saveProductBtn.disabled = false; // Re-enable button
+                saveOrderBtn.disabled = false; // Re-enable button
             }
         });
 
-        // --- Navigate to View Products Page ---
-        viewProductsBtn.addEventListener('click', () => {
-            window.location.href = 'output.html';
+        // --- Navigate to View Orders Page ---
+        viewOrdersBtn.addEventListener('click', () => {
+            window.location.href = 'view-produk.html'; // Still navigate to view-produk.html
         });
 
         // --- Initial Authentication Check (Optional, but good practice) ---
         // Ensure anonymous user is signed in on page load if not already
         document.addEventListener('DOMContentLoaded', async () => {
+            // Set default date to today
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+            const dd = String(today.getDate()).padStart(2, '0');
+            orderDateInput.value = `${yyyy}-${mm}-${dd}`;
+
             if (!auth.currentUser) {
                 try {
                     await auth.signInAnonymously();
