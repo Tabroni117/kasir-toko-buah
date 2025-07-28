@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Produk</title>
+    <title>Daftar Pesanan ke Supplier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
-    <!-- Firebase SDK v9 Compatibility (sesuai konfigurasi yang Kakak berikan) -->
+    <!-- Firebase SDK v9 Compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -29,7 +29,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 600px;
+            max-width: 800px; /* Increased max-width for table */
             box-sizing: border-box;
         }
         h2 {
@@ -39,68 +39,72 @@
             font-size: 24px;
             font-weight: 600;
         }
-        .product-list {
+        .button-group {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
         }
-        .product-card {
-            background-color: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .product-card h3 {
-            margin: 0;
-            color: #333;
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .product-card p {
-            margin: 0;
-            font-size: 14px;
-            color: #555;
-        }
-        .product-card .price {
-            font-weight: bold;
-            color: #4CAF50;
+        .button-group button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
             font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
-        .product-card .timestamp {
-            font-size: 12px;
-            color: #888;
-            text-align: right;
-            margin-top: 5px;
+        #kirimWhatsAppSupplierBtn { /* Changed ID */
+            background-color: #25d366; /* WhatsApp Green */
+            color: white;
+        }
+        #kirimWhatsAppSupplierBtn:hover { /* Changed ID */
+            background-color: #1DA851;
+            transform: translateY(-2px);
+        }
+        #backToInputOrderBtn { /* Changed ID */
+            background-color: #007bff;
+            color: white;
+        }
+        #backToInputOrderBtn:hover { /* Changed ID */
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden; /* Ensures rounded corners apply to table content */
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        tbody tr:hover {
+            background-color: #f5f5f5;
         }
         .empty-state {
             text-align: center;
             color: #777;
             padding: 50px 20px;
             font-style: italic;
-        }
-        .back-button {
-            display: block;
-            width: fit-content;
-            margin: 20px auto 0;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
             font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-        .back-button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
         }
         /* Custom Alert Modal */
         #customAlertDialog {
@@ -145,11 +149,29 @@
 </head>
 <body>
     <div class="container">
-        <h2>Daftar Produk</h2>
-        <div class="product-list" id="productList">
-            <p class="empty-state" id="emptyState">Memuat produk...</p>
+        <h2>Daftar Pesanan ke Supplier</h2>
+        <div class="button-group">
+            <button id="kirimWhatsAppSupplierBtn">Kirim Pesanan via WhatsApp</button>
+            <button id="backToInputOrderBtn">Kembali ke Input Pesanan</button>
         </div>
-        <a href="input-produk.html" class="back-button">Kembali ke Input Produk</a>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Barang</th>
+                    <th>Jumlah</th>
+                    <th>Harga Satuan</th>
+                    <th>Supplier</th>
+                    <th>Tanggal Pesanan</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <!-- Data pesanan akan dimuat di sini -->
+            </tbody>
+        </table>
+
+        <p class="empty-state" id="emptyState">Memuat pesanan...</p>
     </div>
 
     <!-- Custom Alert Modal -->
@@ -179,23 +201,25 @@
             console.log("DEBUG: Firebase App initialized successfully.");
         } catch (error) {
             console.error("DEBUG: Error initializing Firebase App:", error);
-            // Optionally, show a custom alert here
-            // showCustomAlert("Gagal menginisialisasi Firebase. Cek konsol.");
         }
-        const auth = firebase.auth(); // Auth is needed for Firebase rules, even if anonymous
+        const auth = firebase.auth(); 
         const db = firebase.firestore();
 
-        // Firestore Collection Reference
+        // Firestore Collection Reference (Tetap menggunakan 'Produk' sesuai permintaan Kakak)
         const produkCollection = db.collection('Produk');
         console.log("DEBUG: Firestore collection 'Produk' reference created.");
 
         // DOM Elements
-        const productListContainer = document.getElementById('productList');
+        const ordersTableBody = document.getElementById('ordersTableBody'); // Changed ID
         const emptyStateMessage = document.getElementById('emptyState');
+        const kirimWhatsAppSupplierBtn = document.getElementById('kirimWhatsAppSupplierBtn'); // Changed ID
+        const backToInputOrderBtn = document.getElementById('backToInputOrderBtn'); // Changed ID
 
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
         const customAlertOk = document.getElementById('customAlertOk');
+
+        let allOrders = []; // To store all fetched orders for WhatsApp sharing
 
         // --- Helper Functions ---
         function showCustomAlert(message) {
@@ -212,6 +236,9 @@
         }
 
         function formatRupiah(amount) {
+            if (amount === null || amount === undefined) {
+                return 'N/A'; // Or any other placeholder for null/undefined prices
+            }
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
@@ -221,68 +248,59 @@
 
         function formatDate(timestamp) {
             if (!timestamp) return '-';
-            // Check if it's a Firestore Timestamp object
             const date = (timestamp instanceof firebase.firestore.Timestamp) ? timestamp.toDate() : new Date(timestamp);
-            if (isNaN(date.getTime())) return '-'; // Handle invalid date
-            return date.toLocaleString('id-ID', {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
+            if (isNaN(date.getTime())) return '-'; 
+            return date.toLocaleDateString('id-ID'); // Only date for supplier orders
         }
 
-        // --- Load Product Data from Firestore in Real-time ---
-        async function loadProducts() {
-            console.log("DEBUG: loadProducts function called.");
-            emptyStateMessage.textContent = "Memuat produk...";
+        // --- Load Order Data from Firestore in Real-time ---
+        async function loadOrders() { // Renamed function
+            console.log("DEBUG: loadOrders function called.");
+            emptyStateMessage.textContent = "Memuat pesanan...";
             emptyStateMessage.style.display = 'block';
-            productListContainer.innerHTML = ''; // Clear previous content
+            ordersTableBody.innerHTML = ''; 
+            allOrders = []; // Clear previous orders
 
             try {
-                if (!auth.currentUser) {
-                    console.log("DEBUG: No current user, attempting anonymous sign-in...");
-                    await auth.signInAnonymously();
-                    console.log("DEBUG: Signed in anonymously for Firestore access.");
-                } else {
-                    console.log("DEBUG: User already signed in. UID:", auth.currentUser.uid);
-                }
-
-                console.log("DEBUG: Attaching onSnapshot listener to 'Produk' collection.");
+                // No explicit sign-in here, relies on Firestore rules for public read
+                console.log("DEBUG: Attaching onSnapshot listener to 'Produk' collection (public read).");
                 produkCollection.orderBy('createdAt', 'desc').onSnapshot(snapshot => {
                     console.log(`DEBUG: onSnapshot callback triggered. Number of documents: ${snapshot.size}`);
-                    productListContainer.innerHTML = ''; // Clear content on each update
+                    ordersTableBody.innerHTML = ''; 
+                    allOrders = []; // Clear for fresh data
+
                     if (snapshot.empty) {
-                        console.log("DEBUG: Snapshot is empty. No products found.");
-                        emptyStateMessage.textContent = "Belum ada produk yang tersimpan.";
+                        console.log("DEBUG: Snapshot is empty. No orders found.");
+                        emptyStateMessage.textContent = "Belum ada pesanan yang tersimpan.";
                         emptyStateMessage.style.display = 'block';
                     } else {
-                        console.log("DEBUG: Products found, rendering...");
-                        emptyStateMessage.style.display = 'none'; // Hide empty message if there are products
+                        console.log("DEBUG: Orders found, rendering...");
+                        emptyStateMessage.style.display = 'none'; 
+                        let orderNumber = 1;
                         snapshot.forEach(doc => {
-                            const product = doc.data();
-                            const productId = doc.id; // Get document ID
-                            console.log(`DEBUG: Rendering product: ${product.nama} (ID: ${productId})`);
-
-                            const productCard = document.createElement('div');
-                            productCard.classList.add('product-card');
-                            productCard.innerHTML = `
-                                <h3>${product.nama}</h3>
-                                <p>${product.deskripsi}</p>
-                                <p class="price">${formatRupiah(product.harga)}</p>
-                                <p class="timestamp">Ditambahkan: ${formatDate(product.createdAt)}</p>
-                                <p class="timestamp">ID Dokumen: ${productId}</p>
+                            const order = doc.data();
+                            allOrders.push(order); // Add to local array
+                            
+                            const row = ordersTableBody.insertRow();
+                            row.innerHTML = `
+                                <td>${orderNumber++}</td>
+                                <td>${order.nama_barang || '-'}</td>
+                                <td>${order.jumlah_pesanan || '-'}</td>
+                                <td>${formatRupiah(order.harga_satuan_supplier)}</td>
+                                <td>${order.nama_supplier || '-'}</td>
+                                <td>${formatDate(order.tanggal_pesanan)}</td>
                             `;
-                            productListContainer.appendChild(productCard);
                         });
                     }
                 }, error => {
                     console.error("DEBUG: Error in onSnapshot listener:", error);
-                    emptyStateMessage.textContent = "Gagal memuat produk: " + error.message;
+                    emptyStateMessage.textContent = "Gagal memuat pesanan: " + error.message;
                     emptyStateMessage.style.color = 'red';
                     emptyStateMessage.style.display = 'block';
-                    showCustomAlert("Gagal memuat daftar produk. Cek konsol untuk detail.");
+                    showCustomAlert("Gagal memuat daftar pesanan. Cek konsol untuk detail.");
                 });
             } catch (error) {
-                console.error("DEBUG: Error during initial product load setup (e.g., anonymous sign-in failed):", error);
+                console.error("DEBUG: Error during initial order load setup:", error);
                 emptyStateMessage.textContent = "Gagal terhubung ke Firebase. Coba refresh halaman.";
                 emptyStateMessage.style.color = 'red';
                 emptyStateMessage.style.display = 'block';
@@ -290,10 +308,54 @@
             }
         }
 
+        // --- Kirim WhatsApp ke Supplier ---
+        kirimWhatsAppSupplierBtn.addEventListener('click', async () => {
+            if (allOrders.length === 0) {
+                await showCustomAlert("Tidak ada data pesanan untuk dibagikan.");
+                return;
+            }
+
+            const now = new Date();
+            const tanggal = now.toLocaleDateString("id-ID");
+            const jam = now.toLocaleTimeString("id-ID");
+
+            let pesan = `📝 *Daftar Pesanan Barang ke Supplier*
+📅 ${tanggal} - 🕒 ${jam}
+`;
+            let currentSupplier = '';
+            let supplierOrders = {};
+
+            // Group orders by supplier name
+            allOrders.forEach(order => {
+                const supplier = order.nama_supplier || 'Supplier Tidak Diketahui';
+                if (!supplierOrders[supplier]) {
+                    supplierOrders[supplier] = [];
+                }
+                supplierOrders[supplier].push(order);
+            });
+
+            // Format message for each supplier
+            for (const supplierName in supplierOrders) {
+                pesan += `\n--- *${supplierName}* ---\n`;
+                supplierOrders[supplierName].forEach((order, i) => {
+                    const hargaSatuan = order.harga_satuan_supplier !== null ? formatRupiah(order.harga_satuan_supplier) : 'Harga: N/A';
+                    pesan += `${i + 1}. ${order.nama_barang} (${order.jumlah_pesanan}) - ${hargaSatuan}\n`;
+                });
+            }
+            pesan += `\nTerima kasih!`;
+
+            const url = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
+            window.open(url, "_blank");
+        });
+
+        // --- Kembali ke Input Pesanan ---
+        backToInputOrderBtn.addEventListener('click', () => {
+            window.location.href = 'input-produk.html'; 
+        });
+
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("DEBUG: DOMContentLoaded event fired. Calling loadProducts().");
-            loadProducts();
+            loadOrders(); // Call the renamed function
         });
     </script>
 </body>
