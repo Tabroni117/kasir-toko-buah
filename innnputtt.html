@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Data Produk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Firebase SDK v9 Compatibility (sesuai konfigurasi yang Kakak berikan) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        #saveProductBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #saveProductBtn:hover {
+            background-color: #388E3C;
+            transform: translateY(-2px);
+        }
+        #viewProductsBtn {
+            background-color: #007bff;
+            color: white;
+        }
+        #viewProductsBtn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        /* Custom Alert Modal */
+        #customAlertDialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customAlertDialog button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customAlertDialog button:hover {
+            background-color: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Input Data Produk</h2>
+        <form id="productForm">
+            <div class="form-group">
+                <label for="productName">Nama Produk:</label>
+                <input type="text" id="productName" required>
+            </div>
+            <div class="form-group">
+                <label for="productDescription">Deskripsi:</label>
+                <textarea id="productDescription" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="productPrice">Harga (Rp):</label>
+                <input type="number" id="productPrice" min="0" required>
+            </div>
+            <div class="button-group">
+                <button type="submit" id="saveProductBtn">Simpan Produk</button>
+                <button type="button" id="viewProductsBtn">Lihat Produk</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertDialog">
+        <div>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOk">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Auth is needed for Firebase rules, even if anonymous
+        const db = firebase.firestore();
+
+        // Firestore Collection Reference
+        const produkCollection = db.collection('Produk');
+
+        // DOM Elements
+        const productForm = document.getElementById('productForm');
+        const productNameInput = document.getElementById('productName');
+        const productDescriptionInput = document.getElementById('productDescription');
+        const productPriceInput = document.getElementById('productPrice');
+        const saveProductBtn = document.getElementById('saveProductBtn');
+        const viewProductsBtn = document.getElementById('viewProductsBtn');
+
+        const customAlertDialog = document.getElementById('customAlertDialog');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customAlertOk = document.getElementById('customAlertOk');
+
+        // --- Helper Functions ---
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                customAlertMessage.textContent = message;
+                customAlertDialog.style.display = 'flex';
+                const handleOk = () => {
+                    customAlertDialog.style.display = 'none';
+                    customAlertOk.removeEventListener('click', handleOk);
+                    resolve();
+                };
+                customAlertOk.addEventListener('click', handleOk);
+            });
+        }
+
+        // --- Save Product Data to Firestore ---
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            const productName = productNameInput.value.trim();
+            const productDescription = productDescriptionInput.value.trim();
+            const productPrice = parseFloat(productPriceInput.value);
+
+            if (!productName || !productDescription || isNaN(productPrice) || productPrice < 0) {
+                await showCustomAlert("Harap isi semua kolom dengan benar.");
+                return;
+            }
+
+            saveProductBtn.disabled = true; // Disable button to prevent multiple submissions
+
+            try {
+                // Sign in anonymously if not already authenticated
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously();
+                    console.log("Signed in anonymously for Firestore access.");
+                }
+
+                await produkCollection.add({
+                    nama: productName,
+                    deskripsi: productDescription,
+                    harga: productPrice,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() // Add timestamp
+                });
+
+                await showCustomAlert("Produk berhasil disimpan!");
+                productForm.reset(); // Clear form fields
+            } catch (error) {
+                console.error("Error menyimpan produk:", error);
+                await showCustomAlert("Gagal menyimpan produk: " + error.message);
+            } finally {
+                saveProductBtn.disabled = false; // Re-enable button
+            }
+        });
+
+        // --- Navigate to View Products Page ---
+        viewProductsBtn.addEventListener('click', () => {
+            window.location.href = 'view-produk.html';
+        });
+
+        // --- Initial Authentication Check (Optional, but good practice) ---
+        // Ensure anonymous user is signed in on page load if not already
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!auth.currentUser) {
+                try {
+                    await auth.signInAnonymously();
+                    console.log("Anonymous user signed in on page load.");
+                } catch (error) {
+                    console.error("Error signing in anonymously on page load:", error);
+                    await showCustomAlert("Gagal terhubung ke Firebase. Coba refresh halaman.");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
