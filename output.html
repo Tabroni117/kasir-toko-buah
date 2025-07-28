@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Produk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+    <!-- Firebase SDK v9 Compatibility (sesuai konfigurasi yang Kakak berikan) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .product-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .product-card {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .product-card h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .product-card p {
+            margin: 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .product-card .price {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 16px;
+        }
+        .product-card .timestamp {
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #777;
+            padding: 50px 20px;
+            font-style: italic;
+        }
+        .back-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        /* Custom Alert Modal */
+        #customAlertDialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        #customAlertDialog > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customAlertDialog p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customAlertDialog button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customAlertDialog button:hover {
+            background-color: #388E3C;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Daftar Produk</h2>
+        <div class="product-list" id="productList">
+            <p class="empty-state" id="emptyState">Memuat produk...</p>
+        </div>
+        <a href="input-produk.html" class="back-button">Kembali ke Input Produk</a>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="customAlertDialog">
+        <div>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOk">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+            authDomain: "tokobuahkasir.firebaseapp.com",
+            projectId: "tokobuahkasir",
+            storageBucket: "tokobuahkasir.firebasestorage.app",
+            messagingSenderId: "731011133713",
+            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+            measurementId: "G-7CPE2DB2BV"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth(); // Auth is needed for Firebase rules, even if anonymous
+        const db = firebase.firestore();
+
+        // Firestore Collection Reference
+        const produkCollection = db.collection('Produk');
+
+        // DOM Elements
+        const productListContainer = document.getElementById('productList');
+        const emptyStateMessage = document.getElementById('emptyState');
+
+        const customAlertDialog = document.getElementById('customAlertDialog');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customAlertOk = document.getElementById('customAlertOk');
+
+        // --- Helper Functions ---
+        function showCustomAlert(message) {
+            return new Promise((resolve) => {
+                customAlertMessage.textContent = message;
+                customAlertDialog.style.display = 'flex';
+                const handleOk = () => {
+                    customAlertDialog.style.display = 'none';
+                    customAlertOk.removeEventListener('click', handleOk);
+                    resolve();
+                };
+                customAlertOk.addEventListener('click', handleOk);
+            });
+        }
+
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '-';
+            const date = timestamp.toDate(); // Convert Firestore Timestamp to Date object
+            return date.toLocaleString('id-ID', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+        }
+
+        // --- Load Product Data from Firestore in Real-time ---
+        async function loadProducts() {
+            emptyStateMessage.textContent = "Memuat produk...";
+            emptyStateMessage.style.display = 'block';
+            productListContainer.innerHTML = ''; // Clear previous content
+
+            try {
+                // Sign in anonymously if not already authenticated
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously();
+                    console.log("Signed in anonymously for Firestore access.");
+                }
+
+                // Use onSnapshot for real-time updates
+                produkCollection.orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                    productListContainer.innerHTML = ''; // Clear content on each update
+                    if (snapshot.empty) {
+                        emptyStateMessage.textContent = "Belum ada produk yang tersimpan.";
+                        emptyStateMessage.style.display = 'block';
+                    } else {
+                        emptyStateMessage.style.display = 'none'; // Hide empty message if there are products
+                        snapshot.forEach(doc => {
+                            const product = doc.data();
+                            const productId = doc.id; // Get document ID
+
+                            const productCard = document.createElement('div');
+                            productCard.classList.add('product-card');
+                            productCard.innerHTML = `
+                                <h3>${product.nama}</h3>
+                                <p>${product.deskripsi}</p>
+                                <p class="price">${formatRupiah(product.harga)}</p>
+                                <p class="timestamp">Ditambahkan: ${formatDate(product.createdAt)}</p>
+                                <p class="timestamp">ID Dokumen: ${productId}</p>
+                            `;
+                            productListContainer.appendChild(productCard);
+                        });
+                    }
+                }, error => {
+                    console.error("Error memuat produk secara real-time:", error);
+                    emptyStateMessage.textContent = "Gagal memuat produk: " + error.message;
+                    emptyStateMessage.style.color = 'red';
+                    emptyStateMessage.style.display = 'block';
+                    showCustomAlert("Gagal memuat daftar produk. Cek konsol untuk detail.");
+                });
+            } catch (error) {
+                console.error("Error saat inisialisasi pemuatan produk:", error);
+                emptyStateMessage.textContent = "Gagal terhubung ke Firebase. Coba refresh halaman.";
+                emptyStateMessage.style.color = 'red';
+                emptyStateMessage.style.display = 'block';
+                showCustomAlert("Gagal terhubung ke Firebase. Coba refresh halaman.");
+            }
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+        });
+    </script>
+</body>
+</html>
