@@ -173,12 +173,21 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        let app;
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            console.log("DEBUG: Firebase App initialized successfully.");
+        } catch (error) {
+            console.error("DEBUG: Error initializing Firebase App:", error);
+            // Optionally, show a custom alert here
+            // showCustomAlert("Gagal menginisialisasi Firebase. Cek konsol.");
+        }
         const auth = firebase.auth(); // Auth is needed for Firebase rules, even if anonymous
         const db = firebase.firestore();
 
         // Firestore Collection Reference
         const produkCollection = db.collection('Produk');
+        console.log("DEBUG: Firestore collection 'Produk' reference created.");
 
         // DOM Elements
         const productListContainer = document.getElementById('productList');
@@ -212,7 +221,9 @@
 
         function formatDate(timestamp) {
             if (!timestamp) return '-';
-            const date = timestamp.toDate(); // Convert Firestore Timestamp to Date object
+            // Check if it's a Firestore Timestamp object
+            const date = (timestamp instanceof firebase.firestore.Timestamp) ? timestamp.toDate() : new Date(timestamp);
+            if (isNaN(date.getTime())) return '-'; // Handle invalid date
             return date.toLocaleString('id-ID', {
                 year: 'numeric', month: 'long', day: 'numeric',
                 hour: '2-digit', minute: '2-digit', second: '2-digit'
@@ -221,28 +232,35 @@
 
         // --- Load Product Data from Firestore in Real-time ---
         async function loadProducts() {
+            console.log("DEBUG: loadProducts function called.");
             emptyStateMessage.textContent = "Memuat produk...";
             emptyStateMessage.style.display = 'block';
             productListContainer.innerHTML = ''; // Clear previous content
 
             try {
-                // Sign in anonymously if not already authenticated
                 if (!auth.currentUser) {
+                    console.log("DEBUG: No current user, attempting anonymous sign-in...");
                     await auth.signInAnonymously();
-                    console.log("Signed in anonymously for Firestore access.");
+                    console.log("DEBUG: Signed in anonymously for Firestore access.");
+                } else {
+                    console.log("DEBUG: User already signed in. UID:", auth.currentUser.uid);
                 }
 
-                // Use onSnapshot for real-time updates
+                console.log("DEBUG: Attaching onSnapshot listener to 'Produk' collection.");
                 produkCollection.orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                    console.log(`DEBUG: onSnapshot callback triggered. Number of documents: ${snapshot.size}`);
                     productListContainer.innerHTML = ''; // Clear content on each update
                     if (snapshot.empty) {
+                        console.log("DEBUG: Snapshot is empty. No products found.");
                         emptyStateMessage.textContent = "Belum ada produk yang tersimpan.";
                         emptyStateMessage.style.display = 'block';
                     } else {
+                        console.log("DEBUG: Products found, rendering...");
                         emptyStateMessage.style.display = 'none'; // Hide empty message if there are products
                         snapshot.forEach(doc => {
                             const product = doc.data();
                             const productId = doc.id; // Get document ID
+                            console.log(`DEBUG: Rendering product: ${product.nama} (ID: ${productId})`);
 
                             const productCard = document.createElement('div');
                             productCard.classList.add('product-card');
@@ -257,14 +275,14 @@
                         });
                     }
                 }, error => {
-                    console.error("Error memuat produk secara real-time:", error);
+                    console.error("DEBUG: Error in onSnapshot listener:", error);
                     emptyStateMessage.textContent = "Gagal memuat produk: " + error.message;
                     emptyStateMessage.style.color = 'red';
                     emptyStateMessage.style.display = 'block';
                     showCustomAlert("Gagal memuat daftar produk. Cek konsol untuk detail.");
                 });
             } catch (error) {
-                console.error("Error saat inisialisasi pemuatan produk:", error);
+                console.error("DEBUG: Error during initial product load setup (e.g., anonymous sign-in failed):", error);
                 emptyStateMessage.textContent = "Gagal terhubung ke Firebase. Coba refresh halaman.";
                 emptyStateMessage.style.color = 'red';
                 emptyStateMessage.style.display = 'block';
@@ -274,6 +292,7 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
+            console.log("DEBUG: DOMContentLoaded event fired. Calling loadProducts().");
             loadProducts();
         });
     </script>
