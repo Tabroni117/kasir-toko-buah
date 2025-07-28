@@ -316,18 +316,20 @@
             }
 
             const now = new Date();
-            const tanggal = now.toLocaleDateString("id-ID");
-            const jam = now.toLocaleTimeString("id-ID");
+            const tanggal = now.toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' }); // More formal date
+            const jam = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' }); // Include seconds
 
-            let pesan = `📝 *Daftar Pesanan Barang ke Supplier*
-📅 ${tanggal} - 🕒 ${jam}
+            let pesan = `*REKAPITULASI PESANAN BARANG*
+Tanggal: ${tanggal}
+Pukul: ${jam}
+
 `;
-            let currentSupplier = '';
             let supplierOrders = {};
 
             // Group orders by supplier name
             allOrders.forEach(order => {
-                const supplier = order.nama_supplier || 'Supplier Tidak Diketahui';
+                // Use a more professional fallback for missing supplier name
+                const supplier = order.nama_supplier && order.nama_supplier.trim() !== '' ? order.nama_supplier.trim() : 'Supplier Lain-lain';
                 if (!supplierOrders[supplier]) {
                     supplierOrders[supplier] = [];
                 }
@@ -336,13 +338,32 @@
 
             // Format message for each supplier
             for (const supplierName in supplierOrders) {
-                pesan += `\n--- *${supplierName}* ---\n`;
-                supplierOrders[supplierName].forEach((order, i) => {
-                    const hargaSatuan = order.harga_satuan_supplier !== null ? formatRupiah(order.harga_satuan_supplier) : 'Harga: N/A';
-                    pesan += `${i + 1}. ${order.nama_barang} (${order.jumlah_pesanan}) - ${hargaSatuan}\n`;
-                });
+                // Filter out orders with missing essential data for a cleaner message
+                const validOrdersForSupplier = supplierOrders[supplierName].filter(order => 
+                    order.nama_barang && order.nama_barang.trim() !== '' &&
+                    order.jumlah_pesanan && order.jumlah_pesanan.trim() !== ''
+                );
+
+                if (validOrdersForSupplier.length > 0) { // Only add supplier section if there are valid orders
+                    pesan += `\n--- *${supplierName.toUpperCase()}* ---\n`; // Uppercase supplier name for emphasis
+                    validOrdersForSupplier.forEach((order, i) => {
+                        const namaBarang = order.nama_barang.trim();
+                        const jumlahPesanan = order.jumlah_pesanan.trim();
+                        const hargaSatuan = order.harga_satuan_supplier !== null && order.harga_satuan_supplier !== undefined ? formatRupiah(order.harga_satuan_supplier) : 'Harga Belum Tersedia';
+                        pesan += `${i + 1}. ${namaBarang} (${jumlahPesanan}) - ${hargaSatuan}\n`;
+                    });
+                } else {
+                    console.warn(`DEBUG: Skipping supplier group '${supplierName}' due to no valid items.`);
+                }
             }
-            pesan += `\nTerima kasih!`;
+            
+            // Add a message if no valid orders were found across all suppliers
+            if (Object.keys(supplierOrders).length === 0 || allOrders.filter(order => order.nama_barang && order.jumlah_pesanan).length === 0) {
+                pesan += `Belum ada pesanan yang valid untuk ditampilkan.`;
+            }
+
+            pesan += `\nMohon konfirmasi ketersediaan dan total harga.
+Terima kasih atas kerja samanya.`; // More professional closing
 
             const url = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
             window.open(url, "_blank");
