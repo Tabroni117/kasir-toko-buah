@@ -154,7 +154,11 @@
             </div>
             <div class="form-group">
                 <label for="supplierPrice">Harga Satuan (dari Supplier, Rp):</label>
-                <input type="number" id="supplierPrice" min="0" required>
+                <input type="number" id="supplierPrice" min="0"> <!-- Removed 'required' -->
+            </div>
+            <div class="form-group">
+                <label for="supplierName">Nama Supplier:</label>
+                <input type="text" id="supplierName" required> <!-- NEW: Supplier Name -->
             </div>
             <div class="form-group">
                 <label for="orderDate">Tanggal Pesanan:</label>
@@ -200,6 +204,7 @@
         const itemNameInput = document.getElementById('itemName'); // Changed ID
         const orderQuantityInput = document.getElementById('orderQuantity'); // Changed ID
         const supplierPriceInput = document.getElementById('supplierPrice'); // Changed ID
+        const supplierNameInput = document.getElementById('supplierName'); // NEW: Supplier Name Input
         const orderDateInput = document.getElementById('orderDate'); // NEW: Date input
         const saveOrderBtn = document.getElementById('saveOrderBtn'); // Changed ID
         const viewOrdersBtn = document.getElementById('viewOrdersBtn'); // Changed ID
@@ -228,11 +233,19 @@
 
             const itemName = itemNameInput.value.trim();
             const orderQuantity = orderQuantityInput.value.trim();
-            const supplierPrice = parseFloat(supplierPriceInput.value);
+            // Harga Satuan sekarang opsional, jadi bisa kosong
+            const supplierPrice = supplierPriceInput.value.trim() === '' ? null : parseFloat(supplierPriceInput.value); 
+            const supplierName = supplierNameInput.value.trim(); // NEW: Get Supplier Name
             const orderDate = orderDateInput.value; // Get date string
 
-            if (!itemName || !orderQuantity || isNaN(supplierPrice) || supplierPrice < 0 || !orderDate) {
-                await showCustomAlert("Harap isi semua kolom dengan benar.");
+            // Validasi: nama barang, jumlah, nama supplier, dan tanggal pesanan harus diisi
+            if (!itemName || !orderQuantity || !supplierName || !orderDate) {
+                await showCustomAlert("Harap isi Nama Barang, Jumlah Pesanan, Nama Supplier, dan Tanggal Pesanan dengan benar.");
+                return;
+            }
+            // Validasi tambahan untuk harga jika diisi, harus angka positif
+            if (supplierPrice !== null && (isNaN(supplierPrice) || supplierPrice < 0)) {
+                await showCustomAlert("Harga Satuan harus berupa angka positif jika diisi.");
                 return;
             }
 
@@ -246,15 +259,22 @@
                 }
 
                 await produkCollection.add({
-                    nama_barang: itemName, // Changed field name
-                    jumlah_pesanan: orderQuantity, // Changed field name
-                    harga_satuan_supplier: supplierPrice, // Changed field name
+                    nama_barang: itemName,
+                    jumlah_pesanan: orderQuantity,
+                    harga_satuan_supplier: supplierPrice, // Now can be null
+                    nama_supplier: supplierName, // NEW: Save Supplier Name
                     tanggal_pesanan: firebase.firestore.Timestamp.fromDate(new Date(orderDate)), // Save as Timestamp
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() // Add timestamp
                 });
 
                 await showCustomAlert("Pesanan berhasil disimpan!");
                 orderForm.reset(); // Clear form fields
+                // Set default date to today after reset
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months start at 0!
+                const dd = String(today.getDate()).padStart(2, '0');
+                orderDateInput.value = `${yyyy}-${mm}-${dd}`;
             } catch (error) {
                 console.error("Error menyimpan pesanan:", error);
                 await showCustomAlert("Gagal menyimpan pesanan: " + error.message);
