@@ -36,7 +36,7 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            min-height: 100vh;
+            min-height: 10vh; /* Changed from 100vh to 10vh to make it scrollable on smaller screens */
             align-items: center; /* Center content horizontally */
         }
 
@@ -740,6 +740,7 @@
                 <label for="supplierNameOrderInput">Nama Supplier:</label>
                 <div class="autocomplete">
                     <input type="text" id="supplierNameOrderInput" placeholder="Cari atau masukkan nama supplier" autocomplete="off">
+                    <!-- Autocomplete list will be appended here dynamically -->
                     <div id="supplierNameOrderAutocompleteList" class="autocomplete-items"></div>
                     <span class="material-icons dropdown-arrow-icon" id="supplierDropdownArrow">arrow_drop_down</span>
                 </div>
@@ -751,6 +752,7 @@
                 <label for="productNameInput">Nama Produk:</label>
                 <div class="autocomplete">
                     <input type="text" id="productNameInput" placeholder="Cari atau masukkan nama produk" autocomplete="off">
+                    <!-- Autocomplete list will be appended here dynamically -->
                     <div id="productNameAutocompleteList" class="autocomplete-items"></div>
                 </div>
             </div>
@@ -1353,7 +1355,9 @@
         function closeAllLists(exceptElement) {
             const x = document.getElementsByClassName("autocomplete-items");
             for (let i = 0; i < x.length; i++) {
-                if (x[i] !== exceptElement) { // Clear content of all lists except the one specified
+                // Clear content of all lists except the one specified
+                // This ensures only one autocomplete list is visible at a time
+                if (x[i] !== exceptElement) {
                     x[i].innerHTML = '';
                 }
             }
@@ -1385,11 +1389,18 @@
                 // Filter based on current input value (case-insensitive)
                 const itemsToFilter = arr.filter(item => item.nama.toLowerCase().includes(val.toLowerCase()));
 
+                // Create a temporary div to hold the autocomplete items for this input
+                // This div will be appended to the listContainer
+                const a = document.createElement("div");
+                a.setAttribute("id", this.id + "autocomplete-list"); // Unique ID for this list
+                a.setAttribute("class", "autocomplete-items");
+                listContainer.appendChild(a); // CRITICAL: Append the list container to the DOM
+
                 if (itemsToFilter.length === 0) {
                     const noResultsDiv = document.createElement("div");
                     noResultsDiv.classList.add("autocomplete-item");
                     noResultsDiv.textContent = "Tidak ada hasil.";
-                    listContainer.appendChild(noResultsDiv);
+                    a.appendChild(noResultsDiv); // Append to 'a' (the list container)
                     return;
                 }
                 // Loop through filtered items and create autocomplete suggestions
@@ -1413,13 +1424,13 @@
                         }
                         listContainer.innerHTML = ''; // Clear list after selection
                     });
-                    listContainer.appendChild(b);
+                    a.appendChild(b); // Append to 'a' (the list container)
                 }
             });
 
             inp.addEventListener("keydown", function(e) {
-                let x = document.getElementById(this.id + "autocomplete-list"); // This ID is not correct anymore, should be listContainer
-                if (listContainer) x = listContainer.getElementsByTagName("div"); // Use listContainer directly
+                let x = listContainer.querySelector('.autocomplete-items'); // Get the actual list element
+                if (x) x = x.getElementsByTagName("div");
                 if (e.keyCode == 40) { // DOWN key
                     currentFocus++;
                     addActive(x);
@@ -1498,11 +1509,17 @@
             const val = inp.value.toLowerCase();
             const itemsToShow = val ? arr.filter(item => item.nama.toLowerCase().includes(val)) : arr;
 
+            // Create a temporary div to hold the autocomplete items for this input
+            const a = document.createElement("div");
+            a.setAttribute("id", inp.id + "autocomplete-list"); // Unique ID for this list
+            a.setAttribute("class", "autocomplete-items");
+            listContainer.appendChild(a); // CRITICAL: Append the list container to the DOM
+
             if (itemsToShow.length === 0) {
                 const noResultsDiv = document.createElement("div");
                 noResultsDiv.classList.add("autocomplete-item");
                 noResultsDiv.textContent = "Tidak ada hasil.";
-                listContainer.appendChild(noResultsDiv);
+                a.appendChild(noResultsDiv); // Append to 'a' (the list container)
                 return;
             }
 
@@ -1526,7 +1543,7 @@
                     }
                     listContainer.innerHTML = ''; // Clear list after selection
                 });
-                listContainer.appendChild(b);
+                a.appendChild(b); // Append to 'a' (the list container)
             }
         }
 
