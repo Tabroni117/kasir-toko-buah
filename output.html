@@ -1052,15 +1052,16 @@
                 await fetchProducts();
                 await fetchSuppliers();
                 isAuthReady = true;
-                // No need to call selectSupplierForOrder here, as we now select it via input
             } else {
                 console.log("DEBUG: No user signed in. Signing in anonymously.");
                 try {
                     // Use __initial_auth_token if available, otherwise sign in anonymously
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await auth.signInWithCustomToken(__initial_auth_token);
+                        console.log("DEBUG: Signed in with custom token.");
                     } else {
                         await auth.signInAnonymously();
+                        console.log("DEBUG: Signed in anonymously.");
                     }
                 } catch (error) {
                     console.error("DEBUG: Error during anonymous sign-in or custom token sign-in:", error);
@@ -1104,6 +1105,8 @@
                 allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 filteredProducts = allProducts; // Initially, all products are filtered
                 displayProducts(filteredProducts);
+                setupProductAutocomplete(); // Setup product autocomplete after fetching
+                console.log("DEBUG: Produk berhasil dimuat.");
             } catch (error) {
                 console.error("Error fetching products:", error);
                 showAlert("Gagal memuat daftar produk.");
@@ -1151,6 +1154,7 @@
             try {
                 await produkCollection.doc(productId).update({ tersedia: isAvailable });
                 showAlert(`Status ketersediaan produk diperbarui.`);
+                console.log(`DEBUG: Ketersediaan produk ${productId} diubah menjadi ${isAvailable}`);
             } catch (error) {
                 console.error("Error updating product availability:", error);
                 showAlert("Gagal memperbarui ketersediaan produk.");
@@ -1175,14 +1179,17 @@
                 productIsAvailableInput.checked = true; // Default new product to available
             }
             productFormModal.style.display = 'flex';
+            console.log("DEBUG: Modal produk dibuka.");
         }
 
         closeProductFormModalBtn.addEventListener('click', () => {
             productFormModal.style.display = 'none';
+            console.log("DEBUG: Modal produk ditutup.");
         });
 
         cancelProductFormBtn.addEventListener('click', () => {
             productFormModal.style.display = 'none';
+            console.log("DEBUG: Modal produk dibatalkan.");
         });
 
         productForm.addEventListener('submit', async (e) => {
@@ -1204,9 +1211,11 @@
                 if (productId) {
                     await produkCollection.doc(productId).update(productData);
                     showAlert("Produk berhasil diperbarui!");
+                    console.log("DEBUG: Produk diperbarui:", productData);
                 } else {
                     await produkCollection.add(productData);
                     showAlert("Produk berhasil ditambahkan!");
+                    console.log("DEBUG: Produk ditambahkan:", productData);
                 }
                 productFormModal.style.display = 'none';
                 await fetchProducts(); // Re-fetch to update the list
@@ -1227,6 +1236,7 @@
                 product.deskripsi.toLowerCase().includes(searchTerm)
             );
             displayProducts(filteredProducts);
+            console.log("DEBUG: Mencari produk dengan istilah:", searchTerm);
         });
 
         // --- Supplier Management Functions ---
@@ -1241,6 +1251,7 @@
                 filteredSuppliers = allSuppliers; // Initially, all suppliers are filtered
                 displaySuppliers(filteredSuppliers);
                 setupSupplierAutocomplete(); // Re-setup autocomplete with fresh data
+                console.log("DEBUG: Supplier berhasil dimuat.");
             } catch (error) {
                 console.error("Error fetching suppliers:", error);
                 showAlert("Gagal memuat daftar supplier.");
@@ -1283,14 +1294,17 @@
                 supplierIdInput.value = '';
             }
             supplierFormModal.style.display = 'flex';
+            console.log("DEBUG: Modal supplier dibuka.");
         }
 
         closeSupplierFormModalBtn.addEventListener('click', () => {
             supplierFormModal.style.display = 'none';
+            console.log("DEBUG: Modal supplier ditutup.");
         });
 
         cancelSupplierFormBtn.addEventListener('click', () => {
             supplierFormModal.style.display = 'none';
+            console.log("DEBUG: Modal supplier dibatalkan.");
         });
 
         supplierForm.addEventListener('submit', async (e) => {
@@ -1308,9 +1322,11 @@
                 if (supplierId) {
                     await suppliersCollection.doc(supplierId).update(supplierData);
                     showAlert("Supplier berhasil diperbarui!");
+                    console.log("DEBUG: Supplier diperbarui:", supplierData);
                 } else {
                     await suppliersCollection.add(supplierData);
                     showAlert("Supplier berhasil ditambahkan!");
+                    console.log("DEBUG: Supplier ditambahkan:", supplierData);
                 }
                 supplierFormModal.style.display = 'none';
                 await fetchSuppliers(); // Re-fetch to update the list and autocomplete
@@ -1332,6 +1348,7 @@
                 supplier.alamat.toLowerCase().includes(searchTerm)
             );
             displaySuppliers(filteredSuppliers);
+            console.log("DEBUG: Mencari supplier dengan istilah:", searchTerm);
         });
 
         // --- Autocomplete Functionality (Generic) ---
@@ -1349,10 +1366,16 @@
                 listContainer.appendChild(a);
 
                 for (i = 0; i < arr.length; i++) {
+                    // Check if the item's name includes the input value (case-insensitive)
                     if (arr[i].nama.toLowerCase().includes(val.toLowerCase())) {
                         b = document.createElement("div");
-                        b.innerHTML = "<strong>" + arr[i].nama.substr(0, val.length) + "</strong>";
-                        b.innerHTML += arr[i].nama.substr(val.length);
+                        // Highlight the matching part
+                        const matchIndex = arr[i].nama.toLowerCase().indexOf(val.toLowerCase());
+                        const beforeMatch = arr[i].nama.substr(0, matchIndex);
+                        const matchText = arr[i].nama.substr(matchIndex, val.length);
+                        const afterMatch = arr[i].nama.substr(matchIndex + val.length);
+
+                        b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
                         b.innerHTML += "<input type='hidden' value='" + arr[i].nama + "' data-id='" + arr[i].id + "'>";
                         b.addEventListener("click", function(e) {
                             const selectedName = this.getElementsByTagName("input")[0].value;
@@ -1381,27 +1404,48 @@
                 } else if (e.keyCode == 13) { // ENTER key
                     e.preventDefault();
                     if (currentFocus > -1) {
+                        // If an item is highlighted, click it
                         if (x) x[currentFocus].click();
                     } else {
-                        // If enter is pressed and no item is selected, treat as custom entry
-                        if (inp.id === 'productNameInput') {
-                            const customProduct = {
-                                id: 'custom-' + Date.now(), // Unique ID for custom product
-                                nama: inp.value,
-                                deskripsi: 'Produk custom', // Default description
-                                harga: 0, // Default price
-                                tersedia: true
-                            };
-                            onSelectCallback(customProduct); // Pass custom product
-                        } else if (inp.id === 'supplierNameOrderInput') {
-                             // If a supplier is typed but not selected from autocomplete, treat as new/unregistered supplier
-                             const newSupplier = {
-                                id: 'new-' + Date.now(), // Temporary ID
-                                nama: inp.value,
-                                kontak: '', // User can fill this later if needed
-                                alamat: ''
-                             };
-                             onSelectCallback(newSupplier);
+                        // If ENTER is pressed and no item is highlighted,
+                        // check if the typed value exactly matches an existing item
+                        const typedValue = this.value.trim().toLowerCase();
+                        let matchedItem = null;
+
+                        if (this.id === 'productNameInput') {
+                            matchedItem = allProducts.find(p => p.nama.toLowerCase() === typedValue);
+                        } else if (this.id === 'supplierNameOrderInput') {
+                            matchedItem = allSuppliers.find(s => s.nama.toLowerCase() === typedValue);
+                        }
+
+                        if (matchedItem) {
+                            // If an exact match is found, select it
+                            onSelectCallback(matchedItem);
+                            closeAllLists();
+                        } else {
+                            // If no match, treat as custom entry (for product) or new/unregistered (for supplier)
+                            if (this.id === 'productNameInput') {
+                                const customProduct = {
+                                    id: 'custom-' + Date.now(), // Unique ID for custom product
+                                    nama: this.value,
+                                    deskripsi: 'Produk custom', // Default description
+                                    harga: 0, // Default price
+                                    tersedia: true
+                                };
+                                onSelectCallback(customProduct); // Pass custom product
+                                console.log("DEBUG: Produk kustom ditambahkan:", customProduct.nama);
+                            } else if (this.id === 'supplierNameOrderInput') {
+                                 // If a supplier is typed but not selected from autocomplete, treat as new/unregistered supplier
+                                 const newSupplier = {
+                                    id: 'new-' + Date.now(), // Temporary ID
+                                    nama: this.value,
+                                    kontak: '', // User can fill this later if needed
+                                    alamat: ''
+                                 };
+                                 onSelectCallback(newSupplier);
+                                 console.log("DEBUG: Supplier baru/tidak terdaftar dipilih:", newSupplier.nama);
+                            }
+                            closeAllLists(); // Close lists even if no match for the typed value
                         }
                     }
                 }
@@ -1439,7 +1483,7 @@
         function setupProductAutocomplete() {
             autocomplete(productNameInput, allProducts, productNameAutocompleteList, (selectedProduct) => {
                 productNameInput.value = selectedProduct.nama;
-                // No need to store selected product for order, as it's added to orderItems
+                console.log("DEBUG: Produk dipilih dari autocomplete:", selectedProduct.nama);
             });
         }
 
@@ -1448,10 +1492,11 @@
                 currentSelectedSupplier = selectedSupplier;
                 supplierNameOrderInput.value = selectedSupplier.nama; // Ensure input shows selected name
                 updateSupplierInfoDisplay();
-                enableOrderButtons();
+                enableOrderButtons(); // This should enable the buttons
                 // Clear existing order items if a new supplier is selected
                 orderItems = [];
                 renderOrderItems();
+                console.log("DEBUG: Supplier dipilih dari autocomplete:", selectedSupplier);
             });
         }
 
@@ -1462,8 +1507,10 @@
                     <strong>Kontak:</strong> ${currentSelectedSupplier.kontak || 'N/A'}<br>
                     <strong>Alamat:</strong> ${currentSelectedSupplier.alamat || 'N/A'}
                 `;
+                console.log("DEBUG: Informasi supplier diperbarui untuk:", currentSelectedSupplier.nama);
             } else {
                 supplierInfoDiv.textContent = 'Pilih supplier untuk memulai pesanan.';
+                console.log("DEBUG: Informasi supplier direset.");
             }
         }
 
@@ -1472,6 +1519,7 @@
             tambahProdukBtn.disabled = isDisabled;
             clearAllBtn.disabled = isDisabled;
             kirimWhatsAppBtn.disabled = isDisabled;
+            console.log(`DEBUG: Tombol pesanan diaktifkan: ${!isDisabled}. currentSelectedSupplier:`, currentSelectedSupplier);
         }
 
         // --- Supplier Order Panel Functions ---
@@ -1479,6 +1527,7 @@
             orderItemsTableBody.innerHTML = '';
             if (orderItems.length === 0) {
                 emptyOrderItemsMessage.style.display = 'block';
+                console.log("DEBUG: Daftar pesanan kosong.");
                 return;
             }
             emptyOrderItemsMessage.style.display = 'none';
@@ -1503,6 +1552,7 @@
                 editButton.addEventListener('click', () => toggleEditMode(row, item));
                 deleteButton.addEventListener('click', () => deleteOrderItem(index));
             });
+            console.log("DEBUG: Item pesanan dirender ulang. Jumlah item:", orderItems.length);
         }
 
         function toggleEditMode(row, item) {
@@ -1517,6 +1567,7 @@
 
                 if (!newProductName || !newQuantity) {
                     showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
+                    console.warn("WARN: Gagal menyimpan edit item: Nama Produk atau Jumlah kosong.");
                     return;
                 }
 
@@ -1524,6 +1575,7 @@
                 item.jumlah = newQuantity;
                 renderOrderItems(); // Re-render the whole table to update
                 row.classList.remove('editing');
+                console.log("DEBUG: Item pesanan disimpan:", item);
             } else {
                 // Edit mode
                 row.classList.add('editing');
@@ -1542,6 +1594,7 @@
 
                 row.querySelector('.save-item-btn').addEventListener('click', () => toggleEditMode(row, item));
                 row.querySelector('.cancel-edit-btn').addEventListener('click', () => cancelEditMode(row, item));
+                console.log("DEBUG: Item pesanan masuk mode edit:", item);
             }
         }
 
@@ -1551,11 +1604,14 @@
             item.namaProduk = row.dataset.originalProductName;
             item.jumlah = row.dataset.originalQuantity;
             renderOrderItems(); // Re-render to show original values
+            console.log("DEBUG: Edit item pesanan dibatalkan.");
         }
 
         function addOrderItem() {
+            console.log("DEBUG: Fungsi addOrderItem dipanggil.");
             if (!currentSelectedSupplier) {
                 showAlert("Silakan pilih supplier terlebih dahulu.");
+                console.warn("WARN: Gagal menambahkan item: Supplier belum dipilih.");
                 return;
             }
 
@@ -1564,6 +1620,7 @@
 
             if (productName === '' || quantity === '') {
                 showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
+                console.warn("WARN: Gagal menambahkan item: Nama Produk atau Jumlah kosong.");
                 return;
             }
 
@@ -1572,20 +1629,27 @@
             productNameInput.value = '';
             quantityInput.value = '';
             productNameInput.focus();
+            console.log("DEBUG: Item pesanan ditambahkan:", { namaProduk: productName, jumlah: quantity });
         }
 
         async function deleteOrderItem(index) {
+            console.log("DEBUG: Fungsi deleteOrderItem dipanggil untuk index:", index);
             const confirmDelete = await showConfirm("Apakah Anda yakin ingin menghapus item ini?");
             if (confirmDelete) {
-                orderItems.splice(index, 1);
+                const deletedItem = orderItems.splice(index, 1);
                 renderOrderItems();
                 showAlert("Item berhasil dihapus.");
+                console.log("DEBUG: Item pesanan dihapus:", deletedItem);
+            } else {
+                console.log("DEBUG: Penghapusan item dibatalkan.");
             }
         }
 
         async function clearAllOrderItems() {
+            console.log("DEBUG: Fungsi clearAllOrderItems dipanggil.");
             if (orderItems.length === 0) {
                 showAlert("Daftar pesanan sudah kosong.");
+                console.warn("WARN: Tidak ada item untuk dihapus.");
                 return;
             }
             const confirmClear = await showConfirm("Apakah Anda yakin ingin menghapus semua item pesanan?");
@@ -1593,16 +1657,22 @@
                 orderItems = [];
                 renderOrderItems();
                 showAlert("Semua item pesanan berhasil dihapus.");
+                console.log("DEBUG: Semua item pesanan dihapus.");
+            } else {
+                console.log("DEBUG: Penghapusan semua item dibatalkan.");
             }
         }
 
         function generateWhatsAppMessage() {
+            console.log("DEBUG: Fungsi generateWhatsAppMessage dipanggil.");
             if (!currentSelectedSupplier) {
                 showAlert("Silakan pilih supplier terlebih dahulu.");
+                console.warn("WARN: Gagal membuat pesan WhatsApp: Supplier belum dipilih.");
                 return '';
             }
             if (orderItems.length === 0) {
                 showAlert("Daftar pesanan masih kosong. Tambahkan produk terlebih dahulu.");
+                console.warn("WARN: Gagal membuat pesan WhatsApp: Daftar pesanan kosong.");
                 return '';
             }
 
@@ -1615,16 +1685,22 @@
             });
 
             message += `\nMohon konfirmasi ketersediaan dan total harga. Terima kasih!`;
+            console.log("DEBUG: Pesan WhatsApp dibuat.");
             return encodeURIComponent(message);
         }
 
         function sendWhatsAppOrder() {
+            console.log("DEBUG: Fungsi sendWhatsAppOrder dipanggil.");
             const message = generateWhatsAppMessage();
-            if (message === '') return; // Message already handled by showAlert
+            if (message === '') {
+                console.warn("WARN: Pesan WhatsApp kosong, tidak dapat mengirim.");
+                return; // Message already handled by showAlert
+            }
 
             const whatsappNumber = currentSelectedSupplier.kontak.replace(/\D/g, ''); // Remove non-digits
             if (!whatsappNumber) {
                 showAlert("Nomor WhatsApp supplier tidak tersedia.");
+                console.warn("WARN: Nomor WhatsApp supplier tidak ditemukan.");
                 return;
             }
 
@@ -1638,12 +1714,22 @@
 
             const whatsappUrl = `https://wa.me/${formattedNumber}?text=${message}`;
             window.open(whatsappUrl, '_blank');
+            console.log("DEBUG: Membuka link WhatsApp:", whatsappUrl);
         }
 
         // --- Event Listeners for Supplier Order Panel ---
-        tambahProdukBtn.addEventListener('click', addOrderItem);
-        clearAllBtn.addEventListener('click', clearAllOrderItems);
-        kirimWhatsAppBtn.addEventListener('click', sendWhatsAppOrder);
+        tambahProdukBtn.addEventListener('click', () => {
+            console.log("DEBUG: Tombol 'Tambah ke Daftar' diklik.");
+            addOrderItem();
+        });
+        clearAllBtn.addEventListener('click', () => {
+            console.log("DEBUG: Tombol 'Hapus Semua' diklik.");
+            clearAllOrderItems();
+        });
+        kirimWhatsAppBtn.addEventListener('click', () => {
+            console.log("DEBUG: Tombol 'Kirim WhatsApp' diklik.");
+            sendWhatsAppOrder();
+        });
 
         // Initial setup on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -1651,6 +1737,7 @@
             renderOrderItems();
             updateSupplierInfoDisplay(); // Show initial message
             enableOrderButtons(); // Disable buttons initially
+            console.log("DEBUG: DOMContentLoaded - Inisialisasi awal UI.");
         });
     </script>
 </body>
