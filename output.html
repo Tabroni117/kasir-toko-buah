@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Pesanan ke Supplier</title>
+    <title>Buat Pesanan ke Supplier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <!-- Firebase SDK v9 Compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
         body {
@@ -29,7 +29,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 800px; /* Increased max-width for table */
+            max-width: 800px;
             box-sizing: border-box;
         }
         h2 {
@@ -39,12 +39,68 @@
             font-size: 24px;
             font-weight: 600;
         }
+        .supplier-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #555;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .autocomplete {
+            position: relative;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            background-color: #fff;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #333;
+        }
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        .autocomplete-item:hover, .autocomplete-active {
+            background-color: #e9e9e9;
+        }
         .button-group {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            margin-top: 20px;
+            flex-wrap: wrap;
         }
         .button-group button {
             padding: 10px 20px;
@@ -56,30 +112,45 @@
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
-        #kirimWhatsAppSupplierBtn { /* Changed ID */
-            background-color: #25d366; /* WhatsApp Green */
+        #tambahProdukBtn {
+            background-color: #4CAF50;
             color: white;
         }
-        #kirimWhatsAppSupplierBtn:hover { /* Changed ID */
+        #tambahProdukBtn:hover {
+            background-color: #388E3C;
+            transform: translateY(-2px);
+        }
+        #clearAllBtn {
+            background-color: #f44336;
+            color: white;
+        }
+        #clearAllBtn:hover {
+            background-color: #d32f2f;
+            transform: translateY(-2px);
+        }
+        #kirimWhatsAppBtn {
+            background-color: #25d366;
+            color: white;
+        }
+        #kirimWhatsAppBtn:hover {
             background-color: #1DA851;
             transform: translateY(-2px);
         }
-        #backToInputOrderBtn { /* Changed ID */
+        #backToSupplierListBtn {
             background-color: #007bff;
             color: white;
         }
-        #backToInputOrderBtn:hover { /* Changed ID */
+        #backToSupplierListBtn:hover {
             background-color: #0056b3;
             transform: translateY(-2px);
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             border-radius: 8px;
-            overflow: hidden; /* Ensures rounded corners apply to table content */
+            overflow: hidden;
         }
         th, td {
             border: 1px solid #e0e0e0;
@@ -98,6 +169,21 @@
         }
         tbody tr:hover {
             background-color: #f5f5f5;
+        }
+        td button {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+        }
+        td button.delete-item-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        td button.delete-item-btn:hover {
+            background-color: #c82333;
         }
         .empty-state {
             text-align: center;
@@ -145,33 +231,95 @@
         #customAlertDialog button:hover {
             background-color: #388E3C;
         }
+
+        /* Custom Confirmation Modal */
+        #customConfirmModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
+        }
+        #customConfirmModal > div {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 300px;
+        }
+        #customConfirmModal p {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        #customConfirmModal button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        #customConfirmModal button#customConfirmYes {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #customConfirmModal button#customConfirmYes:hover {
+            background-color: #388E3C;
+        }
+        #customConfirmModal button#customConfirmNo {
+            background-color: #f44336;
+            color: white;
+        }
+        #customConfirmModal button#customConfirmNo:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Daftar Pesanan ke Supplier</h2>
+        <h2>Buat Pesanan ke Supplier</h2>
+        <div class="supplier-info" id="supplierInfo"></div>
+
+        <div class="form-group">
+            <label for="productNameInput">Nama Produk:</label>
+            <div class="autocomplete">
+                <input type="text" id="productNameInput" placeholder="Cari atau masukkan nama produk" autocomplete="off">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="quantityInput">Jumlah:</label>
+            <input type="text" id="quantityInput" placeholder="Contoh: 5 KG, 10 Buah">
+        </div>
         <div class="button-group">
-            <button id="kirimWhatsAppSupplierBtn">Kirim Pesanan via WhatsApp</button>
-            <button id="backToInputOrderBtn">Kembali ke Input Pesanan</button>
+            <button id="tambahProdukBtn">Tambah ke Daftar</button>
+            <button id="clearAllBtn">Hapus Semua</button>
+            <button id="kirimWhatsAppBtn">Kirim Pesanan via WhatsApp</button>
+            <button id="backToSupplierListBtn">Kembali ke Daftar Supplier</button>
         </div>
         
         <table>
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Nama Barang</th>
+                    <th>Nama Produk</th>
                     <th>Jumlah</th>
-                    <th>Harga Satuan</th>
-                    <th>Supplier</th>
-                    <th>Tanggal Pesanan</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
-            <tbody id="ordersTableBody">
+            <tbody id="orderItemsTableBody">
                 <!-- Data pesanan akan dimuat di sini -->
             </tbody>
         </table>
 
-        <p class="empty-state" id="emptyState">Memuat pesanan...</p>
+        <p class="empty-state" id="emptyOrderItemsMessage">Daftar pesanan masih kosong.</p>
     </div>
 
     <!-- Custom Alert Modal -->
@@ -179,6 +327,15 @@
         <div>
             <p id="customAlertMessage"></p>
             <button id="customAlertOk">OK</button>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="customConfirmModal">
+        <div>
+            <p id="customConfirmMessage"></p>
+            <button id="customConfirmYes">Ya</button>
+            <button id="customConfirmNo">Tidak</button>
         </div>
     </div>
 
@@ -205,21 +362,33 @@
         const auth = firebase.auth(); 
         const db = firebase.firestore();
 
-        // Firestore Collection Reference (Tetap menggunakan 'Produk' sesuai permintaan Kakak)
-        const produkCollection = db.collection('Produk');
-        console.log("DEBUG: Firestore collection 'Produk' reference created.");
+        // Firestore Collection References
+        const produkCollection = db.collection('Produk'); // Master data for products
+        // const suppliersCollection = db.collection('suppliers'); // If we had a dedicated suppliers collection
 
         // DOM Elements
-        const ordersTableBody = document.getElementById('ordersTableBody'); // Changed ID
-        const emptyStateMessage = document.getElementById('emptyState');
-        const kirimWhatsAppSupplierBtn = document.getElementById('kirimWhatsAppSupplierBtn'); // Changed ID
-        const backToInputOrderBtn = document.getElementById('backToInputOrderBtn'); // Changed ID
+        const supplierInfoDiv = document.getElementById('supplierInfo');
+        const productNameInput = document.getElementById('productNameInput');
+        const quantityInput = document.getElementById('quantityInput');
+        const tambahProdukBtn = document.getElementById('tambahProdukBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const kirimWhatsAppBtn = document.getElementById('kirimWhatsAppBtn');
+        const backToSupplierListBtn = document.getElementById('backToSupplierListBtn');
+        const orderItemsTableBody = document.getElementById('orderItemsTableBody');
+        const emptyOrderItemsMessage = document.getElementById('emptyOrderItemsMessage');
 
         const customAlertDialog = document.getElementById('customAlertDialog');
         const customAlertMessage = document.getElementById('customAlertMessage');
         const customAlertOk = document.getElementById('customAlertOk');
+        const customConfirmModal = document.getElementById('customConfirmModal');
+        const customConfirmMessage = document.getElementById('customConfirmMessage');
+        const customConfirmYes = document.getElementById('customConfirmYes');
+        const customConfirmNo = document.getElementById('customConfirmNo');
 
-        let allOrders = []; // To store all fetched orders for WhatsApp sharing
+        let currentSupplierId = null;
+        let currentSupplierName = 'Supplier Tidak Dikenal';
+        let orderList = []; // Array to hold products for the current order
+        let productSuggestions = []; // For autocomplete
 
         // --- Helper Functions ---
         function showCustomAlert(message) {
@@ -235,150 +404,258 @@
             });
         }
 
-        function formatRupiah(amount) {
-            if (amount === null || amount === undefined) {
-                return 'N/A'; // Or any other placeholder for null/undefined prices
-            }
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(amount);
+        function showCustomConfirm(message) {
+            return new Promise((resolve) => {
+                customConfirmMessage.textContent = message;
+                customConfirmModal.style.display = 'flex';
+                const handleYes = () => {
+                    customConfirmModal.style.display = 'none';
+                    customConfirmYes.removeEventListener('click', handleYes);
+                    customConfirmNo.removeEventListener('click', handleNo);
+                    resolve(true);
+                };
+                const handleNo = () => {
+                    customConfirmModal.style.display = 'none';
+                    customConfirmYes.removeEventListener('click', handleYes);
+                    customConfirmNo.removeEventListener('click', handleNo);
+                    resolve(false);
+                };
+                customConfirmYes.addEventListener('click', handleYes);
+                customConfirmNo.addEventListener('click', handleNo);
+            });
         }
 
-        function formatDate(timestamp) {
-            if (!timestamp) return '-';
-            const date = (timestamp instanceof firebase.firestore.Timestamp) ? timestamp.toDate() : new Date(timestamp);
-            if (isNaN(date.getTime())) return '-'; 
-            return date.toLocaleDateString('id-ID'); // Only date for supplier orders
-        }
+        // --- Autocomplete Logic (reused from stok-barang.html) ---
+        let currentFocusProductName = -1;
 
-        // --- Load Order Data from Firestore in Real-time ---
-        async function loadOrders() { // Renamed function
-            console.log("DEBUG: loadOrders function called.");
-            emptyStateMessage.textContent = "Memuat pesanan...";
-            emptyStateMessage.style.display = 'block';
-            ordersTableBody.innerHTML = ''; 
-            allOrders = []; // Clear previous orders
+        function autocomplete(inp, arr) {
+            inp.addEventListener("input", function () {
+                let val = this.value;
+                closeAllLists();
+                if (!val) return false;
 
-            try {
-                // No explicit sign-in here, relies on Firestore rules for public read
-                console.log("DEBUG: Attaching onSnapshot listener to 'Produk' collection (public read).");
-                produkCollection.orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-                    console.log(`DEBUG: onSnapshot callback triggered. Number of documents: ${snapshot.size}`);
-                    ordersTableBody.innerHTML = ''; 
-                    allOrders = []; // Clear for fresh data
+                const listDiv = document.createElement("DIV");
+                listDiv.setAttribute("id", this.id + "autocomplete-list");
+                listDiv.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(listDiv);
 
-                    if (snapshot.empty) {
-                        console.log("DEBUG: Snapshot is empty. No orders found.");
-                        emptyStateMessage.textContent = "Belum ada pesanan yang tersimpan.";
-                        emptyStateMessage.style.display = 'block';
-                    } else {
-                        console.log("DEBUG: Orders found, rendering...");
-                        emptyStateMessage.style.display = 'none'; 
-                        let orderNumber = 1;
-                        snapshot.forEach(doc => {
-                            const order = doc.data();
-                            allOrders.push(order); // Add to local array
-                            
-                            const row = ordersTableBody.insertRow();
-                            row.innerHTML = `
-                                <td>${orderNumber++}</td>
-                                <td>${order.nama_barang || '-'}</td>
-                                <td>${order.jumlah_pesanan || '-'}</td>
-                                <td>${formatRupiah(order.harga_satuan_supplier)}</td>
-                                <td>${order.nama_supplier || '-'}</td>
-                                <td>${formatDate(order.tanggal_pesanan)}</td>
-                            `;
-                        });
-                    }
-                }, error => {
-                    console.error("DEBUG: Error in onSnapshot listener:", error);
-                    emptyStateMessage.textContent = "Gagal memuat pesanan: " + error.message;
-                    emptyStateMessage.style.color = 'red';
-                    emptyStateMessage.style.display = 'block';
-                    showCustomAlert("Gagal memuat daftar pesanan. Cek konsol untuk detail.");
+                const filteredArr = arr.filter(item => item.toUpperCase().includes(val.toUpperCase()));
+
+                filteredArr.forEach(item => {
+                    const itemDiv = document.createElement("DIV");
+                    itemDiv.innerHTML = item;
+                    itemDiv.classList.add("autocomplete-item");
+                    itemDiv.addEventListener("click", function () {
+                        inp.value = item;
+                        closeAllLists();
+                    });
+                    listDiv.appendChild(itemDiv);
                 });
+            });
+
+            inp.addEventListener("keydown", function (e) {
+                let list = document.getElementById(this.id + "autocomplete-list");
+                if (list) list = list.getElementsByTagName("div");
+                let currentFocus = currentFocusProductName;
+
+                if (e.keyCode == 40) { // DOWN arrow
+                    currentFocus++;
+                    addActive(list, currentFocus);
+                } else if (e.keyCode == 38) { // UP arrow
+                    currentFocus--;
+                    addActive(list, currentFocus);
+                } else if (e.keyCode == 13) { // ENTER key
+                    e.preventDefault();
+                    if (currentFocus > -1 && list && list[currentFocus]) {
+                        list[currentFocus].click();
+                    } else if (this.value.trim() !== '') {
+                        quantityInput.focus(); // Move focus to quantity input
+                    }
+                }
+                currentFocusProductName = currentFocus;
+            });
+
+            function addActive(x, currentFcs) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFcs >= x.length) currentFcs = 0;
+                if (currentFcs < 0) currentFcs = (x.length - 1);
+                x[currentFcs].classList.add("autocomplete-active");
+            }
+
+            function removeActive(x) {
+                for (let i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+
+            function closeAllLists(elmnt) {
+                const items = document.getElementsByClassName("autocomplete-items");
+                for (let item of items) {
+                    if (elmnt != item && elmnt != inp) item.parentNode.removeChild(item);
+                }
+            }
+            document.addEventListener("click", function (e) { closeAllLists(e.target); });
+        }
+
+        // --- Load Product Suggestions for Autocomplete ---
+        async function loadProductSuggestions() {
+            try {
+                const snapshot = await produkCollection.orderBy('nama').get();
+                productSuggestions = [];
+                snapshot.forEach(doc => {
+                    const product = doc.data();
+                    if (product.nama) {
+                        productSuggestions.push(product.nama);
+                    }
+                });
+                autocomplete(productNameInput, productSuggestions);
             } catch (error) {
-                console.error("DEBUG: Error during initial order load setup:", error);
-                emptyStateMessage.textContent = "Gagal terhubung ke Firebase. Coba refresh halaman.";
-                emptyStateMessage.style.color = 'red';
-                emptyStateMessage.style.display = 'block';
-                showCustomAlert("Gagal terhubung ke Firebase. Coba refresh halaman.");
+                console.error("Error loading product suggestions:", error);
+                await showCustomAlert("Gagal memuat daftar produk untuk saran.");
             }
         }
 
-        // --- Kirim WhatsApp ke Supplier ---
-        kirimWhatsAppSupplierBtn.addEventListener('click', async () => {
-            if (allOrders.length === 0) {
-                await showCustomAlert("Tidak ada data pesanan untuk dibagikan.");
+        // --- Order List Management ---
+        function renderOrderList() {
+            orderItemsTableBody.innerHTML = '';
+            if (orderList.length === 0) {
+                emptyOrderItemsMessage.style.display = 'block';
+            } else {
+                emptyOrderItemsMessage.style.display = 'none';
+                orderList.forEach((item, index) => {
+                    const row = orderItemsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.name}</td>
+                        <td>${item.quantity}</td>
+                        <td><button class="delete-item-btn" data-index="${index}">Hapus</button></td>
+                    `;
+                });
+                // Attach event listeners for delete buttons
+                document.querySelectorAll('.delete-item-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const indexToDelete = parseInt(this.dataset.index);
+                        deleteOrderItem(indexToDelete);
+                    });
+                });
+            }
+        }
+
+        async function addOrderItem() {
+            const productName = productNameInput.value.trim();
+            const quantity = quantityInput.value.trim();
+
+            if (!productName || !quantity) {
+                await showCustomAlert("Nama produk dan jumlah tidak boleh kosong.");
+                return;
+            }
+
+            orderList.push({ name: productName, quantity: quantity });
+            productNameInput.value = '';
+            quantityInput.value = '';
+            renderOrderList();
+        }
+
+        async function deleteOrderItem(index) {
+            const confirmDelete = await showCustomConfirm(`Yakin ingin menghapus item "${orderList[index].name}"?`);
+            if (confirmDelete) {
+                orderList.splice(index, 1);
+                renderOrderList();
+            }
+        }
+
+        async function clearAllOrderItems() {
+            if (orderList.length === 0) {
+                await showCustomAlert("Daftar pesanan sudah kosong.");
+                return;
+            }
+            const confirmClear = await showCustomConfirm("Yakin ingin menghapus semua item dari daftar pesanan?");
+            if (confirmClear) {
+                orderList = [];
+                renderOrderList();
+            }
+        }
+
+        // --- WhatsApp Integration ---
+        async function kirimWhatsAppOrder() {
+            if (orderList.length === 0) {
+                await showCustomAlert("Daftar pesanan kosong. Tambahkan produk terlebih dahulu.");
                 return;
             }
 
             const now = new Date();
-            const tanggal = now.toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' }); // More formal date
-            const jam = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' }); // Include seconds
+            const tanggal = now.toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' });
+            const jam = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            let pesan = `📝 *REKAPITULASI PESANAN BARANG*
-📅 Tanggal: ${tanggal}
-🕒 Pukul: ${jam}
+            let pesan = `📝 *Daftar Pesanan Barang ke Supplier*
+📅 ${tanggal} - 🕒 ${jam}
 
+Kepada Yth. Supplier *${currentSupplierName.toUpperCase()}*,
+Berikut adalah daftar pesanan barang dari kami:
+
+🛒 *DAFTAR PRODUK:*
 `;
-            let supplierOrders = {};
-
-            // Group orders by supplier name
-            allOrders.forEach(order => {
-                // Use a more professional fallback for missing supplier name
-                const supplier = order.nama_supplier && order.nama_supplier.trim() !== '' ? order.nama_supplier.trim() : 'Supplier Lain-lain';
-                if (!supplierOrders[supplier]) {
-                    supplierOrders[supplier] = [];
-                }
-                supplierOrders[supplier].push(order);
+            orderList.forEach((item, index) => {
+                pesan += `${index + 1}. ${item.name} (${item.quantity})\n`;
             });
-
-            // Format message for each supplier
-            for (const supplierName in supplierOrders) {
-                // Filter out orders with missing essential data for a cleaner message
-                const validOrdersForSupplier = supplierOrders[supplierName].filter(order => 
-                    order.nama_barang && order.nama_barang.trim() !== '' &&
-                    order.jumlah_pesanan && order.jumlah_pesanan.trim() !== ''
-                );
-
-                if (validOrdersForSupplier.length > 0) { // Only add supplier section if there are valid orders
-                    pesan += `\n--- *${supplierName.toUpperCase()}* ---\n`; // Uppercase supplier name for emphasis
-                    validOrdersForSupplier.forEach((order, i) => {
-                        const namaBarang = order.nama_barang.trim();
-                        const jumlahPesanan = order.jumlah_pesanan.trim();
-                        const hargaSatuan = order.harga_satuan_supplier !== null && order.harga_satuan_supplier !== undefined ? formatRupiah(order.harga_satuan_supplier) : 'Harga Belum Tersedia';
-                        pesan += `${i + 1}. ${namaBarang} (${jumlahPesanan}) - ${hargaSatuan}\n`;
-                    });
-                } else {
-                    console.warn(`DEBUG: Skipping supplier group '${supplierName}' due to no valid items.`);
-                }
-            }
-            
-            // Add a message if no valid orders were found across all suppliers
-            if (Object.keys(supplierOrders).length === 0 || allOrders.filter(order => order.nama_barang && order.jumlah_pesanan).length === 0) {
-                pesan += `Belum ada pesanan yang valid untuk ditampilkan.`;
-            }
 
             pesan += `\nMohon konfirmasi ketersediaan dan total harga.
 Terima kasih atas kerja samanya.
 
-_Pesan ini dikirim otomatis oleh sistem RUJAK BUAH INDONESIA_`; // Added the disclaimer
+_Pesan ini dikirim otomatis oleh sistem RUJAK BUAH INDONESIA_`;
 
             const url = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
             window.open(url, "_blank");
+        }
+
+        // --- Event Listeners ---
+        tambahProdukBtn.addEventListener('click', addOrderItem);
+        clearAllBtn.addEventListener('click', clearAllOrderItems);
+        kirimWhatsAppBtn.addEventListener('click', kirimWhatsAppOrder);
+        backToSupplierListBtn.addEventListener('click', () => {
+            window.location.href = 'supplier-list.html'; // Adjust to your supplier list page name
         });
 
-        // --- Kembali ke Input Pesanan ---
-        backToInputOrderBtn.addEventListener('click', () => {
-            window.location.href = 'input-produk.html'; 
-        });
+        productNameInput.addEventListener("keydown", e => { if (e.key === "Enter") quantityInput.focus(); });
+        quantityInput.addEventListener("keydown", e => { if (e.key === "Enter") addOrderItem(); });
 
-        // --- Initial Load ---
+
+        // --- Page Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            loadOrders(); // Call the renamed function
+            // Get supplier info from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            currentSupplierId = urlParams.get('supplierId');
+            const supplierNameFromUrl = urlParams.get('supplierName');
+            if (supplierNameFromUrl) {
+                currentSupplierName = decodeURIComponent(supplierNameFromUrl);
+                supplierInfoDiv.textContent = `Untuk Supplier: ${currentSupplierName}`;
+            } else {
+                supplierInfoDiv.textContent = `Untuk Supplier: Tidak Dikenal`;
+            }
+
+            loadProductSuggestions();
+            renderOrderList(); // Render empty list initially
+
+            // Authentication check (assuming this page is for sellers/admins)
+            auth.onAuthStateChanged(user => {
+                const storedRole = localStorage.getItem('userRole');
+                const isLoggingOut = localStorage.getItem('isLoggingOut');
+
+                if (isLoggingOut) {
+                    localStorage.removeItem('isLoggingOut');
+                }
+
+                if (!user || storedRole !== 'penjual') { // Only 'penjual' (seller) can access this
+                    if (!isLoggingOut) {
+                        alert('Akses Ditolak: Halaman ini hanya untuk PENJUAL.');
+                    }
+                    window.location.href = 'index.html'; // Redirect to login page
+                } else {
+                    // User is authenticated and has the correct role
+                    // No further action needed here, as data loading is independent
+                }
+            });
         });
     </script>
 </body>
