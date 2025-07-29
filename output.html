@@ -143,6 +143,7 @@
             font-size: 1.1em;
             color: #555;
             font-weight: bold;
+            min-height: 25px; /* Ensure space even when empty */
         }
         #supplierOrderPanel .form-group {
             margin-bottom: 15px;
@@ -218,6 +219,11 @@
             background-color: var(--dark-green);
             transform: translateY(-2px);
         }
+        #supplierOrderPanel #tambahProdukBtn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
         #supplierOrderPanel #clearAllBtn {
             background-color: #f44336;
             color: white;
@@ -225,6 +231,11 @@
         #supplierOrderPanel #clearAllBtn:hover {
             background-color: #d32f2f;
             transform: translateY(-2px);
+        }
+        #supplierOrderPanel #clearAllBtn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
         }
         #supplierOrderPanel #kirimWhatsAppBtn {
             background-color: #25d366;
@@ -234,13 +245,10 @@
             background-color: #1DA851;
             transform: translateY(-2px);
         }
-        #supplierOrderPanel #backToSupplierListBtn {
-            background-color: #007bff;
-            color: white;
-        }
-        #supplierOrderPanel #backToSupplierListBtn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
+        #supplierOrderPanel #kirimWhatsAppBtn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
         }
         #supplierOrderPanel table {
             width: 100%;
@@ -275,6 +283,7 @@
             cursor: pointer;
             transition: background-color 0.2s;
             border: none;
+            margin-right: 5px; /* Space between buttons */
         }
         #supplierOrderPanel td button.delete-item-btn {
             background-color: #dc3545;
@@ -282,6 +291,27 @@
         }
         #supplierOrderPanel td button.delete-item-btn:hover {
             background-color: #c82333;
+        }
+        #supplierOrderPanel td button.edit-item-btn {
+            background-color: #ffc107; /* Amber for edit */
+            color: #333;
+        }
+        #supplierOrderPanel td button.edit-item-btn:hover {
+            background-color: #e0a800;
+        }
+        #supplierOrderPanel td button.save-item-btn {
+            background-color: var(--primary-green);
+            color: white;
+        }
+        #supplierOrderPanel td button.save-item-btn:hover {
+            background-color: var(--dark-green);
+        }
+        #supplierOrderPanel td button.cancel-edit-btn {
+            background-color: #6c757d; /* Gray for cancel */
+            color: white;
+        }
+        #supplierOrderPanel td button.cancel-edit-btn:hover {
+            background-color: #5a6268;
         }
         #supplierOrderPanel .empty-state {
             text-align: center;
@@ -689,12 +719,22 @@
         <!-- Panel Kiri: Input Pesanan ke Supplier -->
         <div class="panel" id="supplierOrderPanel">
             <h2>Buat Pesanan ke Supplier</h2>
-            <div class="supplier-info" id="supplierInfo"></div>
+
+            <div class="form-group">
+                <label for="supplierNameOrderInput">Nama Supplier:</label>
+                <div class="autocomplete">
+                    <input type="text" id="supplierNameOrderInput" placeholder="Cari atau masukkan nama supplier" autocomplete="off">
+                    <div id="supplierNameOrderAutocompleteList" class="autocomplete-items"></div>
+                </div>
+            </div>
+            
+            <div class="supplier-info" id="supplierInfo">Pilih supplier untuk memulai pesanan.</div>
 
             <div class="form-group">
                 <label for="productNameInput">Nama Produk:</label>
                 <div class="autocomplete">
                     <input type="text" id="productNameInput" placeholder="Cari atau masukkan nama produk" autocomplete="off">
+                    <div id="productNameAutocompleteList" class="autocomplete-items"></div>
                 </div>
             </div>
             <div class="form-group">
@@ -702,9 +742,9 @@
                 <input type="text" id="quantityInput" placeholder="Contoh: 5 KG, 10 Buah">
             </div>
             <div class="button-group">
-                <button id="tambahProdukBtn">Tambah ke Daftar</button>
-                <button id="clearAllBtn">Hapus Semua</button>
-                <button id="kirimWhatsAppBtn">Kirim Pesanan via WhatsApp</button>
+                <button id="tambahProdukBtn" disabled>Tambah ke Daftar</button>
+                <button id="clearAllBtn" disabled>Hapus Semua</button>
+                <button id="kirimWhatsAppBtn" disabled>Kirim Pesanan via WhatsApp</button>
             </div>
             
             <table>
@@ -892,9 +932,16 @@
         const produkCollection = db.collection('Produk'); // Master data for products
         const suppliersCollection = db.collection('suppliers'); // Master data for suppliers
 
+        // --- Global Variables ---
+        let currentSelectedSupplier = null; // Stores the currently selected supplier object for ordering
+        let orderItems = []; // Array to store products added to the current order
+
         // --- DOM Elements - Supplier Order Panel ---
+        const supplierNameOrderInput = document.getElementById('supplierNameOrderInput');
+        const supplierNameOrderAutocompleteList = document.getElementById('supplierNameOrderAutocompleteList');
         const supplierInfoDiv = document.getElementById('supplierInfo');
         const productNameInput = document.getElementById('productNameInput');
+        const productNameAutocompleteList = document.getElementById('productNameAutocompleteList');
         const quantityInput = document.getElementById('quantityInput');
         const tambahProdukBtn = document.getElementById('tambahProdukBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
@@ -950,132 +997,422 @@
         const customConfirmNo = document.getElementById('customConfirmNo');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        let currentUserId = null;
-        let orderList = []; // Array to hold products for the current order
-        let productSuggestions = []; // For autocomplete in supplier order panel
-        let allProductsData = []; // Cache for product management panel search/filter
-        let allSuppliersData = []; // Cache for supplier management panel search/filter
-
-        // --- Helper Functions ---
-        function showLoading() { loadingSpinner.style.display = 'flex'; }
-        function hideLoading() { loadingSpinner.style.display = 'none'; }
-
-        function showCustomAlert(message) {
-            return new Promise((resolve) => {
-                customAlertMessage.textContent = message;
-                customAlertDialog.style.display = 'flex';
-                const handleOk = () => {
-                    customAlertDialog.style.display = 'none';
-                    customAlertOk.removeEventListener('click', handleOk);
-                    resolve();
-                };
-                customAlertOk.addEventListener('click', handleOk);
-            });
+        // --- Custom Alert/Confirm Functions ---
+        function showAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertDialog.style.display = 'flex';
         }
 
-        function showCustomConfirm(message) {
+        function showConfirm(message) {
             return new Promise((resolve) => {
                 customConfirmMessage.textContent = message;
                 customConfirmModal.style.display = 'flex';
-                const handleYes = () => {
+
+                const onYes = () => {
                     customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', handleYes);
-                    customConfirmNo.removeEventListener('click', handleNo);
+                    customConfirmYes.removeEventListener('click', onYes);
+                    customConfirmNo.removeEventListener('click', onNo);
                     resolve(true);
                 };
-                const handleNo = () => {
+
+                const onNo = () => {
                     customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', handleYes);
-                    customConfirmNo.removeEventListener('click', handleNo);
+                    customConfirmYes.removeEventListener('click', onYes);
+                    customConfirmNo.removeEventListener('click', onNo);
                     resolve(false);
                 };
-                customConfirmYes.addEventListener('click', handleYes);
-                customConfirmNo.addEventListener('click', handleNo);
+
+                customConfirmYes.addEventListener('click', onYes);
+                customConfirmNo.addEventListener('click', onNo);
             });
         }
 
-        function formatRupiah(amount) {
+        customAlertOk.addEventListener('click', () => {
+            customAlertDialog.style.display = 'none';
+        });
+
+        // --- Loading Spinner Functions ---
+        function showLoadingSpinner() {
+            loadingSpinner.style.display = 'flex';
+        }
+
+        function hideLoadingSpinner() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        // --- Authentication ---
+        let userId = null;
+        let isAuthReady = false;
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                userId = user.uid;
+                console.log("DEBUG: User is signed in:", userId);
+                // Fetch initial data after authentication
+                await fetchProducts();
+                await fetchSuppliers();
+                isAuthReady = true;
+                // No need to call selectSupplierForOrder here, as we now select it via input
+            } else {
+                console.log("DEBUG: No user signed in. Signing in anonymously.");
+                try {
+                    // Use __initial_auth_token if available, otherwise sign in anonymously
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await auth.signInWithCustomToken(__initial_auth_token);
+                    } else {
+                        await auth.signInAnonymously();
+                    }
+                } catch (error) {
+                    console.error("DEBUG: Error during anonymous sign-in or custom token sign-in:", error);
+                    showAlert("Terjadi kesalahan saat otentikasi. Silakan coba lagi.");
+                }
+            }
+        });
+
+        async function logout() {
+            const confirmLogout = await showConfirm("Apakah Anda yakin ingin logout?");
+            if (confirmLogout) {
+                try {
+                    await auth.signOut();
+                    showAlert("Anda telah berhasil logout.");
+                    // Optionally redirect to login page or clear UI
+                    window.location.reload(); // Reloads the page to reset state
+                } catch (error) {
+                    console.error("Error logging out:", error);
+                    showAlert("Gagal logout. Silakan coba lagi.");
+                }
+            }
+        }
+
+        // --- Utility Functions ---
+        function formatRupiah(number) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
                 minimumFractionDigits: 0
-            }).format(amount);
+            }).format(number);
         }
 
-        // --- Authentication ---
-        async function logout() {
+        // --- Product Management Functions ---
+        let allProducts = []; // Cache for all products
+        let filteredProducts = []; // Products displayed after search
+
+        async function fetchProducts() {
+            showLoadingSpinner();
             try {
-                localStorage.setItem('isLoggingOut', 'true');
-                await auth.signOut();
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userEmail');
-                localStorage.removeItem('userUid');
-                await showCustomAlert('Anda telah berhasil logout.');
-                window.location.href = 'index.html';
+                const snapshot = await produkCollection.get();
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                filteredProducts = allProducts; // Initially, all products are filtered
+                displayProducts(filteredProducts);
             } catch (error) {
-                console.error("Error during logout:", error);
-                await showCustomAlert('Gagal logout. Coba lagi.');
-                localStorage.removeItem('isLoggingOut');
+                console.error("Error fetching products:", error);
+                showAlert("Gagal memuat daftar produk.");
+            } finally {
+                hideLoadingSpinner();
             }
         }
 
-        // --- Autocomplete Logic (for Supplier Order Panel) ---
-        let currentFocusProductName = -1;
-
-        function autocomplete(inp, arr) {
-            inp.addEventListener("input", function () {
-                let val = this.value;
-                closeAllLists();
-                if (!val) return false;
-
-                const listDiv = document.createElement("DIV");
-                listDiv.setAttribute("id", this.id + "autocomplete-list");
-                listDiv.setAttribute("class", "autocomplete-items");
-                this.parentNode.appendChild(listDiv);
-
-                const filteredArr = arr.filter(item => item.toUpperCase().includes(val.toUpperCase()));
-
-                filteredArr.forEach(item => {
-                    const itemDiv = document.createElement("DIV");
-                    itemDiv.innerHTML = item;
-                    itemDiv.classList.add("autocomplete-item");
-                    itemDiv.addEventListener("click", function () {
-                        inp.value = item;
-                        closeAllLists();
-                    });
-                    listDiv.appendChild(itemDiv);
+        function displayProducts(productsToDisplay) {
+            productListDiv.innerHTML = '';
+            if (productsToDisplay.length === 0) {
+                productListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada produk ditemukan.</p>';
+                return;
+            }
+            productsToDisplay.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'menu-item-card';
+                card.innerHTML = `
+                    <div class="menu-item-details">
+                        <h3>${product.nama}</h3>
+                        <p class="price">${formatRupiah(product.harga)}</p>
+                        <p>${product.deskripsi}</p>
+                    </div>
+                    <label class="item-toggle-switch">
+                        <input type="checkbox" ${product.tersedia ? 'checked' : ''} data-id="${product.id}">
+                        <span class="item-slider"></span>
+                    </label>
+                `;
+                card.addEventListener('click', (event) => {
+                    // Prevent toggle switch click from opening edit modal
+                    if (!event.target.closest('.item-toggle-switch')) {
+                        openProductFormModal(product);
+                    }
                 });
+                const toggleSwitch = card.querySelector('.item-toggle-switch input');
+                toggleSwitch.addEventListener('change', (event) => {
+                    event.stopPropagation(); // Prevent card click event
+                    toggleProductAvailability(product.id, event.target.checked);
+                });
+                productListDiv.appendChild(card);
             });
+        }
 
-            inp.addEventListener("keydown", function (e) {
-                let list = document.getElementById(this.id + "autocomplete-list");
-                if (list) list = list.getElementsByTagName("div");
-                let currentFocus = currentFocusProductName;
+        async function toggleProductAvailability(productId, isAvailable) {
+            try {
+                await produkCollection.doc(productId).update({ tersedia: isAvailable });
+                showAlert(`Status ketersediaan produk diperbarui.`);
+            } catch (error) {
+                console.error("Error updating product availability:", error);
+                showAlert("Gagal memperbarui ketersediaan produk.");
+            }
+        }
 
-                if (e.keyCode == 40) { // DOWN arrow
-                    currentFocus++;
-                    addActive(list, currentFocus);
-                } else if (e.keyCode == 38) { // UP arrow
-                    currentFocus--;
-                    addActive(list, currentFocus);
-                } else if (e.keyCode == 13) { // ENTER key
-                    e.preventDefault();
-                    if (currentFocus > -1 && list && list[currentFocus]) {
-                        list[currentFocus].click();
-                    } else if (this.value.trim() !== '') {
-                        quantityInput.focus(); // Move focus to quantity input
+        function openProductFormModal(product = null) {
+            productForm.reset();
+            if (product) {
+                productFormTitle.textContent = 'Edit Produk';
+                productIdInput.value = product.id;
+                productNameInputModal.value = product.nama;
+                productDescriptionInput.value = product.deskripsi;
+                productPriceInput.value = product.harga;
+                productImageUrlInput.value = product.imageUrl || '';
+                productRatingInput.value = product.rating || 0;
+                productDeliveryTimeInput.value = product.estimasiPengiriman || '';
+                productIsAvailableInput.checked = product.tersedia;
+            } else {
+                productFormTitle.textContent = 'Tambah Produk Baru';
+                productIdInput.value = '';
+                productIsAvailableInput.checked = true; // Default new product to available
+            }
+            productFormModal.style.display = 'flex';
+        }
+
+        closeProductFormModalBtn.addEventListener('click', () => {
+            productFormModal.style.display = 'none';
+        });
+
+        cancelProductFormBtn.addEventListener('click', () => {
+            productFormModal.style.display = 'none';
+        });
+
+        productForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoadingSpinner();
+
+            const productId = productIdInput.value;
+            const productData = {
+                nama: productNameInputModal.value,
+                deskripsi: productDescriptionInput.value,
+                harga: parseFloat(productPriceInput.value),
+                imageUrl: productImageUrlInput.value,
+                rating: parseFloat(productRatingInput.value),
+                estimasiPengiriman: productDeliveryTimeInput.value,
+                tersedia: productIsAvailableInput.checked
+            };
+
+            try {
+                if (productId) {
+                    await produkCollection.doc(productId).update(productData);
+                    showAlert("Produk berhasil diperbarui!");
+                } else {
+                    await produkCollection.add(productData);
+                    showAlert("Produk berhasil ditambahkan!");
+                }
+                productFormModal.style.display = 'none';
+                await fetchProducts(); // Re-fetch to update the list
+            } catch (error) {
+                console.error("Error saving product:", error);
+                showAlert("Gagal menyimpan produk. Silakan coba lagi.");
+            } finally {
+                hideLoadingSpinner();
+            }
+        });
+
+        addTopProductBtn.addEventListener('click', () => openProductFormModal());
+
+        productSearchInput.addEventListener('input', () => {
+            const searchTerm = productSearchInput.value.toLowerCase();
+            filteredProducts = allProducts.filter(product =>
+                product.nama.toLowerCase().includes(searchTerm) ||
+                product.deskripsi.toLowerCase().includes(searchTerm)
+            );
+            displayProducts(filteredProducts);
+        });
+
+        // --- Supplier Management Functions ---
+        let allSuppliers = []; // Cache for all suppliers
+        let filteredSuppliers = []; // Suppliers displayed after search
+
+        async function fetchSuppliers() {
+            showLoadingSpinner();
+            try {
+                const snapshot = await suppliersCollection.get();
+                allSuppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                filteredSuppliers = allSuppliers; // Initially, all suppliers are filtered
+                displaySuppliers(filteredSuppliers);
+                setupSupplierAutocomplete(); // Re-setup autocomplete with fresh data
+            } catch (error) {
+                console.error("Error fetching suppliers:", error);
+                showAlert("Gagal memuat daftar supplier.");
+            } finally {
+                hideLoadingSpinner();
+            }
+        }
+
+        function displaySuppliers(suppliersToDisplay) {
+            supplierListDiv.innerHTML = '';
+            if (suppliersToDisplay.length === 0) {
+                supplierListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada supplier ditemukan.</p>';
+                return;
+            }
+            suppliersToDisplay.forEach(supplier => {
+                const card = document.createElement('div');
+                card.className = 'supplier-item-card';
+                card.innerHTML = `
+                    <div class="supplier-item-details">
+                        <h3>${supplier.nama}</h3>
+                        <p>${supplier.kontak}</p>
+                        <p>${supplier.alamat}</p>
+                    </div>
+                `;
+                card.addEventListener('click', () => openSupplierFormModal(supplier));
+                supplierListDiv.appendChild(card);
+            });
+        }
+
+        function openSupplierFormModal(supplier = null) {
+            supplierForm.reset();
+            if (supplier) {
+                supplierFormTitle.textContent = 'Edit Supplier';
+                supplierIdInput.value = supplier.id;
+                supplierNameInputModal.value = supplier.nama;
+                supplierContactInput.value = supplier.kontak;
+                supplierAddressInput.value = supplier.alamat;
+            } else {
+                supplierFormTitle.textContent = 'Tambah Supplier Baru';
+                supplierIdInput.value = '';
+            }
+            supplierFormModal.style.display = 'flex';
+        }
+
+        closeSupplierFormModalBtn.addEventListener('click', () => {
+            supplierFormModal.style.display = 'none';
+        });
+
+        cancelSupplierFormBtn.addEventListener('click', () => {
+            supplierFormModal.style.display = 'none';
+        });
+
+        supplierForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoadingSpinner();
+
+            const supplierId = supplierIdInput.value;
+            const supplierData = {
+                nama: supplierNameInputModal.value,
+                kontak: supplierContactInput.value,
+                alamat: supplierAddressInput.value
+            };
+
+            try {
+                if (supplierId) {
+                    await suppliersCollection.doc(supplierId).update(supplierData);
+                    showAlert("Supplier berhasil diperbarui!");
+                } else {
+                    await suppliersCollection.add(supplierData);
+                    showAlert("Supplier berhasil ditambahkan!");
+                }
+                supplierFormModal.style.display = 'none';
+                await fetchSuppliers(); // Re-fetch to update the list and autocomplete
+            } catch (error) {
+                console.error("Error saving supplier:", error);
+                showAlert("Gagal menyimpan supplier. Silakan coba lagi.");
+            } finally {
+                hideLoadingSpinner();
+            }
+        });
+
+        addTopSupplierBtn.addEventListener('click', () => openSupplierFormModal());
+
+        supplierSearchInput.addEventListener('input', () => {
+            const searchTerm = supplierSearchInput.value.toLowerCase();
+            filteredSuppliers = allSuppliers.filter(supplier =>
+                supplier.nama.toLowerCase().includes(searchTerm) ||
+                supplier.kontak.toLowerCase().includes(searchTerm) ||
+                supplier.alamat.toLowerCase().includes(searchTerm)
+            );
+            displaySuppliers(filteredSuppliers);
+        });
+
+        // --- Autocomplete Functionality (Generic) ---
+        function autocomplete(inp, arr, listContainer, onSelectCallback) {
+            let currentFocus;
+
+            inp.addEventListener("input", function(e) {
+                let a, b, i, val = this.value;
+                closeAllLists();
+                if (!val) { return false;}
+                currentFocus = -1;
+                a = document.createElement("div");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                listContainer.appendChild(a);
+
+                for (i = 0; i < arr.length; i++) {
+                    if (arr[i].nama.toLowerCase().includes(val.toLowerCase())) {
+                        b = document.createElement("div");
+                        b.innerHTML = "<strong>" + arr[i].nama.substr(0, val.length) + "</strong>";
+                        b.innerHTML += arr[i].nama.substr(val.length);
+                        b.innerHTML += "<input type='hidden' value='" + arr[i].nama + "' data-id='" + arr[i].id + "'>";
+                        b.addEventListener("click", function(e) {
+                            const selectedName = this.getElementsByTagName("input")[0].value;
+                            const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
+                            inp.value = selectedName;
+                            const selectedItem = arr.find(item => item.id === selectedId);
+                            if (selectedItem) {
+                                onSelectCallback(selectedItem);
+                            }
+                            closeAllLists();
+                        });
+                        a.appendChild(b);
                     }
                 }
-                currentFocusProductName = currentFocus;
             });
 
-            function addActive(x, currentFcs) {
+            inp.addEventListener("keydown", function(e) {
+                let x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) { // DOWN key
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) { // UP key
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) { // ENTER key
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    } else {
+                        // If enter is pressed and no item is selected, treat as custom entry
+                        if (inp.id === 'productNameInput') {
+                            const customProduct = {
+                                id: 'custom-' + Date.now(), // Unique ID for custom product
+                                nama: inp.value,
+                                deskripsi: 'Produk custom', // Default description
+                                harga: 0, // Default price
+                                tersedia: true
+                            };
+                            onSelectCallback(customProduct); // Pass custom product
+                        } else if (inp.id === 'supplierNameOrderInput') {
+                             // If a supplier is typed but not selected from autocomplete, treat as new/unregistered supplier
+                             const newSupplier = {
+                                id: 'new-' + Date.now(), // Temporary ID
+                                nama: inp.value,
+                                kontak: '', // User can fill this later if needed
+                                alamat: ''
+                             };
+                             onSelectCallback(newSupplier);
+                        }
+                    }
+                }
+            });
+
+            function addActive(x) {
                 if (!x) return false;
                 removeActive(x);
-                if (currentFcs >= x.length) currentFcs = 0;
-                if (currentFcs < 0) currentFcs = (x.length - 1);
-                x[currentFcs].classList.add("autocomplete-active");
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
             }
 
             function removeActive(x) {
@@ -1085,489 +1422,235 @@
             }
 
             function closeAllLists(elmnt) {
-                const items = document.getElementsByClassName("autocomplete-items");
-                for (let item of items) {
-                    if (elmnt != item && elmnt != inp) item.parentNode.removeChild(item);
+                const x = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
                 }
             }
-            document.addEventListener("click", function (e) { closeAllLists(e.target); });
+
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
         }
 
-        // --- Load Product Suggestions for Autocomplete (for Supplier Order Panel) ---
-        async function loadProductSuggestions() {
-            try {
-                const snapshot = await produkCollection.orderBy('nama').get();
-                productSuggestions = [];
-                snapshot.forEach(doc => {
-                    const product = doc.data();
-                    if (product.nama) {
-                        productSuggestions.push(product.nama);
-                    }
-                });
-                autocomplete(productNameInput, productSuggestions);
-            } catch (error) {
-                console.error("Error loading product suggestions:", error);
-                await showCustomAlert("Gagal memuat daftar produk untuk saran.");
-            }
+        // --- Setup Autocomplete for Product and Supplier Order Input ---
+        function setupProductAutocomplete() {
+            autocomplete(productNameInput, allProducts, productNameAutocompleteList, (selectedProduct) => {
+                productNameInput.value = selectedProduct.nama;
+                // No need to store selected product for order, as it's added to orderItems
+            });
         }
 
-        // --- Order List Management (for Supplier Order Panel) ---
-        function renderOrderList() {
-            orderItemsTableBody.innerHTML = '';
-            if (orderList.length === 0) {
-                emptyOrderItemsMessage.style.display = 'block';
+        function setupSupplierAutocomplete() {
+            autocomplete(supplierNameOrderInput, allSuppliers, supplierNameOrderAutocompleteList, (selectedSupplier) => {
+                currentSelectedSupplier = selectedSupplier;
+                supplierNameOrderInput.value = selectedSupplier.nama; // Ensure input shows selected name
+                updateSupplierInfoDisplay();
+                enableOrderButtons();
+                // Clear existing order items if a new supplier is selected
+                orderItems = [];
+                renderOrderItems();
+            });
+        }
+
+        function updateSupplierInfoDisplay() {
+            if (currentSelectedSupplier) {
+                supplierInfoDiv.innerHTML = `
+                    <strong>Supplier:</strong> ${currentSelectedSupplier.nama}<br>
+                    <strong>Kontak:</strong> ${currentSelectedSupplier.kontak || 'N/A'}<br>
+                    <strong>Alamat:</strong> ${currentSelectedSupplier.alamat || 'N/A'}
+                `;
             } else {
-                emptyOrderItemsMessage.style.display = 'none';
-                orderList.forEach((item, index) => {
-                    const row = orderItemsTableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${item.name}</td>
-                        <td>${item.quantity}</td>
-                        <td><button class="delete-item-btn" data-index="${index}">Hapus</button></td>
-                    `;
-                });
-                // Attach event listeners for delete buttons
-                document.querySelectorAll('.delete-item-btn').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const indexToDelete = parseInt(this.dataset.index);
-                        deleteOrderItem(indexToDelete);
-                    });
-                });
+                supplierInfoDiv.textContent = 'Pilih supplier untuk memulai pesanan.';
             }
         }
 
-        async function addOrderItem() {
-            const productName = productNameInput.value.trim();
-            const quantity = quantityInput.value.trim();
+        function enableOrderButtons() {
+            const isDisabled = currentSelectedSupplier === null;
+            tambahProdukBtn.disabled = isDisabled;
+            clearAllBtn.disabled = isDisabled;
+            kirimWhatsAppBtn.disabled = isDisabled;
+        }
 
-            if (!productName || !quantity) {
-                await showCustomAlert("Nama produk dan jumlah tidak boleh kosong.");
+        // --- Supplier Order Panel Functions ---
+        function renderOrderItems() {
+            orderItemsTableBody.innerHTML = '';
+            if (orderItems.length === 0) {
+                emptyOrderItemsMessage.style.display = 'block';
+                return;
+            }
+            emptyOrderItemsMessage.style.display = 'none';
+
+            orderItems.forEach((item, index) => {
+                const row = orderItemsTableBody.insertRow();
+                row.setAttribute('data-index', index); // Store index for editing/deleting
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="editable-product-name">${item.namaProduk}</td>
+                    <td class="editable-quantity">${item.jumlah}</td>
+                    <td>
+                        <button class="edit-item-btn">Edit</button>
+                        <button class="delete-item-btn">Hapus</button>
+                    </td>
+                `;
+
+                const editButton = row.querySelector('.edit-item-btn');
+                const deleteButton = row.querySelector('.delete-item-btn');
+
+                editButton.addEventListener('click', () => toggleEditMode(row, item));
+                deleteButton.addEventListener('click', () => deleteOrderItem(index));
+            });
+        }
+
+        function toggleEditMode(row, item) {
+            const productNameCell = row.querySelector('.editable-product-name');
+            const quantityCell = row.querySelector('.editable-quantity');
+            const actionsCell = row.querySelector('td:last-child');
+
+            if (row.classList.contains('editing')) {
+                // Save mode
+                const newProductName = productNameCell.querySelector('input').value;
+                const newQuantity = quantityCell.querySelector('input').value;
+
+                if (!newProductName || !newQuantity) {
+                    showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
+                    return;
+                }
+
+                item.namaProduk = newProductName;
+                item.jumlah = newQuantity;
+                renderOrderItems(); // Re-render the whole table to update
+                row.classList.remove('editing');
+            } else {
+                // Edit mode
+                row.classList.add('editing');
+
+                // Store original values for cancel
+                row.dataset.originalProductName = item.namaProduk;
+                row.dataset.originalQuantity = item.jumlah;
+
+                productNameCell.innerHTML = `<input type="text" value="${item.namaProduk}">`;
+                quantityCell.innerHTML = `<input type="text" value="${item.jumlah}">`;
+                
+                actionsCell.innerHTML = `
+                    <button class="save-item-btn">Simpan</button>
+                    <button class="cancel-edit-btn">Batal</button>
+                `;
+
+                row.querySelector('.save-item-btn').addEventListener('click', () => toggleEditMode(row, item));
+                row.querySelector('.cancel-edit-btn').addEventListener('click', () => cancelEditMode(row, item));
+            }
+        }
+
+        function cancelEditMode(row, item) {
+            row.classList.remove('editing');
+            // Restore original values
+            item.namaProduk = row.dataset.originalProductName;
+            item.jumlah = row.dataset.originalQuantity;
+            renderOrderItems(); // Re-render to show original values
+        }
+
+        function addOrderItem() {
+            if (!currentSelectedSupplier) {
+                showAlert("Silakan pilih supplier terlebih dahulu.");
                 return;
             }
 
-            orderList.push({ name: productName, quantity: quantity });
+            const productName = productNameInput.value.trim();
+            const quantity = quantityInput.value.trim();
+
+            if (productName === '' || quantity === '') {
+                showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
+                return;
+            }
+
+            orderItems.push({ namaProduk: productName, jumlah: quantity });
+            renderOrderItems();
             productNameInput.value = '';
             quantityInput.value = '';
-            renderOrderList();
+            productNameInput.focus();
         }
 
         async function deleteOrderItem(index) {
-            const confirmDelete = await showCustomConfirm(`Yakin ingin menghapus item "${orderList[index].name}"?`);
+            const confirmDelete = await showConfirm("Apakah Anda yakin ingin menghapus item ini?");
             if (confirmDelete) {
-                orderList.splice(index, 1);
-                renderOrderList();
+                orderItems.splice(index, 1);
+                renderOrderItems();
+                showAlert("Item berhasil dihapus.");
             }
         }
 
         async function clearAllOrderItems() {
-            if (orderList.length === 0) {
-                await showCustomAlert("Daftar pesanan sudah kosong.");
+            if (orderItems.length === 0) {
+                showAlert("Daftar pesanan sudah kosong.");
                 return;
             }
-            const confirmClear = await showCustomConfirm("Yakin ingin menghapus semua item dari daftar pesanan?");
+            const confirmClear = await showConfirm("Apakah Anda yakin ingin menghapus semua item pesanan?");
             if (confirmClear) {
-                orderList = [];
-                renderOrderList();
+                orderItems = [];
+                renderOrderItems();
+                showAlert("Semua item pesanan berhasil dihapus.");
             }
         }
 
-        // --- WhatsApp Integration (for Supplier Order Panel) ---
-        async function kirimWhatsAppOrder() {
-            if (orderList.length === 0) {
-                await showCustomAlert("Daftar pesanan kosong. Tambahkan produk terlebih dahulu.");
+        function generateWhatsAppMessage() {
+            if (!currentSelectedSupplier) {
+                showAlert("Silakan pilih supplier terlebih dahulu.");
+                return '';
+            }
+            if (orderItems.length === 0) {
+                showAlert("Daftar pesanan masih kosong. Tambahkan produk terlebih dahulu.");
+                return '';
+            }
+
+            let message = `*Pesanan untuk Supplier: ${currentSelectedSupplier.nama}*\n`;
+            message += `_Kontak: ${currentSelectedSupplier.kontak || 'Tidak ada kontak'}_ \n\n`;
+            message += `Halo ${currentSelectedSupplier.nama},\nSaya ingin memesan beberapa produk:\n\n`;
+
+            orderItems.forEach((item, index) => {
+                message += `${index + 1}. ${item.namaProduk} - ${item.jumlah}\n`;
+            });
+
+            message += `\nMohon konfirmasi ketersediaan dan total harga. Terima kasih!`;
+            return encodeURIComponent(message);
+        }
+
+        function sendWhatsAppOrder() {
+            const message = generateWhatsAppMessage();
+            if (message === '') return; // Message already handled by showAlert
+
+            const whatsappNumber = currentSelectedSupplier.kontak.replace(/\D/g, ''); // Remove non-digits
+            if (!whatsappNumber) {
+                showAlert("Nomor WhatsApp supplier tidak tersedia.");
                 return;
             }
 
-            const now = new Date();
-            const tanggal = now.toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' });
-            const jam = now.toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            let pesan = `📝 *Daftar Pesanan Barang ke Supplier*
-📅 ${tanggal} - 🕒 ${jam}
-
-Kepada Yth. Supplier *${supplierInfoDiv.textContent.replace('Untuk Supplier: ', '').toUpperCase()}*,
-Berikut adalah daftar pesanan barang dari kami:
-
-🛒 *DAFTAR PRODUK:*
-`;
-            orderList.forEach((item, index) => {
-                pesan += `${index + 1}. ${item.name} (${item.quantity})\n`;
-            });
-
-            pesan += `\nMohon konfirmasi ketersediaan dan total harga.
-Terima kasih atas kerja samanya.
-
-_Pesan ini dikirim otomatis oleh sistem RUJAK BUAH INDONESIA_`;
-
-            // Note: In a real scenario, you'd get the supplier's phone number from a selected supplier.
-            // For this combined page, we assume a generic WhatsApp link or manual input/selection.
-            // For now, it opens a generic WhatsApp chat.
-            const url = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
-            window.open(url, "_blank");
-        }
-
-        // --- Product Management Logic ---
-
-        // Load menu items from Firestore
-        async function loadProducts() {
-            productListDiv.innerHTML = '<p class="menu-loading-message">Memuat daftar produk...</p>';
-            try {
-                const snapshot = await produkCollection.orderBy('nama').get();
-                allProductsData = [];
-                snapshot.forEach(doc => {
-                    allProductsData.push({ id: doc.id, ...doc.data() });
-                });
-                renderProducts(allProductsData);
-            } catch (error) {
-                console.error("Error loading products:", error);
-                await showCustomAlert("Gagal memuat daftar produk.");
-                productListDiv.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat daftar produk. Coba refresh halaman.</p>';
-            }
-        }
-
-        // Render products based on filtered list (NO IMAGE DISPLAY)
-        function renderProducts(itemsToRender) {
-            productListDiv.innerHTML = '';
-            if (itemsToRender.length === 0) {
-                productListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada produk ditemukan.</p>';
-                return;
+            // Ensure the number starts with 62 for Indonesia
+            let formattedNumber = whatsappNumber;
+            if (formattedNumber.startsWith('0')) {
+                formattedNumber = '62' + formattedNumber.substring(1);
+            } else if (!formattedNumber.startsWith('62')) {
+                formattedNumber = '62' + formattedNumber;
             }
 
-            itemsToRender.forEach(product => {
-                const card = document.createElement('div');
-                card.classList.add('menu-item-card');
-                card.dataset.id = product.id;
-                card.innerHTML = `
-                    <div class="menu-item-details">
-                        <h3>${product.nama}</h3>
-                        <p class="price">${formatRupiah(product.harga)}</p>
-                    </div>
-                    <label class="item-toggle-switch">
-                        <input type="checkbox" data-id="${product.id}" ${product.isAvailable ? 'checked' : ''}>
-                        <span class="item-slider"></span>
-                    </label>
-                `;
-                productListDiv.appendChild(card);
-            });
-
-            // Attach event listeners for toggles
-            productListDiv.querySelectorAll('.item-toggle-switch input[type="checkbox"]').forEach(toggle => {
-                toggle.addEventListener('change', async (event) => {
-                    const id = event.target.dataset.id;
-                    const isAvailable = event.target.checked;
-                    showLoading();
-                    try {
-                        await produkCollection.doc(id).update({ isAvailable: isAvailable });
-                        await showCustomAlert(`Status produk diperbarui: ${isAvailable ? 'Tersedia' : 'Tidak Tersedia'}`);
-                    } catch (error) {
-                        console.error("Error updating product availability:", error);
-                        await showCustomAlert("Gagal memperbarui ketersediaan produk.");
-                        event.target.checked = !isAvailable; // Revert checkbox state on error
-                    } finally {
-                        hideLoading();
-                    }
-                });
-            });
-
-            // Attach event listeners for card clicks (edit product)
-            productListDiv.querySelectorAll('.menu-item-card').forEach(card => {
-                card.addEventListener('click', (event) => {
-                    // Prevent toggle click from triggering card click
-                    if (!event.target.closest('.item-toggle-switch')) {
-                        editProduct(card.dataset.id);
-                    }
-                });
-            });
+            const whatsappUrl = `https://wa.me/${formattedNumber}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
         }
 
-        // Show Add/Edit Product Form Modal
-        addTopProductBtn.addEventListener('click', () => {
-            showProductFormModal();
-        });
+        // --- Event Listeners for Supplier Order Panel ---
+        tambahProdukBtn.addEventListener('click', addOrderItem);
+        clearAllBtn.addEventListener('click', clearAllOrderItems);
+        kirimWhatsAppBtn.addEventListener('click', sendWhatsAppOrder);
 
-        function showProductFormModal(productData = null) {
-            productFormModal.style.display = 'flex';
-            // Reset form
-            productForm.reset();
-            productIdInput.value = '';
-            productNameInputModal.value = '';
-            productDescriptionInput.value = '';
-            productPriceInput.value = '';
-            productImageUrlInput.value = '';
-            productRatingInput.value = '4.5';
-            productDeliveryTimeInput.value = '15-30 menit';
-            productIsAvailableInput.checked = true;
-
-            productFormTitle.textContent = 'Tambah Produk Baru';
-            saveProductBtn.textContent = 'Simpan Produk';
-
-            if (productData) {
-                productIdInput.value = productData.id;
-                productNameInputModal.value = productData.nama;
-                productDescriptionInput.value = productData.deskripsi;
-                productPriceInput.value = productData.harga;
-                productImageUrlInput.value = productData.imageUrl;
-                productRatingInput.value = productData.rating;
-                productDeliveryTimeInput.value = productData.deliveryTime;
-                productIsAvailableInput.checked = productData.isAvailable;
-                productFormTitle.textContent = 'Edit Produk';
-                saveProductBtn.textContent = 'Update Produk';
-            }
-        }
-
-        // Edit Product (called from card click)
-        async function editProduct(id) {
-            showLoading();
-            try {
-                const doc = await produkCollection.doc(id).get();
-                if (doc.exists) {
-                    showProductFormModal({ id: doc.id, ...doc.data() });
-                } else {
-                    await showCustomAlert("Produk tidak ditemukan.");
-                }
-            } catch (error) {
-                console.error("Error fetching product for edit:", error);
-                await showCustomAlert("Gagal memuat data produk untuk diedit.");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Save Product Item
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = productIdInput.value;
-
-            const productData = {
-                nama: productNameInputModal.value,
-                deskripsi: productDescriptionInput.value,
-                harga: parseFloat(productPriceInput.value),
-                imageUrl: productImageUrlInput.value,
-                rating: parseFloat(productRatingInput.value),
-                deliveryTime: productDeliveryTimeInput.value,
-                isAvailable: productIsAvailableInput.checked,
-            };
-
-            showLoading();
-            try {
-                if (id) {
-                    await produkCollection.doc(id).update(productData);
-                    await showCustomAlert("Produk berhasil diperbarui!");
-                } else {
-                    await produkCollection.add(productData);
-                    await showCustomAlert("Produk berhasil ditambahkan!");
-                }
-                loadProducts(); // Reload product list
-                loadProductSuggestions(); // Reload suggestions for supplier order panel
-                productFormModal.style.display = 'none'; // Hide form
-            } catch (error) {
-                console.error("Error saving product:", error);
-                await showCustomAlert("Gagal menyimpan produk.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Cancel Product Form
-        cancelProductFormBtn.addEventListener('click', () => {
-            productFormModal.style.display = 'none';
-        });
-        closeProductFormModalBtn.addEventListener('click', () => {
-            productFormModal.style.display = 'none';
-        });
-
-        // --- Search Functionality (for Product Management Panel) ---
-        productSearchInput.addEventListener('input', applyProductSearchFilter);
-
-        function applyProductSearchFilter() {
-            const query = productSearchInput.value.toLowerCase().trim();
-            const filteredProducts = allProductsData.filter(product =>
-                product.nama.toLowerCase().includes(query) ||
-                (product.deskripsi && product.deskripsi.toLowerCase().includes(query))
-            );
-            renderProducts(filteredProducts);
-        }
-
-        // --- Supplier Management Logic ---
-
-        // Load suppliers from Firestore
-        async function loadSuppliers() {
-            supplierListDiv.innerHTML = '<p class="menu-loading-message">Memuat daftar supplier...</p>';
-            try {
-                const snapshot = await suppliersCollection.orderBy('nama').get();
-                allSuppliersData = [];
-                snapshot.forEach(doc => {
-                    allSuppliersData.push({ id: doc.id, ...doc.data() });
-                });
-                renderSuppliers(allSuppliersData);
-            } catch (error) {
-                console.error("Error loading suppliers:", error);
-                await showCustomAlert("Gagal memuat daftar supplier.");
-                supplierListDiv.innerHTML = '<p class="menu-loading-message" style="color: red;">Gagal memuat daftar supplier. Coba refresh halaman.</p>';
-            }
-        }
-
-        // Render suppliers based on filtered list
-        function renderSuppliers(itemsToRender) {
-            supplierListDiv.innerHTML = '';
-            if (itemsToRender.length === 0) {
-                supplierListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada supplier ditemukan.</p>';
-                return;
-            }
-
-            itemsToRender.forEach(supplier => {
-                const card = document.createElement('div');
-                card.classList.add('supplier-item-card');
-                card.dataset.id = supplier.id;
-                card.innerHTML = `
-                    <div class="supplier-item-details">
-                        <h3>${supplier.nama}</h3>
-                        <p>Kontak: ${supplier.kontak}</p>
-                        <p>Alamat: ${supplier.alamat}</p>
-                    </div>
-                `;
-                supplierListDiv.appendChild(card);
-            });
-
-            // Attach event listeners for card clicks (edit supplier)
-            supplierListDiv.querySelectorAll('.supplier-item-card').forEach(card => {
-                card.addEventListener('click', (event) => {
-                    editSupplier(card.dataset.id);
-                });
-            });
-        }
-
-        // Show Add/Edit Supplier Form Modal
-        addTopSupplierBtn.addEventListener('click', () => {
-            showSupplierFormModal();
-        });
-
-        function showSupplierFormModal(supplierData = null) {
-            supplierFormModal.style.display = 'flex';
-            // Reset form
-            supplierForm.reset();
-            supplierIdInput.value = '';
-            supplierNameInputModal.value = '';
-            supplierContactInput.value = '';
-            supplierAddressInput.value = '';
-
-            supplierFormTitle.textContent = 'Tambah Supplier Baru';
-            saveSupplierBtn.textContent = 'Simpan Supplier';
-
-            if (supplierData) {
-                supplierIdInput.value = supplierData.id;
-                supplierNameInputModal.value = supplierData.nama;
-                supplierContactInput.value = supplierData.kontak;
-                supplierAddressInput.value = supplierData.alamat;
-                supplierFormTitle.textContent = 'Edit Supplier';
-                saveSupplierBtn.textContent = 'Update Supplier';
-            }
-        }
-
-        // Edit Supplier (called from card click)
-        async function editSupplier(id) {
-            showLoading();
-            try {
-                const doc = await suppliersCollection.doc(id).get();
-                if (doc.exists) {
-                    showSupplierFormModal({ id: doc.id, ...doc.data() });
-                } else {
-                    await showCustomAlert("Supplier tidak ditemukan.");
-                }
-            } catch (error) {
-                console.error("Error fetching supplier for edit:", error);
-                await showCustomAlert("Gagal memuat data supplier untuk diedit.");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Save Supplier Item
-        supplierForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = supplierIdInput.value;
-
-            const supplierData = {
-                nama: supplierNameInputModal.value,
-                kontak: supplierContactInput.value,
-                alamat: supplierAddressInput.value,
-            };
-
-            showLoading();
-            try {
-                if (id) {
-                    await suppliersCollection.doc(id).update(supplierData);
-                    await showCustomAlert("Supplier berhasil diperbarui!");
-                } else {
-                    await suppliersCollection.add(supplierData);
-                    await showCustomAlert("Supplier berhasil ditambahkan!");
-                }
-                loadSuppliers(); // Reload supplier list
-                supplierFormModal.style.display = 'none'; // Hide form
-            } catch (error) {
-                console.error("Error saving supplier:", error);
-                await showCustomAlert("Gagal menyimpan supplier.");
-            } finally {
-                hideLoading();
-            }
-        });
-
-        // Cancel Supplier Form
-        cancelSupplierFormBtn.addEventListener('click', () => {
-            supplierFormModal.style.display = 'none';
-        });
-        closeSupplierFormModalBtn.addEventListener('click', () => {
-            supplierFormModal.style.display = 'none';
-        });
-
-        // --- Search Functionality (for Supplier Management Panel) ---
-        supplierSearchInput.addEventListener('input', applySupplierSearchFilter);
-
-        function applySupplierSearchFilter() {
-            const query = supplierSearchInput.value.toLowerCase().trim();
-            const filteredSuppliers = allSuppliersData.filter(supplier =>
-                supplier.nama.toLowerCase().includes(query) ||
-                supplier.kontak.toLowerCase().includes(query) ||
-                supplier.alamat.toLowerCase().includes(query)
-            );
-            renderSuppliers(filteredSuppliers);
-        }
-
-        // --- Page Initialization ---
+        // Initial setup on page load
         document.addEventListener('DOMContentLoaded', () => {
-            // Set a dummy supplier name for the combined page for now
-            supplierInfoDiv.textContent = `Untuk Supplier: [Pilih Supplier]`;
-
-            // Event listeners for Supplier Order Panel
-            tambahProdukBtn.addEventListener('click', addOrderItem);
-            clearAllBtn.addEventListener('click', clearAllOrderItems);
-            kirimWhatsAppBtn.addEventListener('click', kirimWhatsAppOrder);
-            productNameInput.addEventListener("keydown", e => { if (e.key === "Enter") quantityInput.focus(); });
-            quantityInput.addEventListener("keydown", e => { if (e.key === "Enter") addOrderItem(); });
-
-            // Authentication Check
-            auth.onAuthStateChanged(user => {
-                const storedRole = localStorage.getItem('userRole');
-                const isLoggingOut = localStorage.getItem('isLoggingOut');
-
-                if (isLoggingOut) {
-                    localStorage.removeItem('isLoggingOut');
-                }
-
-                if (!user || storedRole !== 'penjual') { // Only 'penjual' (seller) can access this
-                    if (!isLoggingOut) {
-                        alert('Akses Ditolak: Halaman ini hanya untuk PENJUAL.');
-                    }
-                    window.location.href = 'index.html'; // Redirect to login page
-                } else {
-                    currentUserId = user.uid;
-                    loadProductSuggestions(); // Load products for autocomplete in supplier order panel
-                    renderOrderList(); // Render empty order list initially
-                    loadProducts(); // Load products for management panel
-                    loadSuppliers(); // Load suppliers for management panel
-                }
-            });
+            // Initial render of order items (should be empty)
+            renderOrderItems();
+            updateSupplierInfoDisplay(); // Show initial message
+            enableOrderButtons(); // Disable buttons initially
         });
     </script>
 </body>
