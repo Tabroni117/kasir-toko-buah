@@ -1350,19 +1350,18 @@
         });
 
         // --- Global Autocomplete Helper Function to close all lists ---
-        function closeAllLists(elmnt) {
+        function closeAllLists(exceptElement) {
             const x = document.getElementsByClassName("autocomplete-items");
             for (let i = 0; i < x.length; i++) {
-                // Ensure the clicked element is not the input field itself or part of the autocomplete list
-                if (elmnt != x[i] && elmnt != x[i].parentNode.querySelector('input')) {
-                    x[i].parentNode.removeChild(x[i]);
+                if (x[i] !== exceptElement) { // Clear content of all lists except the one specified
+                    x[i].innerHTML = '';
                 }
             }
         }
         document.addEventListener("click", function (e) {
-            // Close autocomplete lists if click is outside any autocomplete container
+            // Close all lists if click is outside any autocomplete container
             if (!e.target.closest('.autocomplete')) {
-                closeAllLists(e.target);
+                closeAllLists(null); // Pass null to clear all lists
             }
         });
 
@@ -1372,14 +1371,16 @@
             let currentFocus;
 
             inp.addEventListener("input", function(e) {
-                let a, b, i, val = this.value;
-                closeAllLists(); // Use the global closeAllLists
-                if (!val) { return false;} // If input is empty, don't show suggestions (dropdown arrow handles showing all)
+                let b, i, val = this.value;
+                listContainer.innerHTML = ''; // Clear the existing list container content
+                closeAllLists(listContainer); // Close other lists, but keep this one's container
+
+                if (!val) {
+                    // If input is empty, don't show suggestions via typing.
+                    // The dropdown arrow is for showing all.
+                    return false;
+                }
                 currentFocus = -1;
-                a = document.createElement("div");
-                a.setAttribute("id", this.id + "autocomplete-list");
-                a.setAttribute("class", "autocomplete-items");
-                listContainer.appendChild(a);
 
                 // Filter based on current input value (case-insensitive)
                 const itemsToFilter = arr.filter(item => item.nama.toLowerCase().includes(val.toLowerCase()));
@@ -1388,7 +1389,7 @@
                     const noResultsDiv = document.createElement("div");
                     noResultsDiv.classList.add("autocomplete-item");
                     noResultsDiv.textContent = "Tidak ada hasil.";
-                    a.appendChild(noResultsDiv);
+                    listContainer.appendChild(noResultsDiv);
                     return;
                 }
                 // Loop through filtered items and create autocomplete suggestions
@@ -1410,15 +1411,15 @@
                         if (selectedItem) {
                             onSelectCallback(selectedItem);
                         }
-                        closeAllLists();
+                        listContainer.innerHTML = ''; // Clear list after selection
                     });
-                    a.appendChild(b);
+                    listContainer.appendChild(b);
                 }
             });
 
             inp.addEventListener("keydown", function(e) {
-                let x = document.getElementById(this.id + "autocomplete-list");
-                if (x) x = x.getElementsByTagName("div");
+                let x = document.getElementById(this.id + "autocomplete-list"); // This ID is not correct anymore, should be listContainer
+                if (listContainer) x = listContainer.getElementsByTagName("div"); // Use listContainer directly
                 if (e.keyCode == 40) { // DOWN key
                     currentFocus++;
                     addActive(x);
@@ -1429,7 +1430,7 @@
                     e.preventDefault();
                     if (currentFocus > -1) {
                         // If an item is highlighted, click it
-                        if (x) x[currentFocus].click();
+                        if (x && x[currentFocus]) x[currentFocus].click(); // Check if x[currentFocus] exists
                     } else {
                         // If ENTER is pressed and no item is highlighted,
                         // check if the typed value exactly matches an existing item
@@ -1445,7 +1446,7 @@
                         if (matchedItem) {
                             // If an exact match is found, select it
                             onSelectCallback(matchedItem);
-                            closeAllLists();
+                            listContainer.innerHTML = ''; // Clear list after selection
                         } else {
                             // If no match, treat as custom entry (for product) or new/unregistered (for supplier)
                             if (this.id === 'productNameInput') {
@@ -1467,7 +1468,7 @@
                                  };
                                  onSelectCallback(newSupplier);
                             }
-                            closeAllLists(); // Close lists even if no match for the typed value
+                            listContainer.innerHTML = ''; // Clear list even if no match for the typed value
                         }
                     }
                 }
@@ -1490,13 +1491,8 @@
 
         // --- Function to display all items in autocomplete list (for dropdown arrow) ---
         function showAllAutocompleteItems(inp, arr, listContainer, onSelectCallback) {
-            let a, b, i;
-            closeAllLists(); // Close any existing lists
-
-            a = document.createElement("div");
-            a.setAttribute("id", inp.id + "autocomplete-list");
-            a.setAttribute("class", "autocomplete-items");
-            listContainer.appendChild(a);
+            listContainer.innerHTML = ''; // Clear the existing list container content
+            closeAllLists(listContainer); // Close other lists, but keep this one's container
 
             // Filter based on current input value if not empty, otherwise show all
             const val = inp.value.toLowerCase();
@@ -1506,12 +1502,12 @@
                 const noResultsDiv = document.createElement("div");
                 noResultsDiv.classList.add("autocomplete-item");
                 noResultsDiv.textContent = "Tidak ada hasil.";
-                a.appendChild(noResultsDiv);
+                listContainer.appendChild(noResultsDiv);
                 return;
             }
 
-            for (i = 0; i < itemsToShow.length; i++) {
-                b = document.createElement("div");
+            for (let i = 0; i < itemsToShow.length; i++) {
+                let b = document.createElement("div");
                 // Highlight logic (same as in original autocomplete)
                 const matchIndex = itemsToShow[i].nama.toLowerCase().indexOf(val);
                 const beforeMatch = itemsToShow[i].nama.substr(0, matchIndex);
@@ -1528,9 +1524,9 @@
                     if (selectedItem) {
                         onSelectCallback(selectedItem);
                     }
-                    closeAllLists();
+                    listContainer.innerHTML = ''; // Clear list after selection
                 });
-                a.appendChild(b);
+                listContainer.appendChild(b);
             }
         }
 
@@ -1797,7 +1793,7 @@
             enableOrderButtons(); // This will now correctly reflect the state of currentSelectedSupplier
         });
 
-        // New: Event listener for the dropdown arrowarrow
+        // New: Event listener for the dropdown arrow
         supplierDropdownArrow.addEventListener('click', () => {
             // Show all suppliers when the arrow is clicked, filtered by current input if any
             showAllAutocompleteItems(supplierNameOrderInput, allSuppliers, supplierNameOrderAutocompleteList, (selectedSupplier) => {
