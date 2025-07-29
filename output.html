@@ -56,7 +56,7 @@
         @media (min-width: 768px) {
             .main-container {
                 flex-direction: row; /* Side-by-side for larger screens */
-                align-items: flex-start; /* Align items to the top */
+                align-items: flex-start; /* Align items toto the top */
             }
             .panel {
                 flex: 1; /* Each panel takes equal width */
@@ -167,7 +167,23 @@
         }
         #supplierOrderPanel .autocomplete {
             position: relative;
+            display: flex; /* Added for dropdown arrow alignment */
+            align-items: center; /* Added for dropdown arrow alignment */
         }
+        #supplierOrderPanel .autocomplete input[type="text"] {
+            flex-grow: 1; /* Allow input to take available space */
+            margin-right: 5px; /* Space between input and dropdown arrow */
+        }
+        #supplierOrderPanel .dropdown-arrow-icon {
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 24px;
+            transition: color 0.2s;
+        }
+        #supplierOrderPanel .dropdown-arrow-icon:hover {
+            color: var(--primary-green);
+        }
+
         #supplierOrderPanel .autocomplete-items {
             position: absolute;
             border: 1px solid #d4d4d4;
@@ -725,6 +741,7 @@
                 <div class="autocomplete">
                     <input type="text" id="supplierNameOrderInput" placeholder="Cari atau masukkan nama supplier" autocomplete="off">
                     <div id="supplierNameOrderAutocompleteList" class="autocomplete-items"></div>
+                    <span class="material-icons dropdown-arrow-icon" id="supplierDropdownArrow">arrow_drop_down</span>
                 </div>
             </div>
             
@@ -938,6 +955,7 @@
         // --- DOM Elements - Supplier Order Panel ---
         const supplierNameOrderInput = document.getElementById('supplierNameOrderInput');
         const supplierNameOrderAutocompleteList = document.getElementById('supplierNameOrderAutocompleteList');
+        const supplierDropdownArrow = document.getElementById('supplierDropdownArrow'); // New: Dropdown arrow element
         const supplierInfoDiv = document.getElementById('supplierInfo');
         const productNameInput = document.getElementById('productNameInput');
         const productNameAutocompleteList = document.getElementById('productNameAutocompleteList');
@@ -1331,44 +1349,70 @@
             displaySuppliers(filteredSuppliers);
         });
 
-        // --- Autocomplete Functionality (Generic) ---
+        // --- Global Autocomplete Helper Function to close all lists ---
+        function closeAllLists(elmnt) {
+            const x = document.getElementsByClassName("autocomplete-items");
+            for (let i = 0; i < x.length; i++) {
+                // Ensure the clicked element is not the input field itself or part of the autocomplete list
+                if (elmnt != x[i] && elmnt != x[i].parentNode.querySelector('input')) {
+                    x[i].parentNode.removeChild(x[i]);
+                }
+            }
+        }
+        document.addEventListener("click", function (e) {
+            // Close autocomplete lists if click is outside any autocomplete container
+            if (!e.target.closest('.autocomplete')) {
+                closeAllLists(e.target);
+            }
+        });
+
+
+        // --- Autocomplete Functionality (Generic, for typing) ---
         function autocomplete(inp, arr, listContainer, onSelectCallback) {
             let currentFocus;
 
             inp.addEventListener("input", function(e) {
                 let a, b, i, val = this.value;
-                closeAllLists();
-                if (!val) { return false;}
+                closeAllLists(); // Use the global closeAllLists
+                if (!val) { return false;} // If input is empty, don't show suggestions (dropdown arrow handles showing all)
                 currentFocus = -1;
                 a = document.createElement("div");
                 a.setAttribute("id", this.id + "autocomplete-list");
                 a.setAttribute("class", "autocomplete-items");
                 listContainer.appendChild(a);
 
-                for (i = 0; i < arr.length; i++) {
-                    // Check if the item's name includes the input value (case-insensitive)
-                    if (arr[i].nama.toLowerCase().includes(val.toLowerCase())) {
-                        b = document.createElement("div");
-                        // Highlight the matching part
-                        const matchIndex = arr[i].nama.toLowerCase().indexOf(val.toLowerCase());
-                        const beforeMatch = arr[i].nama.substr(0, matchIndex);
-                        const matchText = arr[i].nama.substr(matchIndex, val.length);
-                        const afterMatch = arr[i].nama.substr(matchIndex + val.length);
+                // Filter based on current input value (case-insensitive)
+                const itemsToFilter = arr.filter(item => item.nama.toLowerCase().includes(val.toLowerCase()));
 
-                        b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
-                        b.innerHTML += "<input type='hidden' value='" + arr[i].nama + "' data-id='" + arr[i].id + "'>";
-                        b.addEventListener("click", function(e) {
-                            const selectedName = this.getElementsByTagName("input")[0].value;
-                            const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
-                            inp.value = selectedName;
-                            const selectedItem = arr.find(item => item.id === selectedId);
-                            if (selectedItem) {
-                                onSelectCallback(selectedItem);
-                            }
-                            closeAllLists();
-                        });
-                        a.appendChild(b);
-                    }
+                if (itemsToFilter.length === 0) {
+                    const noResultsDiv = document.createElement("div");
+                    noResultsDiv.classList.add("autocomplete-item");
+                    noResultsDiv.textContent = "Tidak ada hasil.";
+                    a.appendChild(noResultsDiv);
+                    return;
+                }
+
+                for (i = 0; i < itemsToFilter.length; i++) {
+                    b = document.createElement("div");
+                    // Highlight the matching part
+                    const matchIndex = itemsToFilter[i].nama.toLowerCase().indexOf(val.toLowerCase());
+                    const beforeMatch = itemsToFilter[i].nama.substr(0, matchIndex);
+                    const matchText = itemsToFilter[i].nama.substr(matchIndex, val.length);
+                    const afterMatch = itemsToFilter[i].nama.substr(matchIndex + val.length);
+
+                    b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
+                    b.innerHTML += "<input type='hidden' value='" + itemsToFilter[i].nama + "' data-id='" + itemsToFilter[i].id + "'>";
+                    b.addEventListener("click", function(e) {
+                        const selectedName = this.getElementsByTagName("input")[0].value;
+                        const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
+                        inp.value = selectedName;
+                        const selectedItem = arr.find(item => item.id === selectedId);
+                        if (selectedItem) {
+                            onSelectCallback(selectedItem);
+                        }
+                        closeAllLists();
+                    });
+                    a.appendChild(b);
                 }
             });
 
@@ -1416,7 +1460,7 @@
                             } else if (this.id === 'supplierNameOrderInput') {
                                  // If a supplier is typed but not selected from autocomplete, treat as new/unregistered supplier
                                  const newSupplier = {
-                                    id: 'new-' + Date.now(), // Temporary ID
+                                    id: 'temp-' + Date.now(), // Temporary ID
                                     nama: this.value,
                                     kontak: '', // User can fill this later if needed
                                     alamat: ''
@@ -1442,20 +1486,54 @@
                     x[i].classList.remove("autocomplete-active");
                 }
             }
+        }
 
-            function closeAllLists(elmnt) {
-                const x = document.getElementsByClassName("autocomplete-items");
-                for (let i = 0; i < x.length; i++) {
-                    if (elmnt != x[i] && elmnt != inp) {
-                        x[i].parentNode.removeChild(x[i]);
-                    }
-                }
+        // --- Function to display all items in autocomplete list (for dropdown arrow) ---
+        function showAllAutocompleteItems(inp, arr, listContainer, onSelectCallback) {
+            let a, b, i;
+            closeAllLists(); // Close any existing lists
+
+            a = document.createElement("div");
+            a.setAttribute("id", inp.id + "autocomplete-list");
+            a.setAttribute("class", "autocomplete-items");
+            listContainer.appendChild(a);
+
+            // Filter based on current input value if not empty, otherwise show all
+            const val = inp.value.toLowerCase();
+            const itemsToShow = val ? arr.filter(item => item.nama.toLowerCase().includes(val)) : arr;
+
+            if (itemsToShow.length === 0) {
+                const noResultsDiv = document.createElement("div");
+                noResultsDiv.classList.add("autocomplete-item");
+                noResultsDiv.textContent = "Tidak ada hasil.";
+                a.appendChild(noResultsDiv);
+                return;
             }
 
-            document.addEventListener("click", function (e) {
-                closeAllLists(e.target);
-            });
+            for (i = 0; i < itemsToShow.length; i++) {
+                b = document.createElement("div");
+                // Highlight logic (same as in original autocomplete)
+                const matchIndex = itemsToShow[i].nama.toLowerCase().indexOf(val);
+                const beforeMatch = itemsToShow[i].nama.substr(0, matchIndex);
+                const matchText = itemsToShow[i].nama.substr(matchIndex, val.length);
+                const afterMatch = itemsToShow[i].nama.substr(matchIndex + val.length);
+
+                b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
+                b.innerHTML += "<input type='hidden' value='" + itemsToShow[i].nama + "' data-id='" + itemsToShow[i].id + "'>";
+                b.addEventListener("click", function(e) {
+                    const selectedName = this.getElementsByTagName("input")[0].value;
+                    const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
+                    inp.value = selectedName;
+                    const selectedItem = arr.find(item => item.id === selectedId);
+                    if (selectedItem) {
+                        onSelectCallback(selectedItem);
+                    }
+                    closeAllLists();
+                });
+                a.appendChild(b);
+            }
         }
+
 
         // --- Setup Autocomplete for Product and Supplier Order Input ---
         function setupProductAutocomplete() {
@@ -1493,7 +1571,6 @@
                     `;
                 }
             } else if (supplierNameOrderInput.value.trim() !== '') {
-                // If text is in the input but no registered supplier is selected
                 // This case should now be handled by the input event listener setting currentSelectedSupplier to a temp object
                 // But as a fallback, display the typed name
                 supplierInfoDiv.innerHTML = `
@@ -1696,7 +1773,7 @@
         clearAllBtn.addEventListener('click', clearAllOrderItems);
         kirimWhatsAppBtn.addEventListener('click', sendWhatsAppOrder);
 
-        // Crucial: New logic for supplierNameOrderInput 'input' event
+        // Crucial: Logic for supplierNameOrderInput 'input' event
         supplierNameOrderInput.addEventListener('input', () => {
             const typedName = supplierNameOrderInput.value.trim();
             if (typedName === '') {
@@ -1718,6 +1795,19 @@
             }
             updateSupplierInfoDisplay();
             enableOrderButtons(); // This will now correctly reflect the state of currentSelectedSupplier
+        });
+
+        // New: Event listener for the dropdown arrow
+        supplierDropdownArrow.addEventListener('click', () => {
+            // Show all suppliers when the arrow is clicked, filtered by current input if any
+            showAllAutocompleteItems(supplierNameOrderInput, allSuppliers, supplierNameOrderAutocompleteList, (selectedSupplier) => {
+                currentSelectedSupplier = selectedSupplier;
+                supplierNameOrderInput.value = selectedSupplier.nama;
+                updateSupplierInfoDisplay();
+                enableOrderButtons();
+                orderItems = []; // Clear existing order items if a new supplier is selected via dropdown
+                renderOrderItems();
+            });
         });
 
 
