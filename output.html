@@ -1389,23 +1389,17 @@
                 // Filter based on current input value (case-insensitive)
                 const itemsToFilter = arr.filter(item => item.nama.toLowerCase().includes(val.toLowerCase()));
 
-                // Create a temporary div to hold the autocomplete items for this input
-                // This div will be appended to the listContainer
-                const a = document.createElement("div");
-                a.setAttribute("id", this.id + "autocomplete-list"); // Unique ID for this list
-                a.setAttribute("class", "autocomplete-items");
-                listContainer.appendChild(a); // CRITICAL: Append the list container to the DOM
-
                 if (itemsToFilter.length === 0) {
                     const noResultsDiv = document.createElement("div");
                     noResultsDiv.classList.add("autocomplete-item");
                     noResultsDiv.textContent = "Tidak ada hasil.";
-                    a.appendChild(noResultsDiv); // Append to 'a' (the list container)
+                    listContainer.appendChild(noResultsDiv); // Append directly to listContainer
                     return;
                 }
                 // Loop through filtered items and create autocomplete suggestions
                 for (i = 0; i < itemsToFilter.length; i++) {
                     b = document.createElement("div");
+                    b.classList.add("autocomplete-item"); // Add class for styling
                     // Highlight the matching part
                     const matchIndex = itemsToFilter[i].nama.toLowerCase().indexOf(val.toLowerCase());
                     const beforeMatch = itemsToFilter[i].nama.substr(0, matchIndex);
@@ -1424,13 +1418,12 @@
                         }
                         listContainer.innerHTML = ''; // Clear list after selection
                     });
-                    a.appendChild(b); // Append to 'a' (the list container)
+                    listContainer.appendChild(b); // Append directly to listContainer
                 }
             });
 
             inp.addEventListener("keydown", function(e) {
-                let x = listContainer.querySelector('.autocomplete-items'); // Get the actual list element
-                if (x) x = x.getElementsByTagName("div");
+                let x = listContainer.getElementsByTagName("div"); // Get all child divs (autocomplete items)
                 if (e.keyCode == 40) { // DOWN key
                     currentFocus++;
                     addActive(x);
@@ -1509,22 +1502,17 @@
             const val = inp.value.toLowerCase();
             const itemsToShow = val ? arr.filter(item => item.nama.toLowerCase().includes(val)) : arr;
 
-            // Create a temporary div to hold the autocomplete items for this input
-            const a = document.createElement("div");
-            a.setAttribute("id", inp.id + "autocomplete-list"); // Unique ID for this list
-            a.setAttribute("class", "autocomplete-items");
-            listContainer.appendChild(a); // CRITICAL: Append the list container to the DOM
-
             if (itemsToShow.length === 0) {
                 const noResultsDiv = document.createElement("div");
                 noResultsDiv.classList.add("autocomplete-item");
                 noResultsDiv.textContent = "Tidak ada hasil.";
-                a.appendChild(noResultsDiv); // Append to 'a' (the list container)
+                listContainer.appendChild(noResultsDiv); // Append directly to listContainer
                 return;
             }
 
             for (let i = 0; i < itemsToShow.length; i++) {
                 let b = document.createElement("div");
+                b.classList.add("autocomplete-item"); // Add class for styling
                 // Highlight logic (same as in original autocomplete)
                 const matchIndex = itemsToShow[i].nama.toLowerCase().indexOf(val);
                 const beforeMatch = itemsToShow[i].nama.substr(0, matchIndex);
@@ -1543,7 +1531,7 @@
                     }
                     listContainer.innerHTML = ''; // Clear list after selection
                 });
-                a.appendChild(b); // Append to 'a' (the list container)
+                listContainer.appendChild(b); // Append directly to listContainer
             }
         }
 
