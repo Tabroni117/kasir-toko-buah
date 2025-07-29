@@ -1,1824 +1,2290 @@
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penjual: Pesanan & Produk & Supplier</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Penjual: Pesanan & Produk & Supplier</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <style>
+    :root {
+      --primary-green: #4CAF50;
+      --primary-green-dark: #388E3C;
+      --primary-green-light: #E8F5E9;
+      --secondary-green: #81C784;
+      --accent-orange: #FF9800;
+      --text-dark: #212121;
+      --text-light: #757575;
+      --bg-light: #f5f7fa;
+      --bg-white: #ffffff;
+      --border-color: #e0e0e0;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+      --success: #4CAF50;
+      --warning: #FF9800;
+      --error: #F44336;
+      --info: #2196F3;
+      --transition: all 0.3s ease;
+    }
 
-    <!-- Firebase SDK v9 Compatibility -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-    <style>
-        /* General Styling */
-        :root {
-            --primary-green: #4CAF50;
-            --dark-green: #388E3C;
-            --light-green: #8BC34A;
-            --text-dark: #333;
-            --text-light: #777;
-            --border-color: #ddd;
-            --bg-light: #f4f7f6;
-            --card-bg: #ffffff;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-            --shadow-medium: rgba(0, 0, 0, 0.15);
-        }
+    body {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-light);
-            margin: 0;
-            padding: 0;
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            min-height: 10vh; /* Changed from 100vh to 10vh to make it scrollable on smaller screens */
-            align-items: center; /* Center content horizontally */
-        }
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-        .main-container {
-            width: 100%;
-            max-width: 960px; /* Maximum width for two columns */
-            display: flex;
-            flex-direction: column; /* Default stack vertically for small screens */
-            gap: 20px;
-            padding: 20px;
-            box-sizing: border-box;
-            flex-grow: 1; /* Allow main container to take available space */
-            margin: 0 auto; /* Center the main container */
-        }
+    /* Header Styles */
+    .app-header-combined {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-        /* Responsive layout for wider screens */
-        @media (min-width: 768px) {
-            .main-container {
-                flex-direction: row; /* Side-by-side for larger screens */
-                align-items: flex-start; /* Align items to the top */
-            }
-            .panel {
-                flex: 1; /* Each panel takes equal width */
-                min-width: 450px; /* Minimum width for each panel */
-            }
-        }
+    .app-header-combined h1 {
+      font-size: 1.8rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+    }
 
-        .panel {
-            background-color: var(--card-bg);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box;
-        }
+    .app-header-combined .leaf-icon {
+      margin-right: 12px;
+      font-size: 2rem;
+    }
 
-        h2 {
-            text-align: center;
-            color: var(--primary-green);
-            margin-bottom: 25px;
-            font-size: 24px;
-            font-weight: 600;
-        }
+    .app-header-combined .logout-button {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        h3 { /* For sub-sections like "Daftar Produk" and "Daftar Supplier" */
-            color: var(--dark-green);
-            margin-top: 25px;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            border-bottom: 2px solid var(--light-green);
-            padding-bottom: 5px;
-        }
+    .app-header-combined .logout-button:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
 
-        /* Header for the combined page */
-        .app-header-combined {
-            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-            color: white;
-            padding: 15px 20px;
-            box-shadow: 0 2px 5px var(--shadow-medium);
-            border-bottom-left-radius: 25px;
-            border-bottom-right-radius: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-shrink: 0; /* Prevent header from shrinking */
-            max-width: 960px; /* Match main-container max-width */
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .app-header-combined h1 {
-            font-size: 20px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            font-weight: 600;
-        }
-        .app-header-combined .leaf-icon {
-            margin-right: 10px;
-            font-size: 24px;
-        }
-        .app-header-combined .logout-button {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s, border-color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-        .app-header-combined .logout-button:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.6);
-        }
+    /* Main Content */
+    .main-content {
+      display: flex;
+      flex: 1;
+      padding: 25px;
+      gap: 25px;
+    }
 
-        /* Supplier Order Panel Styles */
-        #supplierOrderPanel .supplier-info {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-            color: #555;
-            font-weight: bold;
-            min-height: 25px; /* Ensure space even when empty */
-        }
-        #supplierOrderPanel .form-group {
-            margin-bottom: 15px;
-        }
-        #supplierOrderPanel .form-group label {
-            display: block;
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        #supplierOrderPanel input[type="text"],
-        #supplierOrderPanel input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        #supplierOrderPanel .autocomplete {
-            position: relative;
-            display: flex; /* Added for dropdown arrow alignment */
-            align-items: center; /* Added for dropdown arrow alignment */
-        }
-        #supplierOrderPanel .autocomplete input[type="text"] {
-            flex-grow: 1; /* Allow input to take available space */
-            margin-right: 5px; /* Space between input and dropdown arrow */
-        }
-        #supplierOrderPanel .dropdown-arrow-icon {
-            cursor: pointer;
-            color: var(--text-light);
-            font-size: 24px;
-            transition: color 0.2s;
-        }
-        #supplierOrderPanel .dropdown-arrow-icon:hover {
-            color: var(--primary-green);
-        }
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 280px;
+      background-color: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      padding: 25px 0;
+      height: fit-content;
+      position: sticky;
+      top: 90px;
+    }
 
-        #supplierOrderPanel .autocomplete-items {
-            position: absolute;
-            border: 1px solid #d4d4d4;
-            background-color: #fff;
-            z-index: 99;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 150px;
-            overflow-y: auto;
-            border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        #supplierOrderPanel .autocomplete-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-            color: #333;
-        }
-        #supplierOrderPanel .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-        #supplierOrderPanel .autocomplete-item:hover, #supplierOrderPanel .autocomplete-active {
-            background-color: #e9e9e9;
-        }
-        #supplierOrderPanel .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        #supplierOrderPanel .button-group button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-        #supplierOrderPanel #tambahProdukBtn {
-            background-color: var(--primary-green);
-            color: white;
-        }
-        #supplierOrderPanel #tambahProdukBtn:hover {
-            background-color: var(--dark-green);
-            transform: translateY(-2px);
-        }
-        #supplierOrderPanel #tambahProdukBtn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #supplierOrderPanel #clearAllBtn {
-            background-color: #f44336;
-            color: white;
-        }
-        #supplierOrderPanel #clearAllBtn:hover {
-            background-color: #d32f2f;
-            transform: translateY(-2px);
-        }
-        #supplierOrderPanel #clearAllBtn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #supplierOrderPanel #kirimWhatsAppBtn {
-            background-color: #25d366;
-            color: white;
-        }
-        #supplierOrderPanel #kirimWhatsAppBtn:hover {
-            background-color: #1DA851;
-            transform: translateY(-2px);
-        }
-        #supplierOrderPanel #kirimWhatsAppBtn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        #supplierOrderPanel table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        #supplierOrderPanel th, #supplierOrderPanel td {
-            border: 1px solid #e0e0e0;
-            padding: 12px 15px;
-            text-align: left;
-            font-size: 14px;
-        }
-        #supplierOrderPanel th {
-            background-color: #f0f0f0;
-            font-weight: 600;
-            color: #555;
-            text-transform: uppercase;
-        }
-        #supplierOrderPanel tbody tr:nth-child(even) {
-            background-color: #fcfcfc;
-        }
-        #supplierOrderPanel tbody tr:hover {
-            background-color: #f5f5f5;
-        }
-        #supplierOrderPanel td button {
-            padding: 5px 10px;
-            font-size: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border: none;
-            margin-right: 5px; /* Space between buttons */
-        }
-        #supplierOrderPanel td button.delete-item-btn {
-            background-color: #dc3545;
-            color: white;
-        }
-        #supplierOrderPanel td button.delete-item-btn:hover {
-            background-color: #c82333;
-        }
-        #supplierOrderPanel td button.edit-item-btn {
-            background-color: #ffc107; /* Amber for edit */
-            color: #333;
-        }
-        #supplierOrderPanel td button.edit-item-btn:hover {
-            background-color: #e0a800;
-        }
-        #supplierOrderPanel td button.save-item-btn {
-            background-color: var(--primary-green);
-            color: white;
-        }
-        #supplierOrderPanel td button.save-item-btn:hover {
-            background-color: var(--dark-green);
-        }
-        #supplierOrderPanel td button.cancel-edit-btn {
-            background-color: #6c757d; /* Gray for cancel */
-            color: white;
-        }
-        #supplierOrderPanel td button.cancel-edit-btn:hover {
-            background-color: #5a6268;
-        }
-        #supplierOrderPanel .empty-state {
-            text-align: center;
-            color: #777;
-            padding: 50px 20px;
-            font-style: italic;
-            font-size: 16px;
-        }
+    .nav-item {
+      padding: 16px 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text-light);
+      transition: var(--transition);
+      border-left: 5px solid transparent;
+      margin: 5px 0;
+    }
 
-        /* Product & Supplier Management Panel Styles */
-        #productManagementPanel .top-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    .nav-item:hover {
+      background-color: var(--primary-green-light);
+      color: var(--primary-green-dark);
+    }
 
-        #productManagementPanel .search-bar-container {
-            padding: 0;
-            background-color: transparent;
-            box-shadow: none;
-            position: static;
-            flex-grow: 1;
-            min-width: 180px;
-        }
-        #productManagementPanel .search-bar {
-            display: flex;
-            align-items: center;
-            background-color: var(--bg-light);
-            border-radius: 25px;
-            padding: 8px 15px;
-            border: 1px solid var(--border-color);
-        }
-        #productManagementPanel .search-bar input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            padding: 5px 10px;
-            font-size: 14px;
-            background: transparent;
-            color: var(--text-dark);
-        }
-        #productManagementPanel .search-bar .material-icons {
-            color: var(--text-light);
-            margin-right: 8px;
-        }
-        
-        /* Add Product/Supplier Button at the top */
-        #productManagementPanel #addTopProductBtn,
-        #productManagementPanel #addTopSupplierBtn {
-            background-color: var(--primary-green);
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-        #productManagementPanel #addTopProductBtn:hover,
-        #productManagementPanel #addTopSupplierBtn:hover {
-            background-color: var(--dark-green);
-            transform: translateY(-2px);
-        }
+    .nav-item.active {
+      background-color: var(--primary-green-light);
+      color: var(--primary-green-dark);
+      border-left: 5px solid var(--primary-green);
+    }
 
-        /* Wrapper for Product and Supplier lists to make them side-by-side */
-        .product-supplier-lists-wrapper {
-            display: flex;
-            flex-direction: column; /* Stack vertically by default on small screens */
-            gap: 20px;
-            margin-top: 20px;
-        }
+    .nav-item i {
+      font-size: 1.4rem;
+      width: 24px;
+      text-align: center;
+    }
 
-        @media (min-width: 768px) {
-            .product-supplier-lists-wrapper {
-                flex-direction: row; /* Side-by-side on larger screens */
-            }
-            .product-section, .supplier-section {
-                flex: 1; /* Each section takes equal width */
-                min-width: 280px; /* Ensure minimum width for readability */
-            }
-        }
+    /* Content Panels */
+    .content-panel {
+      flex: 1;
+      background-color: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      padding: 30px;
+      display: none;
+    }
 
-        .product-section, .supplier-section {
-            background-color: var(--card-bg); /* Use card background for sections */
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            box-sizing: border-box;
-        }
+    .content-panel.active {
+      display: block;
+    }
 
-        .product-section h3, .supplier-section h3 {
-            margin-top: 0; /* Reset margin as it's within a new section */
-            margin-bottom: 15px;
-            border-bottom: 2px solid var(--light-green);
-            padding-bottom: 5px;
-            font-size: 1.2em;
-        }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--border-color);
+    }
 
-        .menu-list-container {
-            padding: 0;
-            overflow-y: visible;
-        }
-        .menu-item-card,
-        .supplier-item-card { /* Combined styling for product and supplier cards */
-            display: flex;
-            align-items: center;
-            background-color: var(--bg-light);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-        .menu-item-card:hover,
-        .supplier-item-card:hover {
-            transform: translateY(-2px);
-        }
-        /* Removed .menu-item-image and its child styles */
+    .panel-header h2 {
+      color: var(--primary-green);
+      font-size: 2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-        .menu-item-details,
-        .supplier-item-details { /* Combined styling for details */
-            flex-grow: 1;
-        }
-        .menu-item-details h3,
-        .supplier-item-details h3 {
-            font-size: 15px;
-            margin: 0 0 5px;
-            color: var(--primary-green);
-            font-weight: 600;
-        }
-        .menu-item-details .price {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
-        }
-        .supplier-item-details p {
-            font-size: 13px;
-            color: var(--text-light);
-            margin: 0;
-        }
+    .panel-header h2 i {
+      font-size: 1.8rem;
+    }
 
-        .item-toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 24px;
-            flex-shrink: 0;
-        }
-        .item-toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .item-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .item-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .item-slider {
-            background-color: var(--primary-green);
-        }
-        input:checked + .item-slider:before {
-            transform: translateX(16px);
-        }
-        .menu-loading-message {
-            text-align: center;
-            padding: 20px;
-            color: #757575;
-            font-size: 1.1em;
-        }
+    /* Search Bar */
+    .search-bar-container {
+      padding: 0;
+      background-color: transparent;
+      box-shadow: none;
+      position: static;
+      flex-grow: 1;
+      max-width: 450px;
+    }
 
-        /* Modal for Add/Edit Product Form */
-        #productFormModal, #supplierFormModal { /* Combined styling for modals */
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        #productFormModal .modal-content, #supplierFormModal .modal-content {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 500px;
-            box-sizing: border-box;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        #productFormModal .close-modal-btn, #supplierFormModal .close-modal-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-        #productFormModal h3, #supplierFormModal h3 {
-            text-align: center;
-            color: var(--primary-green);
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-        #productFormModal .form-group, #supplierFormModal .form-group {
-            margin-bottom: 15px;
-        }
-        #productFormModal .form-group label, #supplierFormModal .form-group label {
-            display: block;
-            font-size: 13px;
-            color: var(--text-dark);
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-        #productFormModal input[type="text"],
-        #productFormModal input[type="number"],
-        #productFormModal textarea,
-        #supplierFormModal input[type="text"],
-        #supplierFormModal textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        #productFormModal textarea, #supplierFormModal textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        #productFormModal .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        #productFormModal .checkbox-group input[type="checkbox"] {
-            margin-right: 10px;
-            transform: scale(1.2);
-        }
-        #productFormModal .checkbox-group label {
-            margin-bottom: 0;
-            font-size: 14px;
-            font-weight: normal;
-        }
-        #productFormModal .button-group, #supplierFormModal .button-group {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        #productFormModal .btn, #supplierFormModal .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            box-shadow: 0 2px 5px var(--shadow-light);
-        }
-        #productFormModal .btn-primary, #supplierFormModal .btn-primary {
-            background-color: var(--primary-green);
-            color: white;
-        }
-        #productFormModal .btn-primary:hover, #supplierFormModal .btn-primary:hover {
-            background-color: var(--dark-green);
-            transform: translateY(-1px);
-        }
-        #productFormModal .btn-secondary, #supplierFormModal .btn-secondary {
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-        }
-        #productFormModal .btn-secondary:hover, #supplierFormModal .btn-secondary:hover {
-            background-color: #e0e0e0;
-            transform: translateY(-1px);
-        }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background-color: var(--bg-light);
+      border-radius: 30px;
+      padding: 12px 25px;
+      border: 1px solid var(--border-color);
+      transition: var(--transition);
+    }
 
-        /* Custom Alert/Confirm Modals (reused) */
-        #customAlertDialog, #customConfirmModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 9999; /* Higher z-index for modals */
-            justify-content: center;
-            align-items: center;
-        }
-        #customAlertDialog > div, #customConfirmModal > div {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            text-align: center;
-            max-width: 300px;
-        }
-        #customAlertDialog p, #customConfirmModal p {
-            margin-bottom: 20px;
-            font-size: 16px;
-            color: #333;
-        }
-        #customAlertDialog button, #customConfirmModal button {
-            background-color: var(--primary-green);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        #customAlertDialog button:hover {
-            background-color: var(--dark-green);
-        }
-        #customConfirmModal button#customConfirmYes {
-            background-color: var(--primary-green);
-        }
-        #customConfirmModal button#customConfirmYes:hover {
-            background-color: var(--dark-green);
-        }
-        #customConfirmModal button#customConfirmNo {
-            background-color: #f44336;
-            margin-left: 10px;
-        }
-        #customConfirmModal button#customConfirmNo:hover {
-            background-color: #d32f2f;
-        }
+    .search-bar:focus-within {
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
 
-        /* Loading Spinner */
-        #loadingSpinner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001; /* Higher than other modals */
-            font-size: 24px;
-            color: var(--primary-green);
-        }
-        #loadingSpinner .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: var(--primary-green);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    .search-bar input {
+      flex-grow: 1;
+      border: none;
+      outline: none;
+      padding: 5px 15px;
+      font-size: 1.05rem;
+      background: transparent;
+      color: var(--text-dark);
+    }
+
+    .search-bar .material-icons {
+      color: var(--text-light);
+      font-size: 1.4rem;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-secondary {
+      background-color: var(--text-light);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      background-color: #616161;
+      transform: translateY(-3px);
+    }
+
+    /* Order History Specific Styles */
+    #orderHistoryPanel .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    #orderHistoryPanel .filter-btn {
+      padding: 12px 22px;
+      background-color: var(--bg-light);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 600;
+      color: var(--text-dark);
+      font-size: 0.95rem;
+    }
+
+    #orderHistoryPanel .filter-btn.active {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      border-color: var(--primary-green);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    #orderHistoryPanel .filter-btn:hover:not(.active) {
+      background-color: #e0e0e0;
+    }
+
+    #orderHistoryPanel .date-filter {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      margin-top: 25px;
+      flex-wrap: wrap;
+    }
+
+    #orderHistoryPanel .date-filter label {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    #orderHistoryPanel .date-filter input {
+      padding: 12px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    #orderHistoryPanel .date-filter input:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    #orderHistoryPanel .reset-filters-btn {
+      padding: 12px 25px;
+      background-color: var(--text-light);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    #orderHistoryPanel .reset-filters-btn:hover {
+      background-color: #616161;
+      transform: translateY(-2px);
+    }
+
+    .order-history-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 30px;
+    }
+
+    .order-card {
+      background: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      padding: 25px;
+      border-left: 6px solid var(--primary-green);
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-green), var(--accent-orange));
+    }
+
+    .order-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .order-id {
+      font-weight: 800;
+      color: var(--primary-green);
+      font-size: 1.4rem;
+    }
+
+    .order-status {
+      padding: 7px 20px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-Pending {
+      background-color: #fff8e1;
+      color: #ff8f00;
+    }
+
+    .status-Diproses {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+    }
+
+    .status-SiapDiambil {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+    }
+
+    .status-OnDelivery {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+    }
+
+    .status-Selesai {
+      background-color: #e8f5e9;
+      color: var(--success);
+    }
+
+    .status-Dibatalkan {
+      background-color: #ffebee;
+      color: var(--error);
+    }
+
+    .order-customer {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+      color: var(--text-dark);
+    }
+
+    .order-time {
+      color: var(--text-light);
+      font-size: 1rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .order-items {
+      margin-bottom: 20px;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 15px;
+      padding: 15px;
+      background-color: var(--bg-light);
+      border-radius: 10px;
+    }
+
+    .order-item-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+      background-color: #eee;
+      flex-shrink: 0;
+    }
+
+    .order-item-details {
+      flex-grow: 1;
+    }
+
+    .order-item-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 1.05rem;
+    }
+
+    .order-item-variants-display {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-top: 3px;
+    }
+
+    .order-item-quantity-price {
+      font-size: 0.95rem;
+      color: var(--text-light);
+    }
+
+    .order-item-total {
+      font-weight: 800;
+      white-space: nowrap;
+      margin-left: auto;
+      font-size: 1.1rem;
+      color: var(--primary-green);
+    }
+
+    .order-summary-footer {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+      margin-top: 15px;
+    }
+
+    .order-total-amount {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--primary-green);
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .action-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: var(--transition);
+      flex: 1;
+      min-width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .action-btn.terima, .action-btn.siap-diambil, .action-btn.pick-up, .action-btn.selesai {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+    }
+
+    .action-btn.tolak {
+      background-color: var(--text-light);
+      color: white;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 30px;
+      background: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: var(--border-color);
+      margin-bottom: 25px;
+    }
+
+    .empty-state p {
+      font-size: 1.4rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    /* Product Management Styles */
+    #productManagementPanel .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .product-card {
+      background: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: var(--transition);
+      border: 1px solid var(--border-color);
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background-color: #eee;
+    }
+
+    .product-info {
+      padding: 20px;
+    }
+
+    .product-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text-dark);
+    }
+
+    .product-description {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .product-price {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--primary-green);
+      margin-bottom: 15px;
+    }
+
+    .product-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .product-actions .btn-primary, .product-actions .btn-secondary {
+      padding: 10px 15px;
+      font-size: 0.9rem;
+      flex: 1;
+      text-align: center;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-green);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Supplier Management Styles */
+    #supplierManagementPanel .supplier-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+    }
+
+    .supplier-card {
+      background: var(--bg-white);
+      border-radius: 15px;
+      box-shadow: var(--shadow);
+      padding: 25px;
+      border-left: 5px solid var(--accent-orange);
+      transition: var(--transition);
+    }
+
+    .supplier-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .supplier-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .supplier-details {
+      margin-bottom: 20px;
+    }
+
+    .supplier-detail {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .supplier-detail-label {
+      font-weight: 600;
+      width: 100px;
+      color: var(--text-light);
+    }
+
+    .supplier-detail-value {
+      flex: 1;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-dark);
+      font-size: 1.05rem;
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: var(--transition);
+      background-color: var(--bg-light);
+    }
+
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--bg-white);
+      border-radius: 15px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: var(--transition);
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .close-modal:hover {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+    }
+
+    .modal-header {
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-title {
+      font-size: 1.8rem;
+      color: var(--primary-green);
+      font-weight: 700;
+    }
+
+    /* Popup Detail */
+    .popup-detail {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .popup-content {
+      background: var(--bg-white);
+      border-radius: 15px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 35px;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-popup {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: var(--transition);
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .close-popup:hover {
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+    }
+
+    .popup-header {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .popup-title {
+      font-size: 1.8rem;
+      color: var(--primary-green);
+      font-weight: 700;
+    }
+
+    .popup-section {
+      margin-bottom: 30px;
+    }
+
+    .popup-section-title {
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+    }
+
+    .popup-section-title i {
+      color: var(--primary-green);
+      background-color: rgba(76, 175, 80, 0.1);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .order-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 15px;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--text-light);
+      font-size: 1.05rem;
+    }
+
+    .info-value {
+      color: var(--text-dark);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    .order-status-popup {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .driver-info-section {
+      background-color: var(--bg-light);
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 25px;
+    }
+
+    .driver-info-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 15px;
+    }
+
+    .driver-info-grid .info-label {
+      font-weight: 600;
+    }
+
+    .status-updater {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-top: 25px;
+    }
+
+    .status-updater select {
+      flex: 1;
+      padding: 14px 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 1.05rem;
+      transition: var(--transition);
+    }
+
+    .status-updater select:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    .status-updater button {
+      padding: 14px 25px;
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    .status-updater button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    .driver-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .driver-form input, .driver-form select {
+      padding: 14px 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 1.05rem;
+      transition: var(--transition);
+    }
+
+    .driver-form input:focus, .driver-form select:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    .driver-form button {
+      grid-column: span 2;
+      padding: 16px 25px;
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    .driver-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    /* Custom Modals */
+    #customConfirmModal, #customAlertDialog, #modalVerifikasi {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #customConfirmModal > div, #customAlertDialog > div, #modalVerifikasi > div {
+      background-color: var(--bg-white);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    #customConfirmModal h3, #customAlertDialog h3, #modalVerifikasi h3 {
+      margin-bottom: 25px;
+      color: var(--text-dark);
+      font-size: 1.6rem;
+    }
+
+    #customConfirmModal p, #customAlertDialog p, #modalVerifikasi p {
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    #customConfirmModal button, #customAlertDialog button, #modalVerifikasi button {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: var(--transition);
+      margin: 0 10px;
+      min-width: 130px;
+    }
+
+    #customConfirmModal button#customConfirmYes, #customAlertOk, #saveDriverDetailsBtn, #confirmDeleteAllBtn {
+      background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+      color: white;
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    #customConfirmModal button#customConfirmYes:hover, #customAlertOk:hover, #saveDriverDetailsBtn:hover, #confirmDeleteAllBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    #customConfirmModal button#customConfirmNo, #customAlertOk, #modalVerifikasi button, #cancelDeleteAllBtn {
+      background-color: var(--text-light);
+      color: white;
+    }
+
+    #customConfirmModal button#customConfirmNo:hover, #cancelDeleteAllBtn:hover {
+      background-color: #616161;
+      transform: translateY(-2px);
+    }
+
+    #inputPassword {
+      width: 100%;
+      padding: 14px 20px;
+      margin-top: 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-size: 1.05rem;
+      transition: var(--transition);
+    }
+
+    #inputPassword:focus {
+      outline: none;
+      border-color: var(--primary-green);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    /* Loading Spinner */
+    #loadingSpinner {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 1001;
+    }
+
+    #loadingSpinner .spinner {
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--primary-green);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 992px) {
+      .main-content {
+        flex-direction: column;
+        padding: 20px;
+      }
+      
+      .sidebar {
+        width: 100%;
+        margin-bottom: 25px;
+        position: static;
+      }
+      
+      .order-history-content, .product-grid, .supplier-list {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-header-combined {
+        padding: 15px;
+      }
+      
+      .app-header-combined h1 {
+        font-size: 1.5rem;
+      }
+      
+      .content-panel {
+        padding: 20px;
+      }
+      
+      .panel-header h2 {
+        font-size: 1.6rem;
+      }
+      
+      .order-history-content, .product-grid, .supplier-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .driver-form {
+        grid-template-columns: 1fr;
+      }
+      
+      .driver-form button {
+        grid-column: 1;
+      }
+      
+      .status-updater {
+        flex-direction: column;
+      }
+      
+      .status-updater select {
+        width: 100%;
+      }
+      
+      .order-info-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .driver-info-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .filters {
+        justify-content: center;
+      }
+      
+      .filter-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+      
+      .date-filter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      
+      .date-filter input {
+        width: 100%;
+      }
+      
+      .reset-filters-btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="app-container">
+    <!-- Header -->
     <header class="app-header-combined">
-        <h1><i class="fas fa-leaf leaf-icon"></i> RUJAK BUAH INDONESIA</h1>
-        <button onclick="logout()" class="logout-button">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
+      <h1><span class="material-icons leaf-icon">eco</span> Rujak Buah Indonesia</h1>
+      <button class="logout-button" id="logoutButton">
+        <span class="material-icons">exit_to_app</span> Logout
+      </button>
     </header>
 
-    <div class="main-container">
-        <!-- Panel Kiri: Input Pesanan ke Supplier -->
-        <div class="panel" id="supplierOrderPanel">
-            <h2>Buat Pesanan ke Supplier</h2>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar Navigation -->
+      <nav class="sidebar">
+        <div class="nav-item active" data-panel="orderHistoryPanel">
+          <i class="material-icons">receipt</i>
+          <span>Riwayat Pesanan</span>
+        </div>
+        <div class="nav-item" data-panel="productManagementPanel">
+          <i class="material-icons">restaurant_menu</i>
+          <span>Manajemen Produk</span>
+        </div>
+        <div class="nav-item" data-panel="supplierManagementPanel">
+          <i class="material-icons">local_shipping</i>
+          <span>Manajemen Supplier</span>
+        </div>
+      </nav>
 
-            <div class="form-group">
-                <label for="supplierNameOrderInput">Nama Supplier:</label>
-                <div class="autocomplete">
-                    <input type="text" id="supplierNameOrderInput" placeholder="Cari atau masukkan nama supplier" autocomplete="off">
-                    <!-- Autocomplete list will be appended here dynamically -->
-                    <div id="supplierNameOrderAutocompleteList" class="autocomplete-items"></div>
-                    <span class="material-icons dropdown-arrow-icon" id="supplierDropdownArrow">arrow_drop_down</span>
-                </div>
+      <!-- Content Panels -->
+      <!-- Order History Panel -->
+      <section class="content-panel active" id="orderHistoryPanel">
+        <div class="panel-header">
+          <h2><i class="material-icons">receipt</i> Riwayat Pesanan</h2>
+          <div class="search-bar-container">
+            <div class="search-bar">
+              <span class="material-icons">search</span>
+              <input type="text" id="searchQuery" placeholder="Cari ID Pesanan atau Nama Pelanggan...">
             </div>
-            
-            <div class="supplier-info" id="supplierInfo">Pilih supplier untuk memulai pesanan.</div>
+          </div>
+        </div>
 
-            <div class="form-group">
-                <label for="productNameInput">Nama Produk:</label>
-                <div class="autocomplete">
-                    <input type="text" id="productNameInput" placeholder="Cari atau masukkan nama produk" autocomplete="off">
-                    <!-- Autocomplete list will be appended here dynamically -->
-                    <div id="productNameAutocompleteList" class="autocomplete-items"></div>
-                </div>
+        <div class="filters">
+          <button class="filter-btn active" data-status="All">Semua</button>
+          <button class="filter-btn" data-status="Pending">Baru</button>
+          <button class="filter-btn" data-status="Diproses">Diproses</button>
+          <button class="filter-btn" data-status="SiapDiambil">Siap Ambil</button>
+          <button class="filter-btn" data-status="OnDelivery">On Delivery</button>
+          <button class="filter-btn" data-status="Selesai">Selesai</button>
+          <button class="filter-btn" data-status="Dibatalkan">Dibatalkan</button>
+        </div>
+
+        <div class="date-filter">
+          <label for="filterDate">Filter Tanggal:</label>
+          <input type="date" id="filterDate">
+          <button id="resetFiltersBtn" class="reset-filters-btn">Reset Filter</button>
+        </div>
+
+        <div class="order-history-content" id="orderHistoryContent">
+          <!-- Order cards will be populated by JavaScript -->
+          <div class="empty-state" id="emptyOrderState">
+            <i class="material-icons">inbox</i>
+            <p>Belum ada pesanan</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Product Management Panel -->
+      <section class="content-panel" id="productManagementPanel">
+        <div class="panel-header">
+          <h2><i class="material-icons">restaurant_menu</i> Manajemen Produk</h2>
+          <div class="search-bar-container">
+            <div class="search-bar">
+              <span class="material-icons">search</span>
+              <input type="text" id="productSearchInput" placeholder="Cari produk...">
             </div>
-            <div class="form-group">
-                <label for="quantityInput">Jumlah:</label>
-                <input type="text" id="quantityInput" placeholder="Contoh: 5 KG, 10 Buah">
-            </div>
-            <div class="button-group">
-                <button id="tambahProdukBtn" disabled>Tambah ke Daftar</button>
-                <button id="clearAllBtn" disabled>Hapus Semua</button>
-                <button id="kirimWhatsAppBtn" disabled>Kirim Pesanan via WhatsApp</button>
-            </div>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nama Produk</th>
-                        <th>Jumlah</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="orderItemsTableBody">
-                    <!-- Data pesanan akan dimuat di sini -->
-                </tbody>
-            </table>
-            <p class="empty-state" id="emptyOrderItemsMessage">Daftar pesanan masih kosong.</p>
+          </div>
         </div>
 
-        <!-- Panel Kanan: Manajemen Data Master Produk & Supplier -->
-        <div class="panel" id="productManagementPanel">
-            <h2>Manajemen Data Produk & Supplier</h2>
+        <button class="btn-primary" id="addProductBtn" style="margin-bottom: 25px;">
+          <i class="material-icons">add</i> Tambah Produk
+        </button>
 
-            <div class="product-supplier-lists-wrapper">
-                <!-- Product Management Section -->
-                <div class="product-section">
-                    <h3>Daftar Produk</h3>
-                    <div class="top-actions">
-                        <div class="search-bar-container">
-                            <div class="search-bar">
-                                <span class="material-icons">search</span>
-                                <input type="text" id="productSearchInput" placeholder="Cari nama produk">
-                            </div>
-                        </div>
-                        <button id="addTopProductBtn">
-                            <span class="material-icons">add</span> Tambah Produk Baru
-                        </button>
-                    </div>
-                    <div class="menu-list-container">
-                        <div class="menu-items" id="productList">
-                            <p class="menu-loading-message">Memuat daftar produk...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Supplier Management Section -->
-                <div class="supplier-section">
-                    <h3>Daftar Supplier</h3>
-                    <div class="top-actions">
-                        <div class="search-bar-container">
-                            <div class="search-bar">
-                                <span class="material-icons">search</span>
-                                <input type="text" id="supplierSearchInput" placeholder="Cari nama supplier">
-                            </div>
-                        </div>
-                        <button id="addTopSupplierBtn">
-                            <span class="material-icons">add</span> Tambah Supplier Baru
-                        </button>
-                    </div>
-                    <div class="menu-list-container">
-                        <div class="menu-items" id="supplierList">
-                            <p class="menu-loading-message">Memuat daftar supplier...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="product-grid" id="productGrid">
+          <!-- Product cards will be populated by JavaScript -->
+          <div class="empty-state" id="emptyProductState">
+            <i class="material-icons">restaurant</i>
+            <p>Belum ada produk</p>
+          </div>
         </div>
-    </div>
+      </section>
 
-    <!-- Modal for Add/Edit Product Form -->
-    <div id="productFormModal">
-        <div class="modal-content">
-            <button class="close-modal-btn" id="closeProductFormModalBtn">&times;</button>
-            <h3 id="productFormTitle">Tambah Produk Baru</h3>
-            <form id="productForm">
-                <input type="hidden" id="productId">
-                <div class="form-group">
-                    <label for="productName">Nama Produk:</label>
-                    <input type="text" id="productName" required>
-                </div>
-                <div class="form-group">
-                    <label for="productDescription">Deskripsi:</label>
-                    <textarea id="productDescription" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="productPrice">Harga (Rp):</label>
-                    <input type="number" id="productPrice" required min="0">
-                </div>
-                <div class="form-group">
-                    <label for="productImageUrl">URL Gambar:</label>
-                    <input type="text" id="productImageUrl" placeholder="Contoh: https://example.com/gambar.jpg">
-                </div>
-                <div class="form-group">
-                    <label for="productRating">Rating (1-5):</label>
-                    <input type="number" id="productRating" min="1" max="5" step="0.1" value="4.5">
-                </div>
-                <div class="form-group">
-                    <label for="productDeliveryTime">Estimasi Waktu Pengiriman:</label>
-                    <input type="text" id="productDeliveryTime" placeholder="Contoh: 15-30 menit" value="15-30 menit">
-                </div>
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="productIsAvailable" checked>
-                    <label for="productIsAvailable">Tersedia</label>
-                </div>
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary" id="saveProductBtn">Simpan Produk</button>
-                    <button type="button" class="btn btn-secondary" id="cancelProductFormBtn">Batal</button>
-                </div>
-            </form>
+      <!-- Supplier Management Panel -->
+      <section class="content-panel" id="supplierManagementPanel">
+        <div class="panel-header">
+          <h2><i class="material-icons">local_shipping</i> Manajemen Supplier</h2>
         </div>
-    </div>
 
-    <!-- Modal for Add/Edit Supplier Form -->
-    <div id="supplierFormModal">
-        <div class="modal-content">
-            <button class="close-modal-btn" id="closeSupplierFormModalBtn">&times;</button>
-            <h3 id="supplierFormTitle">Tambah Supplier Baru</h3>
-            <form id="supplierForm">
-                <input type="hidden" id="supplierId">
-                <div class="form-group">
-                    <label for="supplierName">Nama Supplier:</label>
-                    <input type="text" id="supplierName" required>
-                </div>
-                <div class="form-group">
-                    <label for="supplierContact">Kontak (No. HP/WhatsApp):</label>
-                    <input type="text" id="supplierContact" placeholder="Contoh: +6281234567890" required>
-                </div>
-                <div class="form-group">
-                    <label for="supplierAddress">Alamat:</label>
-                    <textarea id="supplierAddress" required></textarea>
-                </div>
-                <div class="button-group">
-                    <button type="submit" class="btn btn-primary" id="saveSupplierBtn">Simpan Supplier</button>
-                    <button type="button" class="btn btn-secondary" id="cancelSupplierFormBtn">Batal</button>
-                </div>
-            </form>
+        <button class="btn-primary" id="addSupplierBtn" style="margin-bottom: 25px;">
+          <i class="material-icons">add</i> Tambah Supplier
+        </button>
+
+        <div class="supplier-list" id="supplierList">
+          <!-- Supplier cards will be populated by JavaScript -->
+          <div class="empty-state" id="emptySupplierState">
+            <i class="material-icons">business</i>
+            <p>Belum ada supplier</p>
+          </div>
         </div>
+      </section>
     </div>
+  </div>
 
-    <!-- Custom Alert Modal -->
-    <div id="customAlertDialog">
-        <div>
-            <p id="customAlertMessage"></p>
-            <button id="customAlertOk">OK</button>
+  <!-- Popup Detail Pesanan -->
+  <div class="popup-detail" id="popupDetail">
+    <div class="popup-content">
+      <span class="close-popup" id="closePopup">&times;</span>
+      
+      <div class="popup-header">
+        <h2 class="popup-title" id="popupOrderId">Detail Pesanan</h2>
+      </div>
+      
+      <div class="popup-section">
+        <h3 class="popup-section-title"><i class="material-icons">person</i> Informasi Pelanggan</h3>
+        <div class="order-info-grid">
+          <div class="info-label">Nama:</div>
+          <div class="info-value" id="popupNama">-</div>
+          
+          <div class="info-label">Telepon:</div>
+          <div class="info-value" id="popupNomor">-</div>
+          
+          <div class="info-label">Alamat:</div>
+          <div class="info-value" id="popupAlamat">-</div>
+          
+          <div class="info-label">Catatan:</div>
+          <div class="info-value" id="popupCatatan">-</div>
         </div>
-    </div>
-
-    <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal">
-        <div>
-            <p id="customConfirmMessage"></p>
-            <button id="customConfirmYes">Ya</button>
-            <button id="customConfirmNo">Tidak</button>
+      </div>
+      
+      <div class="popup-section">
+        <h3 class="popup-section-title"><i class="material-icons">receipt</i> Rincian Pesanan</h3>
+        <div id="popupItems">
+          <!-- Items will be populated by JavaScript -->
         </div>
+        
+        <div class="order-summary-footer">
+          <div class="info-label">Total:</div>
+          <div class="order-total-amount" id="popupTotal">-</div>
+        </div>
+      </div>
+      
+      <div class="popup-section">
+        <h3 class="popup-section-title"><i class="material-icons">info</i> Informasi Tambahan</h3>
+        <div class="order-info-grid">
+          <div class="info-label">Metode Bayar:</div>
+          <div class="info-value" id="popupMetodeBayar">-</div>
+          
+          <div class="info-label">Waktu Pemesanan:</div>
+          <div class="info-value" id="popupWaktu">-</div>
+          
+          <div class="info-label">Status:</div>
+          <div class="order-status-popup" id="popupStatus">-</div>
+          
+          <div class="info-label">Dibuka Oleh:</div>
+          <div class="info-value" id="popupDibukaOleh">-</div>
+          
+          <div class="info-label">Waktu Dibuka:</div>
+          <div class="info-value" id="popupWaktuDibuka">-</div>
+          
+          <div class="info-label">Diubah Oleh:</div>
+          <div class="info-value" id="popupDiubahOleh">-</div>
+          
+          <div class="info-label">Waktu Diubah:</div>
+          <div class="info-value" id="popupWaktuDiubah">-</div>
+        </div>
+      </div>
+      
+      <div class="popup-section">
+        <h3 class="popup-section-title"><i class="material-icons">sync</i> Perbarui Status</h3>
+        <div class="status-updater">
+          <select id="statusUpdater">
+            <option value="Pending">Baru</option>
+            <option value="Diproses">Diproses</option>
+            <option value="SiapDiambil">Siap Ambil</option>
+            <option value="OnDelivery">On Delivery</option>
+            <option value="Selesai">Selesai</option>
+            <option value="Dibatalkan">Dibatalkan</option>
+          </select>
+          <button id="updateStatusBtn">Simpan</button>
+        </div>
+        
+        <div class="driver-info-section" id="driverInfoSection">
+          <h4><i class="material-icons">local_shipping</i> Informasi Driver</h4>
+          <div class="driver-form">
+            <input type="text" id="driverNameInput" placeholder="Nama Driver">
+            <input type="text" id="driverPhoneInput" placeholder="Nomor HP Driver">
+            <select id="driverAppSelect">
+              <option value="">Pilih Aplikasi</option>
+              <option value="Gojek">Gojek</option>
+              <option value="Grab">Grab</option>
+              <option value="Maxim">Maxim</option>
+              <option value="In-house">In-house</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+            <button id="saveDriverDetailsBtn">Simpan Detail Driver</button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" style="display: none;">
-        <div class="spinner"></div>
+  <!-- Product Form Modal -->
+  <div class="modal" id="productFormModal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeProductModal">&times;</span>
+      
+      <div class="modal-header">
+        <h2 class="modal-title" id="productModalTitle">Tambah Produk Baru</h2>
+      </div>
+      
+      <form id="productForm">
+        <input type="hidden" id="productId">
+        
+        <div class="form-group">
+          <label for="productNameInputModal">Nama Produk</label>
+          <input type="text" id="productNameInputModal" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="productDescriptionInput">Deskripsi</label>
+          <textarea id="productDescriptionInput" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="productPriceInput">Harga (Rp)</label>
+          <input type="number" id="productPriceInput" min="0" step="100" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="productImageUrlInput">URL Gambar</label>
+          <input type="url" id="productImageUrlInput" placeholder="https://example.com/image.jpg">
+        </div>
+        
+        <div class="form-group">
+          <label for="productRatingInput">Rating</label>
+          <input type="number" id="productRatingInput" min="0" max="5" step="0.1" value="0">
+        </div>
+        
+        <div class="form-group">
+          <label for="productDeliveryTimeInput">Estimasi Pengiriman</label>
+          <input type="text" id="productDeliveryTimeInput" placeholder="Contoh: 30 menit">
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="productIsAvailableInput"> Tersedia
+          </label>
+        </div>
+        
+        <button type="submit" class="btn-primary" id="saveProductBtn">
+          <i class="material-icons">save</i> Simpan Produk
+        </button>
+      </form>
     </div>
+  </div>
 
-    <script>
-        // --- Firebase Configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
-            authDomain: "tokobuahkasir.firebaseapp.com",
-            projectId: "tokobuahkasir",
-            storageBucket: "tokobuahkasir.firebasestorage.app",
-            messagingSenderId: "731011133713",
-            appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
-            measurementId: "G-7CPE2DB2BV"
-        };
+  <!-- Supplier Form Modal -->
+  <div class="modal" id="supplierFormModal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeSupplierModal">&times;</span>
+      
+      <div class="modal-header">
+        <h2 class="modal-title" id="supplierModalTitle">Tambah Supplier Baru</h2>
+      </div>
+      
+      <form id="supplierForm">
+        <input type="hidden" id="supplierId">
+        
+        <div class="form-group">
+          <label for="supplierNameInput">Nama Supplier</label>
+          <input type="text" id="supplierNameInput" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="supplierContactInput">Kontak</label>
+          <input type="text" id="supplierContactInput">
+        </div>
+        
+        <div class="form-group">
+          <label for="supplierAddressInput">Alamat</label>
+          <textarea id="supplierAddressInput"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="supplierNotesInput">Catatan</label>
+          <textarea id="supplierNotesInput"></textarea>
+        </div>
+        
+        <button type="submit" class="btn-primary" id="saveSupplierBtn">
+          <i class="material-icons">save</i> Simpan Supplier
+        </button>
+      </form>
+    </div>
+  </div>
 
-        // Initialize Firebase
-        let app;
-        try {
-            app = firebase.initializeApp(firebaseConfig);
-        } catch (error) {
-            console.error("Error initializing Firebase App:", error);
+  <!-- Custom Confirmation Modal -->
+  <div id="customConfirmModal">
+    <div>
+      <h3>Konfirmasi</h3>
+      <p id="customConfirmMessage"></p>
+      <button id="customConfirmYes">Ya</button>
+      <button id="customConfirmNo">Tidak</button>
+    </div>
+  </div>
+
+  <!-- Custom Alert Modal -->
+  <div id="customAlertDialog">
+    <div>
+      <h3>Informasi</h3>
+      <p id="customAlertMessage"></p>
+      <button id="customAlertOk">OK</button>
+    </div>
+  </div>
+
+  <!-- Modal Verifikasi Password -->
+  <div id="modalVerifikasi">
+    <div>
+      <h3>🔐 Verifikasi Hapus</h3>
+      <p>Masukkan password untuk melanjutkan.</p>
+      <input type="password" id="inputPassword" placeholder="Password">
+      <div style="margin-top: 25px;">
+        <button id="confirmDeleteAllBtn">Hapus</button>
+        <button id="cancelDeleteAllBtn">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div id="loadingSpinner">
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCeqHW_m9kru2vmEDVSoelZ3UWFD4k4Xqc",
+        authDomain: "tokobuahkasir.firebaseapp.com",
+        projectId: "tokobuahkasir",
+        storageBucket: "tokobuahkasir.firebasestorage.app",
+        messagingSenderId: "731011133713",
+        appId: "1:731011133713:web:4247ae627401a01b8c1cb0",
+        measurementId: "G-7CPE2DB2BV"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // DOM Elements
+    const orderHistoryContent = document.getElementById('orderHistoryContent');
+    const emptyOrderState = document.getElementById('emptyOrderState');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const searchQueryInput = document.getElementById('searchQuery');
+    const filterDateInput = document.getElementById('filterDate');
+    const filterButtons = document.querySelectorAll('#orderHistoryPanel .filter-btn');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+
+    // Popup Detail Elements
+    const popupDetail = document.getElementById('popupDetail');
+    const popupNama = document.getElementById('popupNama');
+    const popupOrderId = document.getElementById('popupOrderId');
+    const popupNomor = document.getElementById('popupNomor');
+    const popupAlamat = document.getElementById('popupAlamat');
+    const popupTotal = document.getElementById('popupTotal');
+    const popupMetodeBayar = document.getElementById('popupMetodeBayar');
+    const popupCatatan = document.getElementById('popupCatatan');
+    const popupStatus = document.getElementById('popupStatus');
+    const statusUpdater = document.getElementById('statusUpdater');
+    const popupWaktu = document.getElementById('popupWaktu');
+    const popupDibukaOleh = document.getElementById('popupDibukaOleh');
+    const popupWaktuDibuka = document.getElementById('popupWaktuDibuka');
+    const popupDiubahOleh = document.getElementById('popupDiubahOleh');
+    const popupWaktuDiubah = document.getElementById('popupWaktuDiubah');
+    const popupItems = document.getElementById('popupItems');
+
+    // NEW: Driver Info Input Elements
+    const driverInfoSection = document.getElementById('driverInfoSection');
+    const driverNameInput = document.getElementById('driverNameInput');
+    const driverPhoneInput = document.getElementById('driverPhoneInput');
+    const driverAppSelect = document.getElementById('driverAppSelect');
+    const saveDriverDetailsBtn = document.getElementById('saveDriverDetailsBtn');
+
+    // Custom Modals
+    const customConfirmModal = document.getElementById('customConfirmModal');
+    const customConfirmMessage = document.getElementById('customConfirmMessage');
+    const customConfirmYes = document.getElementById('customConfirmYes');
+    const customConfirmNo = document.getElementById('customConfirmNo');
+    const customAlertDialog = document.getElementById('customAlertDialog');
+    const customAlertMessage = document.getElementById('customAlertMessage');
+    const customAlertOk = document.getElementById('customAlertOk');
+    const modalVerifikasi = document.getElementById('modalVerifikasi');
+    const inputPassword = document.getElementById('inputPassword');
+    const confirmDeleteAllBtn = document.getElementById('confirmDeleteAllBtn');
+    const cancelDeleteAllBtn = document.getElementById('cancelDeleteAllBtn');
+
+    let currentOrderIdForDetail = null;
+    let activeFilterStatus = 'All';
+    let allOrdersData = [];
+    let unsubscribeOrders = null;
+    let unsubscribeDetailListener = null;
+
+    // --- Helper Functions ---
+    function showLoading() { loadingSpinner.style.display = 'flex'; }
+    function hideLoading() { loadingSpinner.style.display = 'none'; }
+
+    function formatRupiah(amount) {
+        if (isNaN(amount) || amount === null || typeof amount === 'undefined') {
+            return "Rp0";
         }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
 
-        // Firestore Collection References
-        const produkCollection = db.collection('Produk'); // Master data for products
-        const suppliersCollection = db.collection('suppliers'); // Master data for suppliers
+    function formatDate(date) {
+        if (!date || !(date instanceof Date)) return '-';
+        return date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
 
-        // --- Global Variables ---
-        let currentSelectedSupplier = null; // Stores the currently selected supplier object for ordering
-        let orderItems = []; // Array to store products added to the current order
+    function getDisplayStatus(status) {
+        const statusMap = {
+            'Pending': 'Baru',
+            'Diproses': 'Diproses',
+            'SiapDiambil': 'Siap Ambil',
+            'OnDelivery': 'On Delivery',
+            'Selesai': 'Selesai',
+            'Dibatalkan': 'Dibatalkan'
+        };
+        return statusMap[status] || status;
+    }
 
-        // --- DOM Elements - Supplier Order Panel ---
-        const supplierNameOrderInput = document.getElementById('supplierNameOrderInput');
-        const supplierNameOrderAutocompleteList = document.getElementById('supplierNameOrderAutocompleteList');
-        const supplierDropdownArrow = document.getElementById('supplierDropdownArrow'); // New: Dropdown arrow element
-        const supplierInfoDiv = document.getElementById('supplierInfo');
-        const productNameInput = document.getElementById('productNameInput');
-        const productNameAutocompleteList = document.getElementById('productNameAutocompleteList');
-        const quantityInput = document.getElementById('quantityInput');
-        const tambahProdukBtn = document.getElementById('tambahProdukBtn');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        const kirimWhatsAppBtn = document.getElementById('kirimWhatsAppBtn');
-        const orderItemsTableBody = document.getElementById('orderItemsTableBody');
-        const emptyOrderItemsMessage = document.getElementById('emptyOrderItemsMessage');
+    function getStatusClass(status) {
+        return `status-${status}`;
+    }
 
-        // --- DOM Elements - Product Management Panel ---
-        const productSearchInput = document.getElementById('productSearchInput');
-        const productListDiv = document.getElementById('productList');
-        const addTopProductBtn = document.getElementById('addTopProductBtn');
+    function getVariantDisplayString(customizations) {
+        if (!customizations || Object.keys(customizations).length === 0) return '-';
+        return Object.entries(customizations)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ');
+    }
 
-        // --- DOM Elements - Supplier Management Section ---
-        const supplierSearchInput = document.getElementById('supplierSearchInput');
-        const supplierListDiv = document.getElementById('supplierList');
-        const addTopSupplierBtn = document.getElementById('addTopSupplierBtn');
-
-        // --- DOM Elements - Product Form Modal ---
-        const productFormModal = document.getElementById('productFormModal');
-        const closeProductFormModalBtn = document.getElementById('closeProductFormModalBtn');
-        const productFormTitle = document.getElementById('productFormTitle');
-        const productForm = document.getElementById('productForm');
-        const productIdInput = document.getElementById('productId');
-        const productNameInputModal = document.getElementById('productName');
-        const productDescriptionInput = document.getElementById('productDescription');
-        const productPriceInput = document.getElementById('productPrice');
-        const productImageUrlInput = document.getElementById('productImageUrl');
-        const productRatingInput = document.getElementById('productRating');
-        const productDeliveryTimeInput = document.getElementById('productDeliveryTime');
-        const productIsAvailableInput = document.getElementById('productIsAvailable');
-        const saveProductBtn = document.getElementById('saveProductBtn');
-        const cancelProductFormBtn = document.getElementById('cancelProductFormBtn');
-
-        // --- DOM Elements - Supplier Form Modal ---
-        const supplierFormModal = document.getElementById('supplierFormModal');
-        const closeSupplierFormModalBtn = document.getElementById('closeSupplierFormModalBtn');
-        const supplierFormTitle = document.getElementById('supplierFormTitle');
-        const supplierForm = document.getElementById('supplierForm');
-        const supplierIdInput = document.getElementById('supplierId');
-        const supplierNameInputModal = document.getElementById('supplierName');
-        const supplierContactInput = document.getElementById('supplierContact');
-        const supplierAddressInput = document.getElementById('supplierAddress');
-        const saveSupplierBtn = document.getElementById('saveSupplierBtn');
-        const cancelSupplierFormBtn = document.getElementById('cancelSupplierFormBtn');
-
-        // --- Custom Modals & Spinner ---
-        const customAlertDialog = document.getElementById('customAlertDialog');
-        const customAlertMessage = document.getElementById('customAlertMessage');
-        const customAlertOk = document.getElementById('customAlertOk');
-        const customConfirmModal = document.getElementById('customConfirmModal');
-        const customConfirmMessage = document.getElementById('customConfirmMessage');
-        const customConfirmYes = document.getElementById('customConfirmYes');
-        const customConfirmNo = document.getElementById('customConfirmNo');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-
-        // --- Custom Alert/Confirm Functions ---
-        function showAlert(message) {
+    // --- UI Interaction Functions ---
+    function showCustomAlert(message) {
+        return new Promise((resolve) => {
             customAlertMessage.textContent = message;
             customAlertDialog.style.display = 'flex';
-        }
-
-        function showConfirm(message) {
-            return new Promise((resolve) => {
-                customConfirmMessage.textContent = message;
-                customConfirmModal.style.display = 'flex';
-
-                const onYes = () => {
-                    customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', onYes);
-                    customConfirmNo.removeEventListener('click', onNo);
-                    resolve(true);
-                };
-
-                const onNo = () => {
-                    customConfirmModal.style.display = 'none';
-                    customConfirmYes.removeEventListener('click', onYes);
-                    customConfirmNo.removeEventListener('click', onNo);
-                    resolve(false);
-                };
-
-                customConfirmYes.addEventListener('click', onYes);
-                customConfirmNo.addEventListener('click', onNo);
-            });
-        }
-
-        customAlertOk.addEventListener('click', () => {
-            customAlertDialog.style.display = 'none';
-        });
-
-        // --- Loading Spinner Functions ---
-        function showLoadingSpinner() {
-            loadingSpinner.style.display = 'flex';
-        }
-
-        function hideLoadingSpinner() {
-            loadingSpinner.style.display = 'none';
-        }
-
-        // --- Authentication ---
-        let userId = null;
-        let isAuthReady = false;
-
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                userId = user.uid;
-                // Fetch initial data after authentication
-                await fetchProducts();
-                await fetchSuppliers();
-                isAuthReady = true;
-            } else {
-                try {
-                    // Use __initial_auth_token if available, otherwise sign in anonymously
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await auth.signInWithCustomToken(__initial_auth_token);
-                    } else {
-                        await auth.signInAnonymously();
-                    }
-                } catch (error) {
-                    console.error("Error during anonymous sign-in or custom token sign-in:", error);
-                    showAlert("Terjadi kesalahan saat otentikasi. Silakan coba lagi.");
-                }
-            }
-        });
-
-        async function logout() {
-            const confirmLogout = await showConfirm("Apakah Anda yakin ingin logout?");
-            if (confirmLogout) {
-                try {
-                    await auth.signOut();
-                    showAlert("Anda telah berhasil logout.");
-                    // Optionally redirect to login page or clear UI
-                    window.location.reload(); // Reloads the page to reset state
-                } catch (error) {
-                    console.error("Error logging out:", error);
-                    showAlert("Gagal logout. Silakan coba lagi.");
-                }
-            }
-        }
-
-        // --- Utility Functions ---
-        function formatRupiah(number) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(number);
-        }
-
-        // --- Product Management Functions ---
-        let allProducts = []; // Cache for all products
-        let filteredProducts = []; // Products displayed after search
-
-        async function fetchProducts() {
-            showLoadingSpinner();
-            try {
-                const snapshot = await produkCollection.get();
-                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                filteredProducts = allProducts; // Initially, all products are filtered
-                displayProducts(filteredProducts);
-                setupProductAutocomplete(); // Setup product autocomplete after fetching
-            } catch (error) {
-                console.error("Error fetching products:", error);
-                showAlert("Gagal memuat daftar produk.");
-            } finally {
-                hideLoadingSpinner();
-            }
-        }
-
-        function displayProducts(productsToDisplay) {
-            productListDiv.innerHTML = '';
-            if (productsToDisplay.length === 0) {
-                productListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada produk ditemukan.</p>';
-                return;
-            }
-            productsToDisplay.forEach(product => {
-                const card = document.createElement('div');
-                card.className = 'menu-item-card';
-                card.innerHTML = `
-                    <div class="menu-item-details">
-                        <h3>${product.nama}</h3>
-                        <p class="price">${formatRupiah(product.harga)}</p>
-                        <p>${product.deskripsi}</p>
-                    </div>
-                    <label class="item-toggle-switch">
-                        <input type="checkbox" ${product.tersedia ? 'checked' : ''} data-id="${product.id}">
-                        <span class="item-slider"></span>
-                    </label>
-                `;
-                card.addEventListener('click', (event) => {
-                    // Prevent toggle switch click from opening edit modal
-                    if (!event.target.closest('.item-toggle-switch')) {
-                        openProductFormModal(product);
-                    }
-                });
-                const toggleSwitch = card.querySelector('.item-toggle-switch input');
-                toggleSwitch.addEventListener('change', (event) => {
-                    event.stopPropagation(); // Prevent card click event
-                    toggleProductAvailability(product.id, event.target.checked);
-                });
-                productListDiv.appendChild(card);
-            });
-        }
-
-        async function toggleProductAvailability(productId, isAvailable) {
-            try {
-                await produkCollection.doc(productId).update({ tersedia: isAvailable });
-                showAlert(`Status ketersediaan produk diperbarui.`);
-            } catch (error) {
-                console.error("Error updating product availability:", error);
-                showAlert("Gagal memperbarui ketersediaan produk.");
-            }
-        }
-
-        function openProductFormModal(product = null) {
-            productForm.reset();
-            if (product) {
-                productFormTitle.textContent = 'Edit Produk';
-                productIdInput.value = product.id;
-                productNameInputModal.value = product.nama;
-                productDescriptionInput.value = product.deskripsi;
-                productPriceInput.value = product.harga;
-                productImageUrlInput.value = product.imageUrl || '';
-                productRatingInput.value = product.rating || 0;
-                productDeliveryTimeInput.value = product.estimasiPengiriman || '';
-                productIsAvailableInput.checked = product.tersedia;
-            } else {
-                productFormTitle.textContent = 'Tambah Produk Baru';
-                productIdInput.value = '';
-                productIsAvailableInput.checked = true; // Default new product to available
-            }
-            productFormModal.style.display = 'flex';
-        }
-
-        closeProductFormModalBtn.addEventListener('click', () => {
-            productFormModal.style.display = 'none';
-        });
-
-        cancelProductFormBtn.addEventListener('click', () => {
-            productFormModal.style.display = 'none';
-        });
-
-        productForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoadingSpinner();
-
-            const productId = productIdInput.value;
-            const productData = {
-                nama: productNameInputModal.value,
-                deskripsi: productDescriptionInput.value,
-                harga: parseFloat(productPriceInput.value),
-                imageUrl: productImageUrlInput.value,
-                rating: parseFloat(productRatingInput.value),
-                estimasiPengiriman: productDeliveryTimeInput.value,
-                tersedia: productIsAvailableInput.checked
-            };
-
-            try {
-                if (productId) {
-                    await produkCollection.doc(productId).update(productData);
-                    showAlert("Produk berhasil diperbarui!");
-                } else {
-                    await produkCollection.add(productData);
-                    showAlert("Produk berhasil ditambahkan!");
-                }
-                productFormModal.style.display = 'none';
-                await fetchProducts(); // Re-fetch to update the list
-            } catch (error) {
-                console.error("Error saving product:", error);
-                showAlert("Gagal menyimpan produk. Silakan coba lagi.");
-            } finally {
-                hideLoadingSpinner();
-            }
-        });
-
-        addTopProductBtn.addEventListener('click', () => openProductFormModal());
-
-        productSearchInput.addEventListener('input', () => {
-            const searchTerm = productSearchInput.value.toLowerCase();
-            filteredProducts = allProducts.filter(product =>
-                product.nama.toLowerCase().includes(searchTerm) ||
-                product.deskripsi.toLowerCase().includes(searchTerm)
-            );
-            displayProducts(filteredProducts);
-        });
-
-        // --- Supplier Management Functions ---
-        let allSuppliers = []; // Cache for all suppliers
-        let filteredSuppliers = []; // Suppliers displayed after search
-
-        async function fetchSuppliers() {
-            showLoadingSpinner();
-            try {
-                const snapshot = await suppliersCollection.get();
-                allSuppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                filteredSuppliers = allSuppliers; // Initially, all suppliers are filtered
-                displaySuppliers(filteredSuppliers);
-                setupSupplierAutocomplete(); // Re-setup autocomplete with fresh data
-            } catch (error) {
-                console.error("Error fetching suppliers:", error);
-                showAlert("Gagal memuat daftar supplier.");
-            } finally {
-                hideLoadingSpinner();
-            }
-        }
-
-        function displaySuppliers(suppliersToDisplay) {
-            supplierListDiv.innerHTML = '';
-            if (suppliersToDisplay.length === 0) {
-                supplierListDiv.innerHTML = '<p class="menu-loading-message">Tidak ada supplier ditemukan.</p>';
-                return;
-            }
-            suppliersToDisplay.forEach(supplier => {
-                const card = document.createElement('div');
-                card.className = 'supplier-item-card';
-                card.innerHTML = `
-                    <div class="supplier-item-details">
-                        <h3>${supplier.nama}</h3>
-                        <p>${supplier.kontak}</p>
-                        <p>${supplier.alamat}</p>
-                    </div>
-                `;
-                card.addEventListener('click', () => openSupplierFormModal(supplier));
-                supplierListDiv.appendChild(card);
-            });
-        }
-
-        function openSupplierFormModal(supplier = null) {
-            supplierForm.reset();
-            if (supplier) {
-                supplierFormTitle.textContent = 'Edit Supplier';
-                supplierIdInput.value = supplier.id;
-                supplierNameInputModal.value = supplier.nama;
-                supplierContactInput.value = supplier.kontak;
-                supplierAddressInput.value = supplier.alamat;
-            } else {
-                supplierFormTitle.textContent = 'Tambah Supplier Baru';
-                supplierIdInput.value = '';
-            }
-            supplierFormModal.style.display = 'flex';
-        }
-
-        closeSupplierFormModalBtn.addEventListener('click', () => {
-            supplierFormModal.style.display = 'none';
-        });
-
-        cancelSupplierFormBtn.addEventListener('click', () => {
-            supplierFormModal.style.display = 'none';
-        });
-
-        supplierForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoadingSpinner();
-
-            const supplierId = supplierIdInput.value;
-            const supplierData = {
-                nama: supplierNameInputModal.value,
-                kontak: supplierContactInput.value,
-                alamat: supplierAddressInput.value
-            };
-
-            try {
-                if (supplierId) {
-                    await suppliersCollection.doc(supplierId).update(supplierData);
-                    showAlert("Supplier berhasil diperbarui!");
-                } else {
-                    await suppliersCollection.add(supplierData);
-                    showAlert("Supplier berhasil ditambahkan!");
-                }
-                supplierFormModal.style.display = 'none';
-                await fetchSuppliers(); // Re-fetch to update the list and autocomplete
-            } catch (error) {
-                console.error("Error saving supplier:", error);
-                showAlert("Gagal menyimpan supplier. Silakan coba lagi.");
-            } finally {
-                hideLoadingSpinner();
-            }
-        });
-
-        addTopSupplierBtn.addEventListener('click', () => openSupplierFormModal());
-
-        supplierSearchInput.addEventListener('input', () => {
-            const searchTerm = supplierSearchInput.value.toLowerCase();
-            filteredSuppliers = allSuppliers.filter(supplier =>
-                supplier.nama.toLowerCase().includes(searchTerm) ||
-                supplier.kontak.toLowerCase().includes(searchTerm) ||
-                supplier.alamat.toLowerCase().includes(searchTerm)
-            );
-            displaySuppliers(filteredSuppliers);
-        });
-
-        // --- Global Autocomplete Helper Function to close all lists ---
-        function closeAllLists(exceptElement) {
-            const x = document.getElementsByClassName("autocomplete-items");
-            for (let i = 0; i < x.length; i++) {
-                // Clear content of all lists except the one specified
-                // This ensures only one autocomplete list is visible at a time
-                if (x[i] !== exceptElement) {
-                    x[i].innerHTML = '';
-                }
-            }
-        }
-        document.addEventListener("click", function (e) {
-            // Close all lists if click is outside any autocomplete container
-            if (!e.target.closest('.autocomplete')) {
-                closeAllLists(null); // Pass null to clear all lists
-            }
-        });
-
-
-        // --- Autocomplete Functionality (Generic, for typing) ---
-        function autocomplete(inp, arr, listContainer, onSelectCallback) {
-            let currentFocus;
-
-            inp.addEventListener("input", function(e) {
-                let b, i, val = this.value;
-                listContainer.innerHTML = ''; // Clear the existing list container content
-                closeAllLists(listContainer); // Close other lists, but keep this one's container
-
-                // If input is empty, don't show suggestions via typing.
-                // The dropdown arrow is for showing all.
-                if (!val) {
-                    return false;
-                }
-                currentFocus = -1;
-
-                // Filter based on current input value (case-insensitive)
-                const itemsToFilter = arr.filter(item => item.nama.toLowerCase().includes(val.toLowerCase()));
-
-                if (itemsToFilter.length === 0) {
-                    const noResultsDiv = document.createElement("div");
-                    noResultsDiv.classList.add("autocomplete-item");
-                    noResultsDiv.textContent = "Tidak ada hasil.";
-                    listContainer.appendChild(noResultsDiv); // Append directly to listContainer
-                    return;
-                }
-                // Loop through filtered items and create autocomplete suggestions
-                for (i = 0; i < itemsToFilter.length; i++) {
-                    b = document.createElement("div");
-                    b.classList.add("autocomplete-item"); // Add class for styling
-                    // Highlight the matching part
-                    const matchIndex = itemsToFilter[i].nama.toLowerCase().indexOf(val.toLowerCase());
-                    const beforeMatch = itemsToFilter[i].nama.substr(0, matchIndex);
-                    const matchText = itemsToFilter[i].nama.substr(matchIndex, val.length);
-                    const afterMatch = itemsToFilter[i].nama.substr(matchIndex + val.length);
-
-                    b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
-                    b.innerHTML += "<input type='hidden' value='" + itemsToFilter[i].nama + "' data-id='" + itemsToFilter[i].id + "'>";
-                    b.addEventListener("click", function(e) {
-                        const selectedName = this.getElementsByTagName("input")[0].value;
-                        const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
-                        inp.value = selectedName;
-                        const selectedItem = arr.find(item => item.id === selectedId);
-                        if (selectedItem) {
-                            onSelectCallback(selectedItem);
-                        }
-                        listContainer.innerHTML = ''; // Clear list after selection
-                    });
-                    listContainer.appendChild(b); // Append directly to listContainer
-                }
-            });
-
-            inp.addEventListener("keydown", function(e) {
-                let x = listContainer.getElementsByTagName("div"); // Get all child divs (autocomplete items)
-                if (e.keyCode == 40) { // DOWN key
-                    currentFocus++;
-                    addActive(x);
-                } else if (e.keyCode == 38) { // UP key
-                    currentFocus--;
-                    addActive(x);
-                } else if (e.keyCode == 13) { // ENTER key
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        // If an item is highlighted, click it
-                        if (x && x[currentFocus]) x[currentFocus].click(); // Check if x[currentFocus] exists
-                    } else {
-                        // If ENTER is pressed and no item is highlighted,
-                        // check if the typed value exactly matches an existing item
-                        const typedValue = this.value.trim().toLowerCase();
-                        let matchedItem = null;
-
-                        if (this.id === 'productNameInput') {
-                            matchedItem = allProducts.find(p => p.nama.toLowerCase() === typedValue);
-                        } else if (this.id === 'supplierNameOrderInput') {
-                            matchedItem = allSuppliers.find(s => s.nama.toLowerCase() === typedValue);
-                        }
-
-                        if (matchedItem) {
-                            // If an exact match is found, select it
-                            onSelectCallback(matchedItem);
-                            listContainer.innerHTML = ''; // Clear list after selection
-                        } else {
-                            // If no match, treat as custom entry (for product) or new/unregistered (for supplier)
-                            if (this.id === 'productNameInput') {
-                                const customProduct = {
-                                    id: 'custom-' + Date.now(), // Unique ID for custom product
-                                    nama: this.value,
-                                    deskripsi: 'Produk custom', // Default description
-                                    harga: 0, // Default price
-                                    tersedia: true
-                                };
-                                onSelectCallback(customProduct); // Pass custom product
-                            } else if (this.id === 'supplierNameOrderInput') {
-                                 // If a supplier is typed but not selected from autocomplete, treat as new/unregistered supplier
-                                 const newSupplier = {
-                                    id: 'temp-' + Date.now(), // Temporary ID
-                                    nama: this.value,
-                                    kontak: '', // User can fill this later if needed
-                                    alamat: ''
-                                 };
-                                 onSelectCallback(newSupplier);
-                            }
-                            listContainer.innerHTML = ''; // Clear list even if no match for the typed value
-                        }
-                    }
-                }
-            });
-
-            function addActive(x) {
-                if (!x) return false;
-                removeActive(x);
-                if (currentFocus >= x.length) currentFocus = 0;
-                if (currentFocus < 0) currentFocus = (x.length - 1);
-                x[currentFocus].classList.add("autocomplete-active");
-            }
-
-            function removeActive(x) {
-                for (let i = 0; i < x.length; i++) {
-                    x[i].classList.remove("autocomplete-active");
-                }
-            }
-        }
-
-        // --- Function to display all items in autocomplete list (for dropdown arrow) ---
-        function showAllAutocompleteItems(inp, arr, listContainer, onSelectCallback) {
-            listContainer.innerHTML = ''; // Clear the existing list container content
-            closeAllLists(listContainer); // Close other lists, but keep this one's container
-
-            // Filter based on current input value if not empty, otherwise show all
-            const val = inp.value.toLowerCase();
-            const itemsToShow = val ? arr.filter(item => item.nama.toLowerCase().includes(val)) : arr;
-
-            if (itemsToShow.length === 0) {
-                const noResultsDiv = document.createElement("div");
-                noResultsDiv.classList.add("autocomplete-item");
-                noResultsDiv.textContent = "Tidak ada hasil.";
-                listContainer.appendChild(noResultsDiv); // Append directly to listContainer
-                return;
-            }
-
-            for (let i = 0; i < itemsToShow.length; i++) {
-                let b = document.createElement("div");
-                b.classList.add("autocomplete-item"); // Add class for styling
-                // Highlight logic (same as in original autocomplete)
-                const matchIndex = itemsToShow[i].nama.toLowerCase().indexOf(val);
-                const beforeMatch = itemsToShow[i].nama.substr(0, matchIndex);
-                const matchText = itemsToShow[i].nama.substr(matchIndex, val.length);
-                const afterMatch = itemsToShow[i].nama.substr(matchIndex + val.length);
-
-                b.innerHTML = beforeMatch + "<strong>" + matchText + "</strong>" + afterMatch;
-                b.innerHTML += "<input type='hidden' value='" + itemsToShow[i].nama + "' data-id='" + itemsToShow[i].id + "'>";
-                b.addEventListener("click", function(e) {
-                    const selectedName = this.getElementsByTagName("input")[0].value;
-                    const selectedId = this.getElementsByTagName("input")[0].getAttribute('data-id');
-                    inp.value = selectedName;
-                    const selectedItem = arr.find(item => item.id === selectedId);
-                    if (selectedItem) {
-                        onSelectCallback(selectedItem);
-                    }
-                    listContainer.innerHTML = ''; // Clear list after selection
-                });
-                listContainer.appendChild(b); // Append directly to listContainer
-            }
-        }
-
-
-        // --- Setup Autocomplete for Product and Supplier Order Input ---
-        function setupProductAutocomplete() {
-            autocomplete(productNameInput, allProducts, productNameAutocompleteList, (selectedProduct) => {
-                productNameInput.value = selectedProduct.nama;
-            });
-        }
-
-        function setupSupplierAutocomplete() {
-            autocomplete(supplierNameOrderInput, allSuppliers, supplierNameOrderAutocompleteList, (selectedSupplier) => {
-                currentSelectedSupplier = selectedSupplier;
-                supplierNameOrderInput.value = selectedSupplier.nama; // Ensure input shows selected name
-                updateSupplierInfoDisplay();
-                enableOrderButtons(); // This should enable the buttons
-                // Clear existing order items if a new supplier is selected
-                orderItems = [];
-                renderOrderItems();
-            });
-        }
-
-        function updateSupplierInfoDisplay() {
-            if (currentSelectedSupplier) {
-                // If it's a "temp-" supplier, indicate it's new/unregistered
-                if (currentSelectedSupplier.id && currentSelectedSupplier.id.startsWith('temp-')) {
-                    supplierInfoDiv.innerHTML = `
-                        <strong>Supplier:</strong> ${currentSelectedSupplier.nama} (Belum terdaftar/Baru)<br>
-                        _Detail kontak akan kosong jika tidak terdaftar._
-                    `;
-                } else {
-                    // It's a registered supplier
-                    supplierInfoDiv.innerHTML = `
-                        <strong>Supplier:</strong> ${currentSelectedSupplier.nama}<br>
-                        <strong>Kontak:</strong> ${currentSelectedSupplier.kontak || 'N/A'}<br>
-                        <strong>Alamat:</strong> ${currentSelectedSupplier.alamat || 'N/A'}
-                    `;
-                }
-            } else if (supplierNameOrderInput.value.trim() !== '') {
-                // This case should now be handled by the input event listener setting currentSelectedSupplier to a temp object
-                // But as a fallback, display the typed name
-                supplierInfoDiv.innerHTML = `
-                    <strong>Supplier:</strong> ${supplierNameOrderInput.value.trim()} (Belum terdaftar/Baru)<br>
-                    _Detail kontak akan kosong jika tidak terdaftar._
-                `;
-            }
-            else {
-                supplierInfoDiv.textContent = 'Pilih supplier untuk memulai pesanan.';
-            }
-        }
-
-        function enableOrderButtons() {
-            // Buttons are enabled if currentSelectedSupplier is not null (meaning something is typed or selected)
-            const isDisabled = currentSelectedSupplier === null;
-            tambahProdukBtn.disabled = isDisabled;
-            clearAllBtn.disabled = isDisabled;
-            kirimWhatsAppBtn.disabled = isDisabled;
-        }
-
-        // --- Supplier Order Panel Functions ---
-        function renderOrderItems() {
-            orderItemsTableBody.innerHTML = '';
-            if (orderItems.length === 0) {
-                emptyOrderItemsMessage.style.display = 'block';
-                return;
-            }
-            emptyOrderItemsMessage.style.display = 'none';
-
-            orderItems.forEach((item, index) => {
-                const row = orderItemsTableBody.insertRow();
-                row.setAttribute('data-index', index); // Store index for editing/deleting
-
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td class="editable-product-name">${item.namaProduk}</td>
-                    <td class="editable-quantity">${item.jumlah}</td>
-                    <td>
-                        <button class="edit-item-btn">Edit</button>
-                        <button class="delete-item-btn">Hapus</button>
-                    </td>
-                `;
-
-                const editButton = row.querySelector('.edit-item-btn');
-                const deleteButton = row.querySelector('.delete-item-btn');
-
-                editButton.addEventListener('click', () => toggleEditMode(row, item));
-                deleteButton.addEventListener('click', () => deleteOrderItem(index));
-            });
-        }
-
-        function toggleEditMode(row, item) {
-            const productNameCell = row.querySelector('.editable-product-name');
-            const quantityCell = row.querySelector('.editable-quantity');
-            const actionsCell = row.querySelector('td:last-child');
-
-            if (row.classList.contains('editing')) {
-                // Save mode
-                const newProductName = productNameCell.querySelector('input').value;
-                const newQuantity = quantityCell.querySelector('input').value;
-
-                if (!newProductName || !newQuantity) {
-                    showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
-                    return;
-                }
-
-                item.namaProduk = newProductName;
-                item.jumlah = newQuantity;
-                renderOrderItems(); // Re-render the whole table to update
-                row.classList.remove('editing');
-            } else {
-                // Edit mode
-                row.classList.add('editing');
-
-                // Store original values for cancel
-                row.dataset.originalProductName = item.namaProduk;
-                row.dataset.originalQuantity = item.jumlah;
-
-                productNameCell.innerHTML = `<input type="text" value="${item.namaProduk}">`;
-                quantityCell.innerHTML = `<input type="text" value="${item.jumlah}">`;
-                
-                actionsCell.innerHTML = `
-                    <button class="save-item-btn">Simpan</button>
-                    <button class="cancel-edit-btn">Batal</button>
-                `;
-
-                row.querySelector('.save-item-btn').addEventListener('click', () => toggleEditMode(row, item));
-                row.querySelector('.cancel-edit-btn').addEventListener('click', () => cancelEditMode(row, item));
-            }
-        }
-
-        function cancelEditMode(row, item) {
-            row.classList.remove('editing');
-            // Restore original values
-            item.namaProduk = row.dataset.originalProductName;
-            item.jumlah = row.dataset.originalQuantity;
-            renderOrderItems(); // Re-render to show original values
-        }
-
-        function addOrderItem() {
-            // This check is now redundant because enableOrderButtons ensures currentSelectedSupplier is set
-            // if supplierNameOrderInput has value. But keeping for robustness.
-            if (!currentSelectedSupplier) {
-                showAlert("Silakan pilih atau masukkan nama supplier terlebih dahulu.");
-                return;
-            }
-
-            const productName = productNameInput.value.trim();
-            const quantity = quantityInput.value.trim();
-
-            if (productName === '' || quantity === '') {
-                showAlert("Nama Produk dan Jumlah tidak boleh kosong.");
-                return;
-            }
-
-            orderItems.push({ namaProduk: productName, jumlah: quantity });
-            renderOrderItems();
-            productNameInput.value = '';
-            quantityInput.value = '';
-            productNameInput.focus();
-        }
-
-        async function deleteOrderItem(index) {
-            const confirmDelete = await showConfirm("Apakah Anda yakin ingin menghapus item ini?");
-            if (confirmDelete) {
-                orderItems.splice(index, 1);
-                renderOrderItems();
-                showAlert("Item berhasil dihapus.");
-            }
-        }
-
-        async function clearAllOrderItems() {
-            if (orderItems.length === 0) {
-                showAlert("Daftar pesanan sudah kosong.");
-                return;
-            }
-            const confirmClear = await showConfirm("Apakah Anda yakin ingin menghapus semua item pesanan?");
-            if (confirmClear) {
-                orderItems = [];
-                renderOrderItems();
-                showAlert("Semua item pesanan berhasil dihapus.");
-            }
-        }
-
-        function generateWhatsAppMessage() {
-            if (!currentSelectedSupplier) {
-                showAlert("Silakan pilih atau masukkan nama supplier terlebih dahulu.");
-                return '';
-            }
-            if (orderItems.length === 0) {
-                showAlert("Daftar pesanan masih kosong. Tambahkan produk terlebih dahulu.");
-                return '';
-            }
-
-            // Use the typed supplier name if no registered supplier is selected
-            const supplierNameForMessage = currentSelectedSupplier.nama;
-            const supplierContactForMessage = currentSelectedSupplier.kontak || 'Tidak ada kontak';
-
-            let message = `*Pesanan untuk Supplier: ${supplierNameForMessage}*\n`;
-            message += `_Kontak: ${supplierContactForMessage}_ \n\n`;
-            message += `Halo ${supplierNameForMessage},\nSaya ingin memesan beberapa produk:\n\n`;
-
-            orderItems.forEach((item, index) => {
-                message += `${index + 1}. ${item.namaProduk} - ${item.jumlah}\n`;
-            });
-
-            message += `\nMohon konfirmasi ketersediaan dan total harga. Terima kasih!`;
-            return encodeURIComponent(message);
-        }
-
-        function sendWhatsAppOrder() {
-            const message = generateWhatsAppMessage();
-            if (message === '') {
-                return; // Message already handled by showAlert
-            }
-
-            let whatsappNumber = '';
-            if (currentSelectedSupplier && currentSelectedSupplier.kontak) {
-                whatsappNumber = currentSelectedSupplier.kontak.replace(/\D/g, ''); // Remove non-digits
-            } 
             
-            // Ensure the number starts with 62 for Indonesia if it's available
-            if (whatsappNumber && whatsappNumber.startsWith('0')) {
-                whatsappNumber = '62' + whatsappNumber.substring(1);
-            } else if (whatsappNumber && !whatsappNumber.startsWith('62')) {
-                whatsappNumber = '62' + whatsappNumber;
-            }
+            const handleOk = () => {
+                customAlertDialog.style.display = 'none';
+                customAlertOk.removeEventListener('click', handleOk);
+                resolve();
+            };
+            
+            customAlertOk.addEventListener('click', handleOk);
+        });
+    }
 
-            // If no whatsappNumber is available, still try to open WhatsApp but without a specific number
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-            window.open(whatsappUrl, '_blank');
+    function showCustomConfirm(message) {
+        return new Promise((resolve) => {
+            customConfirmMessage.textContent = message;
+            customConfirmModal.style.display = 'flex';
 
-            if (!whatsappNumber) {
-                showAlert("Nomor WhatsApp supplier tidak tersedia di data. Silakan masukkan secara manual di WhatsApp.");
-            }
+            const handleYes = () => {
+                customConfirmModal.style.display = 'none';
+                customConfirmYes.removeEventListener('click', handleYes);
+                customConfirmNo.removeEventListener('click', handleNo);
+                resolve(true);
+            };
+
+            const handleNo = () => {
+                customConfirmModal.style.display = 'none';
+                customConfirmYes.removeEventListener('click', handleYes);
+                customConfirmNo.removeEventListener('click', handleNo);
+                resolve(false);
+            };
+
+            customConfirmYes.addEventListener('click', handleYes);
+            customConfirmNo.addEventListener('click', handleNo);
+        });
+    }
+
+    function bukaDetail(orderId) {
+        currentOrderIdForDetail = orderId;
+        muatDetailPesanan(orderId);
+        popupDetail.style.display = 'flex';
+    }
+
+    function tutupDetail() {
+        popupDetail.style.display = 'none';
+        currentOrderIdForDetail = null;
+        if (unsubscribeDetailListener) {
+            unsubscribeDetailListener();
+            unsubscribeDetailListener = null;
+        }
+    }
+
+    // - Render Order Items to DOM -
+    function renderOrders(ordersToRender) {
+        orderHistoryContent.innerHTML = '';
+        emptyOrderState.style.display = 'none';
+
+        if (ordersToRender.length === 0) {
+            emptyOrderState.style.display = 'block';
+            return;
         }
 
-        // --- Event Listeners for Supplier Order Panel ---
-        tambahProdukBtn.addEventListener('click', addOrderItem);
-        clearAllBtn.addEventListener('click', clearAllOrderItems);
-        kirimWhatsAppBtn.addEventListener('click', sendWhatsAppOrder);
+        ordersToRender.forEach(order => {
+            const displayOrderId = order.displayOrderId || ('#' + order.id.substring(0, 6).toUpperCase());
+            let buyerName = order.customer?.fullName || 'Pelanggan Anonim';
+            let currentStatus = order.status || 'Pending';
+            const waktu = order.waktu?.toDate?.() || new Date(0);
+            const items = order.items || [];
+            const totalAmount = order.totalAmount || 0;
 
-        // Crucial: Logic for supplierNameOrderInput 'input' event
-        supplierNameOrderInput.addEventListener('input', () => {
-            const typedName = supplierNameOrderInput.value.trim();
-            if (typedName === '') {
-                currentSelectedSupplier = null;
-            } else {
-                // Try to find an exact match in allSuppliers
-                const matchedSupplier = allSuppliers.find(s => s.nama.toLowerCase() === typedName.toLowerCase());
-                if (matchedSupplier) {
-                    currentSelectedSupplier = matchedSupplier;
+            // Create order card element
+            const orderCard = document.createElement('div');
+            orderCard.className = 'order-card';
+            orderCard.dataset.orderId = order.id;
+
+            // Determine which action buttons to show based on status
+            let actionButtonsHtml = '';
+            if (currentStatus === 'Pending') {
+                actionButtonsHtml = `
+                    <button class="action-btn terima" data-order-id="${order.id}" data-action="Diproses"><i class="material-icons">check</i> Terima</button>
+                    <button class="action-btn tolak" data-order-id="${order.id}" data-action="Dibatalkan"><i class="material-icons">close</i> Tolak</button>
+                `;
+            } else if (currentStatus === 'Diproses') {
+                actionButtonsHtml = `
+                    <button class="action-btn siap-diambil" data-order-id="${order.id}" data-action="SiapDiambil"><i class="material-icons">done_all</i> Siap Ambil</button>
+                `;
+            } else if (currentStatus === 'SiapDiambil') {
+                actionButtonsHtml = `
+                    <button class="action-btn pick-up" data-order-id="${order.id}" data-action="OnDelivery"><i class="material-icons">local_shipping</i> Pick Up</button>
+                `;
+            } else if (currentStatus === 'OnDelivery') {
+                actionButtonsHtml = `
+                    <button class="action-btn selesai" data-order-id="${order.id}" data-action="Selesai"><i class="material-icons">check_circle</i> Selesai</button>
+                `;
+            }
+
+            // Build items HTML
+            const itemsHtml = items.map(item => {
+                const variantDisplay = getVariantDisplayString(item.custom);
+                return `
+                    <div class="order-item">
+                        <img src="${item.image || 'https://placehold.co/60x60/cccccc/333333?text=No+Image'}" 
+                             alt="${item.name}" 
+                             class="order-item-image">
+                        <div class="order-item-details">
+                            <div class="order-item-name">${item.name}</div>
+                            <span class="order-item-variants-display">${variantDisplay}</span>
+                            <div class="order-item-quantity-price">${item.quantity}x ${formatRupiah(item.price)}</div>
+                        </div>
+                        <div class="order-item-total">${formatRupiah(item.quantity * item.price)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Populate card content
+            orderCard.innerHTML = `
+                <div class="order-header">
+                    <div class="order-id">${displayOrderId}</div>
+                    <div class="order-status ${getStatusClass(currentStatus)}">${getDisplayStatus(currentStatus)}</div>
+                </div>
+                <div class="order-customer">${buyerName}</div>
+                <div class="order-time"><i class="material-icons">schedule</i> ${formatDate(waktu)}</div>
+                
+                <div class="order-items">
+                    ${itemsHtml}
+                </div>
+                
+                <div class="order-summary-footer">
+                    <div class="order-total-amount">Total: ${formatRupiah(totalAmount)}</div>
+                </div>
+                
+                <div class="order-actions">
+                    ${actionButtonsHtml}
+                </div>
+            `;
+
+            // Add click event to open detail
+            orderCard.addEventListener('click', (e) => {
+                // Prevent opening detail when clicking action buttons
+                if (e.target.closest('.action-btn')) return;
+                bukaDetail(order.id);
+            });
+
+            orderHistoryContent.appendChild(orderCard);
+        });
+
+        // Add event listeners to action buttons after they are rendered
+        document.querySelectorAll('.action-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent card click event
+                const orderId = button.dataset.orderId;
+                const newStatus = button.dataset.action;
+                
+                if (orderId && newStatus) {
+                    const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`);
+                    if (confirmChange) {
+                        await updateOrderStatusInFirestore(orderId, newStatus, {});
+                    }
+                }
+            });
+        });
+    }
+
+    // - Load Order Detail with Real-time Updates -
+    async function muatDetailPesanan(orderId) {
+        // Hapus listener detail sebelumnya jika ada
+        if (unsubscribeDetailListener) {
+            unsubscribeDetailListener();
+            unsubscribeDetailListener = null;
+        }
+
+        showLoading();
+        try {
+            const docRef = db.collection('pesanan').doc(orderId);
+
+            // Record who opened the order (transaction to prevent race conditions)
+            const user = auth.currentUser;
+            const uid = user?.uid || "Unknown";
+            const nama = user?.email || "Tanpa Nama";
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const snapshot = await transaction.get(docRef);
+                    if (!snapshot.exists) throw new Error("Pesanan tidak ditemukan.");
+
+                    const d = snapshot.data();
+                    // Only update dibukaOleh if it hasn't been set yet
+                    if (!d.dibukaOlehUid) {
+                        transaction.update(docRef, {
+                            dibukaOlehUid: uid,
+                            dibukaOlehNama: nama,
+                            waktuDibuka: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+            } catch (transactionError) {
+                console.warn("Could not update dibukaOleh (might be already set):", transactionError);
+            }
+
+            // --- GUNAKAN onSnapshot UNTUK REAL-TIME UPDATES ---
+            unsubscribeDetailListener = docRef.onSnapshot((doc) => {
+                if (!doc.exists) {
+                    showCustomAlert('Pesanan tidak ditemukan.');
+                    tutupDetail(); // Tutup popup jika dokumen dihapus
+                    return;
+                }
+
+                const data = doc.data();
+                const orderIdDisplay = data.displayOrderId || '#' + doc.id.slice(0, 6).toUpperCase();
+                const customer = data.customer || {};
+                const waktu = data.waktu?.toDate?.() || new Date(0);
+                const items = data.items || [];
+
+                popupNama.textContent = customer.fullName || "Pelanggan";
+                popupOrderId.textContent = orderIdDisplay;
+
+                const phoneNumber = customer.phoneNumber || "-";
+                let formattedPhoneNumber = phoneNumber.replace(/\D/g, '');
+                if (formattedPhoneNumber.startsWith('08')) {
+                    formattedPhoneNumber = '62' + formattedPhoneNumber.substring(1);
+                }
+                popupNomor.textContent = formattedPhoneNumber !== '-' ? `+${formattedPhoneNumber}` : phoneNumber;
+
+                popupAlamat.textContent = customer.alamat || "-";
+                popupTotal.textContent = formatRupiah(data.totalAmount || 0);
+                popupMetodeBayar.textContent = data.paymentMethod || "-";
+                popupCatatan.textContent = customer.notes || "Tidak ada catatan";
+
+                const currentStatus = data.status || "Pending";
+                popupStatus.textContent = getDisplayStatus(currentStatus);
+                popupStatus.className = `order-status-popup ${getStatusClass(currentStatus)}`;
+                statusUpdater.value = currentStatus;
+
+                // NEW: Populate driver info fields and show/hide section
+                if (currentStatus === 'OnDelivery') {
+                    driverInfoSection.style.display = 'block';
+                    driverNameInput.value = data.driverName || '';
+                    driverPhoneInput.value = data.driverPhone || '';
+                    driverAppSelect.value = data.driverApp || '';
                 } else {
-                    // If no exact match, create a temporary supplier object
-                    currentSelectedSupplier = {
-                        id: 'temp-' + Date.now(), // Unique ID for temporary supplier
-                        nama: typedName,
-                        kontak: '', // Placeholder
-                        alamat: '' // Placeholder
-                    };
+                    driverInfoSection.style.display = 'none';
+                    // Kosongkan input jika bukan OnDelivery
+                    driverNameInput.value = '';
+                    driverPhoneInput.value = '';
+                    driverAppSelect.value = '';
+                }
+
+                popupWaktu.textContent = formatDate(waktu);
+
+                const dibukaOleh = data.dibukaOlehNama || "-";
+                const waktuDibuka = data.waktuDibuka?.toDate?.();
+                popupDibukaOleh.textContent = dibukaOleh;
+                popupWaktuDibuka.textContent = waktuDibuka ? formatDate(waktuDibuka) : "-";
+
+                const diubahOleh = data.diubahOlehNama || "-";
+                const waktuDiubah = data.waktuDiubah?.toDate?.();
+                popupDiubahOleh.textContent = diubahOleh;
+                popupWaktuDiubah.textContent = waktuDiubah ? formatDate(waktuDiubah) : "-";
+
+                popupItems.innerHTML = (items || []).map(item => {
+                    const variantDisplay = getVariantDisplayString(item.custom);
+                    return `
+                        <div class="order-item">
+                            <img src="${item.image || 'https://placehold.co/60x60/cccccc/333333?text=No+Image'}"
+                                 alt="${item.name}"
+                                 class="order-item-image">
+                            <div class="order-item-details">
+                                <div class="order-item-name">${item.name}</div>
+                                <span class="order-item-variants-display">${variantDisplay}</span>
+                                <div class="order-item-quantity-price">${item.quantity}x ${formatRupiah(item.price)}</div>
+                            </div>
+                            <div class="order-item-total">${formatRupiah(item.quantity * item.price)}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Sembunyikan loading setelah data pertama kali dimuat
+                hideLoading();
+
+            }, (error) => {
+                console.error("Error listening to order detail: ", error);
+                showCustomAlert('Gagal memuat detail pesanan.');
+                hideLoading();
+            });
+
+        } catch (error) {
+            console.error("Error setting up order detail listener: ", error);
+            showCustomAlert('Gagal memuat detail pesanan.');
+            hideLoading();
+        }
+    }
+
+    // - Update Order Status -
+    async function updateOrderStatusInFirestore(orderId, newStatus, driverDetails = {}) {
+        if (!orderId || !newStatus) return;
+        
+        showLoading();
+        try {
+            const docRef = db.collection('pesanan').doc(orderId);
+            const user = auth.currentUser;
+            const uid = user?.uid || "Unknown";
+            const nama = user?.email || "Admin Anonim";
+            
+            // Prepare update data
+            const updateData = {
+                status: newStatus,
+                diubahOlehUid: uid,
+                diubahOlehNama: nama,
+                waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // If status is OnDelivery, include driver details
+            if (newStatus === 'OnDelivery') {
+                updateData.driverName = driverDetails.driverName || null;
+                updateData.driverPhone = driverDetails.driverPhone || null;
+                updateData.driverApp = driverDetails.driverApp || null;
+            } 
+            // If status is not OnDelivery, remove driver details
+            else if (newStatus !== 'OnDelivery') {
+                updateData.driverName = firebase.firestore.FieldValue.delete();
+                updateData.driverPhone = firebase.firestore.FieldValue.delete();
+                updateData.driverApp = firebase.firestore.FieldValue.delete();
+            }
+
+            // Update the main order document
+            await docRef.update(updateData);
+            
+            // Also update status in riwayat_customer if userId exists in the order document
+            const orderDoc = await docRef.get();
+            const orderData = orderDoc.data();
+            const customerUserId = orderData.userId;
+            
+            if (customerUserId) {
+                const customerUpdateData = { status: newStatus };
+                
+                if (newStatus === 'OnDelivery') {
+                    customerUpdateData.driverName = driverDetails.driverName || null;
+                    customerUpdateData.driverPhone = driverDetails.driverPhone || null;
+                    customerUpdateData.driverApp = driverDetails.driverApp || null;
+                } else {
+                    customerUpdateData.driverName = firebase.firestore.FieldValue.delete();
+                    customerUpdateData.driverPhone = firebase.firestore.FieldValue.delete();
+                    customerUpdateData.driverApp = firebase.firestore.FieldValue.delete();
+                }
+                
+                // Update all matching documents in riwayat_customer
+                const riwayatCustomerQuery = db.collection('riwayat_customer')
+                    .where('userId', '==', customerUserId)
+                    .where('orderId', '==', orderId);
+                
+                const riwayatCustomerSnapshot = await riwayatCustomerQuery.get();
+                const batch = db.batch();
+                
+                riwayatCustomerSnapshot.forEach(doc => {
+                    batch.update(doc.ref, customerUpdateData);
+                });
+                
+                if (!riwayatCustomerSnapshot.empty) {
+                    await batch.commit();
                 }
             }
-            updateSupplierInfoDisplay();
-            enableOrderButtons(); // This will now correctly reflect the state of currentSelectedSupplier
-        });
+            
+            await showCustomAlert('Status pesanan berhasil diperbarui.');
+            
+            // If popup is open, it will be updated by the real-time listener
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            await showCustomAlert("Gagal memperbarui status pesanan: " + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
 
-        // New: Event listener for the dropdown arrow
-        supplierDropdownArrow.addEventListener('click', () => {
-            // Show all suppliers when the arrow is clicked, filtered by current input if any
-            showAllAutocompleteItems(supplierNameOrderInput, allSuppliers, supplierNameOrderAutocompleteList, (selectedSupplier) => {
-                currentSelectedSupplier = selectedSupplier;
-                supplierNameOrderInput.value = selectedSupplier.nama;
-                updateSupplierInfoDisplay();
-                enableOrderButtons();
-                orderItems = []; // Clear existing order items if a new supplier is selected via dropdown
-                renderOrderItems();
+    // - Load All Order History (with real-time updates and filters) -
+    function loadAllOrders() {
+        showLoading();
+        
+        // Unsubscribe from previous listener if exists
+        if (unsubscribeOrders) {
+            unsubscribeOrders();
+        }
+        
+        // Set up real-time listener
+        unsubscribeOrders = db.collection('pesanan').orderBy('waktu', 'desc').onSnapshot(snapshot => {
+            allOrdersData = [];
+            snapshot.forEach(doc => {
+                allOrdersData.push({ id: doc.id, ...doc.data() });
             });
-            supplierNameOrderInput.focus(); // Focus the input when dropdown is clicked
+            
+            // Apply current filters
+            applyFiltersAndRender();
+            hideLoading();
+        }, error => {
+            console.error("Error listening to orders: ", error);
+            showCustomAlert("Gagal memuat data pesanan: " + error.message);
+            hideLoading();
         });
+    }
 
+    // - Apply Filters and Render -
+    function applyFiltersAndRender() {
+        let filteredOrders = [...allOrdersData];
+        
+        // Apply status filter
+        if (activeFilterStatus !== 'All') {
+            filteredOrders = filteredOrders.filter(order => order.status === activeFilterStatus);
+        }
+        
+        // Apply search filter
+        const searchQuery = searchQueryInput.value.toLowerCase().trim();
+        if (searchQuery) {
+            filteredOrders = filteredOrders.filter(order => {
+                const orderIdMatch = (order.displayOrderId || '').toLowerCase().includes(searchQuery);
+                const customerNameMatch = (order.customer?.fullName || '').toLowerCase().includes(searchQuery);
+                return orderIdMatch || customerNameMatch;
+            });
+        }
+        
+        // Apply date filter
+        const filterDateValue = filterDateInput.value;
+        if (filterDateValue) {
+            const filterDateObj = new Date(filterDateValue);
+            filteredOrders = filteredOrders.filter(order => {
+                const orderDate = order.waktu?.toDate?.();
+                if (!orderDate) return false;
+                return orderDate.toDateString() === filterDateObj.toDateString();
+            });
+        }
+        
+        renderOrders(filteredOrders);
+    }
 
-        // Initial setup on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            renderOrderItems();
-            updateSupplierInfoDisplay(); // Show initial message
-            enableOrderButtons(); // Disable buttons initially
+    // --- Event Listeners ---
+    document.getElementById('closePopup').addEventListener('click', tutupDetail);
+    
+    document.getElementById('updateStatusBtn').addEventListener('click', async () => {
+        if (!currentOrderIdForDetail) return;
+        
+        const newStatus = statusUpdater.value;
+        if (!newStatus) {
+            showCustomAlert('Silakan pilih status.');
+            return;
+        }
+
+        const confirmChange = await showCustomConfirm(`Ubah status pesanan ini menjadi "${getDisplayStatus(newStatus)}"?`);
+        if (!confirmChange) return;
+
+        const driverDetails = {};
+        if (newStatus === 'OnDelivery') {
+            driverDetails.driverName = driverNameInput.value;
+            driverDetails.driverPhone = driverPhoneInput.value;
+            driverDetails.driverApp = driverAppSelect.value;
+        }
+        
+        await updateOrderStatusInFirestore(currentOrderIdForDetail, newStatus, driverDetails);
+    });
+
+    saveDriverDetailsBtn.addEventListener('click', async () => {
+        if (!currentOrderIdForDetail) return;
+        
+        const driverDetails = {
+            driverName: driverNameInput.value,
+            driverPhone: driverPhoneInput.value,
+            driverApp: driverAppSelect.value
+        };
+        
+        showLoading();
+        try {
+            await db.collection('pesanan').doc(currentOrderIdForDetail).update(driverDetails);
+            await showCustomAlert('Detail driver berhasil disimpan.');
+        } catch (error) {
+            console.error("Error saving driver details: ", error);
+            await showCustomAlert('Gagal menyimpan detail driver.');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === popupDetail) tutupDetail();
+        if (event.target === customConfirmModal) customConfirmModal.style.display = 'none';
+        if (event.target === customAlertDialog) customAlertDialog.style.display = 'none';
+        if (event.target === modalVerifikasi) modalVerifikasi.style.display = 'none';
+    });
+
+    // Close modals with Escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            if (popupDetail.style.display === 'flex') tutupDetail();
+            if (customConfirmModal.style.display === 'flex') customConfirmModal.style.display = 'none';
+            if (customAlertDialog.style.display === 'flex') customAlertDialog.style.display = 'none';
+            if (modalVerifikasi.style.display === 'flex') modalVerifikasi.style.display = 'none';
+        }
+    });
+
+    // Close buttons for modals
+    customAlertOk.addEventListener('click', () => {
+        customAlertDialog.style.display = 'none';
+    });
+
+    cancelDeleteAllBtn.addEventListener('click', () => {
+        modalVerifikasi.style.display = 'none';
+    });
+
+    // Filter buttons
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            activeFilterStatus = button.dataset.status;
+            applyFiltersAndRender();
         });
-    </script>
+    });
+
+    // Search button
+    document.getElementById('searchQuery').addEventListener('input', () => {
+        applyFiltersAndRender();
+    });
+
+    // Reset filters button
+    resetFiltersBtn.addEventListener('click', () => {
+        searchQueryInput.value = '';
+        filterDateInput.value = '';
+        filterButtons[0].click(); // Click 'All' filter
+    });
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all items
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                navItem.classList.remove('active');
+            });
+            
+            // Add active class to clicked item
+            item.classList.add('active');
+            
+            // Hide all panels
+            document.querySelectorAll('.content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Show the selected panel
+            const panelId = item.dataset.panel;
+            document.getElementById(panelId).classList.add('active');
+        });
+    });
+
+    // Logout
+    document.getElementById('logoutButton').addEventListener('click', async () => {
+        try {
+            await auth.signOut();
+            window.location.href = '/'; // Redirect to login page
+        } catch (error) {
+            console.error("Error logging out:", error);
+            showCustomAlert("Gagal logout. Silakan coba lagi.");
+        }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set today's date as default for date filter
+        const today = new Date().toISOString().split('T')[0];
+        filterDateInput.value = today;
+        
+        // Initialize driver info section visibility
+        driverInfoSection.style.display = 'none';
+        
+        // Start loading orders
+        loadAllOrders();
+    });
+  </script>
 </body>
 </html>
+```
